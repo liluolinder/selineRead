@@ -78,4 +78,11 @@ export let zlibHaveDownloadTable:I_RelationalStoreDataBaseTableForm[] = [
     type:RelationalStoreDataBaseTableType.TEXT,
     canNull:true
   },
+  {
+    key:'haveDownload',
+    isKey:false,
+    needAutoIncrement:false,
+    type:RelationalStoreDataBaseTableType.INTEGER,
+    canNull:true
+  },
 ]

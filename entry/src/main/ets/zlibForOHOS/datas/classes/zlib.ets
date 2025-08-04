@@ -137,7 +137,7 @@ export class zlib {
     let res:string  =  await linderDataBaseManger.queryValueToRelationalDataBase(__DataBase__.baseStore,"zlibHaveDownload",[],zlibHaveDownloadTable)
     let resArray:I_ZlibHaveDownloadTable[] = JSON.parse(res) as I_ZlibHaveDownloadTable[]
     resArray.forEach((item)=>{
-      this.localDownloadHistoryArray.pushData(item)
+      this.localDownloadHistoryArray.pushUnshiftData(item)
     })
   }
 
@@ -368,6 +368,7 @@ export class zlib {
           BookPublisher: bookInfo.publisher.name,
           BookImage: bookInfo.image,
           BookDownLoadTime: new Date().toISOString(),
+          haveDownload : 0
         };
 
         linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket)

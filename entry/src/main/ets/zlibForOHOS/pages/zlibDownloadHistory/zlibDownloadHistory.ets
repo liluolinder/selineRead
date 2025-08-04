@@ -17,10 +17,11 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-import { __System__ } from "../../datas/classes/ShareDatas"
+import { __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownloadTable"
+import { promptAction } from "@kit.ArkUI"
 
 @ComponentV2
 export struct zlibDownloadHistory {
@@ -34,7 +35,6 @@ export struct zlibDownloadHistory {
               Image(item.BookImage)
                 .size({ height: '100%', width: 82 })
                 .borderRadius(18)
-
               Column({ space: 5 }) {
                 Text(item.BookName)
                   .size({ width: '100%' })
@@ -53,6 +53,20 @@ export struct zlibDownloadHistory {
               }.layoutWeight(1)
             }.size({ width: '100%', height: '100%' })
             .padding(8)
+            .onClick(async () => {
+              if (__UI__.isHaveOpenBook) {
+                promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+              }else {
+                await zlibClient.getBookInfo(item.BookHref).then((res) => {
+                  if (res.name!='' && res.name!=undefined ) {
+                    res.bookID = item.BookID
+                    res.image = item.BookImage
+                    res.href = item.BookHref
+                    __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+                  }
+                })
+              }
+            })
           }
           .onClick(async () => {
           })

@@ -82,7 +82,7 @@ export struct bookInfoPage {
               }.layoutWeight(1)
 
               Image(this.bookInfo?.image)
-                .size({ height: 160 })
+                .size({ height: 160, width:116})
                 .shadow({
                   radius: 25,
                   color: Color.Gray,

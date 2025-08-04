@@ -28,7 +28,6 @@ import { effectKit } from "@kit.ArkGraphics2D"
 
 @ComponentV2
 export struct zlibHome {
-  @Consumer('pageStack') pageStack: NavPathStack = new NavPathStack()
   @Consumer('isInSearchMode') isInSearchMode: boolean = false
   @Local recommendIndex: number = 1
   @Local searchIndex: number = 1
@@ -86,7 +85,7 @@ export struct zlibHome {
               res.bookID = item.id
               res.image = item.cover
               res.href = item.url
-              this.pageStack.pushPathByName('bookInfoPage', res)
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
           })
         }
@@ -100,7 +99,7 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Image(item.cover)
-            .size({ height: '100%' })
+            .size({ height: '100%',width:'62' })
             .shadow({
               radius: 25,
               color: Color.Gray,
@@ -134,7 +133,7 @@ export struct zlibHome {
               res.bookID = item.id
               res.image = item.cover
               res.href = item.url
-              this.pageStack.pushPathByName('bookInfoPage', res)
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
           })
         }
@@ -188,7 +187,7 @@ export struct zlibHome {
               res.bookID = Number(item.id)
               res.image = item.image
               res.href = item.href
-              this.pageStack.pushPathByName('bookInfoPage', res)
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
           })
         }
@@ -203,7 +202,7 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Image(item.image)
-            .size({ height: '100%' })
+            .size({ height: '100%',width:'62' })
             .shadow({
               radius: 25,
               color: Color.Gray,
@@ -237,7 +236,7 @@ export struct zlibHome {
               res.bookID = Number(item.id)
               res.image = item.image
               res.href = item.href
-              this.pageStack.pushPathByName('bookInfoPage', res)
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
           })
         }

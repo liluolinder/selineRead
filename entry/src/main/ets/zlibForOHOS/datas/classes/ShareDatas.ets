@@ -55,5 +55,7 @@ export let  __DataBase__:DataBaseShareData = new DataBaseShareData()
 @ObservedV2
 export class UIShareData{
   @Trace isHaveOpenBook:boolean=false
+
+  indexPageStack: NavPathStack = new NavPathStack()
 }
 export let  __UI__:UIShareData = new UIShareData()
