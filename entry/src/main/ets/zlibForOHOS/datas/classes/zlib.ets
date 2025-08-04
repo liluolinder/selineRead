@@ -9,7 +9,7 @@ import { fileUri, fileIo as fs, picker } from '@kit.CoreFileKit';
 import { promptAction } from '@kit.ArkUI';
 import { I_CookieInfo } from '../interfaces/I_CookieInfo';
 import http from '@ohos.net.http';
-import { __DataBase__, __Notification__, __User__ } from './ShareDatas';
+import { __DataBase__, __Notification__, __UI__, __User__ } from './ShareDatas';
 import NeoPreferencesUtil from './XPreferencesUtil';
 import { linderNotificationManager } from './LNotificationManager';
 import { I_UserDownloadLimit } from '../interfaces/I_UserDownloadLimit';
@@ -59,7 +59,6 @@ export class zlib {
 
 
   async loginIn(email: string, password: string) {
-
     let req = http.createHttp()
     await req.request(`${this.base_url}/rpc.php`, {
       method: http.RequestMethod.GET,
@@ -105,6 +104,7 @@ export class zlib {
       }
     }).catch((err: Error) => {
       console.error('error:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
   }
@@ -128,6 +128,7 @@ export class zlib {
       }
     }).catch((err: Error) => {
       console.error('error2:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
   }
@@ -136,7 +137,7 @@ export class zlib {
     let res:string  =  await linderDataBaseManger.queryValueToRelationalDataBase(__DataBase__.baseStore,"zlibHaveDownload",[],zlibHaveDownloadTable)
     let resArray:I_ZlibHaveDownloadTable[] = JSON.parse(res) as I_ZlibHaveDownloadTable[]
     resArray.forEach((item)=>{
-      this.localDownloadHistoryArray.pushData(item)
+      this.localDownloadHistoryArray.pushUnshiftData(item)
     })
   }
 
@@ -161,6 +162,7 @@ export class zlib {
 
     }).catch((err: Error) => {
       console.error('error2:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
 
@@ -189,6 +191,7 @@ export class zlib {
         }
       } else {
         console.error('FUCK error:' + JSON.stringify(err));
+        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
       }
       req.destroy();
     });
@@ -196,6 +199,7 @@ export class zlib {
 
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
+    __UI__.isHaveOpenBook=true
     let req = http.createHttp()
     let res: string = ''
     let resBookInfo: I_BookInfo = {
@@ -223,6 +227,7 @@ export class zlib {
     }).catch((err: Error) => {
       res = 'error'
       console.error('error1:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
 
     req.destroy()
@@ -235,7 +240,10 @@ export class zlib {
       resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
       resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
     }
+
+    __UI__.isHaveOpenBook = false
     return resBookInfo;
+
 
   }
 
@@ -258,6 +266,7 @@ export class zlib {
       res = (result as object)?.['books']
     }).catch((err: Error) => {
       console.error('error2:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
 
@@ -284,7 +293,7 @@ export class zlib {
 
       if (jsonArray.length == 0 || jsonArray == undefined) {
         //todo:API18后换成openToast
-        promptAction.showToast({ message: `未搜到任何结果`, duration: 2000 })
+        promptAction.showToast({ message: `无更多结果`, duration: 2000 })
       }
 
       jsonArray.forEach((item) => {
@@ -292,7 +301,7 @@ export class zlib {
       })
 
     }).catch((err: Error) => {
-
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
       console.error('error3:' + JSON.stringify(err));
     });
 
@@ -323,7 +332,7 @@ export class zlib {
       this.downloadBook(context, temp.location, decodedFilename, bookInfo)
     }).catch((err: Error) => {
       //todo:API18后换成openToast
-      promptAction.showToast({ message: `下载失败`, duration: 800 })
+      promptAction.showToast({ message: `下载失败，请检查是否登录，是否超出下载限制`, duration: 800 })
       console.error('error4:' + JSON.stringify(err));
     });
 
@@ -359,6 +368,7 @@ export class zlib {
           BookPublisher: bookInfo.publisher.name,
           BookImage: bookInfo.image,
           BookDownLoadTime: new Date().toISOString(),
+          haveDownload : 0
         };
 
         linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket)

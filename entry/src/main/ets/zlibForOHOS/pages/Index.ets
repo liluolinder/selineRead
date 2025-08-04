@@ -19,7 +19,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { globlContext, globlUIContext } from '../../entryability/EntryAbility';
 import { linderPixelMap } from '../datas/classes/LPixelMap';
-import { __DataBase__, __System__, __User__ } from '../datas/classes/ShareDatas';
+import { __DataBase__, __System__, __UI__, __User__ } from '../datas/classes/ShareDatas';
 import { zlibClient } from '../datas/classes/zlib';
 import NeoPreferencesUtil from  '../datas/classes/XPreferencesUtil'
 import { personal } from './personal/personal';
@@ -32,8 +32,6 @@ import { zlibDownloadHistory } from './zlibDownloadHistory/zlibDownloadHistory';
 @Entry
 @ComponentV2
 struct Index {
-
-  @Provider('pageStack') pageStack: NavPathStack = new NavPathStack()
 
   private tabsArray:string[]=[
     'Zlibrary',
@@ -89,7 +87,7 @@ struct Index {
 
   build() {
 
-      Navigation(this.pageStack) {
+      Navigation(__UI__.indexPageStack) {
 
         Tabs(){
           ForEach(this.tabsArray,(item:string,index:number)=>{
@@ -115,6 +113,7 @@ struct Index {
         .vertical(__System__.currentBreakpoint === 'lg')
         .barPosition(__System__.currentBreakpoint === 'lg' ? BarPosition.Start : BarPosition.End)
         .size({width:'100%', height:'100%'})
+        .animationDuration(1)
         .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
           if (index==2)
           {

@@ -19,8 +19,8 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
-import { curves, LengthMetrics } from "@kit.ArkUI"
-import { __System__ } from "../../datas/classes/ShareDatas"
+import { curves, LengthMetrics, promptAction } from "@kit.ArkUI"
+import { __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { I_searchBook } from "../../datas/interfaces/I_BookInfo"
 import { zlibIndexShowMod } from "../../datas/enums/zlibIndexShowMod"
@@ -28,7 +28,6 @@ import { effectKit } from "@kit.ArkGraphics2D"
 
 @ComponentV2
 export struct zlibHome {
-  @Consumer('pageStack') pageStack: NavPathStack = new NavPathStack()
   @Consumer('isInSearchMode') isInSearchMode: boolean = false
   @Local recommendIndex: number = 1
   @Local searchIndex: number = 1
@@ -78,12 +77,18 @@ export struct zlibHome {
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果
         .animation({ duration: 500, curve: Curve.Friction }))
       .onClick(async () => {
-        await zlibClient.getBookInfo(item.url).then((res) => {
-          res.bookID = item.id
-          res.image = item.cover
-          res.href = item.url
-          this.pageStack.pushPathByName('bookInfoPage', res)
-        })
+        if (__UI__.isHaveOpenBook) {
+          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+        }else {
+          await zlibClient.getBookInfo(item.url).then((res) => {
+            if (res.name!='' && res.name!=undefined ) {
+              res.bookID = item.id
+              res.image = item.cover
+              res.href = item.url
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+            }
+          })
+        }
       })
     }, (item: string) => item)
   }
@@ -94,7 +99,7 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Image(item.cover)
-            .size({ height: '100%' })
+            .size({ height: '100%',width:'62' })
             .shadow({
               radius: 25,
               color: Color.Gray,
@@ -120,12 +125,18 @@ export struct zlibHome {
         .padding(15)
       }
       .onClick(async () => {
-        await zlibClient.getBookInfo(item.url).then((res) => {
-          res.bookID = item.id
-          res.image = item.cover
-          res.href = item.url
-          this.pageStack.pushPathByName('bookInfoPage', res)
-        })
+        if (__UI__.isHaveOpenBook) {
+          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+        }else {
+          await zlibClient.getBookInfo(item.url).then((res) => {
+            if (res.name!='' && res.name!=undefined ) {
+              res.bookID = item.id
+              res.image = item.cover
+              res.href = item.url
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+            }
+          })
+        }
       })
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果
@@ -167,12 +178,20 @@ export struct zlibHome {
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
         .animation({ duration: 500, curve: Curve.Friction }))
       .onClick(async () => {
-        await zlibClient.getBookInfo(item.href).then((res) => {
-          res.bookID = Number(item.id)
-          res.image = item.image
-          res.href = item.href
-          this.pageStack.pushPathByName('bookInfoPage', res)
-        })
+
+        if (__UI__.isHaveOpenBook) {
+          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+        }else {
+          await zlibClient.getBookInfo(item.href).then((res) => {
+            if (res.name!='' && res.name!=undefined ) {
+              res.bookID = Number(item.id)
+              res.image = item.image
+              res.href = item.href
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+            }
+          })
+        }
+
       })
     }, (item: string) => item)
   }
@@ -183,7 +202,7 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Image(item.image)
-            .size({ height: '100%' })
+            .size({ height: '100%',width:'62' })
             .shadow({
               radius: 25,
               color: Color.Gray,
@@ -209,12 +228,18 @@ export struct zlibHome {
         .padding(15)
       }
       .onClick(async () => {
-        await zlibClient.getBookInfo(item.href).then((res) => {
-          res.bookID = Number(item.id)
-          res.image = item.image
-          res.href = item.href
-          this.pageStack.pushPathByName('bookInfoPage', res)
-        })
+        if (__UI__.isHaveOpenBook) {
+          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+        }else {
+          await zlibClient.getBookInfo(item.href).then((res) => {
+            if (res.name!='' && res.name!=undefined ) {
+              res.bookID = Number(item.id)
+              res.image = item.image
+              res.href = item.href
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+            }
+          })
+        }
       })
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果
@@ -299,8 +324,11 @@ export struct zlibHome {
       if ((this.searchOrRecommend == zlibIndexShowMod.Recommend &&
         zlibClient.recommendBooksArray.dataArray.length == 0) ||
         (this.searchOrRecommend == zlibIndexShowMod.Search && zlibClient.searchBooksArray.dataArray.length == 0)) {
-        LoadingProgress()
-          .size({ width: 100, height: 100 })
+        Column(){
+          LoadingProgress()
+            .size({ width: 150, height: 150 })
+        }.size({width:'100%', height:'100%'})
+        .justifyContent(FlexAlign.Center)
       } else {
         Stack() {
           if (this.listOrWaterFlow == zlibIndexShowMod.WaterFlow) {
