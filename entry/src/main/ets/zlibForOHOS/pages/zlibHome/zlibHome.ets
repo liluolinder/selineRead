@@ -19,8 +19,8 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
-import { curves, LengthMetrics } from "@kit.ArkUI"
-import { __System__ } from "../../datas/classes/ShareDatas"
+import { curves, LengthMetrics, promptAction } from "@kit.ArkUI"
+import { __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { I_searchBook } from "../../datas/interfaces/I_BookInfo"
 import { zlibIndexShowMod } from "../../datas/enums/zlibIndexShowMod"
@@ -78,12 +78,18 @@ export struct zlibHome {
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果
         .animation({ duration: 500, curve: Curve.Friction }))
       .onClick(async () => {
-        await zlibClient.getBookInfo(item.url).then((res) => {
-          res.bookID = item.id
-          res.image = item.cover
-          res.href = item.url
-          this.pageStack.pushPathByName('bookInfoPage', res)
-        })
+        if (__UI__.isHaveOpenBook) {
+          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+        }else {
+          await zlibClient.getBookInfo(item.url).then((res) => {
+            if (res.name!='' && res.name!=undefined ) {
+              res.bookID = item.id
+              res.image = item.cover
+              res.href = item.url
+              this.pageStack.pushPathByName('bookInfoPage', res)
+            }
+          })
+        }
       })
     }, (item: string) => item)
   }
@@ -120,12 +126,18 @@ export struct zlibHome {
         .padding(15)
       }
       .onClick(async () => {
-        await zlibClient.getBookInfo(item.url).then((res) => {
-          res.bookID = item.id
-          res.image = item.cover
-          res.href = item.url
-          this.pageStack.pushPathByName('bookInfoPage', res)
-        })
+        if (__UI__.isHaveOpenBook) {
+          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+        }else {
+          await zlibClient.getBookInfo(item.url).then((res) => {
+            if (res.name!='' && res.name!=undefined ) {
+              res.bookID = item.id
+              res.image = item.cover
+              res.href = item.url
+              this.pageStack.pushPathByName('bookInfoPage', res)
+            }
+          })
+        }
       })
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果
@@ -167,12 +179,20 @@ export struct zlibHome {
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
         .animation({ duration: 500, curve: Curve.Friction }))
       .onClick(async () => {
-        await zlibClient.getBookInfo(item.href).then((res) => {
-          res.bookID = Number(item.id)
-          res.image = item.image
-          res.href = item.href
-          this.pageStack.pushPathByName('bookInfoPage', res)
-        })
+
+        if (__UI__.isHaveOpenBook) {
+          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+        }else {
+          await zlibClient.getBookInfo(item.href).then((res) => {
+            if (res.name!='' && res.name!=undefined ) {
+              res.bookID = Number(item.id)
+              res.image = item.image
+              res.href = item.href
+              this.pageStack.pushPathByName('bookInfoPage', res)
+            }
+          })
+        }
+
       })
     }, (item: string) => item)
   }
@@ -209,12 +229,18 @@ export struct zlibHome {
         .padding(15)
       }
       .onClick(async () => {
-        await zlibClient.getBookInfo(item.href).then((res) => {
-          res.bookID = Number(item.id)
-          res.image = item.image
-          res.href = item.href
-          this.pageStack.pushPathByName('bookInfoPage', res)
-        })
+        if (__UI__.isHaveOpenBook) {
+          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
+        }else {
+          await zlibClient.getBookInfo(item.href).then((res) => {
+            if (res.name!='' && res.name!=undefined ) {
+              res.bookID = Number(item.id)
+              res.image = item.image
+              res.href = item.href
+              this.pageStack.pushPathByName('bookInfoPage', res)
+            }
+          })
+        }
       })
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果

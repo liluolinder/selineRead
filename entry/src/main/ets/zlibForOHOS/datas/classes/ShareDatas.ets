@@ -48,9 +48,12 @@ export let  __User__:UserShareData = new UserShareData()
 
 @ObservedV2
 export class DataBaseShareData{
-
   @Trace baseStore:relationalStore.RdbStore|undefined
-
-
 }
 export let  __DataBase__:DataBaseShareData = new DataBaseShareData()
+
+@ObservedV2
+export class UIShareData{
+  @Trace isHaveOpenBook:boolean=false
+}
+export let  __UI__:UIShareData = new UIShareData()

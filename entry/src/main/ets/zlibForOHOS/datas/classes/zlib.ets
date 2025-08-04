@@ -9,7 +9,7 @@ import { fileUri, fileIo as fs, picker } from '@kit.CoreFileKit';
 import { promptAction } from '@kit.ArkUI';
 import { I_CookieInfo } from '../interfaces/I_CookieInfo';
 import http from '@ohos.net.http';
-import { __DataBase__, __Notification__, __User__ } from './ShareDatas';
+import { __DataBase__, __Notification__, __UI__, __User__ } from './ShareDatas';
 import NeoPreferencesUtil from './XPreferencesUtil';
 import { linderNotificationManager } from './LNotificationManager';
 import { I_UserDownloadLimit } from '../interfaces/I_UserDownloadLimit';
@@ -199,6 +199,7 @@ export class zlib {
 
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
+    __UI__.isHaveOpenBook=true
     let req = http.createHttp()
     let res: string = ''
     let resBookInfo: I_BookInfo = {
@@ -239,7 +240,10 @@ export class zlib {
       resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
       resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
     }
+
+    __UI__.isHaveOpenBook = false
     return resBookInfo;
+
 
   }
 
