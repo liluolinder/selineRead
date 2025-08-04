@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "韵读"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "韵读"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "韵读"
+    },
+    {
+      "name": "reasonForKEEP_BACKGROUND_RUNNING",
+      "value": "后台下载书籍"
+    }
+  ]
+}

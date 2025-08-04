@@ -1,0 +1,9 @@
+{
+  "routerMap": [
+    {
+      "name": "bookInfoPage",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/bookInfoPage/bookInfoPage.ets",
+      "buildFunction": "bookInfoPageBuilder"
+    }
+  ]
+}

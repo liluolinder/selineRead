@@ -1,0 +1,4 @@
+version = 0
+
+[requires]
+  html4cj = {branch = "cjc_0.53.13", commitId = "d68198e49ef790d408a0b9ffc6e4c5cdcb617e4d", git = "https://gitcode.com/Cangjie-TPC/html4cj.git"}
