@@ -113,6 +113,7 @@ struct Index {
         .vertical(__System__.currentBreakpoint === 'lg')
         .barPosition(__System__.currentBreakpoint === 'lg' ? BarPosition.Start : BarPosition.End)
         .size({width:'100%', height:'100%'})
+        .animationDuration(1)
         .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
           if (index==2)
           {
