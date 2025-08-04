@@ -137,6 +137,7 @@ export struct personal {
               if (__User__.isLoginZlib) {
                 Image($r('app.media.logoff'))
                   .size({ width: 25, height: 25 })
+                  .fillColor($r('sys.color.font'))
                   .onClick(() => {
                     NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", false)
                     NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", '')
@@ -167,6 +168,7 @@ export struct personal {
                 SymbolGlyph($r('sys.symbol.download'))
                   .fontSize(30)
                   .fontWeight(FontWeight.Medium)
+                  .fontColor([$r('sys.color.font')])
 
                 if (zlibClient.userDownloadLimitAndDonation?.downloadLimit == undefined) {
                   LoadingProgress()
@@ -176,6 +178,7 @@ export struct personal {
                     Span(zlibClient.userDownloadLimitAndDonation?.downloadLimit)
                     Span(' ')
                     SymbolSpan($r('sys.symbol.questionmark_circle'))
+                      .fontColor([$r('sys.color.font')])
                   }
                   .fontWeight(FontWeight.Medium)
                   .fontSize(18)
@@ -201,6 +204,7 @@ export struct personal {
                 SymbolGlyph($r('sys.symbol.yuansign_moneybag'))
                   .fontSize(30)
                   .fontWeight(FontWeight.Medium)
+                  .fontColor([$r('sys.color.font')])
                 if (zlibClient.userDownloadLimitAndDonation?.donation == undefined) {
                   LoadingProgress()
                     .size({ width: 30, height: 30 })
@@ -209,6 +213,7 @@ export struct personal {
                     Span(zlibClient.userDownloadLimitAndDonation?.donation)
                     Span(' ')
                     SymbolSpan($r('sys.symbol.questionmark_circle'))
+                      .fontColor([$r('sys.color.font')])
 
                   }
                   .fontSize(18)
