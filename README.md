@@ -6,6 +6,8 @@
 
 SelineRead 是一个专为鸿蒙系统（HarmonyOS）开发的电子书下载应用。目前主要支持从 zlibrary 下载电子书，为用户提供便捷的电子书获取体验。
 
+本仓库为只读镜像，数据均不同步，请前往https://atomgit.com/liluolinder/selineRead.git
+
 ## 主要功能
 
 - **电子书下载**: 支持从 zlibrary 下载各种格式的电子书
