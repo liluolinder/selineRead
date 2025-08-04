@@ -299,8 +299,11 @@ export struct zlibHome {
       if ((this.searchOrRecommend == zlibIndexShowMod.Recommend &&
         zlibClient.recommendBooksArray.dataArray.length == 0) ||
         (this.searchOrRecommend == zlibIndexShowMod.Search && zlibClient.searchBooksArray.dataArray.length == 0)) {
-        LoadingProgress()
-          .size({ width: 100, height: 100 })
+        Column(){
+          LoadingProgress()
+            .size({ width: 150, height: 150 })
+        }.size({width:'100%', height:'100%'})
+        .justifyContent(FlexAlign.Center)
       } else {
         Stack() {
           if (this.listOrWaterFlow == zlibIndexShowMod.WaterFlow) {

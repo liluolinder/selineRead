@@ -59,7 +59,6 @@ export class zlib {
 
 
   async loginIn(email: string, password: string) {
-
     let req = http.createHttp()
     await req.request(`${this.base_url}/rpc.php`, {
       method: http.RequestMethod.GET,
@@ -105,6 +104,7 @@ export class zlib {
       }
     }).catch((err: Error) => {
       console.error('error:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
   }
@@ -128,6 +128,7 @@ export class zlib {
       }
     }).catch((err: Error) => {
       console.error('error2:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
   }
@@ -161,6 +162,7 @@ export class zlib {
 
     }).catch((err: Error) => {
       console.error('error2:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
 
@@ -189,6 +191,7 @@ export class zlib {
         }
       } else {
         console.error('FUCK error:' + JSON.stringify(err));
+        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
       }
       req.destroy();
     });
@@ -223,6 +226,7 @@ export class zlib {
     }).catch((err: Error) => {
       res = 'error'
       console.error('error1:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
 
     req.destroy()
@@ -258,6 +262,7 @@ export class zlib {
       res = (result as object)?.['books']
     }).catch((err: Error) => {
       console.error('error2:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
 
@@ -284,7 +289,7 @@ export class zlib {
 
       if (jsonArray.length == 0 || jsonArray == undefined) {
         //todo:API18后换成openToast
-        promptAction.showToast({ message: `未搜到任何结果`, duration: 2000 })
+        promptAction.showToast({ message: `无更多结果`, duration: 2000 })
       }
 
       jsonArray.forEach((item) => {
@@ -292,7 +297,7 @@ export class zlib {
       })
 
     }).catch((err: Error) => {
-
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
       console.error('error3:' + JSON.stringify(err));
     });
 
@@ -323,7 +328,7 @@ export class zlib {
       this.downloadBook(context, temp.location, decodedFilename, bookInfo)
     }).catch((err: Error) => {
       //todo:API18后换成openToast
-      promptAction.showToast({ message: `下载失败`, duration: 800 })
+      promptAction.showToast({ message: `下载失败，请检查是否登录，是否超出下载限制`, duration: 800 })
       console.error('error4:' + JSON.stringify(err));
     });
 
