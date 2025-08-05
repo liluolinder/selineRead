@@ -21,7 +21,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 import { FunctionalButton, functionalButtonComponentManager } from "@kit.ScenarioFusionKit"
 import { __System__, __User__ } from "../../datas/classes/ShareDatas"
 import { linderPixelMap } from "../../datas/classes/LPixelMap"
-import { CustomContentDialog } from "@kit.ArkUI";
+import { ComposeListItem, CustomContentDialog } from "@kit.ArkUI";
 import { zlibClient } from "../../datas/classes/zlib";
 import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil'
 
@@ -31,6 +31,14 @@ export struct personal {
   @Local userPassword: string = ''
   @Local showDownloadLimitTips: boolean = false
   @Local showDonationTips: boolean = false
+
+  buttonsArray:string[]=[
+    '设置', '版本信息'
+  ]
+  buttonsArray2:string[]=[
+    '关于', '开源仓库', '问题反馈'
+  ]
+
   zlibLoginDialogController: CustomDialogController = new CustomDialogController({
     builder: CustomContentDialog({
       primaryTitle: 'zlib登录',
@@ -239,6 +247,32 @@ export struct personal {
           .columnsGap(15)
           .size({ width: '100%', height: '100%' })
         }.size({ width: '100%', height: 120 })
+
+        ListItemGroup(){
+          ForEach(this.buttonsArray,(item:string)=>{
+            ComposeListItem({
+              contentItem:{ primaryText:item },
+              operateItem:{icon:{value:$r('sys.media.ohos_ic_public_arrow_right')}}
+            })
+          })
+        }
+        .borderRadius(20)
+        .backgroundColor($r('sys.color.comp_background_list_card'))
+        .padding({bottom:6,top:6})
+
+        ListItemGroup(){
+          ForEach(this.buttonsArray2,(item:string)=>{
+            ComposeListItem({
+              contentItem:{ primaryText:item },
+              operateItem:{icon:{value:$r('sys.media.ohos_ic_public_arrow_right')}}
+            })
+          })
+        }
+        .borderRadius(20)
+        .backgroundColor($r('sys.color.comp_background_list_card'))
+        .padding({bottom:6,top:6})
+
+
       }
       .lanes(__System__.currentBreakpoint === 'sm' ? 1 : 2, 10)
 
