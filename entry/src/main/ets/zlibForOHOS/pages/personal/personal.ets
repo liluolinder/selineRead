@@ -18,12 +18,16 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 
-import { FunctionalButton, functionalButtonComponentManager } from "@kit.ScenarioFusionKit"
-import { __System__, __User__ } from "../../datas/classes/ShareDatas"
-import { linderPixelMap } from "../../datas/classes/LPixelMap"
-import { ComposeListItem, CustomContentDialog } from "@kit.ArkUI";
-import { zlibClient } from "../../datas/classes/zlib";
-import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil'
+import { FunctionalButton, functionalButtonComponentManager } from '@kit.ScenarioFusionKit';
+import { __System__, __User__ } from '../../datas/classes/ShareDatas';
+import { linderPixelMap } from '../../datas/classes/LPixelMap';
+import { ComposeListItem, CustomContentDialog } from '@kit.ArkUI';
+import { zlibClient } from '../../datas/classes/zlib';
+import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
+import { globlContext } from '../../../entryability/EntryAbility';
+import { common, Want } from '@kit.AbilityKit';
+import { UpdateInfo, UpdateInfoBuilder } from './pages/UpdateInfo';
+import { TanksForBuilder } from './pages/ThanksFor';
 
 @ComponentV2
 export struct personal {
@@ -31,14 +35,14 @@ export struct personal {
   @Local userPassword: string = ''
   @Local showDownloadLimitTips: boolean = false
   @Local showDonationTips: boolean = false
-
-  buttonsArray:string[]=[
+  @Local showUpdateInfo: boolean = false
+  @Local showTanks: boolean = false
+  buttonsArray: string[] = [
     '设置', '版本信息'
   ]
-  buttonsArray2:string[]=[
-    '关于', '开源仓库', '问题反馈'
+  buttonsArray2: string[] = [
+    '鸣谢', '开源仓库', '问题反馈'
   ]
-
   zlibLoginDialogController: CustomDialogController = new CustomDialogController({
     builder: CustomContentDialog({
       primaryTitle: 'zlib登录',
@@ -248,33 +252,94 @@ export struct personal {
           .size({ width: '100%', height: '100%' })
         }.size({ width: '100%', height: 120 })
 
-        ListItemGroup(){
-          ForEach(this.buttonsArray,(item:string)=>{
+        ListItemGroup() {
+          ForEach(this.buttonsArray, (item: string, index:number) => {
             ComposeListItem({
-              contentItem:{ primaryText:item },
-              operateItem:{icon:{value:$r('sys.media.ohos_ic_public_arrow_right')}}
+              contentItem: { primaryText: item },
+              operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') } }
+            }).onClick(()=>{
+              if (index==1) {
+                this.showUpdateInfo = true;
+              }
+            })
+          })
+        }.divider({
+          strokeWidth: 0.5,
+          color: $r('sys.color.comp_divider'),
+          startMargin: 18,
+          endMargin: 18
+        })
+        .bindSheet($$this.showUpdateInfo, UpdateInfoBuilder(), {
+          preferType: SheetType.CENTER,
+          title: { title: '版本更新信息' },
+          height: SheetSize.LARGE,
+        })
+        .borderRadius(20)
+        .backgroundColor($r('sys.color.comp_background_list_card'))
+        .padding({ bottom: 6, top: 6 })
+
+        ListItemGroup() {
+          ForEach(this.buttonsArray2, (item: string, index: number) => {
+            ComposeListItem({
+              contentItem: { primaryText: item },
+              operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') } }
+            }).onClick(() => {
+              if (index == 0) {
+                this.showTanks = true;
+                return
+              }
+              let url: string = ''
+              if (index == 1) {
+                url = 'https://atomgit.com/liluolinder/selineRead'
+              } else if (index == 2) {
+                url = 'https://atomgit.com/liluolinder/selineRead/issues'
+              }
+
+              AlertDialog.show({
+                title: '提醒',
+                message: '即将打开网站',
+                autoCancel: true,
+                primaryButton: {
+                  value: '取消',
+                  action: () => {
+                  }
+                },
+                secondaryButton: {
+                  enabled: true,
+                  defaultFocus: true,
+                  style: DialogButtonStyle.HIGHLIGHT,
+                  value: '确定',
+                  action: () => {
+                    let want: Want = {
+                      action: 'ohos.want.action.viewData',
+                      entities: ['entity.system.browsable'],
+                      uri: url,
+                    };
+                    (globlContext as common.UIAbilityContext).startAbility(want)
+                  }
+                }
+              })
             })
           })
         }
+        .bindSheet($$this.showTanks, TanksForBuilder(), {
+          preferType: SheetType.CENTER,
+          title: { title: '鸣谢' },
+          height: SheetSize.LARGE,
+        })
+        .divider({
+          strokeWidth: 0.5,
+          color: $r('sys.color.comp_divider'),
+          startMargin: 18,
+          endMargin: 18
+        })
         .borderRadius(20)
         .backgroundColor($r('sys.color.comp_background_list_card'))
-        .padding({bottom:6,top:6})
-
-        ListItemGroup(){
-          ForEach(this.buttonsArray2,(item:string)=>{
-            ComposeListItem({
-              contentItem:{ primaryText:item },
-              operateItem:{icon:{value:$r('sys.media.ohos_ic_public_arrow_right')}}
-            })
-          })
-        }
-        .borderRadius(20)
-        .backgroundColor($r('sys.color.comp_background_list_card'))
-        .padding({bottom:6,top:6})
-
+        .padding({ bottom: 6, top: 6 })
 
       }
       .lanes(__System__.currentBreakpoint === 'sm' ? 1 : 2, 10)
+      .scrollBar(BarState.Off)
 
     }
     .size({ height: '100%', width: '100%' })
