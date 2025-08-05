@@ -32,7 +32,9 @@ export function UpdateInfoBuilder()
 export struct UpdateInfo{
 
   @Local historyArray:I_UpdateInfo[]=[
-    {version:'beta 0.0.1',date:'2025/2/26',addNewFunArray:["初步完善功能"]},
+    {version:'beta 0.0.3',date:'2025/8/6',addNewFunArray:['版本信息页面','鸣谢页面','打开仓库按钮','打开issues按钮']},
+    {version:'beta 0.0.2',date:'2025/8/5',fixBugsArray:["重复入栈",'历史记录排序问题','深色模式bug','书籍图片异常比例','tabs伪卡顿','loding图标位置']},
+    {version:'beta 0.0.1',date:'2025/7/28',addNewFunArray:["zlib推荐页面获取",'zlib下载','个人信息界面','下载通知','下载历史']},
   ]
 
   @Local currentIndex:number=-1
