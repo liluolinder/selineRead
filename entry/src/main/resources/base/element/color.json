@@ -5,6 +5,10 @@
       "value": "#FFFFFF"
     },
     {
+      "name": "start_window_background_blur",
+      "value": "#90FFFFFF"
+    },
+    {
       "name": "linder_blue",
       "value": "#6AA7E2"
     },

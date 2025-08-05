@@ -35,6 +35,11 @@ export interface I_BookInfo{
   href?:string
 }
 
+export function getEmptyBookInfo(): I_BookInfo{
+  return {name: '', description: '', author: [], publisher: {} as publisherInfo,
+    image: '', isbn: '', numberOfPages: 0, datePublished: 0, inLanguage: {} as inLanguageInfo, review: {} as reviewInfo}
+}
+
 export interface I_searchBook{
   id:string
   isbn:string

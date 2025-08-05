@@ -19,7 +19,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 
 import { FunctionalButton, functionalButtonComponentManager } from '@kit.ScenarioFusionKit';
-import { __System__, __User__ } from '../../datas/classes/ShareDatas';
+import { minHeight, minWidth, __System__, __User__ } from '../../datas/classes/ShareDatas';
 import { linderPixelMap } from '../../datas/classes/LPixelMap';
 import { ComposeListItem, CustomContentDialog } from '@kit.ArkUI';
 import { zlibClient } from '../../datas/classes/zlib';
@@ -107,7 +107,10 @@ export struct personal {
 
   build() {
     Column() {
-      List({ space: 15 }) {
+      List({ space: 10 }) {
+        ListItem().height(Math.max(__System__.topRectHeight, 16))
+        if(__System__.windowWidth > minWidth) ListItem().height(Math.max(__System__.topRectHeight, 16))
+
         ListItem() {
           Row() {
             FunctionalButton({
@@ -337,12 +340,16 @@ export struct personal {
         .backgroundColor($r('sys.color.comp_background_list_card'))
         .padding({ bottom: 6, top: 6 })
 
+        ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 60), 16))
+        if(__System__.windowWidth > minWidth) ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 60), 16))
+
       }
-      .lanes(__System__.currentBreakpoint === 'sm' ? 1 : 2, 10)
+      .lanes(__System__.windowWidth > minWidth ? 2 : 1, 10)
       .scrollBar(BarState.Off)
+
 
     }
     .size({ height: '100%', width: '100%' })
-    .padding({ left: 16, right: 16, top: 5 })
+    .padding({ left: 16, right: 16 })
   }
 }

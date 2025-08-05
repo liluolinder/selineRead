@@ -30,7 +30,12 @@ export let  __Notification__:Notification = new Notification()
 export class SysShareData{
   @Trace currentBreakpoint:string=''
   @Trace bottomRectHeight:number=0
-  @Trace topRectHeight:number=0
+  @Trace leftRectHeight:number=0
+  @Trace rightRectHeight: number = 0
+  @Trace topRectHeight:number = 0
+  @Trace windowWidth: number = 0
+  @Trace windowHeight: number =0
+  @Trace pcMode: boolean = false
 }
 export let  __System__:SysShareData = new SysShareData()
 
@@ -59,3 +64,6 @@ export class UIShareData{
   indexPageStack: NavPathStack = new NavPathStack()
 }
 export let  __UI__:UIShareData = new UIShareData()
+
+export const minHeight = 600
+export const minWidth = 800

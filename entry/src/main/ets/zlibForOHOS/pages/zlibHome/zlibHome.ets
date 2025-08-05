@@ -20,7 +20,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
 import { curves, LengthMetrics, promptAction } from "@kit.ArkUI"
-import { __System__, __UI__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { I_searchBook } from "../../datas/interfaces/I_BookInfo"
 import { zlibIndexShowMod } from "../../datas/enums/zlibIndexShowMod"
@@ -35,16 +35,10 @@ export struct zlibHome {
   @Local searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend
   @Local listOrWaterFlow: zlibIndexShowMod = zlibIndexShowMod.WaterFlow
   @Local searchBookName: string = ''
+  @Local waterFlowColumnNumber : number = 0
+  @Local waterFlowEmptyItem: number[] = []
 
-  getWaterFlowColumnNumber(): number {
-    if (__System__.currentBreakpoint == 'sm') {
-      return 2
-    } else if (__System__.currentBreakpoint == 'md') {
-      return 4
-    } else {
-      return 6
-    }
-  }
+  @Local isOpening: boolean = false
 
   @Builder
   waterFlow_recommend() {
@@ -52,7 +46,7 @@ export struct zlibHome {
       FlowItem() {
         Column({ space: 10 }) {
           Image(item.cover)
-            .size({ width: '90%' })
+            .size({ width: '100%' })
             .shadow({
               radius: 25,
               color: Color.Gray,
@@ -60,23 +54,30 @@ export struct zlibHome {
               offsetY: 10
             })
 
-          Text(item.title)
-            .fontSize(15)
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Column({space: 2}){
+            Text(item.title)
+              .fontSize(16)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.MARQUEE }).fontWeight(FontWeight.Medium)
+            Text(item.author)
+              .fontSize(12)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
+          }.alignItems(HorizontalAlign.Start)
 
-        }.padding(5)
 
-        /*.size({ width: '100%', height: '100%' })*/
+        }.alignItems(HorizontalAlign.Start)
       }
-      .padding(10)
+      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+      .padding(15)
       .width('100%')
       .backgroundColor($r('sys.color.comp_background_list_card'))
-      .borderRadius(20)
+      .borderRadius(15)
       .transition(TransitionEffect.OPACITY
-        .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果
-        .animation({ duration: 500, curve: Curve.Friction }))
+        .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+        .animation({ curve: curves.springMotion(0.5, 0.7) }))
       .onClick(async () => {
+        this.isOpening = true
         if (__UI__.isHaveOpenBook) {
           promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
         }else {
@@ -87,6 +88,7 @@ export struct zlibHome {
               res.href = item.url
               __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
+            this.isOpening = false
           })
         }
       })
@@ -107,24 +109,23 @@ export struct zlibHome {
               offsetY: 10
             })
 
-          Column({ space: 5 }) {
+          Column({ space: 2 }) {
             Text(item.title)
-              .size({ width: '100%' })
               .fontWeight(FontWeight.Medium)
               .fontSize(20)
-              .textAlign(TextAlign.Start)
               .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .textOverflow({ overflow: TextOverflow.MARQUEE })
             Text(item.author)
-              .size({ width: '100%' })
-              .textAlign(TextAlign.Start)
               .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-          }.layoutWeight(1)
+              .fontSize(14)
+              .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.8)
+          }.layoutWeight(1).alignItems(HorizontalAlign.Start)
         }.size({ width: '100%', height: '100%' })
         .padding(15)
       }
+      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
       .onClick(async () => {
+        this.isOpening = true
         if (__UI__.isHaveOpenBook) {
           promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
         }else {
@@ -135,12 +136,13 @@ export struct zlibHome {
               res.href = item.url
               __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
+            this.isOpening = false
           })
         }
       })
       .transition(TransitionEffect.OPACITY
-        .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果
-        .animation({ duration: 500, curve: Curve.Friction }))
+        .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+        .animation({ curve: curves.springMotion(0.5, 0.7) }))
       .backgroundColor($r('sys.color.comp_background_list_card'))
       .borderRadius(20)
       .size({ width: '100%', height: 120 })
@@ -153,7 +155,7 @@ export struct zlibHome {
       FlowItem() {
         Column({ space: 10 }) {
           Image(item.image)
-            .size({ width: '90%' })
+            .size({ width: '100%' })
             .shadow({
               radius: 25,
               color: Color.Gray,
@@ -161,27 +163,32 @@ export struct zlibHome {
               offsetY: 10
             })
 
-          Text(item.title)
-            .fontWeight(FontWeight.Medium)
-            .fontSize(18)
-            .maxLines(1)
+          Column({space: 2}){
+            Text(item.title)
+              .fontSize(16)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.MARQUEE }).fontWeight(FontWeight.Medium)
+            Text(item.writer)
+              .fontSize(12)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
+          }.alignItems(HorizontalAlign.Start)
 
-        }.padding(10)
-        .margin({ bottom: 10 })
 
-        /*.size({ width: '100%', height: '100%' })*/
+        }.alignItems(HorizontalAlign.Start)
       }
-      .width('100%')
+      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+      .padding(15)
       .backgroundColor($r('sys.color.comp_background_list_card'))
-      .borderRadius(20)
+      .borderRadius(15)
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
-        .animation({ duration: 500, curve: Curve.Friction }))
+        .animation({ curve: curves.springMotion(0.5, 0.7) }))
       .onClick(async () => {
-
         if (__UI__.isHaveOpenBook) {
           promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
         }else {
+          this.isOpening = true
           await zlibClient.getBookInfo(item.href).then((res) => {
             if (res.name!='' && res.name!=undefined ) {
               res.bookID = Number(item.id)
@@ -189,9 +196,9 @@ export struct zlibHome {
               res.href = item.href
               __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
+            this.isOpening = false
           })
         }
-
       })
     }, (item: string) => item)
   }
@@ -210,27 +217,26 @@ export struct zlibHome {
               offsetY: 10
             })
 
-          Column({ space: 5 }) {
+          Column({ space: 2 }) {
             Text(item.title)
-              .size({ width: '100%' })
               .fontWeight(FontWeight.Medium)
               .fontSize(20)
-              .textAlign(TextAlign.Start)
               .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .textOverflow({ overflow: TextOverflow.MARQUEE })
             Text(item.writer)
-              .size({ width: '100%' })
-              .textAlign(TextAlign.Start)
               .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-          }.layoutWeight(1)
+              .fontSize(14)
+              .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.8)
+          }.layoutWeight(1).alignItems(HorizontalAlign.Start)
         }.size({ width: '100%', height: '100%' })
         .padding(15)
       }
+      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
       .onClick(async () => {
         if (__UI__.isHaveOpenBook) {
           promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
         }else {
+          this.isOpening = true
           await zlibClient.getBookInfo(item.href).then((res) => {
             if (res.name!='' && res.name!=undefined ) {
               res.bookID = Number(item.id)
@@ -238,12 +244,13 @@ export struct zlibHome {
               res.href = item.href
               __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
+            this.isOpening = false
           })
         }
       })
       .transition(TransitionEffect.OPACITY
-        .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))// 对每个方格的转场添加delay，实现组件的渐次出现消失效果
-        .animation({ duration: 500, curve: Curve.Friction }))
+        .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+        .animation({ curve: curves.springMotion(0.5, 0.7) }))
       .backgroundColor($r('sys.color.comp_background_list_card'))
       .borderRadius(20)
       .size({ width: '100%', height: 120 })
@@ -251,75 +258,73 @@ export struct zlibHome {
   }
 
   build() {
-    Column({ space: 5 }) {
+    Stack({alignContent: Alignment.TopEnd}) {
+      if(this.isOpening){
+        Stack(){
+          Column({space: 10}){
+            LoadingProgress().size({width: 100, height: 100})
+            Text('正在载入').fontSize(20).fontWeight(FontWeight.Medium)
+          }.borderRadius(20).padding(20).backgroundColor($r('app.color.start_window_background_blur')).backdropBlur(100)
+        }.size({width: '100%', height: '100%'}).backgroundColor($r('sys.color.comp_background_tertiary')).transition(TransitionEffect.OPACITY.animation({curve:Curve.Ease, duration: 300})).zIndex(2)
+      }
       //顶部搜索栏
-      GridRow({ columns: {xs:4, sm: 4, md: 12, lg: 12 } }) {
-        GridCol({
-          span: {xs: this.isInSearchMode ? 0 : 2, sm: this.isInSearchMode ? 0 : 2, md: this.isInSearchMode ? 0 : 7, lg: this.isInSearchMode ? 0 : 7 }
-        }) {
-          Row() {
-            Button({ type: ButtonType.Circle }) {
-              SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
-              $r('sys.symbol.satellite_map'))
-                .fontSize(24)
-                .fontColor([$r('sys.color.font_secondary')])
+      Row({space: 10}){
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
+          $r('sys.symbol.satellite_map'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('sys.color.comp_background_tertiary')).backdropBlur(100)
+        .onClick(() => {
+          XAnimation.runWithAnimation(() => {
+            this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
+            zlibIndexShowMod.WaterFlow
+          })
+        })
+        .visibility(this.isInSearchMode? Visibility.None: Visibility.Visible)
+
+        Search()
+          .backgroundColor($r('sys.color.comp_background_tertiary')).backdropBlur(100)
+          .focusable(this.isInSearchMode)
+          .enableKeyboardOnFocus(this.isInSearchMode)
+          .onEditChange((isInFocus) => {
+            XAnimation.runWithAnimation(() => {
+              this.isInSearchMode = isInFocus
+            })
+          })
+          .onSubmit((value: string) => {
+            if (value == '' || value == undefined) {
+              XAnimation.runWithAnimation(() => {
+                this.searchOrRecommend = zlibIndexShowMod.Recommend
+              })
+            } else {
+              this.searchIndex = 1
+              this.searchBookName = value
+              zlibClient.searchBooks(value, 1, true)
+              XAnimation.runWithAnimation(() => {
+                this.searchOrRecommend = zlibIndexShowMod.Search
+              })
             }
-            .margin({ right: 5, top: 5 })
-            .width(40)
-            .height(40)
-            .backgroundColor($r('sys.color.comp_background_tertiary'))
-            .onClick(() => {
-              XAnimation.runWithAnimation(() => {
-                this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
-                zlibIndexShowMod.WaterFlow
-              })
-            })
 
-          }.justifyContent(FlexAlign.End)
-          .size({ width: '100%', height: '100%' })
-          .visibility(this.isInSearchMode ? Visibility.Hidden : Visibility.Visible)
-        }.size({ width: '100%', height: '100%' })
-
-        GridCol({
-          span: {xs: this.isInSearchMode ? 0 : 2, sm: this.isInSearchMode ? 4 : 2, md: this.isInSearchMode ? 12 : 5, lg: this.isInSearchMode ? 12 : 5 }
-        }) {
-          Search()
-            .focusable(this.isInSearchMode)
-            .enableKeyboardOnFocus(this.isInSearchMode)
-            .onEditChange((isInFocus) => {
+          })
+          .onChange((value: string) => {
+            if (value == '' || value == undefined) {
               XAnimation.runWithAnimation(() => {
-                this.isInSearchMode = isInFocus
+                this.searchOrRecommend = zlibIndexShowMod.Recommend
               })
+            }
+          })
+          .onTouch(() => {
+            XAnimation.runWithAnimation(() => {
+              this.isInSearchMode = true
             })
-            .onSubmit((value: string) => {
-              if (value == '' || value == undefined) {
-                XAnimation.runWithAnimation(() => {
-                  this.searchOrRecommend = zlibIndexShowMod.Recommend
-                })
-              } else {
-                this.searchIndex = 1
-                this.searchBookName = value
-                zlibClient.searchBooks(value, 1, true)
-                XAnimation.runWithAnimation(() => {
-                  this.searchOrRecommend = zlibIndexShowMod.Search
-                })
-              }
+          })
+          .width(this.isInSearchMode? '100%': '50%')
+      }.zIndex(1).padding({ left: 16, right: 16, top: __System__.topRectHeight })
 
-            })
-            .onChange((value: string) => {
-              if (value == '' || value == undefined) {
-                XAnimation.runWithAnimation(() => {
-                  this.searchOrRecommend = zlibIndexShowMod.Recommend
-                })
-              }
-            })
-            .onTouch(() => {
-              XAnimation.runWithAnimation(() => {
-                this.isInSearchMode = true
-              })
-            })
-        }.size({ width: '100%', height: '100%' })
-      }.height(50)
 
       if ((this.searchOrRecommend == zlibIndexShowMod.Recommend &&
         zlibClient.recommendBooksArray.dataArray.length == 0) ||
@@ -333,21 +338,33 @@ export struct zlibHome {
         Stack() {
           if (this.listOrWaterFlow == zlibIndexShowMod.WaterFlow) {
             WaterFlow() {
+              ForEach(this.waterFlowEmptyItem, (item: number)=>{FlowItem().height(__System__.topRectHeight + 60)})
+
               if (this.searchOrRecommend == zlibIndexShowMod.Recommend) {
                 this.waterFlow_recommend()
               } else {
                 this.waterFlow_search()
               }
+
+              ForEach(this.waterFlowEmptyItem, (item: number)=>{FlowItem().height(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 10: 70))})
             }
-            .columnsTemplate(`repeat(${this.getWaterFlowColumnNumber()},1fr)`)
+            .onAreaChange((_, newValue)=>{
+              XAnimation.runWithAnimation(()=>{
+                this.waterFlowColumnNumber = Math.max(Math.floor(new Number(newValue.width).valueOf() / 200), 2)
+                let itemList: number[] = []
+                for (let index = 0; index < this.waterFlowColumnNumber; index++) {
+                  itemList.push(index)
+                }
+                this.waterFlowEmptyItem = itemList
+              })
+            })
+            .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
             .alignSelf(ItemAlign.Center)
             .align(Alignment.Center)
-            .padding({ bottom: 55 })
+            .layoutWeight(1)
             .edgeEffect(EdgeEffect.Spring)
-            .fadingEdge(true, { fadingEdgeLength: LengthMetrics.vp(80) })
             .columnsGap(10)
             .rowsGap(10)
-            .height('100%')
             .onReachEnd(() => {
               if (this.searchOrRecommend != zlibIndexShowMod.Recommend) {
                 zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
@@ -358,14 +375,16 @@ export struct zlibHome {
           } else {
 
             List({ space: 10 }) {
+              ListItem().height(__System__.topRectHeight + 60)
               if (this.searchOrRecommend == zlibIndexShowMod.Recommend) {
                 this.list_recommend()
               } else {
                 this.list_search()
               }
+              ListItem().height(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 10: 70))
             }
+            .scrollBar(BarState.Off)
             .size({ width: '100%', height: '100%' })
-            .padding({ bottom: 55 })
             .onReachEnd(() => {
               if (this.searchOrRecommend != zlibIndexShowMod.Recommend) {
                 zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
@@ -374,25 +393,22 @@ export struct zlibHome {
               }
             })
             .edgeEffect(EdgeEffect.Spring)
-            .lanes(__System__.currentBreakpoint === 'lg' ? 3 : (__System__.currentBreakpoint == 'md' ? 2 : 1), 10)
 
           }
 
           if (this.isInSearchMode) {
             Column()
               .size({ width: '100%', height: '100%' })
-              .blur(40)
               .onClick(() => {
                 XAnimation.runWithAnimation(() => {
                   this.isInSearchMode = false
                 })
               })
           }
-        }
+        }.padding({ left: 20, right: 20 }).blur(this.isInSearchMode? 50: 0)
       }
 
     }
     .size({ height: '100%', width: '100%' })
-    .padding({ left: 16, right: 16 })
   }
 }

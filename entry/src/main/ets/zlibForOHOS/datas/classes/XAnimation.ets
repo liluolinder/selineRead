@@ -1,3 +1,4 @@
+import curves from '@ohos.curves'
 import Curves from '@ohos.curves'
 
 export class XAnimation {
@@ -58,9 +59,9 @@ export class XAnimation {
 
   public static runWithAnimation(
     fn: Function,
-    duration: number = 200,
-    curve: Curve = Curve.Smooth): void {
-    animateTo({ duration: duration, curve: curve }, () => {
+    s1: number = 0.4,
+    s2: number = 0.7): void {
+    animateTo({ curve: curves.springMotion(s1, s2) }, () => {
       fn();
     });
   }

@@ -19,7 +19,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { globlContext, globlUIContext } from '../../entryability/EntryAbility';
 import { linderPixelMap } from '../datas/classes/LPixelMap';
-import { __DataBase__, __System__, __UI__, __User__ } from '../datas/classes/ShareDatas';
+import { minWidth, __DataBase__, __System__, __UI__, __User__ } from '../datas/classes/ShareDatas';
 import { zlibClient } from '../datas/classes/zlib';
 import NeoPreferencesUtil from  '../datas/classes/XPreferencesUtil'
 import { personal } from './personal/personal';
@@ -33,6 +33,8 @@ import { zlibDownloadHistory } from './zlibDownloadHistory/zlibDownloadHistory';
 @ComponentV2
 struct Index {
 
+  private swiperController: SwiperController = new SwiperController()
+  @Local currentPageIndex: number = 0
   private tabsArray:string[]=[
     'Zlibrary',
     '书单',
@@ -89,49 +91,64 @@ struct Index {
 
       Navigation(__UI__.indexPageStack) {
 
-        Tabs(){
-          ForEach(this.tabsArray,(item:string,index:number)=>{
-            TabContent()
-            {
-              if (index==0) {
-                zlibHome()
-              }
-              else if (index==2)
-              {
-                zlibDownloadHistory()
-              }
-              else if (index==3)
-              {
-                personal()
-              }
-            }.tabBar({text:item,icon:this.tabIconChange(index)})
+        Stack({alignContent: Alignment.BottomStart}){
+          Swiper(this.swiperController){
+            zlibHome()
+            Stack(){
+              Text('正在施工').fontSize(30).fontWeight(FontWeight.Medium)
+            }
+            zlibDownloadHistory()
+            personal()
+          }.loop(false).indicator(false).size({width: '100%', height: '100%'}).padding({left: __System__.windowWidth > minWidth? 65 + __System__.leftRectHeight: 0})
+          .onChange((index)=>{
+            this.currentPageIndex = index
           })
-        }
-        .scrollable(false)
-        .barWidth(__System__.currentBreakpoint === 'lg' ? 96 : '100%')
-        .barHeight(__System__.currentBreakpoint === 'lg' ? '50%' :  76)
-        .vertical(__System__.currentBreakpoint === 'lg')
-        .barPosition(__System__.currentBreakpoint === 'lg' ? BarPosition.Start : BarPosition.End)
-        .size({width:'100%', height:'100%'})
-        .animationDuration(1)
-        .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
-          if (index==2)
-          {
-            zlibClient.localDownloadHistoryArray.clearData()
-          }
-          if (targetIndex == 3 && __User__.isLoginZlib) {
-            zlibClient.getUserDownloadLimit()
-          }else if (targetIndex == 2) {
-            zlibClient.getLocalDownloadHistory()
-          }
-        })
 
-      }.padding({top:globlUIContext.px2vp(__System__.topRectHeight)})
+          Stack({alignContent: Alignment.TopEnd}){
+            Tabs({index: this.currentPageIndex}){
+              ForEach(this.tabsArray,(item:string,index:number)=>{
+                TabContent().tabBar({text:item,icon:this.tabIconChange(index)})
+              })
+            }.scrollable(false).barHeight(__System__.windowWidth > minWidth? '100%': 65)
+            .onChange((index)=>{
+              this.swiperController.changeIndex(index, true)
+              this.currentPageIndex = index
+            })
+            .barWidth(__System__.windowWidth > minWidth? 65: '100%')
+            .height(__System__.windowWidth > minWidth? '100%': 65)
+            .width(__System__.windowWidth > minWidth? 65: '100%')
+            .vertical(__System__.windowWidth > minWidth)
+            .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
+              if (index==2)
+              {
+                zlibClient.localDownloadHistoryArray.clearData()
+              }
+              if (targetIndex == 3 && __User__.isLoginZlib) {
+                zlibClient.getUserDownloadLimit()
+              }else if (targetIndex == 2) {
+                zlibClient.getLocalDownloadHistory()
+              }
+            })
+          }
+          .height(__System__.windowWidth > minWidth? '100%': 65 + __System__.bottomRectHeight)
+          .width(__System__.windowWidth > minWidth? 65 + __System__.leftRectHeight: '100%')
+          .backgroundColor(__System__.windowWidth > minWidth? Color.Transparent: $r('app.color.start_window_background_blur'))
+          .backdropBlur(__System__.windowWidth > minWidth? null: 100)
+
+
+
+        }
+
+
+
+
+
+
+      }
       .hideTitleBar(true)
       .hideToolBar(true)
-      .mode(NavigationMode.Stack)
       .size({width:'100%', height:'100%'})
       .backgroundColor($r('sys.color.comp_background_gray'))
-
+      .navBarWidthRange([600, 1200])
   }
 }

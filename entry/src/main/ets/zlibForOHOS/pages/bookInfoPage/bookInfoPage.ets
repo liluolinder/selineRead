@@ -23,8 +23,10 @@ import { zlibClient } from "../../datas/classes/zlib"
 import { I_DownloadInfo } from "../../datas/interfaces/I_DownloadInfo"
 import common from "@ohos.app.ability.common"
 import { DividerTmp } from "../../datas/classes/DividerTmp"
-import { __System__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __System__ } from "../../datas/classes/ShareDatas"
 import { globlUIContext } from "../../../entryability/EntryAbility"
+import { LengthUnit } from "@kit.ArkUI"
+import { XAnimation } from "../../datas/classes/XAnimation"
 
 @Builder
 export function bookInfoPageBuilder() {
@@ -38,6 +40,7 @@ export struct bookInfoPage {
   @Local isShowDownloadMenu: boolean = false
   pageInfos: NavPathStack = new NavPathStack()
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
+  @Local pageWidth: number = __System__.windowWidth
 
   @Builder
   DownloadMenu() {
@@ -54,33 +57,10 @@ export struct bookInfoPage {
 
   build() {
     NavDestination() {
-      Column() {
         List({ space: 10 }) {
 
           ListItem() {
-            Row({ space: 10 }) {
-              Column({ space: 10 }) {
-                Text(this.bookInfo?.name)
-                  .fontWeight(FontWeight.Bold)
-                  .fontSize(24)
-                  .size({ width: '100%' })
-                  .maxLines(3)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-                Text() {
-                  ForEach(this.bookInfo?.author, (item: authorInfo) => {
-                    Span(item.name)
-                    Span(' ')
-                  })
-                }
-                .maxLines(3)
-                .fontWeight(FontWeight.Normal)
-                .fontSize(18)
-                .textAlign(TextAlign.Start)
-                .size({ width: '100%' })
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-              }.layoutWeight(1)
-
+            Row({space: 20}) {
               Image(this.bookInfo?.image)
                 .size({ height: 160, width:116})
                 .shadow({
@@ -90,38 +70,54 @@ export struct bookInfoPage {
                   offsetY: 10
                 })
 
-            }.padding(16)
-            .justifyContent(FlexAlign.SpaceBetween)
+              Column({ space: 5 }) {
+                Text(this.bookInfo?.name)
+                  .fontWeight(FontWeight.Bold)
+                  .fontSize(24)
+                  .maxLines(3)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                Text() {
+                  ForEach(this.bookInfo?.author, (item: authorInfo) => {
+                    Span(item.name)
+                    Span(' ')
+                  })
+                }
+                .maxLines(3)
+                .fontSize(18)
+                .opacity(0.6)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+              }.alignItems(HorizontalAlign.Start).layoutWeight(1)
+
+            }.padding(16).justifyContent(FlexAlign.SpaceBetween).width('100%')
 
           }.backgroundColor($r('sys.color.comp_background_list_card'))
-
           .size({ width: '100%', height: 200 })
           .borderRadius(20)
 
           ListItem() {
-            Scroll() {
-              Row() {
-                Text(this.bookInfo?.description == '' ? '暂无简介' :
-                this.bookInfo?.description
-                  .replaceAll("&lt;br&gt;", "")
-                  .replaceAll("&lt;p&gt;", "")
-                  .replaceAll("&lt;/p&gt;", "")
-                )
+            Stack({alignContent: Alignment.Top}){
+              Scroll() {
+                Row() {
+                  Text(this.bookInfo?.description == '' ? '暂无简介' :
+                  this.bookInfo?.description
+                    .replaceAll("&lt;br&gt;", "")
+                    .replaceAll("&lt;p&gt;", "")
+                    .replaceAll("&lt;/p&gt;", "")
+                  )
+                    .fontWeight(FontWeight.Normal)
+                    .fontSize(16)
+                    .size({ width: '100%' })
+                }.size({ width: '100%' })
 
-                  .fontWeight(FontWeight.Normal)
-                  .fontSize(16)
-                  .size({ width: '100%' })
-              }.size({ width: '100%' })
-
-            }.size({ width: '100%', height: '100%' })
-            .edgeEffect(EdgeEffect.Spring)
-            .scrollBar(BarState.Off)
-            .fadingEdge(true)
+              }
+              .edgeEffect(EdgeEffect.Spring)
+              .scrollBar(BarState.Off)
+              .fadingEdge(true)
+            }.constraintSize({maxHeight: 200, minHeight: __System__.windowWidth > minWidth? 200: 0}).padding(16)
           }
           .borderRadius(20)
-          .padding(16)
           .backgroundColor($r('sys.color.comp_background_list_card'))
-          .size({ height: 200, width: '100%' })
+          .width('100%')
 
           ListItemGroup() {
 
@@ -184,60 +180,60 @@ export struct bookInfoPage {
           .size({ height: '48', width: '100%' })
           .divider(this.egDivider)
 
-          ListItem() {
-            Row() {
-              Column() {
-                Button(this.bookInfo?.firstDownloadInfo?.format + '   ' + this.bookInfo?.firstDownloadInfo?.size)
-                  .size({ height: '100%', width: '100%' })
-                  .onClick(() => {
-                    zlibClient.getTrueDownloadBookUrl(this.getUIContext().getHostContext() as common.UIAbilityContext,
-                      this.bookInfo?.firstDownloadUrl!, this.bookInfo!)
-                  })
-              }.size({ height: '100%', width: '50%' })
-              .padding({ right: 8 })
 
-              Column() {
-                Button('更多下载选项')
-                  .size({ height: '100%', width: '100%' })
-                  .bindMenu(this.isShowDownloadMenu, this.DownloadMenu, {
-                    onDisappear: () => {
-                      this.isShowDownloadMenu = false
-                    }
-                  })
-                  .onClick(async () => {
-                    await zlibClient.getBookDownloadsInfo(this.bookInfo?.bookID!).then((res) => {
-                      if (res == undefined || res.length == 0) {
-                        this.downloadInfoArray = [
-                          {
-                            id: 0,
-                            extension: "暂无其他下载方式",
-                            filesizeString: "",
-                            href: ""
-                          }
-                        ]
-                      } else {
-                        this.downloadInfoArray = res
-                      }
-                      this.isShowDownloadMenu = true
-                    })
-                  })
-              }.size({ height: '100%', width: '50%' })
-              .padding({ left: 8 })
-            }.size({ height: '100%', width: '100%' })
+          ListItem(){
+            Button({type: ButtonType.Normal, stateEffect: true}){
+              Text(this.bookInfo?.firstDownloadInfo?.format + '   ' + this.bookInfo?.firstDownloadInfo?.size)
+            }.height(55).borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card')).width('100%')
+            .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+            .onClick(() => {
+              zlibClient.getTrueDownloadBookUrl(this.getUIContext().getHostContext() as common.UIAbilityContext,
+                this.bookInfo?.firstDownloadUrl!, this.bookInfo!)
+            })
           }
-          .size({ height: 48, width: '100%' })
-          .margin({
-            bottom:globlUIContext.px2vp(__System__.bottomRectHeight)
-          })
 
-        }.width('100%')
+          ListItem(){
+            Button({type: ButtonType.Normal, stateEffect: true}){
+              Text('更多下载选项')
+            }.height(55).borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card')).width('100%')
+            .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+            .bindMenu(this.isShowDownloadMenu, this.DownloadMenu, {
+              onDisappear: () => {
+                this.isShowDownloadMenu = false
+              }
+            })
+            .onClick(async () => {
+              await zlibClient.getBookDownloadsInfo(this.bookInfo?.bookID!).then((res) => {
+                if (res == undefined || res.length == 0) {
+                  this.downloadInfoArray = [
+                    {
+                      id: 0,
+                      extension: "暂无其他下载方式",
+                      filesizeString: "",
+                      href: ""
+                    }
+                  ]
+                } else {
+                  this.downloadInfoArray = res
+                }
+                this.isShowDownloadMenu = true
+              })
+            })
+          }
+
+          ListItem().height(Math.max(__System__.bottomRectHeight, 16))
+          if(this.pageWidth > minWidth) ListItem().height(Math.max(__System__.bottomRectHeight, 16))
+
+
+
+        }
         .height('100%')
         .scrollBar(BarState.Off)
-        .lanes(__System__.currentBreakpoint == 'sm' ? 1 : 2, 10)
+        .lanes(this.pageWidth > minWidth? 2: 1, 10)
+        .borderRadius({topLeft: 20, topRight: 20}).clip(true)
+        .margin({ left: Math.max(16, __System__.leftRectHeight), right: Math.max(16, __System__.rightRectHeight) })
+      .chainAnimation(true)
 
-
-      }.size({ width: '100%', height: '100%' })
-      .padding({ left: 16, right: 16 })
 
     }.size({ width: '100%', height: '100%' })
     .backgroundColor($r('sys.color.comp_background_gray'))
@@ -246,6 +242,12 @@ export struct bookInfoPage {
       this.pageInfos = context.pathStack
       this.bookInfo = context.pathInfo.param as I_BookInfo
 
+    })
+    .padding({top: __System__.topRectHeight})
+    .onAreaChange((_, newValue)=>{
+      XAnimation.runWithAnimation(()=>{
+        this.pageWidth = new Number(newValue.width).valueOf()
+      })
     })
   }
 }
