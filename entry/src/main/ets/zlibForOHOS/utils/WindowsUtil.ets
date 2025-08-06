@@ -70,7 +70,7 @@ class Windows {
     let nav = windowClass.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR)
     XAnimation.runWithAnimation(()=>{
       __System__.topRectHeight = Math.max(globlUIContext.px2vp(Math.max(cutOut.topRect.height * 1.5, system.topRect.height)), windowClass.getWindowDecorHeight())
-      __System__.bottomRectHeight = globlUIContext.px2vp(Math.max(nav.bottomRect.height, system.bottomRect.height, cutOut.bottomRect.height * 1.5))
+      __System__.bottomRectHeight = globlUIContext.px2vp(Math.max(nav.bottomRect.height * 0.8, system.bottomRect.height, cutOut.bottomRect.height * 1.5))
       __System__.leftRectHeight = globlUIContext.px2vp(Math.max(cutOut.leftRect.width * 1.5, system.leftRect.width))
       __System__.rightRectHeight = globlUIContext.px2vp(Math.max(cutOut.rightRect.width * 1.5, system.rightRect.width))
     })
