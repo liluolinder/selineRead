@@ -5,9 +5,7 @@ import WindowsUtil from '../utils/WindowsUtil'
 
 @ComponentV2
 export struct DecorBar {
-  @Local isHover: boolean = false
   @Local isTop: boolean = false
-  hideTimeout: number = 0
   isClicked: boolean = false
 
   click() {
@@ -115,30 +113,9 @@ export struct DecorBar {
         .size({ width: '100%', height: __System__.topRectHeight })
         .padding({ left: 20, right: 20 })
 
-      }.onHover((isHover) => {
-        if (isHover) {
-          clearTimeout(this.hideTimeout)
-          animateToImmediately({ duration: 300, curve: Curve.Ease }, () => this.isHover = true)
-        } else {
-          this.hideTimeout = setTimeout(() => {
-            animateToImmediately({ duration: 300, curve: Curve.Ease }, () => this.isHover = false)
-          }, 1000)
-        }
-      })
-      .onTouch((event) => {
-        clearTimeout(this.hideTimeout)
-        if (event.type == TouchType.Down) {
-          animateToImmediately({ duration: 300, curve: Curve.Ease }, () => this.isHover = true)
-        } else if (event.type == TouchType.Up || TouchType.Cancel) {
-          this.hideTimeout = setTimeout(() => {
-            animateToImmediately({ duration: 300, curve: Curve.Ease }, () => this.isHover = false)
-          }, 3000)
-        }
-      })
+      }
       .onClick(() => {
-        if (!this.isHover) {
-          this.click()
-        }
+        this.click()
       })
       .onMouse((event) => {
         if (event.button == MouseButton.Left && event.action == MouseAction.Press) {
