@@ -28,6 +28,7 @@ import { globlContext } from '../../../entryability/EntryAbility';
 import { common, Want } from '@kit.AbilityKit';
 import { UpdateInfo, UpdateInfoBuilder } from './pages/UpdateInfo';
 import { TanksForBuilder } from './pages/ThanksFor';
+import { XAnimation } from '../../datas/classes/XAnimation';
 
 @ComponentV2
 export struct personal {
@@ -37,6 +38,8 @@ export struct personal {
   @Local showDonationTips: boolean = false
   @Local showUpdateInfo: boolean = false
   @Local showTanks: boolean = false
+  @Local pageWidth: number = -1
+
   buttonsArray: string[] = [
     '设置', '版本信息'
   ]
@@ -326,11 +329,16 @@ export struct personal {
       }
       .contentStartOffset(Math.max(__System__.topRectHeight, 16))
       .contentEndOffset(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 80), 16))
-      .lanes(__System__.windowWidth > minWidth ? 2 : 1, 10)
+      .lanes(this.pageWidth > minWidth ? 2 : 1, 10)
       .scrollBar(BarState.Off)
 
     }
     .size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
+    .onAreaChange((_, newValue)=>{
+      XAnimation.runWithAnimation(()=>{
+        this.pageWidth = new Number(newValue.width).valueOf()
+      }, this.pageWidth > 0)
+    })
   }
 }
