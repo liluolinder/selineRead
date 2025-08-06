@@ -86,6 +86,7 @@ export struct zlibDownloadHistory {
 
       }.size({ width: '100%', height: '100%' })
       .padding({ bottom: 55 })
+      .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
       .contentStartOffset(Math.max(__System__.topRectHeight, 16))
       .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 70: 0)))
