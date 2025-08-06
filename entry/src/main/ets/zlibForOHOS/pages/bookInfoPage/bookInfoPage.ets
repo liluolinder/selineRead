@@ -40,7 +40,7 @@ export struct bookInfoPage {
   @Local isShowDownloadMenu: boolean = false
   pageInfos: NavPathStack = new NavPathStack()
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
-  @Local pageWidth: number = __System__.windowWidth
+  @Local pageWidth: number = -1
 
   @Builder
   DownloadMenu() {
@@ -113,7 +113,7 @@ export struct bookInfoPage {
               .edgeEffect(EdgeEffect.Spring)
               .scrollBar(BarState.Off)
               .fadingEdge(true)
-            }.constraintSize({maxHeight: 200, minHeight: __System__.windowWidth > minWidth? 200: 0}).padding(16)
+            }.constraintSize({maxHeight: 200, minHeight: this.pageWidth > minWidth? 200: 0}).padding(16)
           }
           .borderRadius(20)
           .backgroundColor($r('sys.color.comp_background_list_card'))
@@ -247,7 +247,7 @@ export struct bookInfoPage {
     .onAreaChange((_, newValue)=>{
       XAnimation.runWithAnimation(()=>{
         this.pageWidth = new Number(newValue.width).valueOf()
-      })
+      }, this.pageWidth > 0)
     })
   }
 }

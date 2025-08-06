@@ -35,7 +35,7 @@ export struct zlibHome {
   @Local searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend
   @Local listOrWaterFlow: zlibIndexShowMod = zlibIndexShowMod.WaterFlow
   @Local searchBookName: string = ''
-  @Local waterFlowColumnNumber : number = 0
+  @Local waterFlowColumnNumber : number = -1
   @Local waterFlowEmptyItem: number[] = []
 
   @Local isOpening: boolean = false
@@ -44,7 +44,7 @@ export struct zlibHome {
   waterFlow_recommend() {
     LazyForEach(zlibClient.recommendBooksArray, (item: I_RecommendBook, index: number) => {
       FlowItem() {
-        Column({ space: 10 }) {
+        Column({ space: 20 }) {
           Image(item.cover)
             .size({ width: '100%' })
             .shadow({
@@ -86,6 +86,7 @@ export struct zlibHome {
               res.bookID = item.id
               res.image = item.cover
               res.href = item.url
+              __UI__.indexPageStack.removeByName('bookInfoPage')
               __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
             this.isOpening = false
@@ -134,6 +135,7 @@ export struct zlibHome {
               res.bookID = item.id
               res.image = item.cover
               res.href = item.url
+              __UI__.indexPageStack.removeByName('bookInfoPage')
               __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
             this.isOpening = false
@@ -153,7 +155,7 @@ export struct zlibHome {
   waterFlow_search() {
     LazyForEach(zlibClient.searchBooksArray, (item: I_searchBook, index: number) => {
       FlowItem() {
-        Column({ space: 10 }) {
+        Column({ space: 20 }) {
           Image(item.image)
             .size({ width: '100%' })
             .shadow({
@@ -194,6 +196,7 @@ export struct zlibHome {
               res.bookID = Number(item.id)
               res.image = item.image
               res.href = item.href
+              __UI__.indexPageStack.removeByName('bookInfoPage')
               __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
             this.isOpening = false
@@ -242,6 +245,7 @@ export struct zlibHome {
               res.bookID = Number(item.id)
               res.image = item.image
               res.href = item.href
+              __UI__.indexPageStack.removeByName('bookInfoPage')
               __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
             }
             this.isOpening = false
@@ -350,13 +354,13 @@ export struct zlibHome {
             }
             .onAreaChange((_, newValue)=>{
               XAnimation.runWithAnimation(()=>{
-                this.waterFlowColumnNumber = Math.max(Math.floor(new Number(newValue.width).valueOf() / 200), 2)
+                this.waterFlowColumnNumber = Math.max(Math.floor(new Number(newValue.width).valueOf() / 180), 2)
                 let itemList: number[] = []
                 for (let index = 0; index < this.waterFlowColumnNumber; index++) {
                   itemList.push(index)
                 }
                 this.waterFlowEmptyItem = itemList
-              })
+              }, this.waterFlowColumnNumber > 0)
             })
             .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
             .alignSelf(ItemAlign.Center)

@@ -17,42 +17,54 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-import { __System__, __UI__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownloadTable"
 import { promptAction } from "@kit.ArkUI"
+import { dateGetTime } from "../../utils/ToolsUtil"
 
 @ComponentV2
 export struct zlibDownloadHistory {
+
+  @Local lanes: number = -1
+  @Local listEmptyItem: number[] = []
+
   build() {
     Column() {
       List({ space: 10 }) {
+
+        ForEach(this.listEmptyItem, ()=>{
+          ListItem().height(Math.max(__System__.topRectHeight, 16))
+        })
 
         LazyForEach(zlibClient.localDownloadHistoryArray, (item: I_ZlibHaveDownloadTable, index: number) => {
           ListItem() {
             Row({ space: 10 }) {
               Image(item.BookImage)
                 .size({ height: '100%', width: 82 })
-                .borderRadius(18)
-              Column({ space: 5 }) {
-                Text(item.BookName)
-                  .size({ width: '100%' })
-                  .fontWeight(FontWeight.Medium)
-                  .fontSize(20)
-                  .textAlign(TextAlign.Start)
+                .borderRadius(15)
+              Flex({justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Start, direction: FlexDirection.Column}){
+                Column({ space: 2 }) {
+                  Text(item.BookName)
+                    .fontWeight(FontWeight.Medium)
+                    .fontSize(22)
+                    .maxLines(1)
+                  Text(item.BookAuthor)
+                    .maxLines(1)
+                    .fontSize(16)
+                    .opacity(0.8)
+
+                }.alignItems(HorizontalAlign.Start)
+                Text(dateGetTime(item.BookDownLoadTime))
                   .maxLines(1)
-                Text(item.BookAuthor)
-                  .size({ width: '100%' })
-                  .textAlign(TextAlign.Start)
-                  .maxLines(1)
-                Text(new Date(item.BookDownLoadTime).toString())
-                  .size({ width: '100%' })
-                  .textAlign(TextAlign.Start)
-                  .maxLines(1)
-              }.layoutWeight(1)
+                  .fontSize(12)
+                  .opacity(0.6)
+              }.layoutWeight(1).padding({top: 5, bottom: 5})
+
             }.size({ width: '100%', height: '100%' })
             .padding(8)
+            .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
             .onClick(async () => {
               if (__UI__.isHaveOpenBook) {
                 promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
@@ -76,10 +88,23 @@ export struct zlibDownloadHistory {
           .size({ width: '100%', height: 120 })
         })
 
+        ForEach(this.listEmptyItem, ()=>{
+          ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 70: 0), 16))
+        })
+
       }.size({ width: '100%', height: '100%' })
       .padding({ bottom: 55 })
       .edgeEffect(EdgeEffect.Spring)
-      .lanes(__System__.currentBreakpoint === 'lg' ? 3 : (__System__.currentBreakpoint == 'md' ? 2 : 1), 10)
+      .onAreaChange((_, newValue)=>{
+        let lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 300), 1)
+        let listEmptyItem: number[] = []
+        for (let i = 0; i < lanes; i++) listEmptyItem.push(i)
+        XAnimation.runWithAnimation(()=>{
+          this.lanes = lanes
+          this.listEmptyItem = listEmptyItem
+        }, this.lanes > 0)
+      })
+
     }.size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
   }

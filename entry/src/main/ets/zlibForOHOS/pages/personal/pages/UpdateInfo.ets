@@ -43,7 +43,7 @@ export struct UpdateInfo{
 
   build() {
     Column(){
-      List({scroller:this.listScroller}){
+      List({scroller:this.listScroller, space: 10}){
 
         ForEach(this.historyArray,(item:I_UpdateInfo,index:number)=>{
 
@@ -56,53 +56,55 @@ export struct UpdateInfo{
               ListItem(){
                 Column({space:5}){
                   if(item.addNewFunArray!=undefined){
-                    Text("【新增功能】").width('100%')
+                    Text("[新增功能]").width('100%')
                     ForEach(item.addNewFunArray,(newFun:string,indexA:number)=>{
-                      Text(`${indexA+1}、${newFun}`).width('100%').margin({left:20})
+                      Text(`${indexA+1}. ${newFun}`).width('100%').fontSize(14)
 
                     })
                   }
 
                   if(item.fixBugsArray!=undefined){
-                    Text("【BUG修复】").width('100%')
+                    Text("[BUG修复]").width('100%')
                     ForEach(item.fixBugsArray,(fixBug:string,indexA:number)=>{
-                      Text(`${indexA+1}、${fixBug}`).width('100%').margin({left:20})
+                      Text(`${indexA+1}. ${fixBug}`).width('100%').fontSize(14)
                     })
                   }
 
                   if(item.optimizeArray!=undefined){
-                    Text("【优化更新】").width('100%')
+                    Text("[优化更新]").width('100%')
                     ForEach(item.optimizeArray,(optimize:string,indexA:number )=>{
-                      Text(`${indexA+1}、${optimize}`).width('100%').margin({left:20})
+                      Text(`${indexA+1}. ${optimize}`).width('100%').fontSize(14)
                     })
                   }
                 }
-              }.width('100%')
+              }.width('100%').padding({left: 15, right: 15, bottom: 15}).opacity(0.9)
             }
 
           }
-          .transition(XAnimation.getAnimation('bottom'))
+          .backgroundColor($r('sys.color.comp_background_list_card'))
+          .borderRadius(20)
           .onClick(()=>{
            if(this.currentIndex==index){
              XAnimation.runWithAnimation(()=>{
                this.currentIndex=-1
-             },400)
+             })
            }else {
              XAnimation.runWithAnimation(()=>{
                this.currentIndex=index
-             },400)
+             })
            }
           })
         })
 
-      }.backgroundColor($r('sys.color.comp_background_list_card'))
-      .width('90%')
+        ListItem().height(16)
+
+      }
       .scrollBar(BarState.Off)
-      .borderRadius('20')
-      .divider({ strokeWidth:0.5 ,color:$r('sys.color.comp_divider'), startMargin: 20, endMargin: 20 })
+      .chainAnimation(true)
+      .borderRadius({topLeft: 20, topRight: 20})
+      .margin({left: 16, right: 16})
 
     }
-    .backgroundColor($r('sys.color.comp_background_gray'))
     .width('100%')
     .height('100%')
   }

@@ -66,4 +66,4 @@ export class UIShareData{
 export let  __UI__:UIShareData = new UIShareData()
 
 export const minHeight = 600
-export const minWidth = 800
+export const minWidth = 700

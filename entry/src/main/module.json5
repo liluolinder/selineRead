@@ -16,6 +16,8 @@
     "abilities": [
       {
         "name": "EntryAbility",
+        "minWindowWidth": 400,
+        "minWindowHeight": 400,
         "orientation": "auto_rotation_restricted",
         "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",

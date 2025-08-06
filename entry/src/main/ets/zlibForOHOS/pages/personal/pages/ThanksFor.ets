@@ -168,16 +168,20 @@ export struct TanksFor{
 
 
         })
-      }.width('90%')
+
+        ListItem().height(16)
+      }
+      .chainAnimation(true)
+      .margin({left: 16, right: 16})
       .height('100%')
       .edgeEffect(EdgeEffect.Spring,{ alwaysEnabled: true })
       .scrollSnapAlign(ScrollSnapAlign.START)
       .scrollBar(BarState.Off)
+      .borderRadius({topLeft: 20, topRight: 20})
 
 
     }.width('100%')
     .height('100%')
-    .backgroundColor($r('sys.color.comp_background_gray'))
   }
 
 }

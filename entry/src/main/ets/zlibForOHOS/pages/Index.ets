@@ -101,6 +101,7 @@ struct Index {
             personal()
           }.loop(false).indicator(false).size({width: '100%', height: '100%'}).padding({left: __System__.windowWidth > minWidth? 65 + __System__.leftRectHeight: 0})
           .onChange((index)=>{
+            __UI__.indexPageStack.removeByName('bookInfoPage')
             this.currentPageIndex = index
           })
 
@@ -135,20 +136,21 @@ struct Index {
           .backgroundColor(__System__.windowWidth > minWidth? Color.Transparent: $r('app.color.start_window_background_blur'))
           .backdropBlur(__System__.windowWidth > minWidth? null: 100)
 
-
-
         }
-
-
-
-
-
 
       }
       .hideTitleBar(true)
       .hideToolBar(true)
       .size({width:'100%', height:'100%'})
       .backgroundColor($r('sys.color.comp_background_gray'))
-      .navBarWidthRange([600, 1200])
+      .navBarWidthRange([550, 1200])
+      .navBarWidth(800)
+      .onNavigationModeChange((mode)=>{
+        if(mode == NavigationMode.Split) {
+          __UI__.indexPageStack.clear(true)
+          __UI__.indexPageStack.pushPathByName('emptyPage', false)
+        }
+        if(mode == NavigationMode.Stack) __UI__.indexPageStack.removeByName('emptyPage')
+      })
   }
 }

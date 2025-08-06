@@ -59,10 +59,15 @@ export class XAnimation {
 
   public static runWithAnimation(
     fn: Function,
+    animate: boolean = true,
     s1: number = 0.4,
     s2: number = 0.7): void {
-    animateTo({ curve: curves.springMotion(s1, s2) }, () => {
-      fn();
-    });
+    if(animate){
+      animateToImmediately({ curve: curves.springMotion(s1, s2) }, () => {
+        fn();
+      });
+    }else{
+      fn()
+    }
   }
 }

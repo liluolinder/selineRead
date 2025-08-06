@@ -4,6 +4,11 @@
       "name": "bookInfoPage",
       "pageSourceFile": "src/main/ets/zlibForOHOS/pages/bookInfoPage/bookInfoPage.ets",
       "buildFunction": "bookInfoPageBuilder"
+    },
+    {
+      "name": "emptyPage",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/EmptyPage.ets",
+      "buildFunction": "emptyPageBuilder"
     }
   ]
 }

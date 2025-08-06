@@ -109,10 +109,10 @@ export struct personal {
     Column() {
       List({ space: 10 }) {
         ListItem().height(Math.max(__System__.topRectHeight, 16))
-        if(__System__.windowWidth > minWidth) ListItem().height(Math.max(__System__.topRectHeight, 16))
+        if (__System__.windowWidth > minWidth) ListItem().height(Math.max(__System__.topRectHeight, 16))
 
         ListItem() {
-          Row() {
+          Row({ space: 15 }) {
             FunctionalButton({
               params: {
                 // OpenType.CHOOSE_AVATAR indicates that the button is used to select an avatar.
@@ -144,11 +144,10 @@ export struct personal {
               })
             })
 
-            Column() {
+            Column({ space: 5 }) {
               Text(__User__.isLoginZlib ? __User__.zlibAccount : '点击登录')
-                .fontSize(18)
+                .fontSize(18).maxLines(2)
                 .fontWeight(FontWeight.Medium)
-                .margin({ left: 15 })
               if (__User__.isLoginZlib) {
                 Image($r('app.media.logoff'))
                   .size({ width: 25, height: 25 })
@@ -161,10 +160,8 @@ export struct personal {
                     __User__.zlibPassword = ''
                     __User__.isLoginZlib = false
                   })
-                  .margin({ top: 10, left: 15 })
-                  .alignSelf(ItemAlign.Start)
               }
-            }
+            }.layoutWeight(1).alignItems(HorizontalAlign.Start)
           }.size({ width: '100%', height: '100%' })
           .padding(15)
         }.size({ width: '100%', height: 120 })
@@ -177,96 +174,84 @@ export struct personal {
         })
 
         ListItem() {
-          Grid() {
-            GridItem() {
+          Row({ space: 10 }) {
+            Stack() {
               Column({ space: 15 }) {
                 SymbolGlyph($r('sys.symbol.download'))
                   .fontSize(30)
                   .fontWeight(FontWeight.Medium)
                   .fontColor([$r('sys.color.font')])
 
-                if (zlibClient.userDownloadLimitAndDonation?.downloadLimit == undefined) {
-                  LoadingProgress()
-                    .size({ width: 30, height: 30 })
-                } else {
-                  Text() {
-                    Span(zlibClient.userDownloadLimitAndDonation?.downloadLimit)
-                    Span(' ')
-                    SymbolSpan($r('sys.symbol.questionmark_circle'))
-                      .fontColor([$r('sys.color.font')])
-                  }
-                  .fontWeight(FontWeight.Medium)
-                  .fontSize(18)
+
+                if (zlibClient.userDownloadLimitAndDonation?.downloadLimit != undefined) {
+                  Text(zlibClient.userDownloadLimitAndDonation?.downloadLimit)
+                    .fontWeight(FontWeight.Medium)
+                    .fontSize(18)
+
                 }
 
 
-              }.bindPopup($$this.showDownloadLimitTips, {
-                message: '下载限制是Zlibrary官方设置的,可以通过对zlib官网捐赠提高限制值',
-                onStateChange: (e) => {
-                  this.showDownloadLimitTips = e.isVisible
-                }
-              })
-              .onClick(() => {
-                this.showDownloadLimitTips = true;
-              })
-
-            }.size({ width: '100%', height: '100%' })
+              }
+            }
+            .layoutWeight(1)
+            .height('100%')
             .backgroundColor($r('sys.color.comp_background_list_card'))
             .borderRadius(20)
+            .bindPopup($$this.showDownloadLimitTips, {
+              message: '下载限制是Zlibrary官方设置的,可以通过对zlib官网捐赠提高限制值',
+              onStateChange: (e) => {
+                this.showDownloadLimitTips = e.isVisible
+              }
+            })
+            .onClick(() => {
+              this.showDownloadLimitTips = true;
+            })
 
-            GridItem() {
+            Stack() {
               Column({ space: 15 }) {
                 SymbolGlyph($r('sys.symbol.yuansign_moneybag'))
                   .fontSize(30)
                   .fontWeight(FontWeight.Medium)
                   .fontColor([$r('sys.color.font')])
-                if (zlibClient.userDownloadLimitAndDonation?.donation == undefined) {
-                  LoadingProgress()
-                    .size({ width: 30, height: 30 })
-                } else {
-                  Text() {
-                    Span(zlibClient.userDownloadLimitAndDonation?.donation)
-                    Span(' ')
-                    SymbolSpan($r('sys.symbol.questionmark_circle'))
-                      .fontColor([$r('sys.color.font')])
-
-                  }
-                  .fontSize(18)
-                  .fontWeight(FontWeight.Medium)
+                if (zlibClient.userDownloadLimitAndDonation?.donation != undefined) {
+                  Text(zlibClient.userDownloadLimitAndDonation?.donation)
+                    .fontWeight(FontWeight.Medium)
+                    .fontSize(18)
                 }
-
-
               }
-              .bindPopup(this.showDonationTips, {
-                message: '此处捐赠额度指的是对zlib官方的捐赠，不是对此APP开发者的捐赠',
-                onStateChange: (e) => {
-                  this.showDonationTips = e.isVisible
-                }
-              })
-              .onClick(() => {
-                this.showDonationTips = true;
-                console.log(`FUCK${this.showDonationTips}`)
-              })
-            }.size({ width: '100%', height: '100%' })
+            }
+            .layoutWeight(1)
+            .height('100%')
             .backgroundColor($r('sys.color.comp_background_list_card'))
             .borderRadius(20)
-          }.columnsTemplate('repeat(2,1fr)')
-          .columnsGap(15)
-          .size({ width: '100%', height: '100%' })
+            .bindPopup(this.showDonationTips, {
+              message: '此处捐赠额度指的是对zlib官方的捐赠，不是对此APP开发者的捐赠',
+              onStateChange: (e) => {
+                this.showDonationTips = e.isVisible
+              }
+            })
+            .onClick(() => {
+              this.showDonationTips = true;
+              console.log(`FUCK${this.showDonationTips}`)
+            })
+
+          }
+
         }.size({ width: '100%', height: 120 })
 
         ListItemGroup() {
-          ForEach(this.buttonsArray, (item: string, index:number) => {
+          ForEach(this.buttonsArray, (item: string, index: number) => {
             ComposeListItem({
               contentItem: { primaryText: item },
               operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') } }
-            }).onClick(()=>{
-              if (index==1) {
+            }).onClick(() => {
+              if (index == 1) {
                 this.showUpdateInfo = true;
               }
             })
           })
-        }.divider({
+        }
+        .divider({
           strokeWidth: 0.5,
           color: $r('sys.color.comp_divider'),
           startMargin: 18,
@@ -340,13 +325,13 @@ export struct personal {
         .backgroundColor($r('sys.color.comp_background_list_card'))
         .padding({ bottom: 6, top: 6 })
 
-        ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 60), 16))
-        if(__System__.windowWidth > minWidth) ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 60), 16))
+        ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 60), 16))
+        if (__System__.windowWidth > minWidth) ListItem()
+          .height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 60), 16))
 
       }
       .lanes(__System__.windowWidth > minWidth ? 2 : 1, 10)
       .scrollBar(BarState.Off)
-
 
     }
     .size({ height: '100%', width: '100%' })
