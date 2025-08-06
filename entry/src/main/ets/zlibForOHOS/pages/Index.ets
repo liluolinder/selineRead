@@ -117,6 +117,12 @@ struct Index {
           .onChange((index)=>{
             __UI__.indexPageStack.removeByName('bookInfoPage')
             this.currentPageIndex = index
+            if (index == 3 && __User__.isLoginZlib) {
+              zlibClient.getUserDownloadLimit()
+            }else if (index == 2) {
+              zlibClient.localDownloadHistoryArray.clearData()
+              zlibClient.getLocalDownloadHistory()
+            }
           })
 
           Stack({alignContent: Alignment.TopEnd}){
@@ -128,21 +134,16 @@ struct Index {
             .onChange((index)=>{
               this.swiperController.changeIndex(index, true)
               this.currentPageIndex = index
+              if (index == 3 && __User__.isLoginZlib) {
+                zlibClient.getUserDownloadLimit()
+              }else if (index == 2) {
+                zlibClient.localDownloadHistoryArray.clearData()
+                zlibClient.getLocalDownloadHistory()
+              }
             })
             .barWidth(__System__.windowWidth > minWidth? 65: '100%')
             .barHeight(__System__.windowWidth > minWidth? '100%': 65)
             .vertical(__System__.windowWidth > minWidth)
-            .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
-              if (index==2)
-              {
-                zlibClient.localDownloadHistoryArray.clearData()
-              }
-              if (targetIndex == 3 && __User__.isLoginZlib) {
-                zlibClient.getUserDownloadLimit()
-              }else if (targetIndex == 2) {
-                zlibClient.getLocalDownloadHistory()
-              }
-            })
           }
           .height(__System__.windowWidth > minWidth? '100%': 65 + __System__.bottomRectHeight * 0.8)
           .width(__System__.windowWidth > minWidth? 65 + __System__.leftRectHeight * 0.8: '100%')
