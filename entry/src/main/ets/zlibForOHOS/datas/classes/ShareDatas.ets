@@ -20,6 +20,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { relationalStore } from '@kit.ArkData'
 import { zlibIndexShowMod } from '../enums/zlibIndexShowMod'
+import { window } from '@kit.ArkUI'
 
 @ObservedV2
 export class Notification {
@@ -37,6 +38,7 @@ export class SysShareData {
   @Trace topRectHeight: number = 0
   @Trace windowWidth: number = 0
   @Trace windowHeight: number = 0
+  @Trace windowState: window.WindowStatusType = window.WindowStatusType.UNDEFINED
   @Trace pcMode: boolean = false
 }
 

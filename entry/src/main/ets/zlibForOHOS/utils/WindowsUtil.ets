@@ -12,27 +12,18 @@ class Windows {
     this.windowClass = await context.windowStage.getMainWindow()
     this.windowClass.setWindowLayoutFullScreen(true)
     try{
-      this.windowClass?.setWindowTitleButtonVisible(false, false, false)
-      this.windowClass?.setWindowDecorHeight(50)
+        this.windowClass.setWindowDecorVisible(false)
+        this.windowClass.setWindowTitleButtonVisible(false, false, false)
+        this.windowClass.setWindowDecorHeight(50)
     }catch {}
     this.updateAvoidArea(this.windowClass)
     this.pcMode(context)
     this.updateScreenSize(undefined, undefined)
     this.windowClass.on('windowSizeChange', (size) => {
-      AppStorage.setOrCreate('showBars', true)
       this.updateScreenSize(size.width, size.height)
     })
-    this.windowClass.on('windowRectChange', (event) => {
-      if (event.reason == window.RectChangeReason.DRAG_START) {
-        AppStorage.setOrCreate('windowRectDragging',
-          true)
-      } else if (event.reason == window.RectChangeReason.DRAG_END) {
-        AppStorage.setOrCreate('windowRectDragging',
-          false)
-      }
-    })
     this.windowClass.on('windowStatusChange', (state) => {
-      AppStorage.setOrCreate('windowState', state)
+      __System__.windowState = state
     })
     this.windowClass.on('avoidAreaChange', () => {
       this.updateAvoidArea(this.windowClass!)
@@ -52,6 +43,7 @@ class Windows {
         __System__.pcMode = pcMode
         if (pcMode) {
           try {
+            this.windowClass?.setWindowDecorVisible(false)
             this.windowClass?.setWindowTitleButtonVisible(false, false, false)
             this.windowClass?.setWindowDecorHeight(50)
           } catch {

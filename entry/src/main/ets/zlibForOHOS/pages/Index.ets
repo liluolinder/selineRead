@@ -29,6 +29,7 @@ import { zlibHaveDownloadTable } from '../datas/commons/zlibHaveDownloadTable';
 import { zlibDownloadHistory } from './zlibDownloadHistory/zlibDownloadHistory';
 import { XAnimation } from '../datas/classes/XAnimation';
 import { zlibIndexShowMod } from '../datas/enums/zlibIndexShowMod';
+import { DecorBar } from './DecorBar';
 
 
 @Entry
@@ -102,6 +103,10 @@ struct Index {
   }
 
   build() {
+    Stack({alignContent: Alignment.TopStart}){
+      if(__System__.pcMode){
+        DecorBar().zIndex(114514)
+      }
 
       Navigation(__UI__.indexPageStack) {
 
@@ -147,6 +152,7 @@ struct Index {
             .height(__System__.windowWidth > minWidth? '100%': 65)
             .vertical(__System__.windowWidth > minWidth)
           }
+          .padding({top: __System__.pcMode? __System__.topRectHeight: 0})
           .height(__System__.windowWidth > minWidth? '100%': 65 + __System__.bottomRectHeight * 0.8)
           .width(__System__.windowWidth > minWidth? 65 + __System__.leftRectHeight * 0.8: '100%')
           .backgroundColor(__System__.windowWidth > minWidth? Color.Transparent: $r('app.color.start_window_background_blur'))
@@ -168,5 +174,8 @@ struct Index {
         }
         if(mode == NavigationMode.Stack) __UI__.indexPageStack.removeByName('emptyPage')
       })
+    }
+
+
   }
 }
