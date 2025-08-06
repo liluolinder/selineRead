@@ -23,14 +23,16 @@ import { zlibClient } from "../../datas/classes/zlib"
 import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownloadTable"
 import { curves, promptAction } from "@kit.ArkUI"
 import { dateGetTime } from "../../utils/ToolsUtil"
+import { loadingDialog } from "../Builder"
 
 @ComponentV2
 export struct zlibDownloadHistory {
 
   @Local lanes: number = -1
+  @Local isOpening: boolean = false
 
   build() {
-    Column() {
+    Stack() {
       List({ space: 10 }) {
 
         LazyForEach(zlibClient.localDownloadHistoryArray, (item: I_ZlibHaveDownloadTable, index: number) => {
@@ -61,18 +63,17 @@ export struct zlibDownloadHistory {
             .padding(8)
 
             .onClick(async () => {
-              if (__UI__.isHaveOpenBook) {
-                promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
-              }else {
+                this.isOpening = true
                 await zlibClient.getBookInfo(item.BookHref).then((res) => {
                   if (res.name!='' && res.name!=undefined ) {
                     res.bookID = item.BookID
                     res.image = item.BookImage
                     res.href = item.BookHref
+                    __UI__.indexPageStack.removeByName('bookInfoPage')
                     __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
                   }
                 })
-              }
+              this.isOpening = false
             })
           }
           .onClick(async () => {
@@ -84,7 +85,8 @@ export struct zlibDownloadHistory {
           .size({ width: '100%', height: 120 })
         })
 
-      }.size({ width: '100%', height: '100%' })
+      }
+      .height('100%')
       .lanes(this.lanes, 10)
       .padding({ bottom: 55 })
       .scrollBar(BarState.Off)
@@ -96,8 +98,12 @@ export struct zlibDownloadHistory {
           this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 400), 1)
         }, this.lanes > 0)
       })
+      .margin({left: 16, right: 16})
+
+      if(this.isOpening){
+        loadingDialog()
+      }
 
     }.size({ height: '100%', width: '100%' })
-    .padding({ left: 16, right: 16 })
   }
 }
