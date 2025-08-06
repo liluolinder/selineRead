@@ -112,7 +112,6 @@ export class zlib {
 
   async getUserInfo() {
     let req = http.createHttp()
-    this.userInfo = undefined
     await req.request(`${this.base_url}/?ts`, {
       method: http.RequestMethod.GET,
       header: {
@@ -122,7 +121,7 @@ export class zlib {
       }
     }).then((data: http.HttpResponse) => {
       let res = CJLoader.getUserDownloadLimitAndDonation(JSON.stringify(data.result))
-      let avatar = CJLoader.getUserAvatar(JSON.stringify(data.result))
+      let avatar = this.userInfo?.avatar ?? CJLoader.getUserAvatar(JSON.stringify(data.result))
       if (res) {
         this.userInfo = JSON.parse(res) as I_UserInfo
         this.userInfo.avatar = avatar
