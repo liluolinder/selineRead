@@ -416,15 +416,14 @@ export struct zlibHome {
         }.padding({ left: 20, right: 20 }).blur(__UI__.isInSearchMode? 50: 0)
       }
 
-      if(this.isFlashing){
         Stack({alignContent: Alignment.Bottom}){
           Row({space: 5}){
             LoadingProgress().size({width: 35, height: 35}).color($r('sys.color.font'))
             Text('正在载入').fontSize(22).fontWeight(FontWeight.Medium).fontColor($r('sys.color.font'))
           }.padding(10).borderRadius(10).backdropBlur(100)
         }.size({width: '100%', height: '100%'}).padding({bottom: Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 100))}).enabled(false)
-        .transition(XAnimation.getAnimation('down'))
-      }
+        .visibility(this.isFlashing? Visibility.Visible: Visibility.None)
+        .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({y: 50})))
 
     }
     .size({ height: '100%', width: '100%' })
