@@ -168,33 +168,38 @@ export class zlib {
 
   }
 
-  async getRecommendBooks(page: number) {
-    let req = http.createHttp()
-    req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
-      method: http.RequestMethod.GET,
-      header: {
-        'sec-ch-ua-platform': '"Windows"',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
-        'Cookie': this.cookie,
-      }
-    }, (err: Error, data: http.HttpResponse) => {
-      if (!err) {
-        try {
-          let obj = JSON.parse(JSON.stringify(data))
-          let result = JSON.parse((obj as object)?.['result'])
-          let tempArray: I_RecommendBook[] = (result as object)?.['books']
-
-          tempArray.forEach((item) => {
-            this.recommendBooksArray.pushData(item)
-          })
-        } catch (e) {
+  async getRecommendBooks(page: number): Promise<boolean> {
+    return new Promise<boolean>((resolve)=>{
+      let req = http.createHttp()
+      req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
+        method: http.RequestMethod.GET,
+        header: {
+          'sec-ch-ua-platform': '"Windows"',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+          'Cookie': this.cookie,
         }
-      } else {
-        console.error('FUCK error:' + JSON.stringify(err));
-        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-      }
-      req.destroy();
-    });
+      }, (err: Error, data: http.HttpResponse) => {
+        req.destroy();
+        if (!err) {
+          try {
+            let obj = JSON.parse(JSON.stringify(data))
+            let result = JSON.parse((obj as object)?.['result'])
+            let tempArray: I_RecommendBook[] = (result as object)?.['books']
+            tempArray.forEach((item) => {
+              this.recommendBooksArray.pushData(item)
+            })
+            resolve(true)
+          } catch (e) {
+            resolve(false)
+          }
+        } else {
+          console.error('FUCK error:' + JSON.stringify(err));
+          promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+          resolve(false)
+        }
+      });
+    })
+
   }
 
 
@@ -274,38 +279,45 @@ export class zlib {
   }
 
 
-  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false) {
-    if (needClear) {
-      this.searchBooksArray.clearData()
-    }
-    let req = http.createHttp()
-    await req.request(`${this.base_url}/s/${encodeURI(bookName)}?page=${page}`, {
-      method: http.RequestMethod.GET,
-      header: {
-        'sec-ch-ua-platform': '"Windows"',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
-        'Cookie': this.cookie,
+  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false): Promise<boolean> {
+    return new Promise<boolean>(async (resolve)=>{
+      if (needClear) {
+        this.searchBooksArray.clearData()
       }
-    }).then((data: http.HttpResponse) => {
+      let req = http.createHttp()
+      req.request(`${this.base_url}/s/${encodeURI(bookName)}?page=${page}`, {
+        method: http.RequestMethod.GET,
+        header: {
+          'sec-ch-ua-platform': '"Windows"',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+          'Cookie': this.cookie,
+        }
+      }).then((data: http.HttpResponse) => {
+        req.destroy()
 
-      let jsonString: string = CJLoader.getSearchBookArray(JSON.stringify(data.result))
-      let jsonArray: I_searchBook[] = JSON.parse(jsonString) as I_searchBook[]
+        let jsonString: string = CJLoader.getSearchBookArray(JSON.stringify(data.result))
+        let jsonArray: I_searchBook[] = JSON.parse(jsonString) as I_searchBook[]
 
-      if (jsonArray.length == 0 || jsonArray == undefined) {
-        //todo:API18后换成openToast
-        promptAction.showToast({ message: `无更多结果`, duration: 2000 })
-      }
+        if (jsonArray.length == 0 || jsonArray == undefined) {
+          //todo:API18后换成openToast
+          promptAction.showToast({ message: `无更多结果`, duration: 2000 })
+        }
 
-      jsonArray.forEach((item) => {
-        this.searchBooksArray.pushData(item)
-      })
+        jsonArray.forEach((item) => {
+          this.searchBooksArray.pushData(item)
+        })
 
-    }).catch((err: Error) => {
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-      console.error('error3:' + JSON.stringify(err));
-    });
+        resolve(true)
 
-    req.destroy()
+      }).catch((err: Error) => {
+        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+        console.error('error3:' + JSON.stringify(err));
+        resolve(false)
+      });
+
+
+    })
+
   }
 
   async getTrueDownloadBookUrl(context: Context, bookUrl: string, bookInfo: I_BookInfo) {

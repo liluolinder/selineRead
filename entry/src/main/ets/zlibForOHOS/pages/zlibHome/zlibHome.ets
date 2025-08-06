@@ -38,6 +38,8 @@ export struct zlibHome {
 
   @Local isOpening: boolean = false
 
+  @Local isFlashing: boolean = false
+
   @Builder
   waterFlow_recommend() {
     LazyForEach(zlibClient.recommendBooksArray, (item: I_RecommendBook, index: number) => {
@@ -367,12 +369,14 @@ export struct zlibHome {
             .edgeEffect(EdgeEffect.Spring)
             .columnsGap(10)
             .rowsGap(10)
-            .onReachEnd(() => {
+            .onReachEnd(async () => {
+              XAnimation.runWithAnimation(()=>this.isFlashing = true)
               if (__UI__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
+                await zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
               } else {
-                zlibClient.getRecommendBooks(++this.recommendIndex)
+                await zlibClient.getRecommendBooks(++this.recommendIndex)
               }
+              XAnimation.runWithAnimation(()=>this.isFlashing = false)
             })
           } else {
 
@@ -387,12 +391,14 @@ export struct zlibHome {
             }
             .scrollBar(BarState.Off)
             .size({ width: '100%', height: '100%' })
-            .onReachEnd(() => {
+            .onReachEnd(async () => {
+              XAnimation.runWithAnimation(()=>this.isFlashing = true)
               if (__UI__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
+                await zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
               } else {
-                zlibClient.getRecommendBooks(++this.recommendIndex)
+                await zlibClient.getRecommendBooks(++this.recommendIndex)
               }
+              XAnimation.runWithAnimation(()=>this.isFlashing = false)
             })
             .edgeEffect(EdgeEffect.Spring)
 
@@ -408,6 +414,16 @@ export struct zlibHome {
               })
           }
         }.padding({ left: 20, right: 20 }).blur(__UI__.isInSearchMode? 50: 0)
+      }
+
+      if(this.isFlashing){
+        Stack({alignContent: Alignment.Bottom}){
+          Row({space: 5}){
+            LoadingProgress().size({width: 35, height: 35}).color($r('sys.color.font'))
+            Text('正在载入').fontSize(22).fontWeight(FontWeight.Medium).fontColor($r('sys.color.font'))
+          }.padding(10).borderRadius(10).backdropBlur(100)
+        }.size({width: '100%', height: '100%'}).padding({bottom: Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 100))}).enabled(false)
+        .transition(XAnimation.getAnimation('down'))
       }
 
     }
