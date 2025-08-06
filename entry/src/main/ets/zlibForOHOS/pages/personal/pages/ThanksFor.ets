@@ -23,6 +23,7 @@ import { common, Want } from "@kit.AbilityKit"
 import { XAnimation } from "../../../datas/classes/XAnimation"
 import { I_Acknowledgment } from "../../../datas/interfaces/I_Acknowledgment"
 import { globlContext } from "../../../../entryability/EntryAbility"
+import { __System__ } from "../../../datas/classes/ShareDatas"
 
 
 @Builder
@@ -169,8 +170,8 @@ export struct TanksFor{
 
         })
 
-        ListItem().height(16)
       }
+      .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
       .chainAnimation(true)
       .margin({left: 16, right: 16})
       .height('100%')

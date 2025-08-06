@@ -18,6 +18,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 import { ComposeListItem } from "@ohos.arkui.advanced.ComposeListItem"
+import { __System__ } from "../../../datas/classes/ShareDatas"
 import { XAnimation } from "../../../datas/classes/XAnimation"
 import { I_UpdateInfo } from "../../../datas/interfaces/I_UpdateInfo"
 
@@ -96,9 +97,8 @@ export struct UpdateInfo{
           })
         })
 
-        ListItem().height(16)
-
       }
+      .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
       .scrollBar(BarState.Off)
       .chainAnimation(true)
       .borderRadius({topLeft: 20, topRight: 20})

@@ -221,14 +221,13 @@ export struct bookInfoPage {
             })
           }
 
-          ListItem().height(Math.max(__System__.bottomRectHeight, 16))
-          if(this.pageWidth > minWidth) ListItem().height(Math.max(__System__.bottomRectHeight, 16))
 
 
 
         }
         .height('100%')
         .scrollBar(BarState.Off)
+        .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
         .lanes(this.pageWidth > minWidth? 2: 1, 10)
         .borderRadius({topLeft: 20, topRight: 20}).clip(true)
         .margin({ left: Math.max(16, __System__.leftRectHeight), right: Math.max(16, __System__.rightRectHeight) })

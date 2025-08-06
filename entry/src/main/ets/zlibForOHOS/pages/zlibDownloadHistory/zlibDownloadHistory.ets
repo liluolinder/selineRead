@@ -28,15 +28,10 @@ import { dateGetTime } from "../../utils/ToolsUtil"
 export struct zlibDownloadHistory {
 
   @Local lanes: number = -1
-  @Local listEmptyItem: number[] = []
 
   build() {
     Column() {
       List({ space: 10 }) {
-
-        ForEach(this.listEmptyItem, ()=>{
-          ListItem().height(Math.max(__System__.topRectHeight, 16))
-        })
 
         LazyForEach(zlibClient.localDownloadHistoryArray, (item: I_ZlibHaveDownloadTable, index: number) => {
           ListItem() {
@@ -89,20 +84,14 @@ export struct zlibDownloadHistory {
           .size({ width: '100%', height: 120 })
         })
 
-        ForEach(this.listEmptyItem, ()=>{
-          ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 70: 0), 16))
-        })
-
       }.size({ width: '100%', height: '100%' })
       .padding({ bottom: 55 })
       .edgeEffect(EdgeEffect.Spring)
+      .contentStartOffset(Math.max(__System__.topRectHeight, 16))
+      .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 70: 0)))
       .onAreaChange((_, newValue)=>{
-        let lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 300), 1)
-        let listEmptyItem: number[] = []
-        for (let i = 0; i < lanes; i++) listEmptyItem.push(i)
         XAnimation.runWithAnimation(()=>{
-          this.lanes = lanes
-          this.listEmptyItem = listEmptyItem
+          this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 300), 1)
         }, this.lanes > 0)
       })
 

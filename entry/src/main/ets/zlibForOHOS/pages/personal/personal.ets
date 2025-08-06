@@ -108,11 +108,9 @@ export struct personal {
   build() {
     Column() {
       List({ space: 10 }) {
-        ListItem().height(Math.max(__System__.topRectHeight, 16))
-        if(__System__.windowWidth > minWidth) ListItem().height(Math.max(__System__.topRectHeight, 16))
 
         ListItem() {
-          Row({space: 15}) {
+          Row({ space: 15 }) {
             FunctionalButton({
               params: {
                 // OpenType.CHOOSE_AVATAR indicates that the button is used to select an avatar.
@@ -144,7 +142,7 @@ export struct personal {
               })
             })
 
-            Column({space: 5}) {
+            Column({ space: 5 }) {
               Text(__User__.isLoginZlib ? __User__.zlibAccount : '点击登录')
                 .fontSize(18).maxLines(2)
                 .fontWeight(FontWeight.Medium)
@@ -174,8 +172,8 @@ export struct personal {
         })
 
         ListItem() {
-          Row({space: 10}){
-            Stack(){
+          Row({ space: 10 }) {
+            Stack() {
               Column({ space: 15 }) {
                 SymbolGlyph($r('sys.symbol.download'))
                   .fontSize(30)
@@ -183,8 +181,8 @@ export struct personal {
                   .fontColor([$r('sys.color.font')])
 
 
-                if (zlibClient.userDownloadLimitAndDonation?.downloadLimit != undefined)  {
-                    Text(zlibClient.userDownloadLimitAndDonation?.downloadLimit)
+                if (zlibClient.userDownloadLimitAndDonation?.downloadLimit != undefined) {
+                  Text(zlibClient.userDownloadLimitAndDonation?.downloadLimit)
                     .fontWeight(FontWeight.Medium)
                     .fontSize(18)
 
@@ -192,7 +190,9 @@ export struct personal {
 
 
               }
-            }.layoutWeight(1).height('100%')
+            }
+            .layoutWeight(1)
+            .height('100%')
             .backgroundColor($r('sys.color.comp_background_list_card'))
             .borderRadius(20)
             .bindPopup($$this.showDownloadLimitTips, {
@@ -205,7 +205,7 @@ export struct personal {
               this.showDownloadLimitTips = true;
             })
 
-            Stack(){
+            Stack() {
               Column({ space: 15 }) {
                 SymbolGlyph($r('sys.symbol.yuansign_moneybag'))
                   .fontSize(30)
@@ -217,7 +217,9 @@ export struct personal {
                     .fontSize(18)
                 }
               }
-            }.layoutWeight(1).height('100%')
+            }
+            .layoutWeight(1)
+            .height('100%')
             .backgroundColor($r('sys.color.comp_background_list_card'))
             .borderRadius(20)
             .bindPopup(this.showDonationTips, {
@@ -236,17 +238,18 @@ export struct personal {
         }.size({ width: '100%', height: 120 })
 
         ListItemGroup() {
-          ForEach(this.buttonsArray, (item: string, index:number) => {
+          ForEach(this.buttonsArray, (item: string, index: number) => {
             ComposeListItem({
               contentItem: { primaryText: item },
               operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') } }
-            }).onClick(()=>{
-              if (index==1) {
+            }).onClick(() => {
+              if (index == 1) {
                 this.showUpdateInfo = true;
               }
             })
           })
-        }.divider({
+        }
+        .divider({
           strokeWidth: 0.5,
           color: $r('sys.color.comp_divider'),
           startMargin: 18,
@@ -320,13 +323,11 @@ export struct personal {
         .backgroundColor($r('sys.color.comp_background_list_card'))
         .padding({ bottom: 6, top: 6 })
 
-        ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 60), 16))
-        if(__System__.windowWidth > minWidth) ListItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 60), 16))
-
       }
+      .contentStartOffset(Math.max(__System__.topRectHeight, 16))
+      .contentEndOffset(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 60), 16))
       .lanes(__System__.windowWidth > minWidth ? 2 : 1, 10)
       .scrollBar(BarState.Off)
-
 
     }
     .size({ height: '100%', width: '100%' })
