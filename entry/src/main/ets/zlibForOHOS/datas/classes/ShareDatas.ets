@@ -18,52 +18,58 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 
-import { relationalStore } from "@kit.ArkData"
+import { relationalStore } from '@kit.ArkData'
+import { zlibIndexShowMod } from '../enums/zlibIndexShowMod'
 
 @ObservedV2
-export class Notification{
-  @Trace id:number=0
+export class Notification {
+  @Trace id: number = 0
 }
-export let  __Notification__:Notification = new Notification()
+
+export let __Notification__: Notification = new Notification()
 
 @ObservedV2
-export class SysShareData{
-  @Trace currentBreakpoint:string=''
-  @Trace bottomRectHeight:number=0
-  @Trace leftRectHeight:number=0
+export class SysShareData {
+  @Trace currentBreakpoint: string = ''
+  @Trace bottomRectHeight: number = 0
+  @Trace leftRectHeight: number = 0
   @Trace rightRectHeight: number = 0
-  @Trace topRectHeight:number = 0
+  @Trace topRectHeight: number = 0
   @Trace windowWidth: number = 0
-  @Trace windowHeight: number =0
+  @Trace windowHeight: number = 0
   @Trace pcMode: boolean = false
 }
-export let  __System__:SysShareData = new SysShareData()
+
+export let __System__: SysShareData = new SysShareData()
 
 @ObservedV2
-export class UserShareData{
-
-  @Trace avatar:ResourceStr=''
-  @Trace isLoginZlib:boolean=true
-  @Trace zlibAccount:string=''
-  @Trace zlibPassword:string=''
-
+export class UserShareData {
+  @Trace avatar: ResourceStr = ''
+  @Trace isLoginZlib: boolean = true
+  @Trace zlibAccount: string = ''
+  @Trace zlibPassword: string = ''
 }
-export let  __User__:UserShareData = new UserShareData()
+
+export let __User__: UserShareData = new UserShareData()
 
 
 @ObservedV2
-export class DataBaseShareData{
-  @Trace baseStore:relationalStore.RdbStore|undefined
+export class DataBaseShareData {
+  @Trace baseStore: relationalStore.RdbStore | undefined
 }
-export let  __DataBase__:DataBaseShareData = new DataBaseShareData()
+
+export let __DataBase__: DataBaseShareData = new DataBaseShareData()
 
 @ObservedV2
-export class UIShareData{
-  @Trace isHaveOpenBook:boolean=false
-
+export class UIShareData {
+  @Trace isHaveOpenBook: boolean = false
+  @Trace isInSearchMode: boolean = false
+  @Trace searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend
   indexPageStack: NavPathStack = new NavPathStack()
 }
-export let  __UI__:UIShareData = new UIShareData()
+
+export let __UI__: UIShareData = new UIShareData()
 
 export const minHeight = 600
+
 export const minWidth = 700

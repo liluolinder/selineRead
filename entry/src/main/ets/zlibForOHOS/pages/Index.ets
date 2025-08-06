@@ -27,6 +27,8 @@ import { zlibHome } from './zlibHome/zlibHome';
 import { linderDataBaseManger } from '../datas/classes/LDataBaseManager';
 import { zlibHaveDownloadTable } from '../datas/commons/zlibHaveDownloadTable';
 import { zlibDownloadHistory } from './zlibDownloadHistory/zlibDownloadHistory';
+import { XAnimation } from '../datas/classes/XAnimation';
+import { zlibIndexShowMod } from '../datas/enums/zlibIndexShowMod';
 
 
 @Entry
@@ -85,6 +87,18 @@ struct Index {
     else {
       return $r('sys.media.person_badge_waveform')
     }
+  }
+
+  onBackPress(): boolean | void {
+    if(__UI__.isInSearchMode){
+      XAnimation.runWithAnimation(()=>__UI__.isInSearchMode = false)
+      return true
+    }
+    if(__UI__.searchOrRecommend == zlibIndexShowMod.Search){
+      XAnimation.runWithAnimation(()=>__UI__.searchOrRecommend = zlibIndexShowMod.Recommend)
+      return true
+    }
+    return false
   }
 
   build() {

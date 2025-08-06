@@ -64,7 +64,7 @@ export struct zlibDownloadHistory {
 
             }.size({ width: '100%', height: '100%' })
             .padding(8)
-            .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+
             .onClick(async () => {
               if (__UI__.isHaveOpenBook) {
                 promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
@@ -85,6 +85,7 @@ export struct zlibDownloadHistory {
           .transition(XAnimation.getAnimation('bottom'))
           .backgroundColor($r('sys.color.comp_background_list_card'))
           .borderRadius(20)
+          .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
           .size({ width: '100%', height: 120 })
         })
 

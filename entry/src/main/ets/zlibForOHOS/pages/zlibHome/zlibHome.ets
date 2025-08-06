@@ -28,11 +28,9 @@ import { effectKit } from "@kit.ArkGraphics2D"
 
 @ComponentV2
 export struct zlibHome {
-  @Consumer('isInSearchMode') isInSearchMode: boolean = false
   @Local recommendIndex: number = 1
   @Local searchIndex: number = 1
   @Local showSearchPage: boolean = false
-  @Local searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend
   @Local listOrWaterFlow: zlibIndexShowMod = zlibIndexShowMod.WaterFlow
   @Local searchBookName: string = ''
   @Local waterFlowColumnNumber : number = -1
@@ -288,28 +286,28 @@ export struct zlibHome {
             zlibIndexShowMod.WaterFlow
           })
         })
-        .visibility(this.isInSearchMode? Visibility.None: Visibility.Visible)
+        .visibility(__UI__.isInSearchMode? Visibility.None: Visibility.Visible)
 
         Search()
           .backgroundColor($r('sys.color.comp_background_tertiary')).backdropBlur(100)
-          .focusable(this.isInSearchMode)
-          .enableKeyboardOnFocus(this.isInSearchMode)
+          .focusable(__UI__.isInSearchMode)
+          .enableKeyboardOnFocus(__UI__.isInSearchMode)
           .onEditChange((isInFocus) => {
             XAnimation.runWithAnimation(() => {
-              this.isInSearchMode = isInFocus
+              __UI__.isInSearchMode = isInFocus
             })
           })
           .onSubmit((value: string) => {
             if (value == '' || value == undefined) {
               XAnimation.runWithAnimation(() => {
-                this.searchOrRecommend = zlibIndexShowMod.Recommend
+                __UI__.searchOrRecommend = zlibIndexShowMod.Recommend
               })
             } else {
               this.searchIndex = 1
               this.searchBookName = value
               zlibClient.searchBooks(value, 1, true)
               XAnimation.runWithAnimation(() => {
-                this.searchOrRecommend = zlibIndexShowMod.Search
+                __UI__.searchOrRecommend = zlibIndexShowMod.Search
               })
             }
 
@@ -317,22 +315,22 @@ export struct zlibHome {
           .onChange((value: string) => {
             if (value == '' || value == undefined) {
               XAnimation.runWithAnimation(() => {
-                this.searchOrRecommend = zlibIndexShowMod.Recommend
+                __UI__.searchOrRecommend = zlibIndexShowMod.Recommend
               })
             }
           })
           .onTouch(() => {
             XAnimation.runWithAnimation(() => {
-              this.isInSearchMode = true
+              __UI__.isInSearchMode = true
             })
           })
-          .width(this.isInSearchMode? '100%': '50%')
+          .width(__UI__.isInSearchMode? '100%': '50%')
       }.zIndex(1).padding({ left: 16, right: 16, top: __System__.topRectHeight })
 
 
-      if ((this.searchOrRecommend == zlibIndexShowMod.Recommend &&
+      if ((__UI__.searchOrRecommend == zlibIndexShowMod.Recommend &&
         zlibClient.recommendBooksArray.dataArray.length == 0) ||
-        (this.searchOrRecommend == zlibIndexShowMod.Search && zlibClient.searchBooksArray.dataArray.length == 0)) {
+        (__UI__.searchOrRecommend == zlibIndexShowMod.Search && zlibClient.searchBooksArray.dataArray.length == 0)) {
         Column(){
           LoadingProgress()
             .size({ width: 150, height: 150 })
@@ -344,7 +342,7 @@ export struct zlibHome {
             WaterFlow() {
               ForEach(this.waterFlowEmptyItem, (item: number)=>{FlowItem().height(__System__.topRectHeight + 60)})
 
-              if (this.searchOrRecommend == zlibIndexShowMod.Recommend) {
+              if (__UI__.searchOrRecommend == zlibIndexShowMod.Recommend) {
                 this.waterFlow_recommend()
               } else {
                 this.waterFlow_search()
@@ -370,7 +368,7 @@ export struct zlibHome {
             .columnsGap(10)
             .rowsGap(10)
             .onReachEnd(() => {
-              if (this.searchOrRecommend != zlibIndexShowMod.Recommend) {
+              if (__UI__.searchOrRecommend != zlibIndexShowMod.Recommend) {
                 zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
               } else {
                 zlibClient.getRecommendBooks(++this.recommendIndex)
@@ -380,7 +378,7 @@ export struct zlibHome {
 
             List({ space: 10 }) {
               ListItem().height(__System__.topRectHeight + 60)
-              if (this.searchOrRecommend == zlibIndexShowMod.Recommend) {
+              if (__UI__.searchOrRecommend == zlibIndexShowMod.Recommend) {
                 this.list_recommend()
               } else {
                 this.list_search()
@@ -390,7 +388,7 @@ export struct zlibHome {
             .scrollBar(BarState.Off)
             .size({ width: '100%', height: '100%' })
             .onReachEnd(() => {
-              if (this.searchOrRecommend != zlibIndexShowMod.Recommend) {
+              if (__UI__.searchOrRecommend != zlibIndexShowMod.Recommend) {
                 zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
               } else {
                 zlibClient.getRecommendBooks(++this.recommendIndex)
@@ -400,16 +398,16 @@ export struct zlibHome {
 
           }
 
-          if (this.isInSearchMode) {
+          if (__UI__.isInSearchMode) {
             Column()
               .size({ width: '100%', height: '100%' })
               .onClick(() => {
                 XAnimation.runWithAnimation(() => {
-                  this.isInSearchMode = false
+                  __UI__.isInSearchMode = false
                 })
               })
           }
-        }.padding({ left: 20, right: 20 }).blur(this.isInSearchMode? 50: 0)
+        }.padding({ left: 20, right: 20 }).blur(__UI__.isInSearchMode? 50: 0)
       }
 
     }
