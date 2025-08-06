@@ -18,7 +18,8 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 
-export interface I_UserDownloadLimit{
+export interface I_UserInfo{
   downloadLimit:string
   donation:string
+  avatar:string
 }

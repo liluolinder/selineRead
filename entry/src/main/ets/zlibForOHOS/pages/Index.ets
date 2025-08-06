@@ -118,7 +118,7 @@ struct Index {
             __UI__.indexPageStack.removeByName('bookInfoPage')
             this.currentPageIndex = index
             if (index == 3 && __User__.isLoginZlib) {
-              zlibClient.getUserDownloadLimit()
+              zlibClient.getUserInfo()
             }else if (index == 2) {
               zlibClient.localDownloadHistoryArray.clearData()
               zlibClient.getLocalDownloadHistory()
@@ -135,7 +135,7 @@ struct Index {
               this.swiperController.changeIndex(index, true)
               this.currentPageIndex = index
               if (index == 3 && __User__.isLoginZlib) {
-                zlibClient.getUserDownloadLimit()
+                zlibClient.getUserInfo()
               }else if (index == 2) {
                 zlibClient.localDownloadHistoryArray.clearData()
                 zlibClient.getLocalDownloadHistory()
