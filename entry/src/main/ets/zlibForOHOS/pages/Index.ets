@@ -131,7 +131,6 @@ struct Index {
             })
             .barWidth(__System__.windowWidth > minWidth? 65: '100%')
             .barHeight(__System__.windowWidth > minWidth? '100%': 65)
-            .width(__System__.windowWidth > minWidth? 65: '100%')
             .vertical(__System__.windowWidth > minWidth)
             .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
               if (index==2)
@@ -146,7 +145,7 @@ struct Index {
             })
           }
           .height(__System__.windowWidth > minWidth? '100%': 65 + __System__.bottomRectHeight * 0.8)
-          .width(__System__.windowWidth > minWidth? 65 + __System__.bottomRectHeight * 0.8: '100%')
+          .width(__System__.windowWidth > minWidth? 65 + __System__.leftRectHeight * 0.8: '100%')
           .backgroundColor(__System__.windowWidth > minWidth? Color.Transparent: $r('app.color.start_window_background_blur'))
           .backdropBlur(__System__.windowWidth > minWidth? null: 100)
 
