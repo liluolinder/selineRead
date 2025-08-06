@@ -88,7 +88,6 @@ export struct zlibDownloadHistory {
       }
       .height('100%')
       .lanes(this.lanes, 10)
-      .padding({ bottom: 55 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
       .contentStartOffset(Math.max(__System__.topRectHeight, 16))
