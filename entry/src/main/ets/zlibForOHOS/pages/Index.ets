@@ -142,7 +142,9 @@ struct Index {
               }
             })
             .barWidth(__System__.windowWidth > minWidth? 65: '100%')
+            .width(__System__.windowWidth > minWidth? 65: '100%')
             .barHeight(__System__.windowWidth > minWidth? '100%': 65)
+            .height(__System__.windowWidth > minWidth? '100%': 65)
             .vertical(__System__.windowWidth > minWidth)
           }
           .height(__System__.windowWidth > minWidth? '100%': 65 + __System__.bottomRectHeight * 0.8)

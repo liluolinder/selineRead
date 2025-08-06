@@ -88,11 +88,10 @@ export struct zlibDownloadHistory {
       }
       .height('100%')
       .lanes(this.lanes, 10)
-      .padding({ bottom: 55 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
       .contentStartOffset(Math.max(__System__.topRectHeight, 16))
-      .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 70: 0)))
+      .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 70)))
       .onAreaChange((_, newValue)=>{
         XAnimation.runWithAnimation(()=>{
           this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 400), 1)
