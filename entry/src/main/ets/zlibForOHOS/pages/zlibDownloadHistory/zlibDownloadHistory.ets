@@ -21,7 +21,7 @@ import { minWidth, __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownloadTable"
-import { promptAction } from "@kit.ArkUI"
+import { curves, promptAction } from "@kit.ArkUI"
 import { dateGetTime } from "../../utils/ToolsUtil"
 
 @ComponentV2
@@ -85,6 +85,7 @@ export struct zlibDownloadHistory {
         })
 
       }.size({ width: '100%', height: '100%' })
+      .lanes(this.lanes, 10)
       .padding({ bottom: 55 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
@@ -92,7 +93,7 @@ export struct zlibDownloadHistory {
       .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 70: 0)))
       .onAreaChange((_, newValue)=>{
         XAnimation.runWithAnimation(()=>{
-          this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 300), 1)
+          this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 400), 1)
         }, this.lanes > 0)
       })
 
