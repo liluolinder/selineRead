@@ -42,4 +42,5 @@ let EXPORT_MODULE = JSModule.registerModule {
         exports["getBookFirstDownloadUrl"] = runtime.function(getBookFirstDownloadUrl).toJSValue()
         exports["getBookFirstDownloadInfo"] = runtime.function(getBookFirstDownloadInfo).toJSValue()
         exports["getUserDownloadLimitAndDonation"] = runtime.function(getUserDownloadLimitAndDonation).toJSValue()
+        exports["getUserAvatar"] = runtime.function(getUserAvatar).toJSValue()
 }

@@ -24,4 +24,5 @@ export interface CJLib {
   getBookFirstDownloadUrl(src: string): string
   getBookFirstDownloadInfo(src: string): string
   getUserDownloadLimitAndDonation(src: string): string
+  getUserAvatar(src: string): string
 }

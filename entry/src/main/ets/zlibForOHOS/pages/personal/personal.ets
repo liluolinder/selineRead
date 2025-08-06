@@ -21,8 +21,8 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 import { FunctionalButton, functionalButtonComponentManager } from '@kit.ScenarioFusionKit';
 import { minHeight, minWidth, __System__, __User__ } from '../../datas/classes/ShareDatas';
 import { linderPixelMap } from '../../datas/classes/LPixelMap';
-import { ComposeListItem, CustomContentDialog } from '@kit.ArkUI';
-import { zlibClient } from '../../datas/classes/zlib';
+import { CircleShape, ComposeListItem, CustomContentDialog } from '@kit.ArkUI';
+import { zlib, zlibClient } from '../../datas/classes/zlib';
 import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
 import { globlContext } from '../../../entryability/EntryAbility';
 import { common, Want } from '@kit.AbilityKit';
@@ -39,7 +39,6 @@ export struct personal {
   @Local showUpdateInfo: boolean = false
   @Local showTanks: boolean = false
   @Local pageWidth: number = -1
-
   buttonsArray: string[] = [
     '设置', '版本信息'
   ]
@@ -114,36 +113,10 @@ export struct personal {
 
         ListItem() {
           Row({ space: 15 }) {
-            FunctionalButton({
-              params: {
-                // OpenType.CHOOSE_AVATAR indicates that the button is used to select an avatar.
-                openType: functionalButtonComponentManager.OpenType.CHOOSE_AVATAR,
-                label: '',
-                // Adjust the button style.
-                styleOption: {
-                  styleConfig: new functionalButtonComponentManager.ButtonConfig()
-                    .type(ButtonType.Circle)
-                    .backgroundImage(__User__.avatar)
-                    .backgroundImageSize(ImageSize.Contain)
-                    .width(80)
-                    .height(80)
-                    .backgroundColor('#E5E5E5')
-                },
-              },
-              // When OpenType is set to CHOOSE_AVATAR, the callback must be onChooseAvatar.
-              controller: new functionalButtonComponentManager.FunctionalButtonController().onChooseAvatar(async (err,
-                data) => {
-                if (err) {
-                  return;
-                }
-                try {
-                  __User__.avatar = data.avatarUri!
-                  const pixelMap = await linderPixelMap.createPixelMAp(data.avatarUri!)
-                  linderPixelMap.savePixelMapToSandBox(pixelMap, getContext().filesDir + '/avatar.jpg')
-                } catch (err) {
-                }
-              })
-            })
+            Image(zlibClient.userInfo?.avatar ?? $r('sys.media.person_badge_waveform'))
+              .width(80)
+              .height(80)
+              .clipShape(new CircleShape({ width: 80, height: 80 }))
 
             Column({ space: 5 }) {
               Text(__User__.isLoginZlib ? __User__.zlibAccount : '点击登录')
@@ -184,8 +157,8 @@ export struct personal {
                   .fontColor([$r('sys.color.font')])
 
 
-                if (zlibClient.userDownloadLimitAndDonation?.downloadLimit != undefined) {
-                  Text(zlibClient.userDownloadLimitAndDonation?.downloadLimit)
+                if (zlibClient.userInfo?.downloadLimit != undefined) {
+                  Text(zlibClient.userInfo?.downloadLimit)
                     .fontWeight(FontWeight.Medium)
                     .fontSize(18)
 
@@ -214,8 +187,8 @@ export struct personal {
                   .fontSize(30)
                   .fontWeight(FontWeight.Medium)
                   .fontColor([$r('sys.color.font')])
-                if (zlibClient.userDownloadLimitAndDonation?.donation != undefined) {
-                  Text(zlibClient.userDownloadLimitAndDonation?.donation)
+                if (zlibClient.userInfo?.donation != undefined) {
+                  Text(zlibClient.userInfo?.donation)
                     .fontWeight(FontWeight.Medium)
                     .fontSize(18)
                 }
@@ -335,8 +308,8 @@ export struct personal {
     }
     .size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
-    .onAreaChange((_, newValue)=>{
-      XAnimation.runWithAnimation(()=>{
+    .onAreaChange((_, newValue) => {
+      XAnimation.runWithAnimation(() => {
         this.pageWidth = new Number(newValue.width).valueOf()
       }, this.pageWidth > 0)
     })

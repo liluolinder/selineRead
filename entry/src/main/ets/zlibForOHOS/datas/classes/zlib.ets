@@ -12,7 +12,6 @@ import http from '@ohos.net.http';
 import { __DataBase__, __Notification__, __UI__, __User__ } from './ShareDatas';
 import NeoPreferencesUtil from './XPreferencesUtil';
 import { linderNotificationManager } from './LNotificationManager';
-import { I_UserDownloadLimit } from '../interfaces/I_UserDownloadLimit';
 import { linderDataBaseManger } from './LDataBaseManager';
 import { relationalStore } from '@kit.ArkData';
 import { zlibHaveDownloadTable } from '../commons/zlibHaveDownloadTable';
@@ -20,13 +19,14 @@ import { I_ZlibHaveDownloadTable } from '../interfaces/I_zlibHaveDownloadTable';
 import { common } from '@kit.AbilityKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
+import { I_UserInfo } from '../interfaces/I_UserInfo';
 
 @ObservedV2
 export class zlib {
   @Trace recommendBooksArray: BasicDataSource<I_RecommendBook> = new BasicDataSource<I_RecommendBook>()
   @Trace searchBooksArray: BasicDataSource<I_searchBook> = new BasicDataSource<I_searchBook>()
   @Trace localDownloadHistoryArray: BasicDataSource<I_ZlibHaveDownloadTable> = new BasicDataSource<I_ZlibHaveDownloadTable>()
-  @Trace userDownloadLimitAndDonation: I_UserDownloadLimit | undefined
+  @Trace userInfo: I_UserInfo | undefined
   //官方:https://zh.z-library.sk
   base_url: string = 'https://zh.zlibraryd.ru'
   baseApi_url: string = 'https://zh.zlibraryd.ru/papi'
@@ -90,7 +90,7 @@ export class zlib {
         __User__.zlibAccount = email
         __User__.zlibPassword = password
         __User__.isLoginZlib = true
-        this.getUserDownloadLimit()
+        this.getUserInfo()
       } else {
         //todo:API18后换成openToast
         promptAction.showToast({ message: `登录失败`, duration: 1000 })
@@ -110,9 +110,9 @@ export class zlib {
   }
 
 
-  async getUserDownloadLimit() {
+  async getUserInfo() {
     let req = http.createHttp()
-    this.userDownloadLimitAndDonation = undefined
+    this.userInfo = undefined
     await req.request(`${this.base_url}/?ts`, {
       method: http.RequestMethod.GET,
       header: {
@@ -122,9 +122,10 @@ export class zlib {
       }
     }).then((data: http.HttpResponse) => {
       let res = CJLoader.getUserDownloadLimitAndDonation(JSON.stringify(data.result))
+      let avatar = CJLoader.getUserAvatar(JSON.stringify(data.result))
       if (res) {
-        this.userDownloadLimitAndDonation = JSON.parse(res) as I_UserDownloadLimit
-        console.log(`FUCK${this.userDownloadLimitAndDonation.downloadLimit}`)
+        this.userInfo = JSON.parse(res) as I_UserInfo
+        this.userInfo.avatar = avatar
       }
     }).catch((err: Error) => {
       console.error('error2:' + JSON.stringify(err));
