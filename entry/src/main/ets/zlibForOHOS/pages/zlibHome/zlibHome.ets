@@ -350,7 +350,7 @@ export struct zlibHome {
             }
             .onAreaChange((_, newValue)=>{
               XAnimation.runWithAnimation(()=>{
-                this.waterFlowColumnNumber = Math.max(Math.floor(new Number(newValue.width).valueOf() / 180), 2)
+                this.waterFlowColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
                 let itemList: number[] = []
                 for (let index = 0; index < this.waterFlowColumnNumber; index++) {
                   itemList.push(index)
@@ -415,8 +415,8 @@ export struct zlibHome {
       if(this.isFlashing){
         Stack({alignContent: Alignment.Bottom}){
           Row({space: 5}){
-            LoadingProgress().size({width: 35, height: 35}).color($r('sys.color.font'))
-            Text('正在载入').fontSize(22).fontWeight(FontWeight.Medium).fontColor($r('sys.color.font'))
+            LoadingProgress().size({width: 35, height: 35}).color($r('sys.color.font')).opacity(0.6)
+            Text('正在载入').fontSize(22).fontWeight(FontWeight.Medium).fontColor($r('sys.color.font')).opacity(0.6)
           }.padding(10).borderRadius(10).backdropBlur(100)
         }.size({width: '100%', height: '100%'}).padding({bottom: Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 100))}).enabled(false)
         .transition(XAnimation.getAnimation('down'))
