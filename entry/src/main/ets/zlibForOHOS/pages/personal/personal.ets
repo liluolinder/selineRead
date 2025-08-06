@@ -325,7 +325,7 @@ export struct personal {
 
       }
       .contentStartOffset(Math.max(__System__.topRectHeight, 16))
-      .contentEndOffset(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 60), 16))
+      .contentEndOffset(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70), 16))
       .lanes(__System__.windowWidth > minWidth ? 2 : 1, 10)
       .scrollBar(BarState.Off)
 
