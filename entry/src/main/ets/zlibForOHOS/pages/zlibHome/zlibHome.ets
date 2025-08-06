@@ -348,7 +348,7 @@ export struct zlibHome {
                 this.waterFlow_search()
               }
 
-              ForEach(this.waterFlowEmptyItem, (item: number)=>{FlowItem().height(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 10: 70))})
+              ForEach(this.waterFlowEmptyItem, (item: number)=>{FlowItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 70), 16))})
             }
             .onAreaChange((_, newValue)=>{
               XAnimation.runWithAnimation(()=>{
