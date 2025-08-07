@@ -17,11 +17,10 @@ import { relationalStore } from '@kit.ArkData';
 import { zlibHaveDownloadTable } from '../commons/zlibHaveDownloadTable';
 import { I_ZlibHaveDownloadTable } from '../interfaces/I_zlibHaveDownloadTable';
 import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
-import { uniformTypeDescriptor as utd } from '@kit.ArkData';
-import { systemShare } from '@kit.ShareKit';
 import { I_UserInfo } from '../interfaces/I_UserInfo';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { globlContext } from '../../../entryability/EntryAbility';
+import { shareBook } from '../../utils/ToolsUtil';
 
 @ObservedV2
 export class zlib {
@@ -37,26 +36,6 @@ export class zlib {
   private setCookies(remix_userkey: string, remix_userid: string) {
     this.cookie =
       `siteLanguage=zh; selectedSiteMode=books; remix_userkey=${remix_userkey}; remix_userid=${remix_userid}; redirects_count=%7B%22auth%22%3A1%2C%22hide-auth-params%22%3A1%7D`
-  }
-
-  private getUtdForm(fileName:string):utd.UniformDataType
-  {
-    let fileSuffix:string[] = fileName.split('.')
-
-    switch (fileSuffix[fileSuffix.length-1].toLowerCase())
-    {
-      case 'pdf':
-        return utd.UniformDataType.PDF
-      case 'epub':
-        return utd.UniformDataType.EPUB
-      case 'azw3':
-        return utd.UniformDataType.AZW3
-      case 'text': case 'txt':
-        return utd.UniformDataType.TEXT
-      default :
-        return utd.UniformDataType.EBOOK
-    }
-
   }
 
 
@@ -391,7 +370,7 @@ export class zlib {
           actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
         };
         wantAgent.getWantAgent(wantAgentInfo).then((wantAgentObj: WantAgent) => {
-          backgroundTaskManager.startBackgroundRunning(globlContext,
+          backgroundTaskManager.startBackgroundRunning(globlContext as common.UIAbilityContext,
             backgroundTaskManager.BackgroundMode.DATA_TRANSFER, wantAgentObj)
         }).catch((err: BusinessError) => {
         })
@@ -428,9 +407,6 @@ export class zlib {
                 console.error("move file failed with error message: " + err.message + ", error code: " + err.code);
               });
 
-
-
-
               fs.closeSync(file0)
               fs.closeSync(file1)
 
@@ -448,29 +424,19 @@ export class zlib {
 
               linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket)
 
-              let data: systemShare.SharedData = new systemShare.SharedData({
-                utd: this.getUtdForm(fileName),
-                title:fileName,
-                uri:uri1 + '/' + fileName
-              });
+              zlibClient.localDownloadHistoryArray.clearData()
+              zlibClient.getLocalDownloadHistory()
 
-              let controller: systemShare.ShareController = new systemShare.ShareController(data);
+              shareBook(testFilePath)
 
-              controller.on('dismiss', () => {
-                console.info('Share panel closed');
-              });
-
-              controller.show(context as common.UIAbilityContext, {
-                previewMode: systemShare.SharePreviewMode.DETAIL,
-                selectionMode: systemShare.SelectionMode.SINGLE
-              });
 
             })
             .catch((err: BusinessError) => {
               console.error(`Invoke documentViewPicker.save failed, code is ${err.code}, message is ${err.message}`);
             })
 
-          backgroundTaskManager.stopBackgroundRunning(globlContext)
+          backgroundTaskManager.stopBackgroundRunning(globlContext as common.UIAbilityContext)
+
         })
       }).catch((err: BusinessError) => {
         promptAction.showToast({
