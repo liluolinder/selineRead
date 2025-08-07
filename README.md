@@ -6,6 +6,11 @@
 
 SelineRead 是一个专为鸿蒙系统（HarmonyOS）开发的电子书下载应用。目前主要支持从 zlibrary 下载电子书，为用户提供便捷的电子书获取体验。
 
+## 联系我们
+
+- **问题反馈**: [Atomgit Issues](https://atomgit.com/liluolinder/selineRead/issues)
+- **讨论交流**: [Atomgit Discussion](https://atomgit.com/liluolinder/selineRead/discussions) | QQ交流群718559395
+
 ## 主要功能
 
 - **电子书下载**: 支持从 zlibrary 下载各种格式的电子书
@@ -263,11 +268,6 @@ See the Mulan PSL v2 for more details.
 - 请遵守当地法律法规和版权规定
 - 用户需自行承担使用本软件的风险
 - 开发者不对因使用本软件而产生的任何后果负责
-
-## 联系我们
-
-- **问题反馈**: [Atomgit Issues](https://atomgit.com/liluolinder/selineRead/issues)
-- **讨论交流**: [Atomgit Discussion](https://atomgit.com/liluolinder/selineRead/discussions) | QQ交流群718559395
 
 ## 支持我们
 
