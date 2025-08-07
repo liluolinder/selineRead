@@ -17,14 +17,15 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-import { minWidth, __System__, __UI__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __DataBase__, __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownloadTable"
 import { curves, promptAction } from "@kit.ArkUI"
-import { dateGetTime } from "../../utils/ToolsUtil"
+import { dateGetTime, shareBook } from "../../utils/ToolsUtil"
 import { loadingDialog } from "../Builder"
 import { fileIo } from "@kit.CoreFileKit"
+import { linderDataBaseManger } from "../../datas/classes/LDataBaseManager"
 
 @ComponentV2
 export struct zlibDownloadHistory {
@@ -63,24 +64,37 @@ export struct zlibDownloadHistory {
             }.size({ width: '100%', height: '100%' })
             .padding(8)
 
-            .onClick(async () => {
-              if(fileIo.accessSync(item.BookFilePath)){
-                __UI__.indexPageStack.pushPath({name: 'readerPage', param: item.BookFilePath}, true)
-              }else{
-                this.isOpening = true
-                await zlibClient.getBookInfo(item.BookHref).then((res) => {
-                  if (res.name!='' && res.name!=undefined ) {
-                    res.bookID = item.BookID
-                    res.image = item.BookImage
-                    res.href = item.BookHref
-                    __UI__.indexPageStack.removeByName('bookInfoPage')
-                    __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
-                  }
-                })
-                this.isOpening = false
+            .bindMenu([
+              {
+                value: '分享',
+                action: ()=>{
+                  shareBook(item.BookFilePath)
+                },
+                enabled: fileIo.accessSync(item.BookFilePath)
+              },
+              {
+                value: '查看详情',
+                action: async ()=>{
+                  this.isOpening = true
+                  await zlibClient.getBookInfo(item.BookHref).then((res) => {
+                    if (res.name!='' && res.name!=undefined ) {
+                      res.bookID = item.BookID
+                      res.image = item.BookImage
+                      res.href = item.BookHref
+                      __UI__.indexPageStack.removeByName('bookInfoPage')
+                      __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+                    }
+                  })
+                  this.isOpening = false
+                }
+              },
+              {
+                value: '在内置阅读器查看',
+                action: ()=>{
+                  __UI__.indexPageStack.pushPath({name: 'readerPage', param: item.BookFilePath}, true)
+                }
               }
-
-            })
+            ])
           }
           .transition(XAnimation.getAnimation('bottom'))
           .backgroundColor($r('sys.color.comp_background_list_card'))
