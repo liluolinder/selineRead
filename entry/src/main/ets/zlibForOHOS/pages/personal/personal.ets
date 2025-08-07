@@ -163,8 +163,6 @@ export struct personal {
                     .fontSize(18)
 
                 }
-
-
               }
             }
             .layoutWeight(1)

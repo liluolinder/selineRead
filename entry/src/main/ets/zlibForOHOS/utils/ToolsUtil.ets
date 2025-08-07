@@ -6,7 +6,7 @@ import { globlContext } from '../../entryability/EntryAbility';
 
 export function dateGetTime(timestamp: number|string, time: boolean = true, date: boolean = true): string {
   try {
-    let nowDate = new Date(timestamp);``
+    let nowDate = new Date(timestamp);
     let year = nowDate.getFullYear();
     let month = String(nowDate.getMonth() + 1).padStart(2, '0');
     let day = String(nowDate.getDate()).padStart(2, '0');
