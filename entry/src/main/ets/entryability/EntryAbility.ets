@@ -1,9 +1,11 @@
-import { AbilityConstant, common, ConfigurationConstant, Context, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, common,
+  Configuration,
+  ConfigurationConstant, Context, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { display, window } from '@kit.ArkUI';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { __System__ } from '../zlibForOHOS/datas/classes/ShareDatas';
+import { __System__, __UI__, __User__ } from '../zlibForOHOS/datas/classes/ShareDatas';
 import  NeoPreferencesUtil from '../zlibForOHOS/datas/classes/XPreferencesUtil'
 import WindowsUtil from '../zlibForOHOS/utils/WindowsUtil';
 
@@ -67,6 +69,10 @@ export default class EntryAbility extends UIAbility {
   onWindowStageDestroy(): void {
     // Main window is destroyed, release UI related resources
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageDestroy');
+  }
+
+  onConfigurationUpdate(newConfig: Configuration): void {
+    __UI__.currentColorMode = newConfig.colorMode || 0
   }
 
   onForeground(): void {
