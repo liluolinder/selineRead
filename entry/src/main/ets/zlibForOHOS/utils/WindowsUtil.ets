@@ -32,7 +32,7 @@ class Windows {
 
   pcMode(context: Context) {
     if (deviceInfo.deviceType.toUpperCase() == 'PC' || deviceInfo.deviceType.toUpperCase() == '2IN1') {
-      AppStorage.setOrCreate('pcMode', true)
+      __System__.pcMode = true
     } else {
       __System__.pcMode = settings.getValueSync(context, 'window_pcmode_switch_status', 'false', settings.domainName.USER_PROPERTY) === 'true'
       //监听：
