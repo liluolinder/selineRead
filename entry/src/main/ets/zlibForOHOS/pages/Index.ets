@@ -130,6 +130,7 @@ struct Index {
             }
           })
 
+
           Stack({alignContent: Alignment.TopEnd}){
             Tabs({index: this.currentPageIndex}){
               ForEach(this.tabsArray,(item:string,index:number)=>{
@@ -147,12 +148,10 @@ struct Index {
               }
             })
             .barWidth(__System__.windowWidth > minWidth? 65: '100%')
-            .width(__System__.windowWidth > minWidth? 65: '100%')
             .barHeight(__System__.windowWidth > minWidth? '100%': 65)
-            .height(__System__.windowWidth > minWidth? '100%': 65)
             .vertical(__System__.windowWidth > minWidth)
           }
-          .padding({top: __System__.pcMode? __System__.topRectHeight: 0})
+          .padding({top: __System__.pcMode && __System__.windowWidth > minWidth? __System__.topRectHeight: 0})
           .height(__System__.windowWidth > minWidth? '100%': 65 + __System__.bottomRectHeight * 0.8)
           .width(__System__.windowWidth > minWidth? 65 + __System__.leftRectHeight * 0.8: '100%')
           .backgroundColor(__System__.windowWidth > minWidth? Color.Transparent: $r('app.color.start_window_background_blur'))
