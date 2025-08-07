@@ -167,7 +167,9 @@ struct Index {
       .backgroundColor($r('sys.color.comp_background_gray'))
       .navBarWidthRange([550, 1200])
       .navBarWidth(800)
+      .mode(__UI__.isInReader? NavigationMode.Stack: NavigationMode.Auto)
       .onNavigationModeChange((mode)=>{
+        if(__UI__.isInReader) return
         if(mode == NavigationMode.Split) {
           __UI__.indexPageStack.clear(true)
           __UI__.indexPageStack.pushPathByName('emptyPage', false)

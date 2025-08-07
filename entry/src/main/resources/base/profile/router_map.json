@@ -9,6 +9,11 @@
       "name": "emptyPage",
       "pageSourceFile": "src/main/ets/zlibForOHOS/pages/EmptyPage.ets",
       "buildFunction": "emptyPageBuilder"
+    },
+    {
+      "name": "readerPage",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/Reader.ets",
+      "buildFunction": "readerBuilder"
     }
   ]
 }

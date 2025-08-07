@@ -64,9 +64,11 @@ export let __DataBase__: DataBaseShareData = new DataBaseShareData()
 
 @ObservedV2
 export class UIShareData {
+  @Trace isInReader: boolean = false
   @Trace isHaveOpenBook: boolean = false
   @Trace isInSearchMode: boolean = false
   @Trace searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend
+  @Trace currentColorMode: number = 1
   indexPageStack: NavPathStack = new NavPathStack()
 }
 
