@@ -24,6 +24,7 @@ import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownlo
 import { curves, promptAction } from "@kit.ArkUI"
 import { dateGetTime } from "../../utils/ToolsUtil"
 import { loadingDialog } from "../Builder"
+import { fileIo } from "@kit.CoreFileKit"
 
 @ComponentV2
 export struct zlibDownloadHistory {
@@ -63,6 +64,9 @@ export struct zlibDownloadHistory {
             .padding(8)
 
             .onClick(async () => {
+              if(fileIo.accessSync(item.BookFilePath)){
+                __UI__.indexPageStack.pushPath({name: 'readerPage', param: item.BookFilePath}, true)
+              }else{
                 this.isOpening = true
                 await zlibClient.getBookInfo(item.BookHref).then((res) => {
                   if (res.name!='' && res.name!=undefined ) {
@@ -73,11 +77,11 @@ export struct zlibDownloadHistory {
                     __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
                   }
                 })
-              this.isOpening = false
+                this.isOpening = false
+              }
+
             })
           }
-          .onClick(async () => {
-          })
           .transition(XAnimation.getAnimation('bottom'))
           .backgroundColor($r('sys.color.comp_background_list_card'))
           .borderRadius(20)

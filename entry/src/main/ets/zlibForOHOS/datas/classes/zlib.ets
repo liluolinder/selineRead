@@ -372,19 +372,6 @@ export class zlib {
         enableMetered: true
       }).then((downloadTask: request.DownloadTask) => {
 
-        const valueBucket: relationalStore.ValuesBucket = {
-          BookID: bookInfo.bookID!,
-          BookName: bookInfo.name,
-          BookHref: bookInfo.href!,
-          BookAuthor: bookInfo.author[0].name,
-          BookPublisher: bookInfo.publisher.name,
-          BookImage: bookInfo.image,
-          BookDownLoadTime: new Date().toISOString(),
-          haveDownload : 0
-        };
-
-        linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket)
-
         let progressValue: number = 0
 
         linderNotificationManager.pushNotificationWithProgress(notificationID, 0, "正在下载", fileName)
@@ -421,8 +408,25 @@ export class zlib {
                 console.error("move file failed with error message: " + err.message + ", error code: " + err.code);
               });
 
+
+
+
               fs.closeSync(file0)
               fs.closeSync(file1)
+
+              const valueBucket: relationalStore.ValuesBucket = {
+                BookID: bookInfo.bookID!,
+                BookName: bookInfo.name,
+                BookHref: bookInfo.href!,
+                BookAuthor: bookInfo.author[0].name,
+                BookPublisher: bookInfo.publisher.name,
+                BookImage: bookInfo.image,
+                BookDownLoadTime: new Date().toISOString(),
+                BookFilePath: testFilePath,
+                haveDownload : 0
+              };
+
+              linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket)
 
               let data: systemShare.SharedData = new systemShare.SharedData({
                 utd: this.getUtdForm(fileName),

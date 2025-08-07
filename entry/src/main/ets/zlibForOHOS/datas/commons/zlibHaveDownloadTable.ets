@@ -79,6 +79,13 @@ export let zlibHaveDownloadTable:I_RelationalStoreDataBaseTableForm[] = [
     canNull:true
   },
   {
+    key:'BookFilePath',
+    isKey:false,
+    needAutoIncrement:false,
+    type:RelationalStoreDataBaseTableType.TEXT,
+    canNull:true
+  },
+  {
     key:'haveDownload',
     isKey:false,
     needAutoIncrement:false,
