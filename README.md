@@ -267,7 +267,7 @@ See the Mulan PSL v2 for more details.
 ## 联系我们
 
 - **问题反馈**: [Atomgit Issues](https://atomgit.com/liluolinder/selineRead/issues)
-- **讨论交流**: [Atomgit Discussion](https://atomgit.com/liluolinder/selineRead/discussions)
+- **讨论交流**: [Atomgit Discussion](https://atomgit.com/liluolinder/selineRead/discussions) | QQ交流群718559395
 
 ## 支持我们
 
