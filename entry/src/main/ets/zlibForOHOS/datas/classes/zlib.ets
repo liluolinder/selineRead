@@ -16,10 +16,12 @@ import { linderDataBaseManger } from './LDataBaseManager';
 import { relationalStore } from '@kit.ArkData';
 import { zlibHaveDownloadTable } from '../commons/zlibHaveDownloadTable';
 import { I_ZlibHaveDownloadTable } from '../interfaces/I_zlibHaveDownloadTable';
-import { common } from '@kit.AbilityKit';
+import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
 import { I_UserInfo } from '../interfaces/I_UserInfo';
+import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
+import { globlContext } from '../../../entryability/EntryAbility';
 
 @ObservedV2
 export class zlib {
@@ -376,6 +378,24 @@ export class zlib {
 
         linderNotificationManager.pushNotificationWithProgress(notificationID, 0, "正在下载", fileName)
 
+        //启动长时任务
+        let wantAgentInfo: wantAgent.WantAgentInfo = {
+          wants: [
+            ({
+              bundleName: 'seline.book.read',
+              abilityName: 'EntryAbility'
+            })
+          ],
+          actionType: wantAgent.OperationType.START_ABILITY,
+          requestCode: 114514,
+          actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
+        };
+        wantAgent.getWantAgent(wantAgentInfo).then((wantAgentObj: WantAgent) => {
+          backgroundTaskManager.startBackgroundRunning(globlContext,
+            backgroundTaskManager.BackgroundMode.DATA_TRANSFER, wantAgentObj)
+        }).catch((err: BusinessError) => {
+        })
+
         //开启进度回调
         downloadTask.on('progress', (receivedSize: number, totalSize: number) => {
 
@@ -450,6 +470,7 @@ export class zlib {
               console.error(`Invoke documentViewPicker.save failed, code is ${err.code}, message is ${err.message}`);
             })
 
+          backgroundTaskManager.stopBackgroundRunning(globlContext)
         })
       }).catch((err: BusinessError) => {
         promptAction.showToast({
