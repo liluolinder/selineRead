@@ -166,7 +166,7 @@ struct Reader{
     })
     .padding({top: this.isFullscreen? 0: __System__.topRectHeight, bottom: this.isFullscreen? 0: __System__.bottomRectHeight})
     .onClick((event)=>{
-      if(event.displayX > __System__.windowWidth * 0.4 && event.displayX < __System__.windowWidth * 0.6) XAnimation.runWithAnimation(() => this.isFullscreen = !this.isFullscreen)
+      if(event.x > __System__.windowWidth * 0.4 && event.x < __System__.windowWidth * 0.6) XAnimation.runWithAnimation(() => this.isFullscreen = !this.isFullscreen)
     })
     .hideTitleBar(this.isFullscreen)
     .onReady((navContext)=>{
