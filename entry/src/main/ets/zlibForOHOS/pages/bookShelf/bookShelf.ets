@@ -25,13 +25,23 @@ export struct bookShelf{
 
   build() {
     Column(){
-      List(){
+      List({space:10}){
        LazyForEach(zlibClient.bookshelfArray,(item:I_ReadLists_Bookshelf)=>{
           ListItem(){
-            Row(){
+            Column(){
               Text(item.title)
+              Scroll(){
+                Row(){
+                  ForEach(item.booksGrouped,(itemB:I_BookInfo_Bookshelf)=>{
+                    Image(itemB.coverUrl)
+                      .width(75)
+                  })
+                }
+              }.scrollable(ScrollDirection.Horizontal)
             }
-          }
+          }.height(200)
+         .backgroundColor($r('sys.color.comp_background_list_card'))
+         .borderRadius(20)
        })
 
       }.size({ height: '100%', width: '100%' })
