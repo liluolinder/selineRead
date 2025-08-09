@@ -69,6 +69,7 @@ struct Index {
 
     await zlibClient.refreshUrl().then(async () => {
       zlibClient.getRecommendBooks(1)
+      zlibClient.getBookShelf(1)
     })
 
   }

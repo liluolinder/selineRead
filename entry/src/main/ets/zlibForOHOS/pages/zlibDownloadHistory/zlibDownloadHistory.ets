@@ -41,7 +41,7 @@ export struct zlibDownloadHistory {
           ListItem() {
             Row({ space: 10 }) {
               Image(item.BookImage)
-                .size({ height: '100%', width: 82 })
+                .size({ height: '100%', width: 82 })  
                 .borderRadius(15)
               Flex({justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Start, direction: FlexDirection.Column}){
                 Column({ space: 2 }) {

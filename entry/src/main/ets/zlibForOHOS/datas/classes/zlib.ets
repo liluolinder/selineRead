@@ -21,12 +21,14 @@ import { I_UserInfo } from '../interfaces/I_UserInfo';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { globlContext } from '../../../entryability/EntryAbility';
 import { shareBook } from '../../utils/ToolsUtil';
+import { I_Bookshelf, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
 
 @ObservedV2
 export class zlib {
   @Trace recommendBooksArray: BasicDataSource<I_RecommendBook> = new BasicDataSource<I_RecommendBook>()
   @Trace searchBooksArray: BasicDataSource<I_searchBook> = new BasicDataSource<I_searchBook>()
   @Trace localDownloadHistoryArray: BasicDataSource<I_ZlibHaveDownloadTable> = new BasicDataSource<I_ZlibHaveDownloadTable>()
+  @Trace bookshelfArray: BasicDataSource<I_ReadLists_Bookshelf> = new BasicDataSource<I_ReadLists_Bookshelf>()
   @Trace userInfo: I_UserInfo | undefined
   //官方:https://zh.z-library.sk
   base_url: string = 'https://zh.zlibraryd.ru'
@@ -233,6 +235,41 @@ export class zlib {
 
   }
 
+  async getBookShelf(page:number)
+  {
+    let req = http.createHttp()
+    console.log(`FUCK${`${this.baseApi_url}/booklist/get-page/${page}`}`)
+    await req.request(`${this.baseApi_url}/booklist/get-page/${page}`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      },
+      extraData:{
+        'access': "public",
+        'color': "all",
+        'hide18plus': "1",
+        'languages':"null",
+        'order': "",
+        'searchQuery': ""
+      }
+    }).then((data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let temp:I_Bookshelf = result as I_Bookshelf
+      temp.readlists.forEach((item:I_ReadLists_Bookshelf, index:number)=>{
+        item.readListsOwners = temp.readlistsOwners[item.user_id]
+        item.booksGrouped = temp.booksGrouped[item.id]
+        this.bookshelfArray.pushData(item)
+      })
+
+    }).catch((err: Error) => {
+      console.error('error11:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+    });
+    req.destroy()
+  }
 
   async getBookDownloadsInfo(bookID: number): Promise<I_DownloadInfo[]> {
     let req = http.createHttp()

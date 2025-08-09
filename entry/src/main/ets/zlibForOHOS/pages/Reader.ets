@@ -177,7 +177,8 @@ struct Reader{
           this.bookInfo = bookParserHandler.getBookInfo();
           this.catalogue = bookParserHandler.getCatalogList()
           this.title = this.bookInfo.bookTitle
-        }).catch(()=>{
+        }).catch((err:BusinessError)=>{
+          console.log(`FUCK${JSON.stringify(err)}`)
           navContext.pathStack.pop(true)
         })
         this.updateSystemBar()
