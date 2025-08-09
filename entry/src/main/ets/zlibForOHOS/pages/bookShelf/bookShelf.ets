@@ -1,0 +1,42 @@
+/*
+Copyright (c) 2025 琉离铟落linder
+SelineRead is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan
+PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+
+Mulan Permissive Software License，Version 2
+
+Mulan Permissive Software License，Version 2 (Mulan PSL v2)
+
+January 2020 http://license.coscl.org.cn/MulanPSL2
+ */
+
+import { zlibClient } from "../../datas/classes/zlib"
+import { I_BookInfo_Bookshelf, I_ReadLists_Bookshelf } from "../../datas/interfaces/I_BookShelf"
+
+@ComponentV2
+export struct bookShelf{
+
+  build() {
+    Column(){
+      List(){
+       LazyForEach(zlibClient.bookshelfArray,(item:I_ReadLists_Bookshelf)=>{
+          ListItem(){
+            Row(){
+              Text(item.title)
+            }
+          }
+       })
+
+      }.size({ height: '100%', width: '100%' })
+    }
+    .size({ height: '100%', width: '100%' })
+    .padding({ left: 16, right: 16 })
+  }
+}

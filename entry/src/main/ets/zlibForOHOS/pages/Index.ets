@@ -30,6 +30,7 @@ import { zlibDownloadHistory } from './zlibDownloadHistory/zlibDownloadHistory';
 import { XAnimation } from '../datas/classes/XAnimation';
 import { zlibIndexShowMod } from '../datas/enums/zlibIndexShowMod';
 import { DecorBar } from './DecorBar';
+import { bookShelf } from './bookShelf/bookShelf';
 
 
 @Entry
@@ -109,9 +110,7 @@ struct Index {
         Stack({ alignContent: Alignment.BottomStart }) {
           Swiper(this.swiperController) {
             zlibHome()
-            Stack() {
-              Text('正在施工').fontSize(30).fontWeight(FontWeight.Medium)
-            }
+            bookShelf()
 
             zlibDownloadHistory()
             personal()
