@@ -17,12 +17,14 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
+import { minWidth, __System__ } from "../../datas/classes/ShareDatas"
+import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_BookInfo_Bookshelf, I_ReadLists_Bookshelf } from "../../datas/interfaces/I_BookShelf"
 
 @ComponentV2
 export struct bookShelf{
-
+  @Local bookShelfIndex: number = 1
   build() {
     Column(){
       List({space:10}){
@@ -43,8 +45,14 @@ export struct bookShelf{
          .backgroundColor($r('sys.color.comp_background_list_card'))
          .borderRadius(20)
        })
-
+        ListItem().height(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 10: 70))
       }.size({ height: '100%', width: '100%' })
+      .onReachEnd(async () => {
+       // XAnimation.runWithAnimation(()=>this.isFlashing = true)
+        await zlibClient.getBookShelf(++this.bookShelfIndex)
+        //XAnimation.runWithAnimation(()=>this.isFlashing = false)
+      })
+      .edgeEffect(EdgeEffect.Spring)
     }
     .size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
