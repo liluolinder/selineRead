@@ -40,7 +40,8 @@ export struct TanksFor{
     {name:'鱼-salmon',info:'溏心音乐开发者',avatar:'https://file.atomgit.com/uploads/user/1744210680007_2116.png',bilibili:'299579466',appInfo:'溏心音乐',appBundle:'com.salmon.sweetmusic',atomgitHome:'lqsxy'},
     {name:'琉离铟落linder',info:'常大助手开发者',avatar:'https://file.atomgit.com/uploads/user/1753793061913_4336.jpeg',bilibili:'473413928',atomgitHome:'liluolinder'},
     {name:'逝水秋生白',info:'云宫开发者',avatar:'https://file.atomgit.com/uploads/user/1744968466315_9239.jpeg',bilibili:'476197206',appInfo:'云宫',appBundle:'ai.CloudUI.Liquid',atomgitHome:'cenber',},
-    {name:'F-park',info:'Bug',avatar:'https://file.atomgit.com/uploads/user/1754322665099_6919.jpeg',atomgitHome:'fpark',barrier:'BUG'},
+    {name:'未定义',info:'格物阅读开发者',avatar:$r('app.media.avatar_weidingyi'),bilibili:'3546793237285117',appInfo:'格物阅读',appBundle:'com.hm.ultimate.reader'},
+    {name:'F-park',info:'Bug测试',avatar:'https://file.atomgit.com/uploads/user/1754322665099_6919.jpeg',atomgitHome:'fpark',barrier:'Bug测试'},
 
   ]
 

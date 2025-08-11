@@ -21,7 +21,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 import { FunctionalButton, functionalButtonComponentManager } from '@kit.ScenarioFusionKit';
 import { minHeight, minWidth, __System__, __User__ } from '../../datas/classes/ShareDatas';
 import { linderPixelMap } from '../../datas/classes/LPixelMap';
-import { CircleShape, ComposeListItem, CustomContentDialog } from '@kit.ArkUI';
+import { CircleShape, ComposeListItem, CustomContentDialog, promptAction } from '@kit.ArkUI';
 import { zlib, zlibClient } from '../../datas/classes/zlib';
 import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
 import { globlContext } from '../../../entryability/EntryAbility';
@@ -29,6 +29,7 @@ import { common, Want } from '@kit.AbilityKit';
 import { UpdateInfo, UpdateInfoBuilder } from './pages/UpdateInfo';
 import { TanksForBuilder } from './pages/ThanksFor';
 import { XAnimation } from '../../datas/classes/XAnimation';
+import { pasteboard } from '@kit.BasicServicesKit';
 
 @ComponentV2
 export struct personal {
@@ -281,6 +282,19 @@ export struct personal {
               })
             })
           })
+
+          ComposeListItem({
+            contentItem: { primaryText: '反馈QQ群' },
+            operateItem: { text:'718559395'}
+          }).onClick(()=>{
+            let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, '718559395');
+            pasteboard.getSystemPasteboard().setData(pasteData) //写入剪切板
+            promptAction.showToast({
+              message:'复制成功',
+              duration: 2000
+            });
+          })
+
         }
         .bindSheet($$this.showTanks, TanksForBuilder(), {
           preferType: SheetType.CENTER,

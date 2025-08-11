@@ -70,7 +70,7 @@ struct Index {
 
     await zlibClient.refreshUrl().then(async () => {
       zlibClient.getRecommendBooks(1)
-      zlibClient.getBookShelf(1)
+ /*     zlibClient.getBookShelf(1)*/
     })
 
   }
@@ -111,7 +111,6 @@ struct Index {
           Swiper(this.swiperController) {
             zlibHome()
             bookShelf()
-
             zlibDownloadHistory()
             personal()
           }

@@ -27,7 +27,8 @@ export struct bookShelf{
   @Local bookShelfIndex: number = 1
   build() {
     Column(){
-      List({space:10}){
+      Text('正在开发')
+     /* List({space:10}){
        LazyForEach(zlibClient.bookshelfArray,(item:I_ReadLists_Bookshelf)=>{
           ListItem(){
             Column(){
@@ -52,7 +53,7 @@ export struct bookShelf{
         await zlibClient.getBookShelf(++this.bookShelfIndex)
         //XAnimation.runWithAnimation(()=>this.isFlashing = false)
       })
-      .edgeEffect(EdgeEffect.Spring)
+      .edgeEffect(EdgeEffect.Spring)*/
     }
     .size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
