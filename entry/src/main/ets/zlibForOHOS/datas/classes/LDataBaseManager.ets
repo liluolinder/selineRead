@@ -74,17 +74,17 @@ export class LDataBaseManager {
   }
 
   async createTableForRelationDataBase(store: relationalStore.RdbStore | undefined, TableName: string,
-    tableForms: I_RelationalStoreDataBaseTableForm[]) {
+    tableForms: I_RelationalStoreDataBaseTableForm[],version:number) {
     if (store) {
       const SQL_CREATE_TABLE =
         `CREATE TABLE IF NOT EXISTS ${TableName} (${this.generateTableForm(tableForms)})`;
       console.log(`FUCK${SQL_CREATE_TABLE}`)
       let storeVersion = store.version;
       // 当数据库创建时，数据库默认版本为0
-      if (storeVersion === 0) {
+      if (storeVersion != version) {
         try {
           await store.execute(SQL_CREATE_TABLE); // 创建数据表，以便后续调用insert接口插入数据
-          storeVersion = 1;
+          storeVersion = version;
           console.log(`FUCK:succeed create table`)
           // 设置数据库的版本，入参为大于0的整数
         } catch (e) {

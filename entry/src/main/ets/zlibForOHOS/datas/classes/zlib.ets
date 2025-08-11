@@ -22,6 +22,7 @@ import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { globlContext } from '../../../entryability/EntryAbility';
 import { shareBook } from '../../utils/ToolsUtil';
 import { I_Bookshelf, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
+import { notificationManager } from '@kit.NotificationKit';
 
 @ObservedV2
 export class zlib {
@@ -349,6 +350,7 @@ export class zlib {
   }
 
   async getTrueDownloadBookUrl(context: Context, bookUrl: string, bookInfo: I_BookInfo) {
+
     //todo:API18后换成openToast
     promptAction.showToast({ message: `开始下载,通知栏查看进度`, duration: 800 })
     let req = http.createHttp()
@@ -425,7 +427,7 @@ export class zlib {
         //开启进度回调
         downloadTask.on('progress', (receivedSize: number, totalSize: number) => {
 
-          console.log('download receivedSize: %s, totalSize: %s', receivedSize, totalSize);
+          console.log('FUCK:download receivedSize: %s, totalSize: %s', receivedSize, totalSize);
 
           progressValue = receivedSize / totalSize * 100
 
@@ -435,7 +437,7 @@ export class zlib {
         //开启下载完成回调
         downloadTask.on('complete', async () => {
           const taskInfo = await downloadTask.getTaskInfo();
-          console.log('downloadTask complete,status: %s', taskInfo.status);
+          console.log('FUCK:downloadTask complete,status: %s', taskInfo.status);
           //todo:API18后换成openToast
           promptAction.showToast({ message: `下载完成`, duration: 800 })
           linderNotificationManager.pushNotificationWithProgress(notificationID, 100, "下载完成", fileName)

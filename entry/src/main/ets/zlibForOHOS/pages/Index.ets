@@ -53,7 +53,7 @@ struct Index {
     })
 
     linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
-      zlibHaveDownloadTable)
+      zlibHaveDownloadTable,3)
 
     __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
 

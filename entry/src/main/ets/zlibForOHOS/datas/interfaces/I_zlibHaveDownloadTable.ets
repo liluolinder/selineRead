@@ -28,4 +28,5 @@ export interface I_ZlibHaveDownloadTable{
   BookImage:string
   BookDownLoadTime:string
   BookFilePath: string
+  haveDownload:number
 }

@@ -28,6 +28,7 @@ export struct bookShelf{
   build() {
     Column(){
       Text('正在开发')
+        .margin({top:__System__.bottomRectHeight})
      /* List({space:10}){
        LazyForEach(zlibClient.bookshelfArray,(item:I_ReadLists_Bookshelf)=>{
           ListItem(){
