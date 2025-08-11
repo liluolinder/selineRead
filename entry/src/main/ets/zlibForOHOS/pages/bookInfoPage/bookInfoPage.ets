@@ -162,7 +162,7 @@ export struct bookInfoPage {
                 primaryText: '出版年份'
               },
               operateItem: {
-                text: this.bookInfo?.datePublished.toString()
+                text: this.bookInfo?.datePublished?.toString()??'暂无数据'
               }
             })
 

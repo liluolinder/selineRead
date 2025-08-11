@@ -202,6 +202,7 @@ export class zlib {
       inLanguage: { name: '' },
       review: { reviewBody: '', datePublished: '', reviewRating: { ratingValue: '' } }
     }
+    console.log(`FUCK${bookHref}`)
     await req.request(`${this.base_url}${bookHref}`, {
       method: http.RequestMethod.GET,
       header: {
@@ -211,6 +212,7 @@ export class zlib {
       }
     }).then((data: http.HttpResponse) => {
       res = JSON.stringify(data.result)
+      console.log(`FUCK${res}`)
 
     }).catch((err: Error) => {
       res = 'error'
@@ -222,13 +224,21 @@ export class zlib {
 
     if (res != 'error') {
       let firstDownloadUrl: string = CJLoader.getBookFirstDownloadUrl(res)
+      console.log(`FUCK!${firstDownloadUrl}`)
       let firstDownloadInfo: string = CJLoader.getBookFirstDownloadInfo(res)
-      res = CJLoader.getBookInfo(res).replaceAll("\\n", "").replaceAll("\\\"", "\"")
-      resBookInfo = (JSON.parse(res) as object) as I_BookInfo
-      resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
-      resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
+      console.log(`FUCK!!${firstDownloadInfo}`)
+      res = CJLoader.getBookInfo(res).replaceAll("\\n", "").replaceAll("\\\"", "\"").replaceAll("\"datePublished\": ,","")
+      console.log(`FUCK!!!${res}`)
+      try {
+        resBookInfo = (JSON.parse(res) as object) as I_BookInfo
+        resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
+        resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
+      }catch (e)
+      {
+        console.log(`FUCK${JSON.stringify(e)}`)
+      }
     }
-
+    console.log(`FUCK${JSON.stringify(resBookInfo)}`)
     __UI__.isHaveOpenBook = false
     return resBookInfo;
 

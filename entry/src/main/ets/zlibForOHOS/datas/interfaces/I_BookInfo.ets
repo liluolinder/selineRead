@@ -26,7 +26,7 @@ export interface I_BookInfo{
   image:string
   isbn:string
   numberOfPages:number
-  datePublished:number
+  datePublished?:number
   inLanguage:inLanguageInfo
   review:reviewInfo
   bookID?:number
