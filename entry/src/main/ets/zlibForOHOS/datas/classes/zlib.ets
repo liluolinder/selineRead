@@ -94,6 +94,62 @@ export class zlib {
   }
 
 
+  async registerAccount(email:string, password:string, name:string) {
+    let req = http.createHttp()
+    await req.request(`${this.baseApi_url}/user/verification/send-code`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      },
+      extraData:{
+        'email':email,
+        'password':password,
+        'name':name,
+        'rx':215,
+        'action':'registration',
+        'redirectUrl':''
+      }
+    }).then((data: http.HttpResponse) => {
+      console.log(`FUCK:${JSON.stringify(data)}`)
+    }).catch((err: Error) => {
+      console.error('error2:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+    });
+    req.destroy()
+  }
+
+  async registerVerify(email:string, password:string, name:string, verifyCode:string) {
+    let req = http.createHttp()
+    await req.request(`${this.base_url}/rpc.php`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      },
+      extraData:{
+        'isModal':true,
+        'email':email,
+        'password':password,
+        'name':name,
+        'rx':215,
+        'action':'registration',
+        'redirectUrl':'',
+        'verifyCode':verifyCode,
+        'gg_json_mode':1
+      }
+    }).then((data: http.HttpResponse) => {
+      console.log(`FUCK:${JSON.stringify(data)}`)
+    }).catch((err: Error) => {
+      console.error('error2:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+    });
+    req.destroy()
+  }
+
+
   async getUserInfo() {
     let req = http.createHttp()
     await req.request(`${this.base_url}/?ts`, {
