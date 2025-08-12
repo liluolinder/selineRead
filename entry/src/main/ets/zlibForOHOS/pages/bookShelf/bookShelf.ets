@@ -28,7 +28,6 @@ export struct bookShelf{
   build() {
     Column(){
       Text('正在开发')
-        .margin({top:__System__.bottomRectHeight})
      /* List({space:10}){
        LazyForEach(zlibClient.bookshelfArray,(item:I_ReadLists_Bookshelf)=>{
           ListItem(){
@@ -56,6 +55,7 @@ export struct bookShelf{
       })
       .edgeEffect(EdgeEffect.Spring)*/
     }
+    .padding({top:Math.max(__System__.topRectHeight, 16)})
     .size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
   }

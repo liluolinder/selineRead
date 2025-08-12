@@ -36,8 +36,6 @@ import { bookShelf } from './bookShelf/bookShelf';
 @Entry
 @ComponentV2
 struct Index {
-  private swiperController: SwiperController = new SwiperController()
-  @Local currentPageIndex: number = 0
   private tabsArray: string[] = [
     'Zlibrary',
     '书单',
@@ -107,53 +105,39 @@ struct Index {
 
       Navigation(__UI__.indexPageStack) {
 
-        Stack({ alignContent: Alignment.BottomStart }) {
-          Swiper(this.swiperController) {
-            zlibHome()
-            bookShelf()
-            zlibDownloadHistory()
-            personal()
-          }
-          .loop(false)
-          .indicator(false)
-          .size({ width: '100%', height: '100%' })
-          .padding({ left: __System__.windowWidth > minWidth ? 65 + __System__.leftRectHeight : 0 })
-          .onChange((index) => {
-            __UI__.indexPageStack.removeByName('bookInfoPage')
-            this.currentPageIndex = index
-          })
 
-
-          Stack({ alignContent: Alignment.TopEnd }) {
-            Tabs({ index: this.currentPageIndex }) {
-              ForEach(this.tabsArray, (item: string, index: number) => {
-                TabContent().tabBar({ text: item, icon: this.tabIconChange(index) })
-              })
-            }
-            .scrollable(false)
-            .barHeight(__System__.windowWidth > minWidth ? '100%' : 65)
-            .onChange((index) => {
-              this.swiperController.changeIndex(index, true)
-              this.currentPageIndex = index
-              if (index == 3 && __User__.isLoginZlib) {
-                zlibClient.getUserInfo()
-              } else if (index == 2) {
-                zlibClient.localDownloadHistoryArray.clearData()
-                zlibClient.getLocalDownloadHistory()
-              }
+          Tabs() {
+            ForEach(this.tabsArray, (item: string, index: number) => {
+              TabContent(){
+                if (index==0) {
+                  zlibHome()
+                }else if (index==1)
+                {
+                  bookShelf()
+                }else if (index==2)
+                {
+                  zlibDownloadHistory()
+                }else {
+                  personal()
+                }
+              }.tabBar({ text: item, icon: this.tabIconChange(index) })
             })
-            .barWidth(__System__.windowWidth > minWidth ? 65 : '100%')
-            .barHeight(__System__.windowWidth > minWidth ? '100%' : 65)
-            .vertical(__System__.windowWidth > minWidth)
           }
-          .padding({ top: __System__.pcMode && __System__.windowWidth > minWidth ? __System__.topRectHeight : 0 })
-          .height(__System__.windowWidth > minWidth ? '100%' : 65 + __System__.bottomRectHeight * 0.8)
-          .width(__System__.windowWidth > minWidth ? 65 + __System__.leftRectHeight * 0.8 : '100%')
-          .backgroundColor(__System__.windowWidth > minWidth ? Color.Transparent :
-          $r('app.color.start_window_background_blur'))
-          .backdropBlur(__System__.windowWidth > minWidth ? null : 100)
+          .scrollable(false)
+          .barHeight(__System__.windowWidth > minWidth ? '100%' : 65)
+          .onChange((index) => {
+            zlibClient.localDownloadHistoryArray.clearData()
+            if (index == 3 && __User__.isLoginZlib) {
+              zlibClient.getUserInfo()
+            } else if (index == 2) {
+              zlibClient.getLocalDownloadHistory()
+            }
+          })
+          .barWidth(__System__.windowWidth > minWidth ? 65 : '100%')
+          .barHeight(__System__.windowWidth > minWidth ? '100%' : 65)
+          .barPosition(__System__.windowWidth > minWidth?BarPosition.Start:BarPosition.End)
+          .vertical(__System__.windowWidth > minWidth)
 
-        }
 
       }
       .hideTitleBar(true)

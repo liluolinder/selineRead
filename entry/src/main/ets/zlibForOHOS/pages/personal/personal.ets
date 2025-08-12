@@ -120,7 +120,7 @@ export struct personal {
               .clipShape(new CircleShape({ width: 80, height: 80 }))
 
             Column({ space: 5 }) {
-              Text(__User__.isLoginZlib ? __User__.zlibAccount : '点击登录')
+              Text(__User__.isLoginZlib ? zlibClient.userInfo?.userName??'正在获取' : '点击登录')
                 .fontSize(18).maxLines(2)
                 .fontWeight(FontWeight.Medium)
               if (__User__.isLoginZlib) {
