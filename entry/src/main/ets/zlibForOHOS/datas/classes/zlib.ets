@@ -162,9 +162,11 @@ export class zlib {
     }).then((data: http.HttpResponse) => {
       let res = CJLoader.getUserDownloadLimitAndDonation(JSON.stringify(data.result))
       let avatar = this.userInfo?.avatar ?? CJLoader.getUserAvatar(JSON.stringify(data.result))
+      let userName = this.userInfo?.userName ?? CJLoader.getUserName(JSON.stringify(data.result))
       if (res) {
         this.userInfo = JSON.parse(res) as I_UserInfo
         this.userInfo.avatar = avatar
+        this.userInfo.userName = userName
       }
     }).catch((err: Error) => {
       console.error('error2:' + JSON.stringify(err));

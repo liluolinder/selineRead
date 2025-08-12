@@ -22,4 +22,5 @@ export interface I_UserInfo{
   downloadLimit:string
   donation:string
   avatar:string
+  userName:string
 }
