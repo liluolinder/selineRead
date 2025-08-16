@@ -329,11 +329,10 @@ export struct zlibHome {
       if ((__UI__.searchOrRecommend == zlibIndexShowMod.Recommend &&
         zlibClient.recommendBooksArray.dataArray.length == 0) ||
         (__UI__.searchOrRecommend == zlibIndexShowMod.Search && zlibClient.searchBooksArray.dataArray.length == 0)) {
-        Column(){
+        Stack(){
           LoadingProgress()
             .size({ width: 150, height: 150 })
         }.size({width:'100%', height:'100%'})
-        .justifyContent(FlexAlign.Center)
       } else {
         Stack() {
           if (this.listOrWaterFlow == zlibIndexShowMod.WaterFlow) {
