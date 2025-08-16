@@ -184,21 +184,17 @@ export struct zlibHome {
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
         .animation({ curve: curves.springMotion(0.5, 0.7) }))
       .onClick(async () => {
-        if (__UI__.isHaveOpenBook) {
-          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
-        }else {
-          this.isOpening = true
-          await zlibClient.getBookInfo(item.href).then((res) => {
-            if (res.name!='' && res.name!=undefined ) {
-              res.bookID = Number(item.id)
-              res.image = item.image
-              res.href = item.href
-              __UI__.indexPageStack.removeByName('bookInfoPage')
-              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
-            }
-            this.isOpening = false
-          })
-        }
+        this.isOpening = true
+        await zlibClient.getBookInfo(item.href).then((res) => {
+          if (res.name != '' && res.name != undefined) {
+            res.bookID = Number(item.id)
+            res.image = item.image
+            res.href = item.href
+            __UI__.indexPageStack.removeByName('bookInfoPage')
+            __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+          }
+          this.isOpening = false
+        })
       })
     }, (item: string) => item)
   }
