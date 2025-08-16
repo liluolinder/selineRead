@@ -25,7 +25,7 @@ import { XAnimation } from "../../datas/classes/XAnimation"
 import { I_searchBook } from "../../datas/interfaces/I_BookInfo"
 import { zlibIndexShowMod } from "../../datas/enums/zlibIndexShowMod"
 import { effectKit } from "@kit.ArkGraphics2D"
-import { loadingDialog } from "../Builder"
+import { loadingDialog, loadingNewDialog } from "../Builder"
 
 @ComponentV2
 export struct zlibHome {
@@ -413,13 +413,7 @@ export struct zlibHome {
       }
 
       if(this.isFlashing){
-        Stack({alignContent: Alignment.Bottom}){
-          Row({space: 5}){
-            LoadingProgress().size({width: 35, height: 35}).color($r('sys.color.font')).opacity(0.6)
-            Text('正在载入').fontSize(22).fontWeight(FontWeight.Medium).fontColor($r('sys.color.font')).opacity(0.6)
-          }.padding(10).borderRadius(10).backdropBlur(100)
-        }.size({width: '100%', height: '100%'}).padding({bottom: Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 100))}).enabled(false)
-        .transition(XAnimation.getAnimation('down'))
+        loadingNewDialog()
       }
 
     }
