@@ -192,9 +192,13 @@ export struct personal {
                 .fontSize(18).maxLines(2)
                 .fontWeight(FontWeight.Medium)
               if (__User__.isLoginZlib) {
-                Image($r('app.media.logoff'))
-                  .size({ width: 25, height: 25 })
-                  .fillColor($r('sys.color.font'))
+                Button({stateEffect: true}){
+                  SymbolGlyph($r('sys.symbol.arrow_right_and_square')).fontSize(18).fontColor([$r('sys.color.font')])
+                }
+                .size({ width: 30, height: 30 })
+                .backgroundColor(Color.Transparent)
+                .opacity(0.8)
+                .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
                   .onClick(() => {
                     NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", false)
                     NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", '')
