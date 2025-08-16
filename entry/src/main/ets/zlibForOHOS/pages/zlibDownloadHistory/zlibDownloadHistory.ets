@@ -100,7 +100,7 @@ export struct zlibDownloadHistory {
           .transition(XAnimation.getAnimation('bottom'))
           .backgroundColor($r('sys.color.comp_background_list_card'))
           .borderRadius(20)
-          .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+          .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
           .size({ width: '100%', height: 120 })
         })
 

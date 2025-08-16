@@ -69,7 +69,7 @@ export struct zlibHome {
 
         }.alignItems(HorizontalAlign.Start)
       }
-      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
       .padding(15)
       .width('100%')
       .backgroundColor($r('sys.color.comp_background_list_card'))
@@ -125,7 +125,7 @@ export struct zlibHome {
         }.size({ width: '100%', height: '100%' })
         .padding(15)
       }
-      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
       .onClick(async () => {
         this.isOpening = true
         if (__UI__.isHaveOpenBook) {
