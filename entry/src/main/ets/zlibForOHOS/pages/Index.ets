@@ -36,12 +36,16 @@ import { bookShelf } from './bookShelf/bookShelf';
 @Entry
 @ComponentV2
 struct Index {
-  private tabsArray: string[] = [
-    'Zlibrary',
-    '书单',
-    '历史记录',
-    '我的'
+  private tabsArray: [string, Resource, Resource][] = [
+    ['Zlibrary', $r('sys.symbol.book'), $r('sys.symbol.book_open_fill')],
+    ['书单', $r('sys.symbol.list_bullet'), $r('sys.symbol.list_bullet')],
+    ['历史记录', $r('sys.symbol.clock'), $r('sys.symbol.clock_fill')],
+    ['我的', $r('sys.symbol.person'), $r('sys.symbol.person_fill')]
   ]
+
+  @Local currentPage: number = 0
+
+  private swiperController = new SwiperController()
 
   async aboutToAppear(): Promise<void> {
     console.log(`FUCK${zlibClient.recommendBooksArray.totalCount()}`)
@@ -105,27 +109,17 @@ struct Index {
 
       Navigation(__UI__.indexPageStack) {
 
-
-          Tabs() {
-            ForEach(this.tabsArray, (item: string, index: number) => {
-              TabContent(){
-                if (index==0) {
-                  zlibHome()
-                }else if (index==1)
-                {
-                  bookShelf()
-                }else if (index==2)
-                {
-                  zlibDownloadHistory()
-                }else {
-                  personal()
-                }
-              }.tabBar({ text: item, icon: this.tabIconChange(index) })
-            })
-          }
-          .scrollable(false)
-          .barHeight(__System__.windowWidth > minWidth ? '100%' : 65)
-          .onChange((index) => {
+        Stack({alignContent: Alignment.BottomStart}){
+          Swiper(this.swiperController){
+            zlibHome()
+            bookShelf()
+            zlibDownloadHistory()
+            personal()
+          }.padding({left: __System__.windowWidth > minWidth? 65 + __System__.leftRectHeight: 0})
+          .indicator(false)
+          .loop(false)
+          .onChange((index)=>{
+            this.currentPage = index
             zlibClient.localDownloadHistoryArray.clearData()
             if (index == 3 && __User__.isLoginZlib) {
               zlibClient.getUserInfo()
@@ -133,10 +127,29 @@ struct Index {
               zlibClient.getLocalDownloadHistory()
             }
           })
-          .barWidth(__System__.windowWidth > minWidth ? 65 : '100%')
-          .barHeight(__System__.windowWidth > minWidth ? '100%' : 65)
-          .barPosition(__System__.windowWidth > minWidth?BarPosition.Start:BarPosition.End)
-          .vertical(__System__.windowWidth > minWidth)
+          Flex({justifyContent: FlexAlign.SpaceAround, alignItems: ItemAlign.Center, direction: __System__.windowWidth > minWidth? FlexDirection.Column: FlexDirection.Row}){
+            ForEach(this.tabsArray, (item: [string, Resource, Resource], index: number) =>{
+              Button({stateEffect: true, type: ButtonType.Normal}){
+                Column({space: 2}){
+                  SymbolGlyph(this.currentPage == index? item[2]: item[1]).fontSize(22).fontColor([this.currentPage == index? $r('app.color.sweet_blue'): $r('sys.color.font')])
+                  Text(item[0]).fontSize(22).fontColor(this.currentPage == index? $r('app.color.sweet_blue'): $r('sys.color.font')).maxFontSize(11).minFontSize(10).maxLines(1)
+                }
+              }.backgroundColor(Color.Transparent).opacity(0.9)
+              .padding(10)
+              .borderRadius(10)
+              .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+              .onClick(()=>{
+                this.currentPage = index
+                this.swiperController.changeIndex(index, true)
+              })
+            })
+
+          }
+          .backgroundColor($r('app.color.start_window_background_blur')).backdropBlur(__System__.windowWidth > minWidth? 65 + __System__.bottomRectHeight: 100)
+          .width(__System__.windowWidth > minWidth ? 65 + __System__.leftRectHeight : '100%')
+          .height(__System__.windowWidth > minWidth ? '100%' : undefined)
+          .padding({bottom: Math.max(__System__.bottomRectHeight, 5), top: __System__.windowWidth > minWidth? __System__.topRectHeight: 0, left: __System__.windowWidth > minWidth? __System__.leftRectHeight: 5})
+        }
 
 
       }
