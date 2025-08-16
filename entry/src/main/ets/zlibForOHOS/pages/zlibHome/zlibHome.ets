@@ -128,20 +128,16 @@ export struct zlibHome {
       .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
       .onClick(async () => {
         this.isOpening = true
-        if (__UI__.isHaveOpenBook) {
-          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
-        }else {
-          await zlibClient.getBookInfo(item.url).then((res) => {
-            if (res.name!='' && res.name!=undefined ) {
-              res.bookID = item.id
-              res.image = item.cover
-              res.href = item.url
-              __UI__.indexPageStack.removeByName('bookInfoPage')
-              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
-            }
-            this.isOpening = false
-          })
-        }
+        await zlibClient.getBookInfo(item.url).then((res) => {
+          if (res.name!='' && res.name!=undefined ) {
+            res.bookID = item.id
+            res.image = item.cover
+            res.href = item.url
+            __UI__.indexPageStack.removeByName('bookInfoPage')
+            __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+          }
+          this.isOpening = false
+        })
       })
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
