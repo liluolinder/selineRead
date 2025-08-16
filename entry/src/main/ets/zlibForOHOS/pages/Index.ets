@@ -145,7 +145,7 @@ struct Index {
             })
 
           }
-          .backgroundColor($r('app.color.start_window_background_blur')).backdropBlur(__System__.windowWidth > minWidth? 65 + __System__.bottomRectHeight: 100)
+          .backgroundColor(__System__.windowWidth > minWidth? Color.Transparent: $r('app.color.start_window_background_blur')).backdropBlur(__System__.windowWidth > minWidth? 65 + __System__.bottomRectHeight: 100)
           .width(__System__.windowWidth > minWidth ? 65 + __System__.leftRectHeight : '100%')
           .height(__System__.windowWidth > minWidth ? '100%' : 65 + __System__.bottomRectHeight)
           .padding({bottom: Math.max(__System__.bottomRectHeight, 5), top: __System__.windowWidth > minWidth? __System__.topRectHeight: 0, left: __System__.windowWidth > minWidth? __System__.leftRectHeight: 5})
