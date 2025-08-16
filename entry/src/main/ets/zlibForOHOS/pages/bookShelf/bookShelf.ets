@@ -17,11 +17,12 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-import { minWidth, __System__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_BookInfo_Bookshelf, I_ReadLists_Bookshelf } from "../../datas/interfaces/I_BookShelf"
 import { loadingNewDialog } from "../Builder"
+import { curves } from "@kit.ArkUI"
 
 @ComponentV2
 export struct bookShelf{
@@ -30,57 +31,68 @@ export struct bookShelf{
   @Local waterFlowColumnNumber : number = -1
   @Local waterFlowEmptyItem: number[] = []
 
-  aboutToAppear(): void {
-    zlibClient.getBookShelf(1)
-  }
-
   build() {
-    Stack(){
-      WaterFlow(){
-        LazyForEach(zlibClient.bookshelfArray,(item:I_ReadLists_Bookshelf)=>{
-          FlowItem(){
-            Column({space: 5}){
-              Text(item.title).fontSize(18).fontWeight(FontWeight.Medium).maxLines(1)
-              List({space: 10}){
-                ForEach(item.booksGrouped?.slice(0, 5),(itemB:I_BookInfo_Bookshelf)=>{
-                  ListItem(){
-                    Image(itemB.coverUrl)
-                      .width(75)
-                  }
-                })
-              }.listDirection(Axis.Horizontal).scrollBar(BarState.Off).contentStartOffset(20).contentEndOffset(20).fadingEdge(true)
-            }.alignItems(HorizontalAlign.Start)
-          }
-          .backgroundColor($r('sys.color.comp_background_list_card'))
-          .borderRadius(20)
-          .onClick(()=>{
-            zlibClient.getBookShelfMoreInfo(item.id,1)
+    if ((zlibClient.bookshelfArray.dataArray.length == 0)) {
+      Stack(){
+        LoadingProgress()
+          .size({ width: 150, height: 150 })
+      }.size({width:'100%', height:'100%'})
+    }else{
+      Stack(){
+        WaterFlow(){
+          ForEach(this.waterFlowEmptyItem, ()=>{FlowItem().height(Math.max(16, __System__.topRectHeight))})
+          LazyForEach(zlibClient.bookshelfArray,(item:I_ReadLists_Bookshelf)=>{
+            FlowItem(){
+              Column({space: 10}){
+                Text(item.title).fontSize(18).fontWeight(FontWeight.Medium).maxLines(1).textOverflow({overflow: TextOverflow.Ellipsis})
+                List({space: 10}){
+                  ForEach(item.booksGrouped,(itemB:I_BookInfo_Bookshelf)=>{
+                    ListItem(){
+                      Image(itemB.coverUrl)
+                        .width(75)
+                        .draggable(false)
+                    }
+                  })
+                }.listDirection(Axis.Horizontal).scrollBar(BarState.Off).contentStartOffset(5).contentEndOffset(5).fadingEdge(true)
+              }.alignItems(HorizontalAlign.Start)
+            }
+            .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
+            .transition(TransitionEffect.OPACITY
+              .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+              .animation({ curve: curves.springMotion(0.5, 0.7) }))
+            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .padding(15)
+            .borderRadius(20)
+            .onClick(()=>{
+              zlibClient.getBookShelfMoreInfo(item.id,1)
+            })
           })
+          ForEach(this.waterFlowEmptyItem, ()=>{FlowItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 70), 16))})
+        }.margin({left: 16, right: 16})
+        .scrollBar(BarState.Off)
+        .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
+        .columnsGap(10)
+        .rowsGap(10)
+        .onReachEnd(async () => {
+          XAnimation.runWithAnimation(()=>this.isFlashing = true)
+          await zlibClient.getBookShelf(++this.bookShelfIndex)
+          XAnimation.runWithAnimation(()=>this.isFlashing = false)
         })
-      }.margin({left: 15, right: 15})
-      .scrollBar(BarState.Off)
-      .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
-      .columnsGap(10)
-      .rowsGap(10)
-      .onReachEnd(async () => {
-        XAnimation.runWithAnimation(()=>this.isFlashing = true)
-        await zlibClient.getBookShelf(++this.bookShelfIndex)
-        XAnimation.runWithAnimation(()=>this.isFlashing = false)
-      })
-      .edgeEffect(EdgeEffect.Spring)
-      if(this.isFlashing){
-        loadingNewDialog()
-      }
-    }.size({width: '100%', height: '100%'})
-    .onAreaChange((_, newValue)=>{
-      XAnimation.runWithAnimation(()=>{
-        this.waterFlowColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 270), 2)
-        let itemList: number[] = []
-        for (let index = 0; index < this.waterFlowColumnNumber; index++) {
-          itemList.push(index)
+        .edgeEffect(EdgeEffect.Spring)
+        if(this.isFlashing){
+          loadingNewDialog()
         }
-        this.waterFlowEmptyItem = itemList
-      }, this.waterFlowColumnNumber > 0)
-    })
+      }.size({width: '100%', height: '100%'})
+      .onAreaChange((_, newValue)=>{
+        XAnimation.runWithAnimation(()=>{
+          this.waterFlowColumnNumber = Math.max(Math.floor(new Number(newValue.width).valueOf() / 300), 1)
+          let itemList: number[] = []
+          for (let index = 0; index < this.waterFlowColumnNumber; index++) {
+            itemList.push(index)
+          }
+          this.waterFlowEmptyItem = itemList
+        }, this.waterFlowColumnNumber > 0)
+      })
+    }
   }
 }
