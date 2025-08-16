@@ -118,7 +118,7 @@ export struct bookShelfList {
                   .animation({ curve: curves.springMotion(0.4, 0.7) })
 
                 animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
-                  this.bookShelfNavPathStack.pushPath({ name: 'bookShelfPage', param: item.id.toString() }, false);
+                  this.bookShelfNavPathStack.pushPath({ name: 'bookShelfPage', param: item }, false);
                 })
               })
             })
