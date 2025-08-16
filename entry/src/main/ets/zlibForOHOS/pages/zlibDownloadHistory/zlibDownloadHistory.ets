@@ -92,7 +92,8 @@ export struct zlibDownloadHistory {
                 value: '在内置阅读器查看',
                 action: ()=>{
                   __UI__.indexPageStack.pushPath({name: 'readerPage', param: item.BookFilePath}, true)
-                }
+                },
+                enabled: fileIo.accessSync(item.BookFilePath)
               }
             ])
           }
