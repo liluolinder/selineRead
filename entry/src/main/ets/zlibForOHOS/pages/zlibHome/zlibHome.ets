@@ -17,15 +17,14 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-import { zlibClient } from "../../datas/classes/zlib"
-import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
-import { curves, LengthMetrics, promptAction } from "@kit.ArkUI"
-import { minWidth, __System__, __UI__ } from "../../datas/classes/ShareDatas"
-import { XAnimation } from "../../datas/classes/XAnimation"
-import { I_searchBook } from "../../datas/interfaces/I_BookInfo"
-import { zlibIndexShowMod } from "../../datas/enums/zlibIndexShowMod"
-import { effectKit } from "@kit.ArkGraphics2D"
-import { loadingDialog, loadingNewDialog } from "../Builder"
+import { zlibClient } from '../../datas/classes/zlib'
+import { I_RecommendBook } from '../../datas/interfaces/I_RecommendBook'
+import { curves, promptAction } from '@kit.ArkUI'
+import { __System__, __UI__, minWidth } from '../../datas/classes/ShareDatas'
+import { XAnimation } from '../../datas/classes/XAnimation'
+import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
+import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod'
+import { loadingDialog, loadingNewDialog } from '../Builder'
 
 @ComponentV2
 export struct zlibHome {
@@ -34,11 +33,9 @@ export struct zlibHome {
   @Local showSearchPage: boolean = false
   @Local listOrWaterFlow: zlibIndexShowMod = zlibIndexShowMod.WaterFlow
   @Local searchBookName: string = ''
-  @Local waterFlowColumnNumber : number = -1
+  @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
-
   @Local isOpening: boolean = false
-
   @Local isFlashing: boolean = false
 
   @Builder
@@ -55,7 +52,7 @@ export struct zlibHome {
               offsetY: 10
             })
 
-          Column({space: 2}){
+          Column({ space: 2 }) {
             Text(item.title)
               .fontSize(16)
               .maxLines(1)
@@ -66,10 +63,9 @@ export struct zlibHome {
               .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
           }.alignItems(HorizontalAlign.Start)
 
-
         }.alignItems(HorizontalAlign.Start)
       }
-      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
       .padding(15)
       .width('100%')
       .backgroundColor($r('sys.color.comp_background_list_card'))
@@ -81,9 +77,9 @@ export struct zlibHome {
         this.isOpening = true
         if (__UI__.isHaveOpenBook) {
           promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
-        }else {
+        } else {
           await zlibClient.getBookInfo(item.url).then((res) => {
-            if (res.name!='' && res.name!=undefined ) {
+            if (res.name != '' && res.name != undefined) {
               res.bookID = item.id
               res.image = item.cover
               res.href = item.url
@@ -103,7 +99,7 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Image(item.cover)
-            .size({ height: '100%',width:'62' })
+            .size({ height: '100%', width: '62' })
             .shadow({
               radius: 25,
               color: Color.Gray,
@@ -125,11 +121,11 @@ export struct zlibHome {
         }.size({ width: '100%', height: '100%' })
         .padding(15)
       }
-      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
       .onClick(async () => {
         this.isOpening = true
         await zlibClient.getBookInfo(item.url).then((res) => {
-          if (res.name!='' && res.name!=undefined ) {
+          if (res.name != '' && res.name != undefined) {
             res.bookID = item.id
             res.image = item.cover
             res.href = item.url
@@ -162,7 +158,7 @@ export struct zlibHome {
               offsetY: 10
             })
 
-          Column({space: 2}){
+          Column({ space: 2 }) {
             Text(item.title)
               .fontSize(16)
               .maxLines(1)
@@ -173,10 +169,9 @@ export struct zlibHome {
               .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
           }.alignItems(HorizontalAlign.Start)
 
-
         }.alignItems(HorizontalAlign.Start)
       }
-      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
       .padding(15)
       .backgroundColor($r('sys.color.comp_background_list_card'))
       .borderRadius(15)
@@ -205,7 +200,7 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Image(item.image)
-            .size({ height: '100%',width:'62' })
+            .size({ height: '100%', width: '62' })
             .shadow({
               radius: 25,
               color: Color.Gray,
@@ -227,23 +222,19 @@ export struct zlibHome {
         }.size({ width: '100%', height: '100%' })
         .padding(15)
       }
-      .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
       .onClick(async () => {
-        if (__UI__.isHaveOpenBook) {
-          promptAction.showToast({ message: `已有待打开的书籍，请稍后`, duration: 800 })
-        }else {
-          this.isOpening = true
-          await zlibClient.getBookInfo(item.href).then((res) => {
-            if (res.name!='' && res.name!=undefined ) {
-              res.bookID = Number(item.id)
-              res.image = item.image
-              res.href = item.href
-              __UI__.indexPageStack.removeByName('bookInfoPage')
-              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
-            }
-            this.isOpening = false
-          })
-        }
+        this.isOpening = true
+        await zlibClient.getBookInfo(item.href).then((res) => {
+          if (res.name != '' && res.name != undefined) {
+            res.bookID = Number(item.id)
+            res.image = item.image
+            res.href = item.href
+            __UI__.indexPageStack.removeByName('bookInfoPage')
+            __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+          }
+          this.isOpening = false
+        })
       })
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
@@ -255,12 +246,12 @@ export struct zlibHome {
   }
 
   build() {
-    Stack({alignContent: Alignment.TopEnd}) {
-      if(this.isOpening){
+    Stack({ alignContent: Alignment.TopEnd }) {
+      if (this.isOpening) {
         loadingDialog()
       }
       //顶部搜索栏
-      Row({space: 10}){
+      Row({ space: 10 }) {
         Button({ type: ButtonType.Circle }) {
           SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
           $r('sys.symbol.satellite_map'))
@@ -269,17 +260,19 @@ export struct zlibHome {
         }
         .width(40)
         .height(40)
-        .backgroundColor($r('sys.color.comp_background_tertiary')).backdropBlur(100)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .backdropBlur(100)
         .onClick(() => {
           XAnimation.runWithAnimation(() => {
             this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
             zlibIndexShowMod.WaterFlow
           })
         })
-        .visibility(__UI__.isInSearchMode? Visibility.None: Visibility.Visible)
+        .visibility(__UI__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
         Search()
-          .backgroundColor($r('sys.color.comp_background_tertiary')).backdropBlur(100)
+          .backgroundColor($r('sys.color.comp_background_tertiary'))
+          .backdropBlur(100)
           .focusable(__UI__.isInSearchMode)
           .enableKeyboardOnFocus(__UI__.isInSearchMode)
           .onEditChange((isInFocus) => {
@@ -314,22 +307,24 @@ export struct zlibHome {
               __UI__.isInSearchMode = true
             })
           })
-          .width(__UI__.isInSearchMode? '100%': '50%')
+          .width(__UI__.isInSearchMode ? '100%' : '50%')
       }.zIndex(1).padding({ left: 16, right: 16, top: __System__.topRectHeight })
 
 
       if ((__UI__.searchOrRecommend == zlibIndexShowMod.Recommend &&
         zlibClient.recommendBooksArray.dataArray.length == 0) ||
         (__UI__.searchOrRecommend == zlibIndexShowMod.Search && zlibClient.searchBooksArray.dataArray.length == 0)) {
-        Stack(){
+        Stack() {
           LoadingProgress()
             .size({ width: 150, height: 150 })
-        }.size({width:'100%', height:'100%'})
+        }.size({ width: '100%', height: '100%' })
       } else {
         Stack() {
           if (this.listOrWaterFlow == zlibIndexShowMod.WaterFlow) {
             WaterFlow() {
-              ForEach(this.waterFlowEmptyItem, (item: number)=>{FlowItem().height(__System__.topRectHeight + 60)})
+              ForEach(this.waterFlowEmptyItem, (item: number) => {
+                FlowItem().height(__System__.topRectHeight + 60)
+              })
 
               if (__UI__.searchOrRecommend == zlibIndexShowMod.Recommend) {
                 this.waterFlow_recommend()
@@ -337,10 +332,13 @@ export struct zlibHome {
                 this.waterFlow_search()
               }
 
-              ForEach(this.waterFlowEmptyItem, (item: number)=>{FlowItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 70), 16))})
+              ForEach(this.waterFlowEmptyItem, (item: number) => {
+                FlowItem()
+                  .height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70), 16))
+              })
             }
-            .onAreaChange((_, newValue)=>{
-              XAnimation.runWithAnimation(()=>{
+            .onAreaChange((_, newValue) => {
+              XAnimation.runWithAnimation(() => {
                 this.waterFlowColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
                 let itemList: number[] = []
                 for (let index = 0; index < this.waterFlowColumnNumber; index++) {
@@ -374,7 +372,7 @@ export struct zlibHome {
               } else {
                 this.list_search()
               }
-              ListItem().height(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 10: 70))
+              ListItem().height(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 10 : 70))
             }
             .scrollBar(BarState.Off)
             .size({ width: '100%', height: '100%' })
@@ -400,10 +398,10 @@ export struct zlibHome {
                 })
               })
           }
-        }.padding({ left: 20, right: 20 }).blur(__UI__.isInSearchMode? 50: 0)
+        }.padding({ left: 20, right: 20 }).blur(__UI__.isInSearchMode ? 50 : 0)
       }
 
-      if(this.isFlashing){
+      if (this.isFlashing) {
         loadingNewDialog()
       }
 
