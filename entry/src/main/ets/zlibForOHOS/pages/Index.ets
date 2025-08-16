@@ -135,7 +135,7 @@ struct Index {
                   Text(item[0]).fontSize(22).fontColor(this.currentPage == index? $r('app.color.sweet_blue'): $r('sys.color.font')).maxFontSize(11).minFontSize(10).maxLines(1)
                 }
               }.backgroundColor(Color.Transparent).opacity(0.9)
-              .padding(10)
+              .size({width: '100%', height: '100%'})
               .borderRadius(10)
               .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
               .onClick(()=>{
