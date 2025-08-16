@@ -153,6 +153,7 @@ export struct bookShelfList {
         })
       }
     }
+    .backgroundColor($r('sys.color.comp_background_gray'))
     .transition(this.transitionEffect)
     .hideTitleBar(true)
     .hideToolBar(true)
