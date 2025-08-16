@@ -21,7 +21,7 @@ import { I_UserInfo } from '../interfaces/I_UserInfo';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { globlContext } from '../../../entryability/EntryAbility';
 import { shareBook } from '../../utils/ToolsUtil';
-import { I_Bookshelf, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
+import { I_Bookshelf, I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
 import { notificationManager } from '@kit.NotificationKit';
 
 @ObservedV2
@@ -30,6 +30,7 @@ export class zlib {
   @Trace searchBooksArray: BasicDataSource<I_searchBook> = new BasicDataSource<I_searchBook>()
   @Trace localDownloadHistoryArray: BasicDataSource<I_ZlibHaveDownloadTable> = new BasicDataSource<I_ZlibHaveDownloadTable>()
   @Trace bookshelfArray: BasicDataSource<I_ReadLists_Bookshelf> = new BasicDataSource<I_ReadLists_Bookshelf>()
+  @Trace bookshelfBooks: BasicDataSource<I_Bookshelf_extraBooks> = new BasicDataSource<I_Bookshelf_extraBooks>()
   @Trace userInfo: I_UserInfo | undefined
   //官方:https://zh.z-library.sk
   base_url: string = 'https://zh.zlibraryd.ru'
@@ -92,63 +93,6 @@ export class zlib {
     });
     req.destroy()
   }
-
-
-  async registerAccount(email:string, password:string, name:string) {
-    let req = http.createHttp()
-    await req.request(`${this.baseApi_url}/user/verification/send-code`, {
-      method: http.RequestMethod.POST,
-      header: {
-        'sec-ch-ua-platform': '"Windows"',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
-        'Cookie': this.cookie,
-      },
-      extraData:{
-        'email':email,
-        'password':password,
-        'name':name,
-        'rx':215,
-        'action':'registration',
-        'redirectUrl':''
-      }
-    }).then((data: http.HttpResponse) => {
-      console.log(`FUCK:${JSON.stringify(data)}`)
-    }).catch((err: Error) => {
-      console.error('error2:' + JSON.stringify(err));
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-    });
-    req.destroy()
-  }
-
-  async registerVerify(email:string, password:string, name:string, verifyCode:string) {
-    let req = http.createHttp()
-    await req.request(`${this.base_url}/rpc.php`, {
-      method: http.RequestMethod.POST,
-      header: {
-        'sec-ch-ua-platform': '"Windows"',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
-        'Cookie': this.cookie,
-      },
-      extraData:{
-        'isModal':true,
-        'email':email,
-        'password':password,
-        'name':name,
-        'rx':215,
-        'action':'registration',
-        'redirectUrl':'',
-        'verifyCode':verifyCode,
-        'gg_json_mode':1
-      }
-    }).then((data: http.HttpResponse) => {
-      console.log(`FUCK:${JSON.stringify(data)}`)
-    }).catch((err: Error) => {
-      console.error('error2:' + JSON.stringify(err));
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-    });
-    req.destroy()
-  }
-
 
   async getUserInfo() {
     let req = http.createHttp()
@@ -282,19 +226,21 @@ export class zlib {
     req.destroy()
 
     if (res != 'error') {
-      let firstDownloadUrl: string = CJLoader.getBookFirstDownloadUrl(res)
-      console.log(`FUCK!${firstDownloadUrl}`)
-      let firstDownloadInfo: string = CJLoader.getBookFirstDownloadInfo(res)
-      console.log(`FUCK!!${firstDownloadInfo}`)
-      res = CJLoader.getBookInfo(res).replaceAll("\\n", "").replaceAll("\\\"", "\"").replaceAll("\"datePublished\": ,","")
-      console.log(`FUCK!!!${res}`)
+      console.log(`FUCK123124`)
       try {
+        let firstDownloadUrl: string = CJLoader.getBookFirstDownloadUrl(res)
+        console.log(`FUCK!${firstDownloadUrl}`)
+        let firstDownloadInfo: string = CJLoader.getBookFirstDownloadInfo(res)
+        console.log(`FUCK!!${firstDownloadInfo}`)
+        res = CJLoader.getBookInfo(res).replaceAll("\\n", "").replaceAll("\\\"", "\"").replaceAll("\"datePublished\": ,","")
+        console.log(`FUCK!!!${res}`)
         resBookInfo = (JSON.parse(res) as object) as I_BookInfo
         resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
       }catch (e)
       {
-        console.log(`FUCK${JSON.stringify(e)}`)
+        promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
+        console.log(`FUCK12412444${JSON.stringify(e)}`)
       }
     }
     console.log(`FUCK${JSON.stringify(resBookInfo)}`)
@@ -331,6 +277,37 @@ export class zlib {
         item.readListsOwners = temp.readlistsOwners[item.user_id]
         item.booksGrouped = temp.booksGrouped[item.id]
         this.bookshelfArray.pushData(item)
+      })
+
+    }).catch((err: Error) => {
+      console.error('error11:' + JSON.stringify(err));
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+    });
+    req.destroy()
+  }
+
+  async getBookShelfMoreInfo(shelfID:number, page:number)
+  {
+    let req = http.createHttp()
+    await req.request(`${this.baseApi_url}/booklist/${shelfID}/get-books/${page}`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      },
+      extraData:{
+        'order': "date_savedA",
+        'searchQuery': ""
+      }
+    }).then((data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+
+      let tempArray:I_Bookshelf_extraBooks[] = (result as object)?.['books']
+
+      tempArray.forEach((item:I_Bookshelf_extraBooks)=>{
+        this.bookshelfBooks.pushData(item)
       })
 
     }).catch((err: Error) => {

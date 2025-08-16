@@ -18,15 +18,13 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 
-import { FunctionalButton, functionalButtonComponentManager } from '@kit.ScenarioFusionKit';
-import { minHeight, minWidth, __System__, __User__ } from '../../datas/classes/ShareDatas';
-import { linderPixelMap } from '../../datas/classes/LPixelMap';
+import { __System__, __User__, minWidth } from '../../datas/classes/ShareDatas';
 import { CircleShape, ComposeListItem, CustomContentDialog, promptAction } from '@kit.ArkUI';
-import { zlib, zlibClient } from '../../datas/classes/zlib';
+import { zlibClient } from '../../datas/classes/zlib';
 import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
 import { globlContext } from '../../../entryability/EntryAbility';
 import { common, Want } from '@kit.AbilityKit';
-import { UpdateInfo, UpdateInfoBuilder } from './pages/UpdateInfo';
+import { UpdateInfoBuilder } from './pages/UpdateInfo';
 import { TanksForBuilder } from './pages/ThanksFor';
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { pasteboard } from '@kit.BasicServicesKit';
@@ -37,15 +35,18 @@ export struct personal {
   @Local userPassword: string = ''
   @Local showDownloadLimitTips: boolean = false
   @Local showDonationTips: boolean = false
+  @Local showLoginInOrRegister:boolean = false
   @Local showUpdateInfo: boolean = false
   @Local showTanks: boolean = false
   @Local pageWidth: number = -1
+
   buttonsArray: string[] = [
     '设置', '版本信息'
   ]
   buttonsArray2: string[] = [
     '鸣谢', '开源仓库', '问题反馈'
   ]
+
   zlibLoginDialogController: CustomDialogController = new CustomDialogController({
     builder: CustomContentDialog({
       primaryTitle: 'zlib登录',
@@ -77,6 +78,7 @@ export struct personal {
     }),
   });
 
+
   @Builder
   loginPageBuilder() {
     Column({ space: 10 }) {
@@ -107,6 +109,62 @@ export struct personal {
     }.width('100%')
     .padding({ left: 16, right: 16 })
   }
+
+
+
+  @Builder
+  loginOrRegister()
+  {
+    Column(){
+      List({space:20}){
+        ComposeListItem({
+          contentItem:{
+            primaryText:'登录'
+          }
+        }).backgroundColor($r('sys.color.comp_background_list_card'))
+          .borderRadius(10)
+          .onClick(()=>{
+            this.zlibLoginDialogController.open()
+            this.showLoginInOrRegister = false
+          })
+
+        ComposeListItem({
+          contentItem:{
+            primaryText:'注册'
+          }
+        }).backgroundColor($r('sys.color.comp_background_list_card'))
+          .borderRadius(10)
+          .onClick(()=>{
+            AlertDialog.show({
+              title: '提醒',
+              message: '即将打开网站',
+              autoCancel: true,
+              primaryButton: {
+                value: '取消',
+                action: () => {
+                }
+              },
+              secondaryButton: {
+                enabled: true,
+                defaultFocus: true,
+                style: DialogButtonStyle.HIGHLIGHT,
+                value: '确定',
+                action: () => {
+                  let want: Want = {
+                    action: 'ohos.want.action.viewData',
+                    entities: ['entity.system.browsable'],
+                    uri: zlibClient.base_url,
+                  };
+                  (globlContext as common.UIAbilityContext).startAbility(want)
+                }
+              }
+            })
+            this.showLoginInOrRegister = false
+          })
+      }
+    }.padding({left:16, right:16,bottom:50})
+  }
+
 
   build() {
     Column() {
@@ -142,9 +200,14 @@ export struct personal {
         }.size({ width: '100%', height: 120 })
         .backgroundColor($r('sys.color.comp_background_list_card'))
         .borderRadius(20)
+        .bindSheet($$this.showLoginInOrRegister,this.loginOrRegister(),{
+          title:{title:'注册/登录'},
+          preferType:SheetType.CENTER,
+          height:SheetSize.FIT_CONTENT
+        })
         .onClick(() => {
           if (!__User__.isLoginZlib) {
-            this.zlibLoginDialogController.open()
+            this.showLoginInOrRegister = true
           }
         })
 
