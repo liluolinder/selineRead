@@ -70,6 +70,19 @@ export default struct BookShelfPage {
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
+              .onClick(async ()=>{
+                this.isOpening = true
+                await zlibClient.getBookInfo(item.book.href).then((res) => {
+                  if (res.name!='' && res.name!=undefined ) {
+                    res.bookID = item.id
+                    res.image = item.book.cover
+                    res.href = item.book.href
+                    __UI__.indexPageStack.removeByName('bookInfoPage')
+                    __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+                  }
+                  this.isOpening = false
+                })
+              })
             }, (item: string) => item)
 
             ForEach(this.waterFlowEmptyItem, ()=>{FlowItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 70), 16))})
