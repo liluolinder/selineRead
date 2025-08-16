@@ -7,6 +7,10 @@
     {
       "name": "start_window_background_blur",
       "value": "#90000000"
+    },
+    {
+      "name": "sweet_blue",
+      "value": "#608ff6"
     }
   ]
 }
