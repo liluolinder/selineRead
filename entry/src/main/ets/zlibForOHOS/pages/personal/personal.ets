@@ -172,10 +172,20 @@ export struct personal {
 
         ListItem() {
           Row({ space: 15 }) {
-            Image(zlibClient.userInfo?.avatar ?? $r('sys.media.person_badge_waveform'))
+            if(zlibClient.userInfo?.avatar){
+              Image(zlibClient.userInfo?.avatar)
+                .width(80)
+                .height(80)
+                .borderRadius(40)
+            }else{
+              Stack(){
+                SymbolGlyph($r('sys.symbol.person')).opacity(0.5).fontColor([$r('sys.color.font')]).fontSize(40)
+              }.backgroundColor($r('sys.color.comp_background_gray'))
               .width(80)
               .height(80)
-              .clipShape(new CircleShape({ width: 80, height: 80 }))
+              .borderRadius(40)
+            }
+
 
             Column({ space: 5 }) {
               Text(__User__.isLoginZlib ? zlibClient.userInfo?.userName??'正在获取' : '点击登录')
