@@ -365,13 +365,13 @@ export struct zlibHome {
             .columnsGap(10)
             .rowsGap(10)
             .onReachEnd(async () => {
-              XAnimation.runWithAnimation(()=>this.isFlashing = true)
+              this.isFlashing = true
               if (__UI__.searchOrRecommend != zlibIndexShowMod.Recommend) {
                 await zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
               } else {
                 await zlibClient.getRecommendBooks(++this.recommendIndex)
               }
-              XAnimation.runWithAnimation(()=>this.isFlashing = false)
+              this.isFlashing = false
             })
           } else {
 
@@ -387,13 +387,13 @@ export struct zlibHome {
             .scrollBar(BarState.Off)
             .size({ width: '100%', height: '100%' })
             .onReachEnd(async () => {
-              XAnimation.runWithAnimation(()=>this.isFlashing = true)
+              this.isFlashing = true
               if (__UI__.searchOrRecommend != zlibIndexShowMod.Recommend) {
                 await zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
               } else {
                 await zlibClient.getRecommendBooks(++this.recommendIndex)
               }
-              XAnimation.runWithAnimation(()=>this.isFlashing = false)
+              this.isFlashing = false
             })
             .edgeEffect(EdgeEffect.Spring)
 
