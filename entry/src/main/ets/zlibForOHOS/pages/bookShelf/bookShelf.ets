@@ -46,7 +46,7 @@ export struct bookShelf{
               Column({space: 10}){
                 Text(item.title).fontSize(18).fontWeight(FontWeight.Medium).maxLines(1).textOverflow({overflow: TextOverflow.Ellipsis})
                 List({space: 10}){
-                  ForEach(item.booksGrouped,(itemB:I_BookInfo_Bookshelf)=>{
+                  ForEach(item.booksGrouped?.slice(0, 7),(itemB:I_BookInfo_Bookshelf)=>{
                     ListItem(){
                       Image(itemB.coverUrl)
                         .width(75)
