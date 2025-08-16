@@ -30,7 +30,7 @@ import { zlibDownloadHistory } from './zlibDownloadHistory/zlibDownloadHistory';
 import { XAnimation } from '../datas/classes/XAnimation';
 import { zlibIndexShowMod } from '../datas/enums/zlibIndexShowMod';
 import { DecorBar } from './DecorBar';
-import { bookShelf } from './bookShelf/bookShelf';
+import { bookShelf } from './bookShelf/bookShelfList';
 
 
 @Entry
