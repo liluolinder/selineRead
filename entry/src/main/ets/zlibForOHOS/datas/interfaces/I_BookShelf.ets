@@ -77,3 +77,62 @@ export interface I_BookInfo_Bookshelf
   link:string
   coverUrl:string
 }
+
+
+export interface I_Bookshelf_extraInfo{
+  success:number,
+  books:I_Bookshelf_extraBooks[]
+  pagination:I_Bookshelf_pagination
+}
+
+export interface I_Bookshelf_extraBooks{
+  id: number,
+  readlist_id: number,
+  book_id: number,
+  description: string,
+  deleted: number,
+  book: I_Bookshelf_extraBooksInfo
+}
+
+export interface I_Bookshelf_extraBooksInfo{
+  id: number,
+  content_type:string,
+  title: string,
+  author: string,
+  volume: string,
+  year: number,
+  edition: string,
+  publisher: string,
+  identifier: string,
+  language: string,
+  pages: number,
+  series: string,
+  cover: string,
+  terms_hash: string,
+  active: number,
+  deleted: number,
+  filesize: number,
+  filesizeString: string,
+  extension: string,
+  md5: string,
+  sha256: string,
+  href: string,
+  hash: string,
+  kindleAvailable: boolean,
+  sendToEmailAvailable: boolean,
+  interestScore: string,
+  qualityScore: string,
+  description:string,
+  isbn: string,
+  _isUserSavedBook: boolean
+}
+
+export interface I_Bookshelf_pagination {
+  limit: number,
+  current: number,
+  before: number,
+  next: number,
+  total_items: number,
+  total_pages: number,
+  baseUrl: string
+}

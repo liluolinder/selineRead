@@ -27,8 +27,7 @@ export struct bookShelf{
   @Local bookShelfIndex: number = 1
   build() {
     Column(){
-      Text('正在开发')
-     /* List({space:10}){
+      List({space:10}){
        LazyForEach(zlibClient.bookshelfArray,(item:I_ReadLists_Bookshelf)=>{
           ListItem(){
             Column(){
@@ -45,6 +44,9 @@ export struct bookShelf{
           }.height(200)
          .backgroundColor($r('sys.color.comp_background_list_card'))
          .borderRadius(20)
+         .onClick(()=>{
+           zlibClient.getBookShelfMoreInfo(item.id,1)
+         })
        })
         ListItem().height(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 10: 70))
       }.size({ height: '100%', width: '100%' })
@@ -53,10 +55,10 @@ export struct bookShelf{
         await zlibClient.getBookShelf(++this.bookShelfIndex)
         //XAnimation.runWithAnimation(()=>this.isFlashing = false)
       })
-      .edgeEffect(EdgeEffect.Spring)*/
+      .edgeEffect(EdgeEffect.Spring)
     }
-    .padding({top:Math.max(__System__.topRectHeight, 16)})
+
     .size({ height: '100%', width: '100%' })
-    .padding({ left: 16, right: 16 })
+    .padding({ left: 16, right: 16, top: Math.max(__System__.topRectHeight, 16)})
   }
 }
