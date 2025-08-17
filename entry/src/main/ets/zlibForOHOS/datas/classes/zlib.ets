@@ -266,7 +266,7 @@ export class zlib {
         'color': "all",
         'hide18plus': "1",
         'languages':"null",
-        'order': "",
+        'order': "date_updated",
         'searchQuery': ""
       }
     }).then((data: http.HttpResponse) => {
@@ -308,6 +308,7 @@ export class zlib {
 
       tempArray.forEach((item:I_Bookshelf_extraBooks)=>{
         this.bookshelfBooks.pushData(item)
+        console.log(`FUCK${JSON.stringify(item)}`);
       })
 
     }).catch((err: Error) => {

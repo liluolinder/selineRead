@@ -16,3 +16,5 @@
 **/module_**_entry.cj
 /cer/
 /build-profile.json5
+/.arts/settings.json
+/.vscode/settings.json
