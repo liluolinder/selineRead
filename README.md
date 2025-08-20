@@ -10,7 +10,7 @@ SelineRead 是一个专为鸿蒙系统（HarmonyOS）开发的电子书下载应
 
 - **问题反馈**: [Atomgit Issues](https://atomgit.com/liluolinder/selineRead/issues)
 - **讨论交流**: [Atomgit Discussion](https://atomgit.com/liluolinder/selineRead/discussions) | QQ交流群718559395
-- **邀测链接**:[邀请测试](https://appgallery.huawei.com/grey/link/invite-test-wap?taskId=9e11b3563fbd0653cfc8e1d24b0d4849&invitationCode=8q8p0VGtEhI)
+- **邀测链接**: [邀请测试](https://appgallery.huawei.com/grey/link/invite-test-wap?taskId=9e11b3563fbd0653cfc8e1d24b0d4849&invitationCode=8q8p0VGtEhI)
 
 ## 主要功能
 
