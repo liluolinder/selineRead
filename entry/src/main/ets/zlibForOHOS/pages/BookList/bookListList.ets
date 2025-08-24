@@ -153,6 +153,11 @@ export struct BookListList {
         })
       }
     }
+    .onAppear(async ()=>{
+      await zlibClient.refreshUrl().then(async () => {
+        zlibClient.getBookShelf(1)
+      })
+    })
     .backgroundColor($r('sys.color.comp_background_gray'))
     .transition(this.transitionEffect)
     .hideTitleBar(true)
