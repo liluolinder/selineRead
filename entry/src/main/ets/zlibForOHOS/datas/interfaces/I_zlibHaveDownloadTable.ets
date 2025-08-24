@@ -29,4 +29,5 @@ export interface I_ZlibHaveDownloadTable{
   BookDownLoadTime:string
   BookFilePath: string
   haveDownload:number
+  isFromLocal:number
 }
