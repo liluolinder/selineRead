@@ -10,8 +10,6 @@ import { XAnimation } from '../datas/classes/XAnimation';
 import { fileUri } from '@kit.CoreFileKit';
 import { globlContext } from '../../entryability/EntryAbility';
 
-const context = getContext()
-
 interface Catalogue{
   title: string
   path: string
@@ -108,17 +106,17 @@ struct Reader{
 
   }
 
-  @Monitor('isFullScreen')
-  updateSystemBar(){
-    window.getLastWindow(context).then((windowClass) => {
-      windowClass.setSpecificSystemBarEnabled('status', !this.isFullscreen)
-      windowClass.setSpecificSystemBarEnabled('navigationIndicator', !this.isFullscreen)
+  updateSystemBar(isShow: boolean){
+    console.log('testTAG', this.isFullscreen)
+    window.getLastWindow(getContext(this)).then((windowClass) => {
+      windowClass.setSpecificSystemBarEnabled('status', isShow)
+      windowClass.setSpecificSystemBarEnabled('navigationIndicator', isShow)
     })
   }
 
   aboutToDisappear(): void {
     this.isFullscreen = false
-    // 退出需要释放阅读器实例
+    this.updateSystemBar(false)
     this.readerComponentController.releaseBook();
   }
 
@@ -139,6 +137,13 @@ struct Reader{
               this.readerComponentController.setPageConfig(this.readerSetting);
             }catch{
             }
+          })
+          .onAppear(()=>{
+            bookParser.getDefaultHandler(this.path).then((bookParserHandler)=>{
+              this.bookInfo = bookParserHandler.getBookInfo();
+              this.catalogue = bookParserHandler.getCatalogList()
+              this.title = this.bookInfo.bookTitle
+            })
           })
 
         Flex({direction: FlexDirection.Column, justifyContent: FlexAlign.SpaceBetween}){
@@ -173,15 +178,7 @@ struct Reader{
       if(navContext.pathInfo.param){
         this.path = navContext.pathInfo.param.toString()
         this.name = new fileUri.FileUri(this.path).name
-        bookParser.getDefaultHandler(this.path).then((bookParserHandler)=>{
-          this.bookInfo = bookParserHandler.getBookInfo();
-          this.catalogue = bookParserHandler.getCatalogList()
-          this.title = this.bookInfo.bookTitle
-        }).catch((err:BusinessError)=>{
-          console.log(`FUCK${JSON.stringify(err)}`)
-          navContext.pathStack.pop(true)
-        })
-        this.updateSystemBar()
+        this.updateSystemBar(false)
         this.startPlay();
       }else{
         navContext.pathStack.pop(true)
