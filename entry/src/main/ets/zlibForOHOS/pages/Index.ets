@@ -36,9 +36,14 @@ import { BookList } from './BookList/bookListList';
 @Entry
 @ComponentV2
 struct Index {
-  private tabsArray: [string, Resource, Resource][] = [
+  private tabsArrayOnline: [string, Resource, Resource][] = [
     ['Zlibrary', $r('sys.symbol.book'), $r('sys.symbol.book_open_fill')],
     ['书单', $r('sys.symbol.list_bullet'), $r('sys.symbol.list_bullet')],
+    ['书架', $r('sys.symbol.book_closed_right_left'), $r('sys.symbol.books_vertical_fill')],
+    ['我的', $r('sys.symbol.person'), $r('sys.symbol.person_fill')]
+  ]
+
+  private tabsArray: [string, Resource, Resource][] = [
     ['书架', $r('sys.symbol.book_closed_right_left'), $r('sys.symbol.books_vertical_fill')],
     ['我的', $r('sys.symbol.person'), $r('sys.symbol.person_fill')]
   ]
@@ -69,11 +74,6 @@ struct Index {
       __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
       zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
     }
-
-    await zlibClient.refreshUrl().then(async () => {
-      zlibClient.getRecommendBooks(1)
-      zlibClient.getBookShelf(1)
-    })
 
   }
 
@@ -111,8 +111,10 @@ struct Index {
 
         Stack({alignContent: Alignment.BottomStart}){
           Swiper(this.swiperController){
-            zlibHome()
-            BookList()
+            if(__UI__.onlineMode){
+              zlibHome()
+              BookList()
+            }
             BookShelf()
             personal()
           }.padding({left: __System__.windowWidth > minWidth? 65 + __System__.leftRectHeight: 0})
@@ -120,15 +122,9 @@ struct Index {
           .loop(false)
           .onChange((index)=>{
             this.currentPage = index
-            zlibClient.localDownloadHistoryArray.clearData()
-            if (index == 3 && __User__.isLoginZlib) {
-              zlibClient.getUserInfo()
-            } else if (index == 2) {
-              zlibClient.getLocalDownloadHistory()
-            }
           })
           Flex({justifyContent: FlexAlign.SpaceAround, alignItems: ItemAlign.Center, direction: __System__.windowWidth > minWidth? FlexDirection.Column: FlexDirection.Row}){
-            ForEach(this.tabsArray, (item: [string, Resource, Resource], index: number) =>{
+            ForEach(__UI__.onlineMode? this.tabsArrayOnline: this.tabsArray, (item: [string, Resource, Resource], index: number) =>{
               Button({stateEffect: true, type: ButtonType.Normal}){
                 Column({space: 2}){
                   SymbolGlyph(this.currentPage == index? item[2]: item[1]).fontSize(22).fontColor([this.currentPage == index? $r('app.color.sweet_blue'): $r('sys.color.font')])
