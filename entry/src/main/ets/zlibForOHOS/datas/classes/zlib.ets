@@ -507,13 +507,10 @@ export class zlib {
                 haveDownload : 0
               };
 
-              linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket)
-
-              this.getDownloadHistoryList()
-
+              linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket).then(()=>{
+                this.flashDownloadHistoryAndLocalBooksList()
+              })
               shareBook(testFilePath)
-
-
             })
             .catch((err: BusinessError) => {
               console.error(`Invoke documentViewPicker.save failed, code is ${err.code}, message is ${err.message}`);
@@ -541,9 +538,9 @@ export class zlib {
 
   }
 
-  getDownloadHistoryList(){
+  flashDownloadHistoryAndLocalBooksList(){
     zlibClient.localDownloadHistoryArray.clearData()
-    zlibClient.getLocalDownloadHistory()
+    setTimeout(()=>{zlibClient.getLocalDownloadHistory()}, 100)
   }
 }
 
