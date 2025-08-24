@@ -52,31 +52,6 @@ struct Index {
 
   private swiperController = new SwiperController()
 
-  async aboutToAppear(): Promise<void> {
-    console.log(`FUCK${zlibClient.recommendBooksArray.totalCount()}`)
-
-    __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
-      dataBaseName: 'selineRead',
-    })
-
-    linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
-      zlibHaveDownloadTable,4)
-
-    __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
-
-    __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
-
-    zlibClient.base_url =
-      NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', 'https://zh.zlibraryd.ru') as string
-    zlibClient.baseApi_url = zlibClient.base_url + '/papi'
-    if (__User__.isLoginZlib) {
-      __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
-      __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
-      zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
-    }
-
-  }
-
   tabIconChange(index: number): ResourceStr {
     if (index == 0) {
       return $r('app.media.zlibsvg')

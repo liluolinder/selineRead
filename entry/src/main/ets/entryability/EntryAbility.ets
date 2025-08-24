@@ -5,9 +5,13 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { display, window } from '@kit.ArkUI';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { __System__, __UI__, __User__ } from '../zlibForOHOS/datas/classes/ShareDatas';
+import { __DataBase__, __System__, __UI__, __User__ } from '../zlibForOHOS/datas/classes/ShareDatas';
 import  NeoPreferencesUtil from '../zlibForOHOS/datas/classes/XPreferencesUtil'
 import WindowsUtil from '../zlibForOHOS/utils/WindowsUtil';
+import { linderDataBaseManger } from '../zlibForOHOS/datas/classes/LDataBaseManager';
+import { zlibHaveDownloadTable } from '../zlibForOHOS/datas/commons/zlibHaveDownloadTable';
+import { linderPixelMap } from '../zlibForOHOS/datas/classes/LPixelMap';
+import { zlibClient } from '../zlibForOHOS/datas/classes/zlib';
 
 const DOMAIN = 0x0000;
 
@@ -19,10 +23,24 @@ export default class EntryAbility extends UIAbility {
   private windowObj?: window.Window
   private curBp: string = ''
 
-
-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     NeoPreferencesUtil.localPreferences(this.context, 'selineRead');
+    zlibClient.base_url =
+      NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', 'https://zh.zlibraryd.ru') as string
+    zlibClient.baseApi_url = zlibClient.base_url + '/papi'
+    __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
+      dataBaseName: 'selineRead',
+    })
+    linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
+      zlibHaveDownloadTable,4)
+    __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
+    if (__User__.isLoginZlib) {
+      __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
+      __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
+      __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
+      zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
+    }
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
   }
 
