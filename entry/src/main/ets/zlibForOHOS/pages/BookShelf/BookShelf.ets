@@ -112,7 +112,6 @@ export struct BookShelf {
                   value: '编辑',
                   action: ()=>{
                   },
-                  enabled: fileIo.accessSync(item.BookFilePath)
                 },
                 {
                   value: '删除',
@@ -121,7 +120,6 @@ export struct BookShelf {
                       zlibClient.flashDownloadHistoryAndLocalBooksList()
                     })
                   },
-                  enabled: fileIo.accessSync(item.BookFilePath)
                 }
               ])
             }
