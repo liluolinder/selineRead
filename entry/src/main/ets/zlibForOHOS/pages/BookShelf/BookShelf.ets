@@ -43,6 +43,9 @@ export struct BookShelf {
           }
           .size({width: 40, height: 40})
           .backgroundColor($r('sys.color.comp_background_list_card'))
+          .onClick(()=>{
+            zlibClient.flashDownloadHistoryAndLocalBooksList()
+          })
         }.padding({top: Math.max( __System__.topRectHeight, 16), left: 16, right: 16})
 
         List({ space: 10 }) {
@@ -104,6 +107,21 @@ export struct BookShelf {
                     __UI__.indexPageStack.pushPath({name: 'readerPage', param: item.BookFilePath}, true)
                   },
                   enabled: fileIo.accessSync(item.BookFilePath)
+                },
+                {
+                  value: '编辑',
+                  action: ()=>{
+                  },
+                  enabled: fileIo.accessSync(item.BookFilePath)
+                },
+                {
+                  value: '删除',
+                  action: ()=>{
+                    linderDataBaseManger.deleteValueToRelationalDataBase(__DataBase__.baseStore,"zlibHaveDownload", [{key: 'ID', value: item.ID}]).then(()=>{
+                      zlibClient.flashDownloadHistoryAndLocalBooksList()
+                    })
+                  },
+                  enabled: fileIo.accessSync(item.BookFilePath)
                 }
               ])
             }
@@ -112,7 +130,7 @@ export struct BookShelf {
             .borderRadius(20)
             .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
             .size({ width: '100%', height: 120 })
-          })
+          }, (item: string) => item)
 
         }
         .height('100%')
@@ -137,5 +155,18 @@ export struct BookShelf {
       }
 
     }.size({ height: '100%', width: '100%' })
+    .onAppear(()=>{
+      zlibClient.flashDownloadHistoryAndLocalBooksList()
+    })
+  }
+}
+
+@ComponentV2
+struct EditBookInfoPage{
+
+  @Param @Require info: I_ZlibHaveDownloadTable
+
+  build() {
+
   }
 }
