@@ -70,6 +70,7 @@ export class UIShareData {
   @Trace searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend
   @Trace currentColorMode: number = 1
   indexPageStack: NavPathStack = new NavPathStack()
+  @Trace onlineMode: boolean = true
 }
 
 export let __UI__: UIShareData = new UIShareData()
