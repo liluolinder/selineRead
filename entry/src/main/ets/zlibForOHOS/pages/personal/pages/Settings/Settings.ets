@@ -1,0 +1,133 @@
+import { __System__, __UI__, __User__ } from "../../../../datas/classes/ShareDatas"
+import  NeoPreferencesUtil from '../../../../datas/classes/XPreferencesUtil'
+import { zlibClient } from "../../../../datas/classes/zlib"
+
+@Builder
+export function settingsBuilder(){
+  Settings()
+}
+
+@ComponentV2
+struct Settings{
+
+  @Provider('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
+
+  @Builder
+  Page(name: string){
+    if(name == 'settings'){
+      SettingsPage()
+    }
+  }
+
+  aboutToAppear(): void {
+    this.settingsPagesInfo.pushPath({name: 'settings'}, false)
+  }
+
+  build() {
+    Navigation(this.settingsPagesInfo)
+      .hideTitleBar(true)
+      .navDestination(this.Page)
+  }
+}
+
+@ComponentV2
+struct SettingsPage{
+
+  @Consumer('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
+
+  build() {
+    NavDestination(){
+      List({space: 10}){
+        ListItem(){
+          SettingsToggleItem({
+            symbol: $r('sys.symbol.link_slash'),
+            symbol1: $r('sys.symbol.link'),
+            message: '使用局域网书库',
+            checked: __UI__.onlineMode,
+            onChange: (checked: boolean)=>{
+              __UI__.onlineMode = checked
+              NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', checked)
+              if(checked) zlibClient.getUserInfo()
+            }
+          })
+        }
+      }
+      .contentEndOffset(Math.max(16, __System__.bottomRectHeight))
+      .layoutWeight(1)
+      .margin({left: 16, right: 16})
+      .chainAnimation(true)
+    }.padding({ top: 8 })
+    .title('设置')
+    .backgroundColor($r('sys.color.comp_background_gray'))
+    .hideBackButton(true)
+    .onBackPressed(()=>{
+      __UI__.showSettings = false
+      return true
+    })
+  }
+}
+
+@ComponentV2
+export struct SettingsToggleItem {
+  @Param symbol: Resource | undefined = undefined
+  @Param symbol1: Resource | undefined = undefined
+  @Param message: ResourceStr = ''
+  @Param checked: boolean = false
+  @Local enable: boolean = this.checked
+  @Param ensureMessage: ResourceStr | undefined = undefined
+  @Event onChange: (checked: boolean) => void
+
+  build() {
+    Row() {
+      Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
+        Row({ space: 10 }) {
+          SymbolGlyph(this.enable && this.symbol1 ? this.symbol1 : this.symbol)
+            .fontSize(22)
+            .fontColor([$r('sys.color.font')])
+            .symbolEffect(new ReplaceSymbolEffect(EffectScope.WHOLE), Number(this.enable))
+          Text(this.message)
+            .fontSize(17)
+            .fontWeight(FontWeight.Medium)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.MARQUEE })
+            .layoutWeight(1)
+        }.layoutWeight(1)
+
+        Toggle({ type: ToggleType.Switch, isOn: this.enable })
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+          .onChange((checked: boolean) => {
+            if (this.ensureMessage && checked) {
+              this.getUIContext().showAlertDialog({
+                title: this.message,
+                message: this.ensureMessage,
+                alignment: DialogAlignment.Center,
+                primaryButton: {
+                  value: '知道了',
+                  fontColor: (AppStorage.get('themeColor') as string[])[AppStorage.get('currentColorMode') as number],
+                  action: () => {
+                  }
+                },
+                cornerRadius: 20,
+                backgroundBlurStyle: BlurStyle.COMPONENT_THIN,
+              })
+            }
+            this.enable = checked
+            this.onChange(checked)
+          })
+          .selectedColor($r('app.color.sweet_blue'))
+          .width(45)
+          .height(27);
+      }.align(Alignment.Center)
+
+    }
+    .backgroundColor($r('app.color.card_list_background'))
+    .height(55)
+    .borderRadius(20)
+    .padding({
+      right: 15,
+      left: 15,
+      top: 10,
+      bottom: 10
+    })
+  }
+}

@@ -28,6 +28,7 @@ import { UpdateInfoBuilder } from './pages/UpdateInfo';
 import { TanksForBuilder } from './pages/ThanksFor';
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { pasteboard } from '@kit.BasicServicesKit';
+import { settingsBuilder } from './pages/Settings/Settings';
 
 @ComponentV2
 export struct personal {
@@ -297,8 +298,13 @@ export struct personal {
               contentItem: { primaryText: item },
               operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') } }
             }).onClick(() => {
-              if (index == 1) {
-                this.showUpdateInfo = true;
+              switch (index){
+                case 0:
+                  __UI__.showSettings = true
+                  break
+                case 1:
+                  this.showUpdateInfo = true;
+                  break
               }
             })
           })
@@ -409,5 +415,6 @@ export struct personal {
         this.pageWidth = new Number(newValue.width).valueOf()
       }, this.pageWidth > 0)
     })
+    .bindSheet(__UI__.showSettings, settingsBuilder(), {backgroundColor: $r('sys.color.comp_background_gray'), onDisappear: ()=> __UI__.showSettings = false})
   }
 }
