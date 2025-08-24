@@ -18,7 +18,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 
-import { __System__, __User__, minWidth } from '../../datas/classes/ShareDatas';
+import { __System__, __User__, minWidth, __UI__ } from '../../datas/classes/ShareDatas';
 import { CircleShape, ComposeListItem, CustomContentDialog, promptAction } from '@kit.ArkUI';
 import { zlibClient } from '../../datas/classes/zlib';
 import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
@@ -170,35 +170,36 @@ export struct personal {
     Column() {
       List({ space: 10 }) {
 
-        ListItem() {
-          Row({ space: 15 }) {
-            if(zlibClient.userInfo?.avatar){
-              Image(zlibClient.userInfo?.avatar)
+        if(__UI__.onlineMode){
+          ListItem() {
+            Row({ space: 15 }) {
+              if(zlibClient.userInfo?.avatar){
+                Image(zlibClient.userInfo?.avatar)
+                  .width(80)
+                  .height(80)
+                  .borderRadius(40)
+              }else{
+                Stack(){
+                  SymbolGlyph($r('sys.symbol.person')).opacity(0.5).fontColor([$r('sys.color.font')]).fontSize(40)
+                }.backgroundColor($r('sys.color.comp_background_gray'))
                 .width(80)
                 .height(80)
                 .borderRadius(40)
-            }else{
-              Stack(){
-                SymbolGlyph($r('sys.symbol.person')).opacity(0.5).fontColor([$r('sys.color.font')]).fontSize(40)
-              }.backgroundColor($r('sys.color.comp_background_gray'))
-              .width(80)
-              .height(80)
-              .borderRadius(40)
-            }
+              }
 
 
-            Column({ space: 5 }) {
-              Text(__User__.isLoginZlib ? zlibClient.userInfo?.userName??'正在获取' : '点击登录')
-                .fontSize(18).maxLines(2)
-                .fontWeight(FontWeight.Medium)
-              if (__User__.isLoginZlib) {
-                Button({stateEffect: true}){
-                  SymbolGlyph($r('sys.symbol.arrow_right_and_square')).fontSize(18).fontColor([$r('sys.color.font')])
-                }
-                .size({ width: 30, height: 30 })
-                .backgroundColor(Color.Transparent)
-                .opacity(0.8)
-                .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+              Column({ space: 5 }) {
+                Text(__User__.isLoginZlib ? zlibClient.userInfo?.userName??'正在获取' : '点击登录')
+                  .fontSize(18).maxLines(2)
+                  .fontWeight(FontWeight.Medium)
+                if (__User__.isLoginZlib) {
+                  Button({stateEffect: true}){
+                    SymbolGlyph($r('sys.symbol.arrow_right_and_square')).fontSize(18).fontColor([$r('sys.color.font')])
+                  }
+                  .size({ width: 30, height: 30 })
+                  .backgroundColor(Color.Transparent)
+                  .opacity(0.8)
+                  .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
                   .onClick(() => {
                     NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", false)
                     NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", '')
@@ -207,87 +208,88 @@ export struct personal {
                     __User__.zlibPassword = ''
                     __User__.isLoginZlib = false
                   })
-              }
-            }.layoutWeight(1).alignItems(HorizontalAlign.Start)
-          }.size({ width: '100%', height: '100%' })
-          .padding(15)
-        }.size({ width: '100%', height: 120 })
-        .backgroundColor($r('sys.color.comp_background_list_card'))
-        .borderRadius(20)
-        .bindSheet($$this.showLoginInOrRegister,this.loginOrRegister(),{
-          title:{title:'注册/登录'},
-          preferType:SheetType.CENTER,
-          height:SheetSize.FIT_CONTENT
-        })
-        .onClick(() => {
-          if (!__User__.isLoginZlib) {
-            this.showLoginInOrRegister = true
-          }
-        })
+                }
+              }.layoutWeight(1).alignItems(HorizontalAlign.Start)
+            }.size({ width: '100%', height: '100%' })
+            .padding(15)
+          }.size({ width: '100%', height: 120 })
+          .backgroundColor($r('sys.color.comp_background_list_card'))
+          .borderRadius(20)
+          .bindSheet($$this.showLoginInOrRegister,this.loginOrRegister(),{
+            title:{title:'注册/登录'},
+            preferType:SheetType.CENTER,
+            height:SheetSize.FIT_CONTENT
+          })
+          .onClick(() => {
+            if (!__User__.isLoginZlib) {
+              this.showLoginInOrRegister = true
+            }
+          })
 
-        ListItem() {
-          Row({ space: 10 }) {
-            Stack() {
-              Column({ space: 15 }) {
-                SymbolGlyph($r('sys.symbol.download'))
-                  .fontSize(30)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor([$r('sys.color.font')])
-
-
-                if (zlibClient.userInfo?.downloadLimit != undefined) {
-                  Text(zlibClient.userInfo?.downloadLimit)
+          ListItem() {
+            Row({ space: 10 }) {
+              Stack() {
+                Column({ space: 15 }) {
+                  SymbolGlyph($r('sys.symbol.download'))
+                    .fontSize(30)
                     .fontWeight(FontWeight.Medium)
-                    .fontSize(18)
+                    .fontColor([$r('sys.color.font')])
 
+
+                  if (zlibClient.userInfo?.downloadLimit != undefined) {
+                    Text(zlibClient.userInfo?.downloadLimit)
+                      .fontWeight(FontWeight.Medium)
+                      .fontSize(18)
+
+                  }
                 }
               }
-            }
-            .layoutWeight(1)
-            .height('100%')
-            .backgroundColor($r('sys.color.comp_background_list_card'))
-            .borderRadius(20)
-            .bindPopup($$this.showDownloadLimitTips, {
-              message: '下载限制是Zlibrary官方设置的,可以通过对zlib官网捐赠提高限制值',
-              onStateChange: (e) => {
-                this.showDownloadLimitTips = e.isVisible
-              }
-            })
-            .onClick(() => {
-              this.showDownloadLimitTips = true;
-            })
+              .layoutWeight(1)
+              .height('100%')
+              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .borderRadius(20)
+              .bindPopup($$this.showDownloadLimitTips, {
+                message: '下载限制是Zlibrary官方设置的,可以通过对zlib官网捐赠提高限制值',
+                onStateChange: (e) => {
+                  this.showDownloadLimitTips = e.isVisible
+                }
+              })
+              .onClick(() => {
+                this.showDownloadLimitTips = true;
+              })
 
-            Stack() {
-              Column({ space: 15 }) {
-                SymbolGlyph($r('sys.symbol.yuansign_moneybag'))
-                  .fontSize(30)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor([$r('sys.color.font')])
-                if (zlibClient.userInfo?.donation != undefined) {
-                  Text(zlibClient.userInfo?.donation)
+              Stack() {
+                Column({ space: 15 }) {
+                  SymbolGlyph($r('sys.symbol.yuansign_moneybag'))
+                    .fontSize(30)
                     .fontWeight(FontWeight.Medium)
-                    .fontSize(18)
+                    .fontColor([$r('sys.color.font')])
+                  if (zlibClient.userInfo?.donation != undefined) {
+                    Text(zlibClient.userInfo?.donation)
+                      .fontWeight(FontWeight.Medium)
+                      .fontSize(18)
+                  }
                 }
               }
+              .layoutWeight(1)
+              .height('100%')
+              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .borderRadius(20)
+              .bindPopup(this.showDonationTips, {
+                message: '此处捐赠额度指的是对zlib官方的捐赠，不是对此APP开发者的捐赠',
+                onStateChange: (e) => {
+                  this.showDonationTips = e.isVisible
+                }
+              })
+              .onClick(() => {
+                this.showDonationTips = true;
+                console.log(`FUCK${this.showDonationTips}`)
+              })
+
             }
-            .layoutWeight(1)
-            .height('100%')
-            .backgroundColor($r('sys.color.comp_background_list_card'))
-            .borderRadius(20)
-            .bindPopup(this.showDonationTips, {
-              message: '此处捐赠额度指的是对zlib官方的捐赠，不是对此APP开发者的捐赠',
-              onStateChange: (e) => {
-                this.showDonationTips = e.isVisible
-              }
-            })
-            .onClick(() => {
-              this.showDonationTips = true;
-              console.log(`FUCK${this.showDonationTips}`)
-            })
 
-          }
-
-        }.size({ width: '100%', height: 120 })
+          }.size({ width: '100%', height: 120 })
+        }
 
         ListItemGroup() {
           ForEach(this.buttonsArray, (item: string, index: number) => {
@@ -395,6 +397,11 @@ export struct personal {
       .scrollBar(BarState.Off)
 
     }
+    .onAppear(()=>{
+      if(__User__.isLoginZlib && __UI__.onlineMode){
+        zlibClient.getUserInfo()
+      }
+    })
     .size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
     .onAreaChange((_, newValue) => {
