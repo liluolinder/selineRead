@@ -33,8 +33,8 @@ export class zlib {
   @Trace bookshelfBooks: BasicDataSource<I_Bookshelf_extraBooks> = new BasicDataSource<I_Bookshelf_extraBooks>()
   @Trace userInfo: I_UserInfo | undefined
   //官方:https://zh.z-library.sk
-  base_url: string = 'https://zh.zlibraryd.ru'
-  baseApi_url: string = 'https://zh.zlibraryd.ru/papi'
+  base_url: string = ''
+  baseApi_url: string = ''
   cookie: string = ''
 
   private setCookies(remix_userkey: string, remix_userid: string) {

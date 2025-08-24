@@ -1,6 +1,8 @@
 import { __System__, __UI__, __User__ } from "../../../../datas/classes/ShareDatas"
+import { XAnimation } from "../../../../datas/classes/XAnimation"
 import  NeoPreferencesUtil from '../../../../datas/classes/XPreferencesUtil'
-import { zlibClient } from "../../../../datas/classes/zlib"
+import { zlib, zlibClient } from "../../../../datas/classes/zlib"
+import { promptAction } from "@kit.ArkUI"
 
 @Builder
 export function settingsBuilder(){
@@ -34,6 +36,7 @@ struct Settings{
 struct SettingsPage{
 
   @Consumer('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
+  @Local apiAddress: string = zlibClient.base_url
 
   build() {
     NavDestination(){
@@ -45,11 +48,40 @@ struct SettingsPage{
             message: '使用局域网书库',
             checked: __UI__.onlineMode,
             onChange: (checked: boolean)=>{
-              __UI__.onlineMode = checked
+              XAnimation.runWithAnimation(()=>__UI__.onlineMode = checked)
               NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', checked)
               if(checked) zlibClient.getUserInfo()
             }
           })
+        }
+
+        if(__UI__.onlineMode){
+          ListItem(){
+            Column({space: 10}){
+              Text('服务地址').fontSize(15).fontWeight(FontWeight.Medium).padding({left: 5, right: 5})
+              Row({space: 10}){
+                TextInput({text: $$this.apiAddress}).backgroundColor($r('sys.color.comp_background_gray')).layoutWeight(1).height(40)
+                Button({stateEffect: true}){
+                  SymbolGlyph($r('sys.symbol.checkmark')).fontSize(17).fontColor([$r('sys.color.font')])
+                }.backgroundColor($r('sys.color.comp_background_gray')).size({width: 40, height: 40}).backgroundColor($r('sys.color.comp_background_gray')).clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+                .onClick(()=>{
+                  zlibClient.base_url = this.apiAddress
+                  zlibClient.baseApi_url = zlibClient.base_url + '/papi'
+                  NeoPreferencesUtil.putPreferencesValue("selineRead", 'zlibUrl', this.apiAddress)
+                  zlibClient.recommendBooksArray.clearData()
+                  zlibClient.bookshelfArray.clearData()
+                  zlibClient.refreshUrl().then(async () => {
+                    zlibClient.getRecommendBooks(1)
+                    zlibClient.getBookShelf(1)
+                  })
+                  promptAction.showToast({
+                    message:'已保存',
+                    duration: 2000
+                  });
+                })
+              }.width('100%')
+            }.width('100%').borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card')).padding(15).alignItems(HorizontalAlign.Start)
+          }
         }
       }
       .contentEndOffset(Math.max(16, __System__.bottomRectHeight))
@@ -120,7 +152,7 @@ export struct SettingsToggleItem {
       }.align(Alignment.Center)
 
     }
-    .backgroundColor($r('app.color.card_list_background'))
+    .backgroundColor($r('sys.color.comp_background_list_card'))
     .height(55)
     .borderRadius(20)
     .padding({

@@ -28,9 +28,8 @@ export default class EntryAbility extends UIAbility {
     NeoPreferencesUtil.localPreferences(this.context, 'selineRead');
     __UI__.onlineMode = NeoPreferencesUtil.getPreferencesValue("selineRead", 'onlineMode', false) as boolean
     zlibClient.base_url =
-      NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', 'https://zh.zlibraryd.ru') as string
+      NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', '') as string
     zlibClient.baseApi_url = zlibClient.base_url + '/papi'
-
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
   }
 
