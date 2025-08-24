@@ -26,21 +26,11 @@ export default class EntryAbility extends UIAbility {
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     NeoPreferencesUtil.localPreferences(this.context, 'selineRead');
+    __UI__.onlineMode = NeoPreferencesUtil.getPreferencesValue("selineRead", 'onlineMode', false) as boolean
     zlibClient.base_url =
       NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', 'https://zh.zlibraryd.ru') as string
     zlibClient.baseApi_url = zlibClient.base_url + '/papi'
-    __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
-      dataBaseName: 'selineRead',
-    })
-    linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
-      zlibHaveDownloadTable,4)
-    __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
-    if (__User__.isLoginZlib) {
-      __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
-      __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
-      __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
-      zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
-    }
+
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
   }
 

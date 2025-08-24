@@ -64,6 +64,21 @@ struct Index {
     }
   }
 
+  async aboutToAppear(): Promise<void> {
+    __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
+      dataBaseName: 'selineRead',
+    })
+    linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
+      zlibHaveDownloadTable,4)
+    __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
+    __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
+    if (__User__.isLoginZlib) {
+      __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
+      __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
+      zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
+    }
+  }
+
   onBackPress(): boolean | void {
     if (__UI__.isInSearchMode) {
       XAnimation.runWithAnimation(() => __UI__.isInSearchMode = false)
