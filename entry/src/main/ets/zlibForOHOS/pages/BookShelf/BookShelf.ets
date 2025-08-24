@@ -76,52 +76,17 @@ export struct BookShelf {
 
               }.size({ width: '100%', height: '100%' })
               .padding(8)
-
-              .bindMenu([
-                {
-                  value: '分享',
-                  action: ()=>{
-                    shareBook(item.BookFilePath)
-                  },
-                  enabled: fileIo.accessSync(item.BookFilePath)
-                },
-                {
-                  value: '查看详情',
-                  action: async ()=>{
-                    this.isOpening = true
-                    await zlibClient.getBookInfo(item.BookHref).then((res) => {
-                      if (res.name!='' && res.name!=undefined ) {
-                        res.bookID = item.BookID
-                        res.image = item.BookImage
-                        res.href = item.BookHref
-                        __UI__.indexPageStack.removeByName('bookInfoPage')
-                        __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
-                      }
-                    })
-                    this.isOpening = false
-                  }
-                },
-                {
-                  value: '在内置阅读器查看',
-                  action: ()=>{
-                    __UI__.indexPageStack.pushPath({name: 'readerPage', param: item.BookFilePath}, true)
-                  },
-                  enabled: fileIo.accessSync(item.BookFilePath)
-                },
-                {
-                  value: '编辑',
-                  action: ()=>{
-                  },
-                },
-                {
-                  value: '删除',
-                  action: ()=>{
-                    linderDataBaseManger.deleteValueToRelationalDataBase(__DataBase__.baseStore,"zlibHaveDownload", [{key: 'ID', value: item.ID}]).then(()=>{
-                      zlibClient.flashDownloadHistoryAndLocalBooksList()
-                    })
-                  },
+              .onClick(()=>{
+                if(fileIo.accessSync(item.BookFilePath)){
+                  __UI__.indexPageStack.pushPath({name: 'readerPage', param: item.BookFilePath}, true)
+                }else{
+                  promptAction.showToast({
+                    message: '源文件不存在',
+                    duration: 2000
+                  })
                 }
-              ])
+              })
+              .bindContextMenu(this.BookMenu(item), ResponseType.RightClick || ResponseType.LongPress)
             }
             .transition(XAnimation.getAnimation('bottom'))
             .backgroundColor($r('sys.color.comp_background_list_card'))
@@ -156,6 +121,41 @@ export struct BookShelf {
     .onAppear(()=>{
       zlibClient.flashDownloadHistoryAndLocalBooksList()
     })
+  }
+
+  @Builder
+  BookMenu(item: I_ZlibHaveDownloadTable){
+    Menu(){
+      MenuItem({content: '分享'})
+        .onClick(()=>{
+          shareBook(item.BookFilePath)
+        })
+        .enabled(fileIo.accessSync(item.BookFilePath))
+      MenuItem({content: '查看详情'})
+        .onClick(async ()=> {
+          this.isOpening = true
+          await zlibClient.getBookInfo(item.BookHref).then((res) => {
+            if (res.name != '' && res.name != undefined) {
+              res.bookID = item.BookID
+              res.image = item.BookImage
+              res.href = item.BookHref
+              __UI__.indexPageStack.removeByName('bookInfoPage')
+              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+            }
+            this.isOpening = false
+          })
+        })
+        .enabled(fileIo.accessSync(item.BookFilePath))
+
+      MenuItem({content: '删除'})
+        .contentFontColor($r('sys.color.warning'))
+        .onClick(()=>{
+          linderDataBaseManger.deleteValueToRelationalDataBase(__DataBase__.baseStore,"zlibHaveDownload", [{key: 'ID', value: item.ID}]).then(()=>{
+            zlibClient.flashDownloadHistoryAndLocalBooksList()
+          })
+        })
+        .enabled(fileIo.accessSync(item.BookFilePath))
+    }
   }
 }
 
