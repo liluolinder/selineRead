@@ -406,6 +406,11 @@ export struct zlibHome {
       }
 
     }
+    .onAppear(async ()=>{
+      await zlibClient.refreshUrl().then(async () => {
+        zlibClient.getRecommendBooks(1)
+      })
+    })
     .size({ height: '100%', width: '100%' })
   }
 }
