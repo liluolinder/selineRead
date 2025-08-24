@@ -116,7 +116,7 @@ struct Reader{
 
   aboutToDisappear(): void {
     this.isFullscreen = false
-    this.updateSystemBar(false)
+    this.updateSystemBar(true)
     this.readerComponentController.releaseBook();
   }
 
