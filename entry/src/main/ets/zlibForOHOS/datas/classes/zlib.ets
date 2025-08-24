@@ -509,8 +509,7 @@ export class zlib {
 
               linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket)
 
-              zlibClient.localDownloadHistoryArray.clearData()
-              zlibClient.getLocalDownloadHistory()
+              this.getDownloadHistoryList()
 
               shareBook(testFilePath)
 
@@ -540,6 +539,11 @@ export class zlib {
       console.log('Invoke downloadTask failed-----, message is: %s', err.message);
     }
 
+  }
+
+  getDownloadHistoryList(){
+    zlibClient.localDownloadHistoryArray.clearData()
+    zlibClient.getLocalDownloadHistory()
   }
 }
 
