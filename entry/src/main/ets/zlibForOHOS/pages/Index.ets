@@ -26,11 +26,11 @@ import { personal } from './personal/personal';
 import { zlibHome } from './zlibHome/zlibHome';
 import { linderDataBaseManger } from '../datas/classes/LDataBaseManager';
 import { zlibHaveDownloadTable } from '../datas/commons/zlibHaveDownloadTable';
-import { zlibDownloadHistory } from './zlibDownloadHistory/zlibDownloadHistory';
+import { BookShelf } from './BookShelf/BookShelf';
 import { XAnimation } from '../datas/classes/XAnimation';
 import { zlibIndexShowMod } from '../datas/enums/zlibIndexShowMod';
 import { DecorBar } from './DecorBar';
-import { bookShelf } from './bookShelf/bookShelfList';
+import { BookList } from './BookList/bookListList';
 
 
 @Entry
@@ -39,7 +39,7 @@ struct Index {
   private tabsArray: [string, Resource, Resource][] = [
     ['Zlibrary', $r('sys.symbol.book'), $r('sys.symbol.book_open_fill')],
     ['书单', $r('sys.symbol.list_bullet'), $r('sys.symbol.list_bullet')],
-    ['历史记录', $r('sys.symbol.clock'), $r('sys.symbol.clock_fill')],
+    ['书架', $r('sys.symbol.book_closed_right_left'), $r('sys.symbol.books_vertical_fill')],
     ['我的', $r('sys.symbol.person'), $r('sys.symbol.person_fill')]
   ]
 
@@ -112,8 +112,8 @@ struct Index {
         Stack({alignContent: Alignment.BottomStart}){
           Swiper(this.swiperController){
             zlibHome()
-            bookShelf()
-            zlibDownloadHistory()
+            BookList()
+            BookShelf()
             personal()
           }.padding({left: __System__.windowWidth > minWidth? 65 + __System__.leftRectHeight: 0})
           .indicator(false)

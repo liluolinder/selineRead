@@ -9,7 +9,7 @@ import { loadingDialog, loadingNewDialog } from '../Builder';
 
 
 @ComponentV2
-export default struct BookShelfPage {
+export default struct BookListPage {
   private pageInfos: NavPathStack = new NavPathStack();
   @Local waterFlowColumnNumber : number = -1
   @Local waterFlowEmptyItem: number[] = []

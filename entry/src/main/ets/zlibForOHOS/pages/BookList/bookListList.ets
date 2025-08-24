@@ -37,18 +37,18 @@ import { XAnimation } from '../../datas/classes/XAnimation';
 import { zlibClient } from '../../datas/classes/zlib';
 import { I_ReadLists_Bookshelf, I_BookInfo_Bookshelf } from '../../datas/interfaces/I_BookShelf';
 import { loadingDialog, loadingNewDialog } from '../Builder';
-import BookShelfPage from './bookShelf';
+import BookListPage from './BookListPage';
 
 @ComponentV2
-export struct bookShelf {
+export struct BookList {
   @Provider('bookShelfNavPathStack') bookShelfNavPathStack: NavPathStack = new NavPathStack()
 
   @Builder
   Pages(name: string){
     if(name == 'bookShelfPage'){
-      BookShelfPage()
+      BookListPage()
     }else if(name == 'bookShelfList'){
-      bookShelfList()
+      BookListList()
     }
   }
 
@@ -63,7 +63,7 @@ export struct bookShelf {
 }
 
 @ComponentV2
-export struct bookShelfList {
+export struct BookListList {
   @Local transitionEffect: TransitionEffect = TransitionEffect.IDENTITY;
   @Consumer('bookShelfNavPathStack') bookShelfNavPathStack: NavPathStack = new NavPathStack()
   @Local bookShelfIndex: number = 1
