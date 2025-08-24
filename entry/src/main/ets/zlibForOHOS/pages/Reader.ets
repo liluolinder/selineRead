@@ -214,7 +214,6 @@ struct Reader{
     })
     .bindSheet($$this.catalogueShow, this.Catalogue(), {
       detents: [SheetSize.MEDIUM],
-      backgroundColor: $r('sys.color.comp_background_gray'),
       showClose: false,
       preferType: SheetType.CENTER
     })
@@ -231,7 +230,7 @@ struct Reader{
             }.padding({left: 15, right: 15, top: 10, bottom: 10})
             .alignItems(HorizontalAlign.Start)
             .borderRadius(15)
-            .backgroundColor($r('app.color.card_list_background'))
+            .backgroundColor($r('sys.color.comp_background_list_card'))
             .width('100%')
           }
           .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
