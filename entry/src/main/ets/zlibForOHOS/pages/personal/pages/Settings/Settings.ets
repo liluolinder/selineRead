@@ -60,10 +60,10 @@ struct SettingsPage{
             Column({space: 10}){
               Text('服务地址').fontSize(15).fontWeight(FontWeight.Medium).padding({left: 5, right: 5})
               Row({space: 10}){
-                TextInput({text: $$this.apiAddress}).backgroundColor($r('sys.color.comp_background_gray')).layoutWeight(1).height(40)
+                TextInput({text: $$this.apiAddress}).backgroundColor($r('sys.color.comp_background_secondary')).layoutWeight(1).height(40)
                 Button({stateEffect: true}){
                   SymbolGlyph($r('sys.symbol.checkmark')).fontSize(17).fontColor([$r('sys.color.font')])
-                }.backgroundColor($r('sys.color.comp_background_gray')).size({width: 40, height: 40}).backgroundColor($r('sys.color.comp_background_gray')).clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+                }.backgroundColor($r('sys.color.comp_background_secondary')).size({width: 40, height: 40}).clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
                 .onClick(()=>{
                   zlibClient.base_url = this.apiAddress
                   zlibClient.baseApi_url = zlibClient.base_url + '/papi'
@@ -89,8 +89,8 @@ struct SettingsPage{
       .margin({left: 16, right: 16})
       .chainAnimation(true)
     }.padding({ top: 8 })
+    .backgroundColor(Color.Transparent)
     .title('设置')
-    .backgroundColor($r('sys.color.comp_background_gray'))
     .hideBackButton(true)
     .onBackPressed(()=>{
       __UI__.showSettings = false

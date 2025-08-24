@@ -415,6 +415,6 @@ export struct personal {
         this.pageWidth = new Number(newValue.width).valueOf()
       }, this.pageWidth > 0)
     })
-    .bindSheet(__UI__.showSettings, settingsBuilder(), {backgroundColor: $r('sys.color.comp_background_gray'), onDisappear: ()=> __UI__.showSettings = false})
+    .bindSheet(__UI__.showSettings, settingsBuilder(), {onDisappear: ()=> __UI__.showSettings = false})
   }
 }
