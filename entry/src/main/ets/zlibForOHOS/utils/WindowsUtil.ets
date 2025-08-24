@@ -66,7 +66,6 @@ class Windows {
       __System__.leftRectHeight = globlUIContext.px2vp(Math.max(cutOut.leftRect.width * 1.5, system.leftRect.width))
       __System__.rightRectHeight = globlUIContext.px2vp(Math.max(cutOut.rightRect.width * 1.5, system.rightRect.width))
     })
-    console.log('testTAG', __System__.bottomRectHeight, __System__.topRectHeight)
   }
 
   setBarState(status: boolean, navigationIndicator: boolean) {
