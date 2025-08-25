@@ -22,10 +22,14 @@ import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownloadTable"
 import { curves, promptAction } from "@kit.ArkUI"
-import { dateGetTime, shareBook } from "../../utils/ToolsUtil"
+import { dateGetTime, getDownloadFolderPath, shareBook } from "../../utils/ToolsUtil"
 import { loadingDialog } from "../Builder"
-import { fileIo } from "@kit.CoreFileKit"
+import { fileIo, fileUri, picker } from "@kit.CoreFileKit"
 import { linderDataBaseManger } from "../../datas/classes/LDataBaseManager"
+import { relationalStore } from "@kit.ArkData"
+import { bookParser } from "@kit.ReaderKit"
+import { globlContext } from "../../../entryability/EntryAbility"
+import { BusinessError, zlib } from "@kit.BasicServicesKit"
 
 @ComponentV2
 export struct BookShelf {
@@ -44,7 +48,49 @@ export struct BookShelf {
           .size({width: 40, height: 40})
           .backgroundColor($r('sys.color.comp_background_list_card'))
           .onClick(()=>{
-            zlibClient.flashDownloadHistoryAndLocalBooksList()
+            new picker.DocumentViewPicker().select({fileSuffixFilters: ['epub', 'pdf'], maxSelectNumber: 1}).then(async (result)=>{
+              const file0 = fileIo.openSync(result[0])
+              if(fileIo.accessSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name)){
+                promptAction.showToast({message: '文件已存在', duration: 2000})
+                return
+              }
+              const file1 = fileIo.openSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name, fileIo.OpenMode.CREATE|fileIo.OpenMode.READ_WRITE)
+              fileIo.copyFile(file0.fd, file1.fd).then(async ()=>{
+                const id = new Date().getTime() * -1
+                const valueBucket: relationalStore.ValuesBucket = {
+                  BookID: id,
+                  BookName: file0.name,
+                  BookHref: '',
+                  BookAuthor: '未知',
+                  BookPublisher: '未知',
+                  BookImage: '',
+                  BookDownLoadTime: new Date().toISOString(),
+                  BookFilePath: file1.path,
+                  haveDownload : 0
+                };
+                try {
+                  const bookParserHandler = await bookParser.getDefaultHandler(file1.path)
+                  const bookInfo = bookParserHandler.getBookInfo();
+                  valueBucket.BookName = bookInfo.bookTitle
+                  valueBucket.BookAuthor = bookInfo.bookCreator || valueBucket.BookAuthor
+                  if(bookInfo.bookCoverImage){
+                    fileIo.mkdir(globlContext.cacheDir + '/tmp/')
+                    await zlib.decompressFile(file1.path, globlContext.cacheDir + '/tmp/')
+                    const file2 = fileIo.openSync(globlContext.filesDir + '/' + id.toString(), fileIo.OpenMode.CREATE|fileIo.OpenMode.READ_WRITE)
+                    const coverImage = fileIo.openSync(globlContext.cacheDir + '/tmp/' + bookInfo.bookCoverImage)
+                    fileIo.copyFileSync(coverImage.fd, file2.fd)
+                    valueBucket.BookImage = fileUri.getUriFromPath(file2.path)
+                    fileIo.rmdirSync(globlContext.cacheDir + '/tmp/')
+                  }
+                }catch {
+                }
+
+                linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket).then(()=>{
+                  zlibClient.flashDownloadHistoryAndLocalBooksList()
+                })
+                promptAction.showToast({message: '导入完成', duration: 2000})
+              })
+            })
           })
         }.padding({top: Math.max( __System__.topRectHeight, 16), left: 16, right: 16})
 
@@ -53,9 +99,11 @@ export struct BookShelf {
           LazyForEach(zlibClient.localDownloadHistoryArray, (item: I_ZlibHaveDownloadTable, index: number) => {
             ListItem() {
               Row({ space: 10 }) {
-                Image(item.BookImage)
+                Image(item.BookImage.length == 0? $r('app.media.zlib'): item.BookImage)
                   .size({ height: '100%', width: 82 })
                   .borderRadius(15)
+                  .autoResize(true)
+                  .draggable(false)
                 Flex({justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Start, direction: FlexDirection.Column}){
                   Column({ space: 2 }) {
                     Text(item.BookName)
@@ -68,10 +116,16 @@ export struct BookShelf {
                       .opacity(0.8)
 
                   }.alignItems(HorizontalAlign.Start)
-                  Text(dateGetTime(item.BookDownLoadTime))
-                    .maxLines(1)
-                    .fontSize(12)
-                    .opacity(0.6)
+                  Flex({justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.End}){
+                    Text(dateGetTime(item.BookDownLoadTime))
+                      .maxLines(1)
+                      .fontSize(12)
+                      .opacity(0.6)
+                    SymbolGlyph($r('sys.symbol.cloud')).fontSize(20).fontColor([$r('sys.color.font')]).padding({left: 10, right: 10})
+                      .visibility(item.BookID > 0? Visibility.Visible: Visibility.Hidden)
+                      .opacity(0.4)
+                  }
+
                 }.layoutWeight(1).padding({top: 5, bottom: 5})
 
               }.size({ width: '100%', height: '100%' })
@@ -131,22 +185,28 @@ export struct BookShelf {
           shareBook(item.BookFilePath)
         })
         .enabled(fileIo.accessSync(item.BookFilePath))
-      MenuItem({content: '查看详情'})
-        .onClick(async ()=> {
-          this.isOpening = true
-          await zlibClient.getBookInfo(item.BookHref).then((res) => {
-            if (res.name != '' && res.name != undefined) {
-              res.bookID = item.BookID
-              res.image = item.BookImage
-              res.href = item.BookHref
-              __UI__.indexPageStack.removeByName('bookInfoPage')
-              __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
-            }
-            this.isOpening = false
+      if(__UI__.onlineMode){
+        MenuItem({content: '查看详情'})
+          .onClick(async ()=> {
+            this.isOpening = true
+            await zlibClient.getBookInfo(item.BookHref).then((res) => {
+              if (res.name != '' && res.name != undefined) {
+                res.bookID = item.BookID
+                res.image = item.BookImage
+                res.href = item.BookHref
+                __UI__.indexPageStack.removeByName('bookInfoPage')
+                __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+              }
+              this.isOpening = false
+            })
           })
-        })
-        .enabled(fileIo.accessSync(item.BookFilePath))
+          .enabled(item.BookID > 0)
+      }
+      MenuItem({content: '编辑'})
+        .onClick(async ()=> {
 
+          })
+        .enabled(item.BookID < 0)
       MenuItem({content: '删除'})
         .contentFontColor($r('sys.color.warning'))
         .onClick(()=>{
@@ -154,7 +214,6 @@ export struct BookShelf {
             zlibClient.flashDownloadHistoryAndLocalBooksList()
           })
         })
-        .enabled(fileIo.accessSync(item.BookFilePath))
     }
   }
 }
