@@ -77,6 +77,12 @@ export struct TanksFor {
       appBundle: 'com.hm.ultimate.reader'
     },
     {
+      name: '楠柒',
+      info: 'ICON绘制',
+      avatar: $r("app.media.nanqi"),
+      barrier: 'ICON绘制'
+    },
+    {
       name: 'F-park',
       info: 'Bug测试',
       avatar: 'https://file.atomgit.com/uploads/user/1754322665099_6919.jpeg',
