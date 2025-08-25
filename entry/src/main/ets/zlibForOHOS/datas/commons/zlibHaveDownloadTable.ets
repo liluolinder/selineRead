@@ -91,14 +91,7 @@ export let zlibHaveDownloadTable:I_RelationalStoreDataBaseTableForm[] = [
     needAutoIncrement:false,
     type:RelationalStoreDataBaseTableType.INTEGER,
     canNull:true
-  },
-  {
-    key:'isFromLocal',
-    isKey:false,
-    needAutoIncrement:false,
-    type:RelationalStoreDataBaseTableType.INTEGER,
-    canNull:true
-  },
+  }
 ]
 
 
