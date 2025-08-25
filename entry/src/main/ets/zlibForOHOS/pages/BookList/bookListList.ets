@@ -154,6 +154,7 @@ export struct BookListList {
       }
     }
     .onAppear(async ()=>{
+      zlibClient.bookshelfArray.clearData()
       await zlibClient.refreshUrl().then(async () => {
         zlibClient.getBookShelf(1)
       })
