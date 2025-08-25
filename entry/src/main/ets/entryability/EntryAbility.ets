@@ -2,15 +2,12 @@ import { AbilityConstant, common,
   Configuration,
   ConfigurationConstant, Context, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { display, window } from '@kit.ArkUI';
+import { window } from '@kit.ArkUI';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { __DataBase__, __System__, __UI__, __User__ } from '../zlibForOHOS/datas/classes/ShareDatas';
 import  NeoPreferencesUtil from '../zlibForOHOS/datas/classes/XPreferencesUtil'
 import WindowsUtil from '../zlibForOHOS/utils/WindowsUtil';
-import { linderDataBaseManger } from '../zlibForOHOS/datas/classes/LDataBaseManager';
-import { zlibHaveDownloadTable } from '../zlibForOHOS/datas/commons/zlibHaveDownloadTable';
-import { linderPixelMap } from '../zlibForOHOS/datas/classes/LPixelMap';
 import { zlibClient } from '../zlibForOHOS/datas/classes/zlib';
 
 const DOMAIN = 0x0000;
