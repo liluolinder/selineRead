@@ -20,7 +20,7 @@ import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { I_UserInfo } from '../interfaces/I_UserInfo';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { globlContext } from '../../../entryability/EntryAbility';
-import { shareBook } from '../../utils/ToolsUtil';
+import { getDownloadFolderPath, shareBook } from '../../utils/ToolsUtil';
 import { I_Bookshelf, I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
 import { notificationManager } from '@kit.NotificationKit';
 
@@ -478,13 +478,8 @@ export class zlib {
           promptAction.showToast({ message: `下载完成`, duration: 800 })
           linderNotificationManager.pushNotificationWithProgress(notificationID, 100, "下载完成", fileName)
 
-          let uri1: string = '';
-          const documentViewPicker = new picker.DocumentViewPicker(context);
-          documentViewPicker.save({ pickerMode: picker.DocumentPickerMode.DOWNLOAD })
-            .then((documentSaveResult: Array<string>) => {
-              uri1 = documentSaveResult[0];
               let file0 = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE)
-              let testFilePath = new fileUri.FileUri(uri1 + '/' + fileName).path;
+              let testFilePath = new fileUri.FileUri(await getDownloadFolderPath() + fileName).path;
               let file1 = fs.openSync(testFilePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE);
               fs.moveFile(file0.path, file1.path, 0).then(() => {
                 console.info("move file succeed");
@@ -511,10 +506,6 @@ export class zlib {
                 this.flashDownloadHistoryAndLocalBooksList()
               })
               shareBook(testFilePath)
-            })
-            .catch((err: BusinessError) => {
-              console.error(`Invoke documentViewPicker.save failed, code is ${err.code}, message is ${err.message}`);
-            })
 
           backgroundTaskManager.stopBackgroundRunning(globlContext as common.UIAbilityContext)
 
