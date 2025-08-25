@@ -407,7 +407,6 @@ export struct zlibHome {
 
     }
     .onAppear(async ()=>{
-      zlibClient.recommendBooksArray.clearData()
       await zlibClient.refreshUrl().then(async () => {
         zlibClient.getRecommendBooks(1)
       })

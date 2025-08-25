@@ -51,6 +51,8 @@ struct SettingsPage{
               XAnimation.runWithAnimation(()=>__UI__.onlineMode = checked)
               NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', checked)
               if(checked) zlibClient.getUserInfo()
+              zlibClient.recommendBooksArray.clearData()
+              zlibClient.bookshelfArray.clearData()
             }
           })
         }
