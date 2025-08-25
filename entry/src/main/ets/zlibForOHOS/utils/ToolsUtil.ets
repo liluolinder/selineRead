@@ -1,7 +1,7 @@
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
 import { common } from '@kit.AbilityKit';
-import { fileUri } from '@kit.CoreFileKit';
+import { fileUri, picker } from '@kit.CoreFileKit';
 import { globlContext } from '../../entryability/EntryAbility';
 
 export function dateGetTime(timestamp: number|string, time: boolean = true, date: boolean = true): string {
@@ -67,4 +67,10 @@ export function shareBook(path: string){
     previewMode: systemShare.SharePreviewMode.DETAIL,
     selectionMode: systemShare.SelectionMode.SINGLE
   });
+}
+
+export async function getDownloadFolderPath() {
+  const documentViewPicker = new picker.DocumentViewPicker()
+  let documentSaveResult = await documentViewPicker.save({ pickerMode: picker.DocumentPickerMode.DOWNLOAD })
+  return new fileUri.FileUri(documentSaveResult[0]).path + '/'
 }
