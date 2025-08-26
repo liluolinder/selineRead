@@ -309,6 +309,7 @@ export struct zlibHome {
           })
           .width(__UI__.isInSearchMode ? '100%' : '50%')
       }.zIndex(1).padding({ left: 16, right: 16, top: __System__.topRectHeight })
+      .transition(XAnimation.getAnimation('up'))
 
 
       if ((__UI__.searchOrRecommend == zlibIndexShowMod.Recommend &&
