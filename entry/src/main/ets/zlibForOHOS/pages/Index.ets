@@ -123,6 +123,7 @@ struct Index {
           .width(__System__.windowWidth > minWidth ? 65 + __System__.leftRectHeight : '100%')
           .height(__System__.windowWidth > minWidth ? '100%' : 65 + __System__.bottomRectHeight * 0.8)
           .padding({bottom: Math.max(__System__.bottomRectHeight * 0.8, 5), top: __System__.windowWidth > minWidth? __System__.topRectHeight: 0, left: __System__.windowWidth > minWidth? __System__.leftRectHeight: 5})
+          .transition(XAnimation.getAnimation('bottom'))
         }
 
 
