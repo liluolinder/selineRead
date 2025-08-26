@@ -60,7 +60,7 @@ export struct UpdateInfo{
               ListItem(){
                 Column({space:5}){
                   if(item.addNewFunArray!=undefined){
-                    Text("[新增功能]").width('100%')
+                    Text("[新增功能]").width('100%').fontWeight(FontWeight.Bold)
                     ForEach(item.addNewFunArray,(newFun:string,indexA:number)=>{
                       Text(`${indexA+1}. ${newFun}`).width('100%').fontSize(14)
 
@@ -68,14 +68,14 @@ export struct UpdateInfo{
                   }
 
                   if(item.fixBugsArray!=undefined){
-                    Text("[BUG修复]").width('100%')
+                    Text("[BUG修复]").width('100%').fontWeight(FontWeight.Bold)
                     ForEach(item.fixBugsArray,(fixBug:string,indexA:number)=>{
                       Text(`${indexA+1}. ${fixBug}`).width('100%').fontSize(14)
                     })
                   }
 
                   if(item.optimizeArray!=undefined){
-                    Text("[优化更新]").width('100%')
+                    Text("[优化更新]").width('100%').fontWeight(FontWeight.Bold)
                     ForEach(item.optimizeArray,(optimize:string,indexA:number )=>{
                       Text(`${indexA+1}. ${optimize}`).width('100%').fontSize(14)
                     })
