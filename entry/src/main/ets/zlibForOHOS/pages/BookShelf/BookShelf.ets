@@ -97,103 +97,113 @@ export struct BookShelf {
           })
         }.padding({ top: Math.max(__System__.topRectHeight, 16), left: 16, right: 16 })
 
-        List({ space: 10 }) {
+        if (zlibClient.localDownloadHistoryArray.totalCount() == 0) {
+          Stack() {
+            Text('空空如也')
+              .fontSize(30)
+              .fontWeight(FontWeight.Medium)
+              .offset({ y: __System__.windowWidth > minWidth ? 0 : (70 + __System__.bottomRectHeight) * -1 })
+          }.height('100%')
+        } else {
+          List({ space: 10 }) {
 
-          LazyForEach(zlibClient.localDownloadHistoryArray, (item: I_ZlibHaveDownloadTable, index: number) => {
-            ListItem() {
-              Row({ space: 10 }) {
-                Image(item.BookImage.length == 0 ? $r('app.media.zlib') : item.BookImage)
-                  .size({ height: '100%', width: 82 })
-                  .borderRadius(15)
-                  .autoResize(true)
-                  .draggable(false)
-                Flex({
-                  justifyContent: FlexAlign.SpaceBetween,
-                  alignItems: ItemAlign.Start,
-                  direction: FlexDirection.Column
-                }) {
-                  Column({ space: 2 }) {
-                    Text(item.BookName)
-                      .fontWeight(FontWeight.Medium)
-                      .fontSize(21)
-                      .maxLines(2)
-                    Text(item.BookAuthor)
-                      .maxLines(1)
-                      .fontSize(16)
-                      .opacity(0.8)
+            LazyForEach(zlibClient.localDownloadHistoryArray, (item: I_ZlibHaveDownloadTable, index: number) => {
+              ListItem() {
+                Row({ space: 10 }) {
+                  Image(item.BookImage.length == 0 ? $r('app.media.zlib') : item.BookImage)
+                    .size({ height: '100%', width: 82 })
+                    .borderRadius(15)
+                    .autoResize(true)
+                    .draggable(false)
+                  Flex({
+                    justifyContent: FlexAlign.SpaceBetween,
+                    alignItems: ItemAlign.Start,
+                    direction: FlexDirection.Column
+                  }) {
+                    Column({ space: 2 }) {
+                      Text(item.BookName)
+                        .fontWeight(FontWeight.Medium)
+                        .fontSize(21)
+                        .maxLines(2)
+                      Text(item.BookAuthor)
+                        .maxLines(1)
+                        .fontSize(16)
+                        .opacity(0.8)
 
-                  }.alignItems(HorizontalAlign.Start)
+                    }.alignItems(HorizontalAlign.Start)
 
-                  Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.End }) {
-                    Text(dateGetTime(item.BookDownLoadTime))
-                      .maxLines(1)
-                      .fontSize(12)
-                      .opacity(0.6)
-                    Row({ space: 5 }) {
-                      if (!fileIo.accessSync(item.BookFilePath)) {
-                        SymbolGlyph($r('sys.symbol.ohos_trash'))
-                          .fontSize(20)
-                          .fontColor([$r('sys.color.warning')])
+                    Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.End }) {
+                      Text(dateGetTime(item.BookDownLoadTime))
+                        .maxLines(1)
+                        .fontSize(12)
+                        .opacity(0.6)
+                      Row({ space: 5 }) {
+                        if (!fileIo.accessSync(item.BookFilePath)) {
+                          SymbolGlyph($r('sys.symbol.ohos_trash'))
+                            .fontSize(20)
+                            .fontColor([$r('sys.color.warning')])
 
-                      }
-                      if (item.BookID > 0) {
-                        SymbolGlyph($r('sys.symbol.cloud'))
-                          .fontSize(20)
-                          .fontColor([$r('sys.color.font')])
-                      }
-                    }.opacity(0.4).padding({left: 10, right: 10})
+                        }
+                        if (item.BookID > 0) {
+                          SymbolGlyph($r('sys.symbol.cloud'))
+                            .fontSize(20)
+                            .fontColor([$r('sys.color.font')])
+                        }
+                      }.opacity(0.4).padding({ left: 10, right: 10 })
 
+                    }
+
+                  }.layoutWeight(1).padding({ top: 5, bottom: 5 })
+
+                }.size({ width: '100%', height: '100%' })
+                .padding(8)
+                .onClick(() => {
+                  if (fileIo.accessSync(item.BookFilePath)) {
+                    __UI__.indexPageStack.pushPath({ name: 'readerPage', param: item.BookFilePath }, true)
+                  } else {
+                    promptAction.showToast({
+                      message: '源文件不存在',
+                      duration: 2000
+                    })
                   }
-
-                }.layoutWeight(1).padding({ top: 5, bottom: 5 })
-
-              }.size({ width: '100%', height: '100%' })
-              .padding(8)
-              .onClick(() => {
-                if (fileIo.accessSync(item.BookFilePath)) {
-                  __UI__.indexPageStack.pushPath({ name: 'readerPage', param: item.BookFilePath }, true)
-                } else {
-                  promptAction.showToast({
-                    message: '源文件不存在',
-                    duration: 2000
-                  })
-                }
-              })
-            }
-            .transition(XAnimation.getAnimation('bottom'))
-            .backgroundColor($r('sys.color.comp_background_list_card'))
-            .draggable(fileIo.accessSync(item.BookFilePath))
-            .onDragStart((event) => {
-              if (fileIo.accessSync(item.BookFilePath)) {
-                let data: unifiedDataChannel.File = new unifiedDataChannel.File()
-                data.uri = item.BookFilePath
-                event.setData(new unifiedDataChannel.UnifiedData(data))
+                })
               }
-              return this.draggingPreview(item)
-            })
-            .bindContextMenu(this.BookMenu(item), ResponseType.RightClick)
-            .bindContextMenu(this.BookMenu(item), ResponseType.LongPress,
-              { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
-            .borderRadius(20)
-            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-            .size({ width: '100%', height: 120 })
-          }, (item: string) => item)
+              .transition(XAnimation.getAnimation('bottom'))
+              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .draggable(fileIo.accessSync(item.BookFilePath))
+              .onDragStart((event) => {
+                if (fileIo.accessSync(item.BookFilePath)) {
+                  let data: unifiedDataChannel.File = new unifiedDataChannel.File()
+                  data.uri = item.BookFilePath
+                  event.setData(new unifiedDataChannel.UnifiedData(data))
+                }
+                return this.draggingPreview(item)
+              })
+              .bindContextMenu(this.BookMenu(item), ResponseType.RightClick)
+              .bindContextMenu(this.BookMenu(item), ResponseType.LongPress,
+                { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
+              .borderRadius(20)
+              .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+              .size({ width: '100%', height: 120 })
+            }, (item: string) => item)
 
+          }
+          .height('100%')
+          .lanes(this.lanes, 10)
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
+          .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70)))
+          .onAreaChange((_, newValue) => {
+            XAnimation.runWithAnimation(() => {
+              this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 400), 1)
+            }, this.lanes > 0)
+          })
+          .layoutWeight(1)
+          .margin({ left: 16, right: 16 })
+          .borderRadius({ topLeft: 20, topRight: 20 })
+          .clip(true)
         }
-        .height('100%')
-        .lanes(this.lanes, 10)
-        .scrollBar(BarState.Off)
-        .edgeEffect(EdgeEffect.Spring)
-        .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70)))
-        .onAreaChange((_, newValue) => {
-          XAnimation.runWithAnimation(() => {
-            this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 400), 1)
-          }, this.lanes > 0)
-        })
-        .layoutWeight(1)
-        .margin({ left: 16, right: 16 })
-        .borderRadius({ topLeft: 20, topRight: 20 })
-        .clip(true)
+
       }
 
 
