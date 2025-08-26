@@ -226,6 +226,7 @@ export struct personal {
               this.showLoginInOrRegister = true
             }
           })
+          .transition(XAnimation.getAnimation('bottom'))
 
           ListItem() {
             Row({ space: 10 }) {
@@ -289,7 +290,7 @@ export struct personal {
 
             }
 
-          }.size({ width: '100%', height: 120 })
+          }.size({ width: '100%', height: 120 }).transition(XAnimation.getAnimation('bottom'))
         }
 
         ListItemGroup() {
@@ -323,6 +324,7 @@ export struct personal {
         .borderRadius(20)
         .backgroundColor($r('sys.color.comp_background_list_card'))
         .padding({ bottom: 6, top: 6 })
+        .transition(XAnimation.getAnimation('bottom'))
 
         ListItemGroup() {
           ForEach(this.buttonsArray2, (item: string, index: number) => {
@@ -381,6 +383,7 @@ export struct personal {
           })
 
         }
+        .transition(XAnimation.getAnimation('bottom'))
         .bindSheet($$this.showTanks, TanksForBuilder(), {
           preferType: SheetType.CENTER,
           title: { title: '鸣谢' },
