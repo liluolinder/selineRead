@@ -401,6 +401,7 @@ export struct personal {
       .contentEndOffset(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 80), 16))
       .lanes(this.pageWidth > minWidth ? 2 : 1, 10)
       .scrollBar(BarState.Off)
+      .chainAnimation(true)
 
     }
     .onAppear(()=>{
