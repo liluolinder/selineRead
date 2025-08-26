@@ -52,18 +52,6 @@ struct Index {
 
   private swiperController = new SwiperController()
 
-  tabIconChange(index: number): ResourceStr {
-    if (index == 0) {
-      return $r('app.media.zlibsvg')
-    } else if (index == 1) {
-      return $r('app.media.bookshelf')
-    } else if (index == 2) {
-      return $r('sys.media.ohos_ic_public_clock')
-    } else {
-      return $r('sys.media.person_badge_waveform')
-    }
-  }
-
   async aboutToAppear(): Promise<void> {
     __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
       dataBaseName: 'selineRead',
