@@ -33,6 +33,7 @@ export function UpdateInfoBuilder()
 export struct UpdateInfo{
 
   @Local historyArray:I_UpdateInfo[]=[
+    {version:'beta 0.2.0',date:'2025/8/26',addNewFunArray:['新增自定义API','新增本地书导入','新增API设置','新增下载完自动分享设置','新增书架拖动分享'],optimizeArray:['优化动画','更换icon(感谢群友:楠柒Zayn)','优化部分展示效果','优化书架展示','优化书架书籍是否存在显示','登录确定按钮位置移动'],fixBugsArray:['修复重复加载','内置阅读器首次打开异常']},
     {version:'beta 0.1.0',date:'2025/8/16',addNewFunArray:['新增书单','新增引导注册页'],optimizeArray:['优化Tab动画']},
     {version:'beta 0.0.4',date:'2025/8/6',optimizeArray:['UI优化','新增动画']},
     {version:'beta 0.0.3',date:'2025/8/5',addNewFunArray:['版本信息页面','鸣谢页面','打开仓库按钮','打开issues按钮']},
