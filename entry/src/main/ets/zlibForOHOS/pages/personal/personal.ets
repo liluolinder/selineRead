@@ -57,19 +57,19 @@ export struct personal {
 
       buttons: [
         {
-          value: '确定',
+          value: '取消',
           buttonStyle: ButtonStyleMode.TEXTUAL,
+          role: ButtonRole.ERROR,
           action: () => {
-            zlibClient.loginIn(this.userAccount, this.userPassword)
             this.userAccount = ''
             this.userPassword = ''
           }
         },
         {
-          value: '取消',
+          value: '确定',
           buttonStyle: ButtonStyleMode.TEXTUAL,
-          role: ButtonRole.ERROR,
           action: () => {
+            zlibClient.loginIn(this.userAccount, this.userPassword)
             this.userAccount = ''
             this.userPassword = ''
           }
