@@ -28,7 +28,7 @@ export class XAnimation {
     XAnimation.mode = mode;
   }
 
-  public static getAnimation(dir: string) {
+  public static getAnimation(dir: 'left'|'right'|'up'|'bottom') {
     switch (XAnimation.mode) {
       case 'auto': {
         switch (dir) {
@@ -40,8 +40,6 @@ export class XAnimation {
             return XAnimation.MoveFromStart;
           case 'right':
             return XAnimation.MoveFromEnd;
-          default:
-            return XAnimation.MoveFromBottom;
         }
       }
       case 'up':
