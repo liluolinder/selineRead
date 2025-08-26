@@ -24,79 +24,99 @@ import { I_UpdateInfo } from "../../../datas/interfaces/I_UpdateInfo"
 
 
 @Builder
-export function UpdateInfoBuilder()
-{
+export function UpdateInfoBuilder() {
   UpdateInfo()
 }
 
 @ComponentV2
-export struct UpdateInfo{
-
-  @Local historyArray:I_UpdateInfo[]=[
-    {version:'beta 0.1.0',date:'2025/8/16',addNewFunArray:['新增书单','新增引导注册页'],optimizeArray:['优化Tab动画']},
-    {version:'beta 0.0.4',date:'2025/8/6',optimizeArray:['UI优化','新增动画']},
-    {version:'beta 0.0.3',date:'2025/8/5',addNewFunArray:['版本信息页面','鸣谢页面','打开仓库按钮','打开issues按钮']},
-    {version:'beta 0.0.2',date:'2025/8/4',fixBugsArray:["重复入栈",'历史记录排序问题','深色模式bug','书籍图片异常比例','tabs伪卡顿','loding图标位置']},
-    {version:'beta 0.0.1',date:'2025/7/28',addNewFunArray:["zlib推荐页面获取",'zlib下载','个人信息界面','下载通知','下载历史']},
+export struct UpdateInfo {
+  @Local historyArray: I_UpdateInfo[] = [
+    {
+      version: 'beta 0.1.0',
+      date: '2025/8/16',
+      addNewFunArray: ['新增书单', '新增引导注册页'],
+      optimizeArray: ['优化Tab动画']
+    },
+    { version: 'beta 0.0.4', date: '2025/8/6', optimizeArray: ['UI优化', '新增动画'] },
+    {
+      version: 'beta 0.0.3',
+      date: '2025/8/5',
+      addNewFunArray: ['版本信息页面', '鸣谢页面', '打开仓库按钮', '打开issues按钮']
+    },
+    {
+      version: 'beta 0.0.2',
+      date: '2025/8/4',
+      fixBugsArray: ["重复入栈", '历史记录排序问题', '深色模式bug', '书籍图片异常比例', 'tabs伪卡顿', 'loding图标位置']
+    },
+    {
+      version: 'beta 0.0.1',
+      date: '2025/7/28',
+      addNewFunArray: ["zlib推荐页面获取", 'zlib下载', '个人信息界面', '下载通知', '下载历史']
+    },
   ]
-
-  @Local currentIndex:number=-1
-
-  listScroller:Scroller = new Scroller()
+  @Local currentIndex: number = -1
+  listScroller: Scroller = new Scroller()
 
   build() {
-    Column(){
-      List({scroller:this.listScroller, space: 10}){
+    Column() {
+      List({ scroller: this.listScroller, space: 10 }) {
 
-        ForEach(this.historyArray,(item:I_UpdateInfo,index:number)=>{
+        ForEach(this.historyArray, (item: I_UpdateInfo, index: number) => {
 
-          ListItemGroup(){
+          ListItemGroup() {
 
-            ComposeListItem({contentItem:{primaryText:item.version,secondaryText:item.date},operateItem:{icon:{value:index==this.currentIndex?$r('sys.media.ohos_ic_public_arrow_up'):$r('sys.media.ohos_ic_public_arrow_down')}}})
+            ComposeListItem({
+              contentItem: { primaryText: item.version, secondaryText: item.date },
+              operateItem: {
+                icon: {
+                  value: index == this.currentIndex ? $r('sys.media.ohos_ic_public_arrow_up') :
+                  $r('sys.media.ohos_ic_public_arrow_down')
+                }
+              }
+            })
 
-            if(index==this.currentIndex)
-            {
-              ListItem(){
-                Column({space:5}){
-                  if(item.addNewFunArray!=undefined){
+            if (index == this.currentIndex) {
+              ListItem() {
+                Column({ space: 5 }) {
+                  if (item.addNewFunArray != undefined) {
                     Text("[新增功能]").width('100%')
-                    ForEach(item.addNewFunArray,(newFun:string,indexA:number)=>{
-                      Text(`${indexA+1}. ${newFun}`).width('100%').fontSize(14)
+                    ForEach(item.addNewFunArray, (newFun: string, indexA: number) => {
+                      Text(`${indexA + 1}. ${newFun}`).width('100%').fontSize(14)
 
                     })
                   }
 
-                  if(item.fixBugsArray!=undefined){
+                  if (item.fixBugsArray != undefined) {
                     Text("[BUG修复]").width('100%')
-                    ForEach(item.fixBugsArray,(fixBug:string,indexA:number)=>{
-                      Text(`${indexA+1}. ${fixBug}`).width('100%').fontSize(14)
+                    ForEach(item.fixBugsArray, (fixBug: string, indexA: number) => {
+                      Text(`${indexA + 1}. ${fixBug}`).width('100%').fontSize(14)
                     })
                   }
 
-                  if(item.optimizeArray!=undefined){
+                  if (item.optimizeArray != undefined) {
                     Text("[优化更新]").width('100%')
-                    ForEach(item.optimizeArray,(optimize:string,indexA:number )=>{
-                      Text(`${indexA+1}. ${optimize}`).width('100%').fontSize(14)
+                    ForEach(item.optimizeArray, (optimize: string, indexA: number) => {
+                      Text(`${indexA + 1}. ${optimize}`).width('100%').fontSize(14)
                     })
                   }
                 }
-              }.width('100%').padding({left: 15, right: 15, bottom: 15}).opacity(0.9)
+              }.width('100%').padding({ left: 15, right: 15, bottom: 15 }).opacity(0.9)
             }
 
           }
           .transition(XAnimation.getAnimation('bottom'))
           .backgroundColor($r('sys.color.comp_background_list_card'))
           .borderRadius(20)
-          .onClick(()=>{
-           if(this.currentIndex==index){
-             XAnimation.runWithAnimation(()=>{
-               this.currentIndex=-1
-             })
-           }else {
-             XAnimation.runWithAnimation(()=>{
-               this.currentIndex=index
-             })
-           }
+          .onClick(() => {
+            if (this.currentIndex == index) {
+              XAnimation.runWithAnimation(() => {
+                this.currentIndex = -1
+              })
+            } else {
+              XAnimation.runWithAnimation(() => {
+                this.currentIndex = index
+              })
+            }
           })
         })
 
@@ -104,12 +124,11 @@ export struct UpdateInfo{
       .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
       .scrollBar(BarState.Off)
       .chainAnimation(true)
-      .borderRadius({topLeft: 20, topRight: 20})
-      .margin({left: 16, right: 16})
+      .borderRadius({ topLeft: 20, topRight: 20 })
+      .margin({ left: 16, right: 16 })
 
     }
     .width('100%')
     .height('100%')
   }
-
 }
