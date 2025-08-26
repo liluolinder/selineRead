@@ -84,6 +84,7 @@ export struct UpdateInfo{
             }
 
           }
+          .transition(XAnimation.getAnimation('bottom'))
           .backgroundColor($r('sys.color.comp_background_list_card'))
           .borderRadius(20)
           .onClick(()=>{
