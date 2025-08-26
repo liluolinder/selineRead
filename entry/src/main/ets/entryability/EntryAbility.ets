@@ -27,6 +27,7 @@ export default class EntryAbility extends UIAbility {
     zlibClient.base_url =
       NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', '') as string
     zlibClient.baseApi_url = zlibClient.base_url + '/papi'
+    zlibClient.autoShare = NeoPreferencesUtil.getPreferencesValue("selineRead", 'autoShare', true) as boolean
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
   }
 

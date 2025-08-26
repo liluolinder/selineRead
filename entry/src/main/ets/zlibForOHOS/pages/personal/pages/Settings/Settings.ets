@@ -84,6 +84,18 @@ struct SettingsPage{
               }.width('100%')
             }.width('100%').borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card')).padding(15).alignItems(HorizontalAlign.Start)
           }
+
+          ListItem(){
+            SettingsToggleItem({
+              symbol: $r('sys.symbol.share'),
+              message: '下载完成后自动分享',
+              checked: zlibClient.autoShare,
+              onChange: (checked: boolean)=>{
+                zlibClient.autoShare = checked
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'autoShare', checked)
+              }
+            })
+          }
         }
       }
       .contentEndOffset(Math.max(16, __System__.bottomRectHeight))

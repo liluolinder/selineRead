@@ -37,6 +37,8 @@ export class zlib {
   baseApi_url: string = ''
   cookie: string = ''
 
+  autoShare: boolean = false
+
   private setCookies(remix_userkey: string, remix_userid: string) {
     this.cookie =
       `siteLanguage=zh; selectedSiteMode=books; remix_userkey=${remix_userkey}; remix_userid=${remix_userid}; redirects_count=%7B%22auth%22%3A1%2C%22hide-auth-params%22%3A1%7D`
@@ -505,7 +507,7 @@ export class zlib {
               linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket).then(()=>{
                 this.flashDownloadHistoryAndLocalBooksList()
               })
-              shareBook(testFilePath)
+              if(this.autoShare) shareBook(testFilePath)
 
           backgroundTaskManager.stopBackgroundRunning(globlContext as common.UIAbilityContext)
 
