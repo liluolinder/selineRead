@@ -37,7 +37,7 @@ import { BookList } from './BookList/bookListList';
 @ComponentV2
 struct Index {
   private tabsArrayOnline: [string, Resource, Resource][] = [
-    ['Zlibrary', $r('sys.symbol.book'), $r('sys.symbol.book_open_fill')],
+    ['书库', $r('sys.symbol.book'), $r('sys.symbol.book_open_fill')],
     ['书单', $r('sys.symbol.list_bullet'), $r('sys.symbol.list_bullet')],
     ['书架', $r('sys.symbol.book_closed_right_left'), $r('sys.symbol.books_vertical_fill')],
     ['我的', $r('sys.symbol.person'), $r('sys.symbol.person_fill')]
