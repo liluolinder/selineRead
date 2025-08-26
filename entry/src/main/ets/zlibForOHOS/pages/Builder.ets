@@ -20,5 +20,5 @@ export function loadingNewDialog(){
       Text('正在载入').fontSize(22).fontWeight(FontWeight.Medium).fontColor($r('sys.color.font')).opacity(0.6)
     }.padding(10).borderRadius(10).backdropBlur(100)
   }.size({width: '100%', height: '100%'}).padding({bottom: Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 100))}).enabled(false)
-  .transition(XAnimation.getAnimation('down'))
+  .transition(XAnimation.getAnimation('bottom'))
 }
