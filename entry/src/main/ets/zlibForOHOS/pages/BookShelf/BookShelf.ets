@@ -21,12 +21,12 @@ import { minWidth, __DataBase__, __System__, __UI__ } from "../../datas/classes/
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownloadTable"
-import { curves, promptAction } from "@kit.ArkUI"
+import { curves, LengthUnit, promptAction } from "@kit.ArkUI"
 import { dateGetTime, getDownloadFolderPath, shareBook } from "../../utils/ToolsUtil"
 import { loadingDialog } from "../Builder"
 import { fileIo, fileUri, picker } from "@kit.CoreFileKit"
 import { linderDataBaseManger } from "../../datas/classes/LDataBaseManager"
-import { relationalStore } from "@kit.ArkData"
+import { relationalStore, unifiedDataChannel } from "@kit.ArkData"
 import { bookParser } from "@kit.ReaderKit"
 import { globlContext } from "../../../entryability/EntryAbility"
 import { BusinessError, zlib } from "@kit.BasicServicesKit"
@@ -108,8 +108,8 @@ export struct BookShelf {
                   Column({ space: 2 }) {
                     Text(item.BookName)
                       .fontWeight(FontWeight.Medium)
-                      .fontSize(22)
-                      .maxLines(1)
+                      .fontSize(21)
+                      .maxLines(2)
                     Text(item.BookAuthor)
                       .maxLines(1)
                       .fontSize(16)
@@ -140,10 +140,20 @@ export struct BookShelf {
                   })
                 }
               })
-              .bindContextMenu(this.BookMenu(item), ResponseType.RightClick || ResponseType.LongPress)
             }
             .transition(XAnimation.getAnimation('bottom'))
             .backgroundColor($r('sys.color.comp_background_list_card'))
+            .draggable(fileIo.accessSync(item.BookFilePath))
+            .onDragStart((event) => {
+              if(fileIo.accessSync(item.BookFilePath)){
+                let data: unifiedDataChannel.File = new unifiedDataChannel.File()
+                data.uri = item.BookFilePath
+                event.setData(new unifiedDataChannel.UnifiedData(data))
+              }
+              return this.draggingPreview(item)
+            })
+            .bindContextMenu(this.BookMenu(item), ResponseType.RightClick)
+            .bindContextMenu(this.BookMenu(item), ResponseType.LongPress, {preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] }})
             .borderRadius(20)
             .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
             .size({ width: '100%', height: 120 })
@@ -175,6 +185,26 @@ export struct BookShelf {
     .onAppear(()=>{
       zlibClient.flashDownloadHistoryAndLocalBooksList()
     })
+  }
+
+  @Builder
+  draggingPreview(item: I_ZlibHaveDownloadTable){
+    Flex({alignItems: ItemAlign.Start, space: {main: {value: 5, unit: LengthUnit.VP}}}){
+      Image(item.BookImage).size({width: 65, height: 84}).borderRadius(15)
+      Column(){
+        Text(item.BookName)
+          .fontWeight(FontWeight.Medium)
+          .fontSize(20)
+          .maxLines(3)
+        Text(item.BookAuthor)
+          .fontSize(14)
+          .maxLines(1)
+          .opacity(0.8)
+      }.constraintSize({maxWidth: '80%'})
+      .padding(5)
+      .alignItems(HorizontalAlign.Start)
+
+    }.padding(8).borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card'))
   }
 
   @Builder
@@ -213,6 +243,9 @@ export struct BookShelf {
           linderDataBaseManger.deleteValueToRelationalDataBase(__DataBase__.baseStore,"zlibHaveDownload", [{key: 'ID', value: item.ID}]).then(()=>{
             zlibClient.flashDownloadHistoryAndLocalBooksList()
           })
+          try {
+            fileIo.unlinkSync(globlContext.filesDir + '/' + item.BookID)
+          }catch{}
         })
     }
   }
