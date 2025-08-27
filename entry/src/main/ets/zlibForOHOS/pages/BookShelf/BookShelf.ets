@@ -30,6 +30,7 @@ import { relationalStore, unifiedDataChannel } from "@kit.ArkData"
 import { bookParser } from "@kit.ReaderKit"
 import { globlContext } from "../../../entryability/EntryAbility"
 import { BusinessError, zlib } from "@kit.BasicServicesKit"
+import { common, Want, wantConstant } from "@kit.AbilityKit"
 
 @ComponentV2
 export struct BookShelf {
@@ -294,6 +295,17 @@ export struct BookShelf {
             fileIo.unlinkSync(globlContext.filesDir + '/' + item.BookID)
           } catch {
           }
+        })
+
+      MenuItem({ content: '导出至格物阅读' })
+        .onClick(async () => {
+          let want: Want = {
+            bundleName: 'com.hm.ultimate.reader',
+            action: 'ohos.want.action.viewData',
+            uri: fileUri.getUriFromPath(item.BookFilePath),
+            flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
+          };
+          (globlContext as common.UIAbilityContext).startAbility(want)
         })
     }
   }
