@@ -242,7 +242,7 @@ export struct BookShelf {
         Text(item.BookName)
           .fontWeight(FontWeight.Medium)
           .fontSize(20)
-          .maxLines(3)
+          .maxLines(2)
         Text(item.BookAuthor)
           .fontSize(14)
           .maxLines(1)
@@ -251,7 +251,7 @@ export struct BookShelf {
       .padding(5)
       .alignItems(HorizontalAlign.Start)
 
-    }.padding(8).borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card'))
+    }.padding(8).borderRadius(20).backgroundColor($r('app.color.start_window_background'))
   }
 
   @Builder
