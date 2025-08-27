@@ -22,7 +22,6 @@ import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { globlContext } from '../../../entryability/EntryAbility';
 import { getDownloadFolderPath, shareBook } from '../../utils/ToolsUtil';
 import { I_Bookshelf, I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
-import { notificationManager } from '@kit.NotificationKit';
 
 @ObservedV2
 export class zlib {
@@ -452,8 +451,8 @@ export class zlib {
               abilityName: 'EntryAbility'
             })
           ],
-          actionType: wantAgent.OperationType.START_ABILITY,
-          requestCode: 114514,
+          actionType: wantAgent.OperationType.START_SERVICE,
+          requestCode: 114513,
           actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
         };
         wantAgent.getWantAgent(wantAgentInfo).then((wantAgentObj: WantAgent) => {
