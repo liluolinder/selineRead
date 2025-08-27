@@ -9,3 +9,8 @@ export interface I_Acknowledgment{
   atomgitHome?:string
   barrier?:string
 }
+
+export interface I_Acknowledgment_List{
+  name: string,
+  list: I_Acknowledgment[]
+}
