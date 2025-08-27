@@ -41,60 +41,76 @@ export struct BookShelf {
       Column({ space: 10 }) {
         Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
           Text('书架').fontSize(25).fontWeight(FontWeight.Medium)
-          Button({ stateEffect: true }) {
-            SymbolGlyph($r('sys.symbol.plus')).fontSize(26).fontColor([$r('sys.color.font')])
-          }
-          .size({ width: 40, height: 40 })
-          .backgroundColor($r('sys.color.comp_background_list_card'))
-          .onClick(() => {
-            new picker.DocumentViewPicker().select({ fileSuffixFilters: ['epub', 'pdf'], maxSelectNumber: 1 })
-              .then(async (result) => {
-                const file0 = fileIo.openSync(result[0])
-                if (fileIo.accessSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name)) {
-                  promptAction.showToast({ message: '文件已存在', duration: 2000 })
-                  return
-                }
-                const file1 = fileIo.openSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name,
-                  fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
-                fileIo.copyFile(file0.fd, file1.fd).then(async () => {
-                  const id = new Date().getTime() * -1
-                  const valueBucket: relationalStore.ValuesBucket = {
-                    BookID: id,
-                    BookName: file0.name,
-                    BookHref: '',
-                    BookAuthor: '未知',
-                    BookPublisher: '未知',
-                    BookImage: '',
-                    BookDownLoadTime: new Date().toISOString(),
-                    BookFilePath: file1.path,
-                    haveDownload: 0
-                  };
-                  try {
-                    const bookParserHandler = await bookParser.getDefaultHandler(file1.path)
-                    const bookInfo = bookParserHandler.getBookInfo();
-                    valueBucket.BookName = bookInfo.bookTitle
-                    valueBucket.BookAuthor = bookInfo.bookCreator || valueBucket.BookAuthor
-                    if (bookInfo.bookCoverImage) {
-                      fileIo.mkdir(globlContext.cacheDir + '/tmp/')
-                      await zlib.decompressFile(file1.path, globlContext.cacheDir + '/tmp/')
-                      const file2 = fileIo.openSync(globlContext.filesDir + '/' + id.toString(),
-                        fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
-                      const coverImage = fileIo.openSync(globlContext.cacheDir + '/tmp/' + bookInfo.bookCoverImage)
-                      fileIo.copyFileSync(coverImage.fd, file2.fd)
-                      valueBucket.BookImage = fileUri.getUriFromPath(file2.path)
-                      fileIo.rmdirSync(globlContext.cacheDir + '/tmp/')
-                    }
-                  } catch {
-                  }
 
-                  linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
-                    valueBucket).then(() => {
-                    zlibClient.flashDownloadHistoryAndLocalBooksList()
+          Row({space: 10}){
+            Button({ stateEffect: true }) {
+              SymbolGlyph($r('sys.symbol.plus')).fontSize(26).fontColor([$r('sys.color.font')])
+            }
+            .size({ width: 40, height: 40 })
+            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .onClick(() => {
+              new picker.DocumentViewPicker().select({ fileSuffixFilters: ['epub', 'pdf'], maxSelectNumber: 1 })
+                .then(async (result) => {
+                  const file0 = fileIo.openSync(result[0])
+                  if (fileIo.accessSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name)) {
+                    promptAction.showToast({ message: '文件已存在', duration: 2000 })
+                    return
+                  }
+                  const file1 = fileIo.openSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name,
+                    fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
+                  fileIo.copyFile(file0.fd, file1.fd).then(async () => {
+                    const id = new Date().getTime() * -1
+                    const valueBucket: relationalStore.ValuesBucket = {
+                      BookID: id,
+                      BookName: file0.name,
+                      BookHref: '',
+                      BookAuthor: '未知',
+                      BookPublisher: '未知',
+                      BookImage: '',
+                      BookDownLoadTime: new Date().toISOString(),
+                      BookFilePath: file1.path,
+                      haveDownload: 0
+                    };
+                    try {
+                      const bookParserHandler = await bookParser.getDefaultHandler(file1.path)
+                      const bookInfo = bookParserHandler.getBookInfo();
+                      valueBucket.BookName = bookInfo.bookTitle
+                      valueBucket.BookAuthor = bookInfo.bookCreator || valueBucket.BookAuthor
+                      if (bookInfo.bookCoverImage) {
+                        fileIo.mkdir(globlContext.cacheDir + '/tmp/')
+                        await zlib.decompressFile(file1.path, globlContext.cacheDir + '/tmp/')
+                        const file2 = fileIo.openSync(globlContext.filesDir + '/' + id.toString(),
+                          fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
+                        const coverImage = fileIo.openSync(globlContext.cacheDir + '/tmp/' + bookInfo.bookCoverImage)
+                        fileIo.copyFileSync(coverImage.fd, file2.fd)
+                        valueBucket.BookImage = fileUri.getUriFromPath(file2.path)
+                        fileIo.rmdirSync(globlContext.cacheDir + '/tmp/')
+                      }
+                    } catch {
+                    }
+
+                    linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
+                      valueBucket).then(() => {
+                      zlibClient.flashDownloadHistoryAndLocalBooksList()
+                    })
+                    promptAction.showToast({ message: '导入完成', duration: 2000 })
                   })
-                  promptAction.showToast({ message: '导入完成', duration: 2000 })
                 })
+            })
+            if(__UI__.onlineMode){
+              Button({ stateEffect: true }) {
+                SymbolGlyph($r('sys.symbol.download')).fontSize(26).fontColor([$r('sys.color.font')])
+              }
+              .size({ width: 40, height: 40 })
+              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .onClick(()=>{
+                if(__UI__.indexPageStack.getPathStack().find(i => i.name == 'downloadPage')) __UI__.indexPageStack.pushPathByName('downloadPage', undefined)
               })
-          })
+            }
+
+          }
+
+
         }.padding({ top: Math.max(__System__.topRectHeight, 16), left: 16, right: 16 })
 
         if (zlibClient.localDownloadHistoryArray.totalCount() == 0) {

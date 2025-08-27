@@ -14,6 +14,11 @@
       "name": "readerPage",
       "pageSourceFile": "src/main/ets/zlibForOHOS/pages/Reader.ets",
       "buildFunction": "readerBuilder"
+    },
+    {
+      "name": "downloadPage",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/BookShelf/DownloadPage.ets",
+      "buildFunction": "downloadPageBuilder"
     }
   ]
 }
