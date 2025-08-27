@@ -297,7 +297,16 @@ export struct personal {
           ForEach(this.buttonsArray, (item: string, index: number) => {
             ComposeListItem({
               contentItem: { primaryText: item },
-              operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') } }
+              operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right'),action:()=>{
+                switch (index){
+                  case 0:
+                    __UI__.showSettings = true
+                    break
+                  case 1:
+                    this.showUpdateInfo = true;
+                    break
+                }
+              } } }
             }).onClick(() => {
               switch (index){
                 case 0:
@@ -330,7 +339,43 @@ export struct personal {
           ForEach(this.buttonsArray2, (item: string, index: number) => {
             ComposeListItem({
               contentItem: { primaryText: item },
-              operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') } }
+              operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') ,action:()=>{
+                if (index == 0) {
+                  this.showTanks = true;
+                  return
+                }
+                let url: string = ''
+                if (index == 1) {
+                  url = 'https://atomgit.com/liluolinder/selineRead'
+                } else if (index == 2) {
+                  url = 'https://atomgit.com/liluolinder/selineRead/issues'
+                }
+
+                AlertDialog.show({
+                  title: '提醒',
+                  message: '即将打开网站',
+                  autoCancel: true,
+                  primaryButton: {
+                    value: '取消',
+                    action: () => {
+                    }
+                  },
+                  secondaryButton: {
+                    enabled: true,
+                    defaultFocus: true,
+                    style: DialogButtonStyle.HIGHLIGHT,
+                    value: '确定',
+                    action: () => {
+                      let want: Want = {
+                        action: 'ohos.want.action.viewData',
+                        entities: ['entity.system.browsable'],
+                        uri: url,
+                      };
+                      (globlContext as common.UIAbilityContext).startAbility(want)
+                    }
+                  }
+                })
+              }} }
             }).onClick(() => {
               if (index == 0) {
                 this.showTanks = true;
