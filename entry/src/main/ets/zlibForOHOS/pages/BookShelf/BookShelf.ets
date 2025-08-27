@@ -307,6 +307,7 @@ export struct BookShelf {
           };
           (globlContext as common.UIAbilityContext).startAbility(want)
         })
+        .enabled(fileIo.accessSync(item.BookFilePath))
     }
   }
 }
