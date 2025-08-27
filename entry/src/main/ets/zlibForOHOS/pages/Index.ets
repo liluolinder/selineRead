@@ -31,6 +31,7 @@ import { XAnimation } from '../datas/classes/XAnimation';
 import { zlibIndexShowMod } from '../datas/enums/zlibIndexShowMod';
 import { DecorBar } from './DecorBar';
 import { BookList } from './BookList/bookListList';
+import { zlibDownloadingTable } from '../datas/commons/zlibDownloadingTable';
 
 
 @Entry
@@ -56,8 +57,14 @@ struct Index {
     __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
       dataBaseName: 'selineRead',
     })
+
     linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
-      zlibHaveDownloadTable,4)
+      zlibHaveDownloadTable,5)
+
+    linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'I_zlibDownloadingTable',
+      zlibDownloadingTable,5)
+
+
     __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
     __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
     if (__User__.isLoginZlib) {
