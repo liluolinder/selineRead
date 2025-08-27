@@ -425,23 +425,18 @@ export class zlib {
       let cachedir = context.cacheDir
       let filePath = cachedir + '/' + fileName
       console.log('downloadTask1 filesDir============: %s/%s', cachedir, fileName);
-
-      await fs.access(filePath).then((canAccess: boolean) => {
-        if (canAccess) {
-          fs.unlinkSync(filePath)
-        }
-      })
+      try {
+        fs.unlinkSync(filePath)
+      }catch{}
+      const downloadPath = await getDownloadFolderPath()
       request.downloadFile(context, {
         //替换下载地址
         url: bookHref,
         //文件下载后保存的沙箱路径
         filePath: filePath,
-        enableMetered: true
+        enableMetered: true,
+        background: true
       }).then((downloadTask: request.DownloadTask) => {
-
-        let progressValue: number = 0
-
-        linderNotificationManager.pushNotificationWithProgress(notificationID, 0, "正在下载", fileName)
 
         //启动长时任务
         let wantAgentInfo: wantAgent.WantAgentInfo = {
@@ -461,27 +456,16 @@ export class zlib {
         }).catch((err: BusinessError) => {
         })
 
-        //开启进度回调
-        downloadTask.on('progress', (receivedSize: number, totalSize: number) => {
-
-          console.log('FUCK:download receivedSize: %s, totalSize: %s', receivedSize, totalSize);
-
-          progressValue = receivedSize / totalSize * 100
-
-          linderNotificationManager.pushNotificationWithProgress(notificationID, progressValue, "正在下载", fileName)
-
-        })
         //开启下载完成回调
         downloadTask.on('complete', async () => {
           const taskInfo = await downloadTask.getTaskInfo();
           console.log('FUCK:downloadTask complete,status: %s', taskInfo.status);
           //todo:API18后换成openToast
           promptAction.showToast({ message: `下载完成`, duration: 800 })
-          linderNotificationManager.pushNotificationWithProgress(notificationID, 100, "下载完成", fileName)
 
               try {
                 let file0 = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE)
-                let testFilePath = new fileUri.FileUri(await getDownloadFolderPath() + fileName).path;
+                let testFilePath = new fileUri.FileUri(downloadPath + fileName).path;
                 let file1 = fs.openSync(testFilePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE);
                 fs.moveFile(file0.path, file1.path, 0).then(() => {
                   console.info("move file succeed");
