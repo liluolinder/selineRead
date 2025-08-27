@@ -18,7 +18,6 @@ import { zlibHaveDownloadTable } from '../commons/zlibHaveDownloadTable';
 import { I_ZlibHaveDownloadTable } from '../interfaces/I_zlibHaveDownloadTable';
 import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { I_UserInfo } from '../interfaces/I_UserInfo';
-import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { globlContext } from '../../../entryability/EntryAbility';
 import { getDownloadFolderPath, shareBook } from '../../utils/ToolsUtil';
 import { I_Bookshelf, I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
@@ -438,24 +437,6 @@ export class zlib {
         background: true
       }).then((downloadTask: request.DownloadTask) => {
 
-        //启动长时任务
-        let wantAgentInfo: wantAgent.WantAgentInfo = {
-          wants: [
-            ({
-              bundleName: 'seline.book.read',
-              abilityName: 'EntryAbility'
-            })
-          ],
-          actionType: wantAgent.OperationType.START_SERVICE,
-          requestCode: 114513,
-          actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
-        };
-        wantAgent.getWantAgent(wantAgentInfo).then((wantAgentObj: WantAgent) => {
-          backgroundTaskManager.startBackgroundRunning(globlContext as common.UIAbilityContext,
-            backgroundTaskManager.BackgroundMode.DATA_TRANSFER, wantAgentObj)
-        }).catch((err: BusinessError) => {
-        })
-
         //开启下载完成回调
         downloadTask.on('complete', async () => {
           const taskInfo = await downloadTask.getTaskInfo();
@@ -497,8 +478,6 @@ export class zlib {
               {
                 console.log(`FUCK${JSON.stringify(e)}`)
               }
-
-          backgroundTaskManager.stopBackgroundRunning(globlContext as common.UIAbilityContext)
 
         })
       }).catch((err: BusinessError) => {
