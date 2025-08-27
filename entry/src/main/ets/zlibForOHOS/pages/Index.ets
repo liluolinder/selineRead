@@ -67,6 +67,7 @@ struct Index {
 
     __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
     __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
+
     if (__User__.isLoginZlib) {
       __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
       __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
