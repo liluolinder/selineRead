@@ -104,7 +104,7 @@ export struct BookShelf {
               .size({ width: 40, height: 40 })
               .backgroundColor($r('sys.color.comp_background_list_card'))
               .onClick(()=>{
-                if(__UI__.indexPageStack.getAllPathName().includes('downloadPage')) __UI__.indexPageStack.pushPathByName('downloadPage', undefined)
+                if(!__UI__.indexPageStack.getAllPathName().includes('downloadPage')) __UI__.indexPageStack.pushPathByName('downloadPage', undefined)
               })
             }
 
