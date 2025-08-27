@@ -479,34 +479,40 @@ export class zlib {
           promptAction.showToast({ message: `下载完成`, duration: 800 })
           linderNotificationManager.pushNotificationWithProgress(notificationID, 100, "下载完成", fileName)
 
-              let file0 = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE)
-              let testFilePath = new fileUri.FileUri(await getDownloadFolderPath() + fileName).path;
-              let file1 = fs.openSync(testFilePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE);
-              fs.moveFile(file0.path, file1.path, 0).then(() => {
-                console.info("move file succeed");
-              }).catch((err: BusinessError) => {
-                console.error("move file failed with error message: " + err.message + ", error code: " + err.code);
-              });
+              try {
+                let file0 = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE)
+                let testFilePath = new fileUri.FileUri(await getDownloadFolderPath() + fileName).path;
+                let file1 = fs.openSync(testFilePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE);
+                fs.moveFile(file0.path, file1.path, 0).then(() => {
+                  console.info("move file succeed");
+                }).catch((err: BusinessError) => {
+                  console.error("move file failed with error message: " + err.message + ", error code: " + err.code);
+                });
 
-              fs.closeSync(file0)
-              fs.closeSync(file1)
+                fs.closeSync(file0)
+                fs.closeSync(file1)
+                const valueBucket: relationalStore.ValuesBucket = {
+                  BookID: bookInfo.bookID!,
+                  BookName: bookInfo.name,
+                  BookHref: bookInfo.href!,
+                  BookAuthor: bookInfo.author[0].name,
+                  BookPublisher: bookInfo.publisher.name,
+                  BookImage: bookInfo.image,
+                  BookDownLoadTime: new Date().toISOString(),
+                  BookFilePath: testFilePath,
+                  haveDownload : 0
+                };
 
-              const valueBucket: relationalStore.ValuesBucket = {
-                BookID: bookInfo.bookID!,
-                BookName: bookInfo.name,
-                BookHref: bookInfo.href!,
-                BookAuthor: bookInfo.author[0].name,
-                BookPublisher: bookInfo.publisher.name,
-                BookImage: bookInfo.image,
-                BookDownLoadTime: new Date().toISOString(),
-                BookFilePath: testFilePath,
-                haveDownload : 0
-              };
+                linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket).then(()=>{
+                  this.flashDownloadHistoryAndLocalBooksList()
+                })
+                if(this.autoShare) shareBook(testFilePath)
 
-              linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload', valueBucket).then(()=>{
-                this.flashDownloadHistoryAndLocalBooksList()
-              })
-              if(this.autoShare) shareBook(testFilePath)
+
+              }catch (e)
+              {
+                console.log(`FUCK${JSON.stringify(e)}`)
+              }
 
           backgroundTaskManager.stopBackgroundRunning(globlContext as common.UIAbilityContext)
 

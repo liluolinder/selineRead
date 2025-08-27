@@ -32,6 +32,13 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: 'beta 0.2.1',
+      date: '2025/8/27',
+      addNewFunArray: ['书架长按书籍直接导入格物阅读','搜索书籍展示主文件格式'],
+      optimizeArray: ['新增鸣谢详细信息'],
+      fixBugsArray: ['修复部分右侧箭头无法使用','修复后台下载不更新通知(本版本仍不建议后台下载，下载完成不会移动至下载目录)']
+    },
+    {
       version: 'beta 0.2.0',
       date: '2025/8/26',
       addNewFunArray: ['新增自定义API', '新增本地书导入', '新增API设置', '新增下载完自动分享设置', '新增书架拖动分享'],
