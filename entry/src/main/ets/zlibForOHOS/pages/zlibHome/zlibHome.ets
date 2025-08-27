@@ -203,14 +203,19 @@ export struct zlibHome {
     LazyForEach(zlibClient.searchBooksArray, (item: I_searchBook, index: number) => {
       ListItem() {
         Row({ space: 10 }) {
-          Image(item.image)
-            .size({ height: '100%', width: '62' })
-            .shadow({
-              radius: 25,
-              color: Color.Gray,
-              offsetX: 0,
-              offsetY: 10
-            })
+          Stack({alignContent: Alignment.BottomEnd}){
+            Image(item.image)
+              .size({ height: '100%', width: '62' })
+              .shadow({
+                radius: 25,
+                color: Color.Gray,
+                offsetX: 0,
+                offsetY: 10
+              })
+
+            Text(item.extension).fontSize(10).padding({left: 5, right: 5, top: 2, bottom: 2}).backdropBlur(50).borderRadius({topLeft: 5}).backgroundColor($r('app.color.start_window_background_blur'))
+          }
+
 
           Column({ space: 2 }) {
             Text(item.title)
