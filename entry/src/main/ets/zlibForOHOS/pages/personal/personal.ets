@@ -454,7 +454,10 @@ export struct personal {
     }
     .onAppear(()=>{
       if(__User__.isLoginZlib && __UI__.onlineMode){
-        zlibClient.getUserInfo()
+        zlibClient.refreshUrl().then(async () => {
+          zlibClient.getUserInfo()
+        })
+
       }
     })
     .size({ height: '100%', width: '100%' })
