@@ -107,7 +107,7 @@ export struct BookListList {
                   this.bookShelfNavPathStack.pushPath({ name: 'bookShelfPage', param: item }, false);
                 })
               })
-            })
+            },(item:I_ReadLists_Bookshelf)=>item.id.toString()+item.title)
             ForEach(this.waterFlowEmptyItem, ()=>{FlowItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 70), 16))})
           }.margin({left: 16, right: 16})
           .scrollBar(BarState.Off)
