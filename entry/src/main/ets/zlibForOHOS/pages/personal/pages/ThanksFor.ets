@@ -91,6 +91,12 @@ export struct TanksFor {
           appBundle: 'com.hm.ultimate.reader'
         },
         {
+          name: '超爱mika',
+          info: 'Bug测试',
+          avatar: 'https://file.atomgit.com/uploads/user/1754226827763_9527.jpeg',
+          barrier: '吉祥物'
+        },
+        {
           name: 'F-park',
           info: 'Bug测试',
           avatar: 'https://file.atomgit.com/uploads/user/1754322665099_6919.jpeg',

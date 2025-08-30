@@ -32,6 +32,12 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: 'beta 0.2.2',
+      date: '2025/8/28',
+      optimizeArray: ['导出至格物阅读新增校验文件是否定存在'],
+      fixBugsArray: ['后台下载异常问题','书单UI异常','首次打开APP个人信息不加载']
+    },
+    {
       version: 'beta 0.2.1',
       date: '2025/8/27',
       addNewFunArray: ['书架长按书籍直接导入格物阅读','搜索书籍展示主文件格式'],
