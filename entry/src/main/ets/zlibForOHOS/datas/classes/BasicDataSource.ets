@@ -12,6 +12,15 @@ export class BasicDataSource<T> implements IDataSource {
   }
 
 
+  setData(items: T[]) {
+    this.clearData()
+    this.dataArray = items
+    for (let i = 0; i < items.length; i++) {
+      this.listeners.forEach((listener: DataChangeListener) => {
+        listener.onDataAdd(i)
+      })
+    }
+  }
 
   registerDataChangeListener(listener: DataChangeListener): void {
     if (this.listeners.indexOf(listener) === -1) {
