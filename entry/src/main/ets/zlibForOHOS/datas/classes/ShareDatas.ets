@@ -21,6 +21,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 import { relationalStore } from '@kit.ArkData'
 import { zlibIndexShowMod } from '../enums/zlibIndexShowMod'
 import { window } from '@kit.ArkUI'
+import { LogLine } from '../../pages/personal/pages/LoggerPage'
 
 @ObservedV2
 export class Notification {
@@ -63,6 +64,13 @@ export class DataBaseShareData {
 export let __DataBase__: DataBaseShareData = new DataBaseShareData()
 
 @ObservedV2
+export class Logger {
+  @Trace logs: LogLine[] = []
+}
+
+export let __Logger__: Logger = new Logger()
+
+@ObservedV2
 export class UIShareData {
   @Trace isInReader: boolean = false
   @Trace isHaveOpenBook: boolean = false
@@ -72,6 +80,7 @@ export class UIShareData {
   indexPageStack: NavPathStack = new NavPathStack()
   @Trace onlineMode: boolean = false
   @Trace showSettings: boolean = false
+  @Trace showLogger: boolean = false
 }
 
 export let __UI__: UIShareData = new UIShareData()

@@ -3,6 +3,8 @@ import { systemShare } from '@kit.ShareKit';
 import { common } from '@kit.AbilityKit';
 import { fileUri, picker } from '@kit.CoreFileKit';
 import { globlContext } from '../../entryability/EntryAbility';
+import { LogLine } from '../pages/personal/pages/LoggerPage';
+import { __Logger__ } from '../datas/classes/ShareDatas';
 
 export function dateGetTime(timestamp: number|string, time: boolean = true, date: boolean = true): string {
   try {
@@ -73,4 +75,16 @@ export async function getDownloadFolderPath() {
   const documentViewPicker = new picker.DocumentViewPicker()
   let documentSaveResult = await documentViewPicker.save({ pickerMode: picker.DocumentPickerMode.DOWNLOAD })
   return new fileUri.FileUri(documentSaveResult[0]).path + '/'
+}
+
+export function addLog(tag: string = '', text: string = '', error: boolean = false) {
+  if (__Logger__.logs.length > 200) {
+    __Logger__.logs = __Logger__.logs.slice(__Logger__.logs.length - 201, __Logger__.logs.length - 1)
+  }
+  __Logger__.logs.push({ time: new Date().getTime(), isError: error, tag: tag, text: text })
+  if (error) {
+    console.error(`testTAG [${tag}] ${text}`)
+  } else {
+    console.log(`testTAG [${tag}] ${text}`)
+  }
 }

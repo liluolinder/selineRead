@@ -29,6 +29,7 @@ import { TanksForBuilder } from './pages/ThanksFor';
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { settingsBuilder } from './pages/Settings/Settings';
+import { loggerBuilder, LoggerPage } from './pages/LoggerPage';
 
 @ComponentV2
 export struct personal {
@@ -452,6 +453,11 @@ export struct personal {
       .chainAnimation(true)
 
     }
+    .bindSheet(__UI__.showLogger, loggerBuilder(), {
+      preferType: SheetType.CENTER,
+      height: SheetSize.LARGE,
+      onDisappear: ()=> __UI__.showLogger = false
+    })
     .onAppear(()=>{
       if(__User__.isLoginZlib && __UI__.onlineMode){
         zlibClient.refreshUrl().then(async () => {
