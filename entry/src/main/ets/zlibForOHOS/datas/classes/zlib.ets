@@ -250,6 +250,7 @@ export class zlib {
         resBookInfo = (JSON.parse(res) as object) as I_BookInfo
         resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
+        addLog('getBookInfo', `获取成功`,true)
       }catch (e)
       {
         promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
