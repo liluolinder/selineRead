@@ -185,7 +185,7 @@ export class zlib {
             tempArray.forEach((item) => {
               this.recommendBooksArray.pushData(item)
             })
-            addLog('getRecommendBooks', `获取成功}`)
+            addLog('getRecommendBooks', `获取成功`)
             resolve(true)
           } catch (e) {
             resolve(false)
@@ -250,7 +250,7 @@ export class zlib {
         resBookInfo = (JSON.parse(res) as object) as I_BookInfo
         resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
-        addLog('getBookInfo', `获取成功`,true)
+        addLog('getBookInfo', `获取成功`)
       }catch (e)
       {
         promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
