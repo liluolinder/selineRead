@@ -104,7 +104,7 @@ export struct LoggerPage {
       left: 15,
       right: 15
     })
-    .backgroundColor($r('app.color.card_list_background'))
+    .backgroundColor($r('sys.color.comp_background_list_card'))
 
   }
 }
