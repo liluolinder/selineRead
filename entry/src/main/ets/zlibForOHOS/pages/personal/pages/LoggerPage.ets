@@ -1,6 +1,8 @@
 import { BasicDataSource } from "../../../datas/classes/BasicDataSource"
 import { Logger, __Logger__ } from "../../../datas/classes/ShareDatas"
 import { dateGetTime } from "../../../utils/ToolsUtil"
+import { fileIo, picker } from "@kit.CoreFileKit"
+import { BusinessError } from "@kit.BasicServicesKit"
 
 export interface LogLine {
   time: number
@@ -40,6 +42,24 @@ export struct LoggerPage {
             Stack().size({ width: 15, height: 15 }).borderRadius(100).backgroundColor('#fa6457')
             Stack().size({ width: 15, height: 15 }).borderRadius(100).backgroundColor('#fbb02f')
             Stack().size({ width: 15, height: 15 }).borderRadius(100).backgroundColor('#2bbd2f')
+              .onClick(()=>{
+                let saverOption = new picker.DocumentSaveOptions()
+                saverOption.newFileNames =
+                  ['log_' + dateGetTime(new Date().getTime(), true, true).replace(/[.: ]/g, '_') +
+                    '.log']
+                let saver = new picker.DocumentViewPicker(getContext())
+                saver.save(saverOption, (err: BusinessError, documentSaveResult: string[]) => {
+                  if (!err) {
+                    let file = fileIo.openSync(documentSaveResult[0], fileIo.OpenMode.READ_WRITE)
+                    let text = ''
+                    __Logger__.logs.forEach((log)=>{
+                      text += `${dateGetTime(log.time, true, false)} [${log.tag}]${log.text}` + '\n'
+                    })
+                    fileIo.writeSync(file.fd, text)
+                    fileIo.close(file)
+                  }
+                })
+              })
           }.height(35).padding(5)
         }.width('100%')
 
