@@ -45,6 +45,7 @@ export class zlib {
 
   async loginIn(email: string, password: string) {
     let req = http.createHttp()
+    addLog('login', `正在尝试登录`)
     await req.request(`${this.base_url}/rpc.php`, {
       method: http.RequestMethod.GET,
       header: {
@@ -67,6 +68,7 @@ export class zlib {
       let tempCookies: I_CookieInfo = (result as object)?.['response']
       if (tempCookies.message == undefined) {
         promptAction.showToast({ message: `欢迎`, duration: 1000 })
+        addLog('login', `登录成功`)
         this.setCookies(tempCookies.user_key, tempCookies.user_id.toString())
         NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", true)
         NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", email)
@@ -78,7 +80,8 @@ export class zlib {
         this.getUserInfo()
       } else {
         //todo:API18后换成openToast
-        promptAction.showToast({ message: `登录失败`, duration: 1000 })
+        promptAction.showToast({ message: `登录失败,账号密码错误`, duration: 1000 })
+        addLog('login', `登录失败,账号密码错误`,true)
         NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", false)
         NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibCookies", '')
         NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", '')
@@ -88,7 +91,7 @@ export class zlib {
         __User__.isLoginZlib = false
       }
     }).catch((err: Error) => {
-      addLog('loginIn', `error! ${err.name} ${err.message}`, true)
+      addLog('login', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
@@ -108,9 +111,12 @@ export class zlib {
       let avatar = this.userInfo?.avatar ?? CJLoader.getUserAvatar(JSON.stringify(data.result))
       let userName = this.userInfo?.userName ?? CJLoader.getUserName(JSON.stringify(data.result))
       if (res) {
+        addLog('getUserInfo', `成功获取用户信息`)
         this.userInfo = JSON.parse(res) as I_UserInfo
         this.userInfo.avatar = avatar
         this.userInfo.userName = userName
+      }else{
+        addLog('getUserInfo', `获取用户信息失败,疑似仓颉错误`, true)
       }
     }).catch((err: Error) => {
       addLog('getUserInfo', `error! ${err.name} ${err.message}`, true)
@@ -120,14 +126,17 @@ export class zlib {
   }
 
   async getLocalDownloadHistory(){
+    addLog('getLocalBook', `获取书架中`)
     let res:string  =  await linderDataBaseManger.queryValueToRelationalDataBase(__DataBase__.baseStore,"zlibHaveDownload",[],zlibHaveDownloadTable)
     let resArray:I_ZlibHaveDownloadTable[] = JSON.parse(res) as I_ZlibHaveDownloadTable[]
     resArray.forEach((item)=>{
       this.localDownloadHistoryArray.pushUnshiftData(item)
     })
+    addLog('getLocalBook', `获取完成`)
   }
 
   async refreshUrl() {
+    addLog('refreshUrl', `尝试刷新Url`)
     let req = http.createHttp()
     await req.request(`${this.base_url}`, {
       method: http.RequestMethod.GET,
@@ -145,6 +154,7 @@ export class zlib {
         this.baseApi_url = location + '/papi'
         NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibUrl", location)
       }
+      addLog('refreshUrl', `刷新Url成功`)
 
     }).catch((err: Error) => {
       addLog('refreshUrl', `error! ${err.name} ${err.message}`, true)
@@ -155,6 +165,7 @@ export class zlib {
   }
 
   async getRecommendBooks(page: number): Promise<boolean> {
+    addLog('getRecommendBooks', `正在获取推荐书籍page=${page}`)
     return new Promise<boolean>((resolve)=>{
       let req = http.createHttp()
       req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
@@ -174,6 +185,7 @@ export class zlib {
             tempArray.forEach((item) => {
               this.recommendBooksArray.pushData(item)
             })
+            addLog('getRecommendBooks', `获取成功}`)
             resolve(true)
           } catch (e) {
             resolve(false)
@@ -190,6 +202,7 @@ export class zlib {
 
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
+    addLog('getBookInfo', `尝试获取书籍信息`)
     __UI__.isHaveOpenBook=true
     let req = http.createHttp()
     let res: string = ''
@@ -242,6 +255,8 @@ export class zlib {
         promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
         addLog('getBookInfo', `error! ${e.name} ${e.message}`, true)
       }
+    }else {
+      addLog('getBookInfo', `获取失败`,true)
     }
     console.log(`FUCK${JSON.stringify(resBookInfo)}`)
     __UI__.isHaveOpenBook = false
@@ -252,6 +267,7 @@ export class zlib {
 
   async getBookShelf(page:number)
   {
+    addLog('getBookShelf', `尝试获取书单page=${page}`)
     let req = http.createHttp()
     console.log(`FUCK${`${this.baseApi_url}/booklist/get-page/${page}`}`)
     await req.request(`${this.baseApi_url}/booklist/get-page/${page}`, {
@@ -278,7 +294,7 @@ export class zlib {
         item.booksGrouped = temp.booksGrouped[item.id]
         this.bookshelfArray.pushData(item)
       })
-
+      addLog('getBookShelf', `获取书单page=${page}成功`)
     }).catch((err: Error) => {
       addLog('getBookShelf', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
@@ -288,6 +304,7 @@ export class zlib {
 
   async getBookShelfMoreInfo(shelfID:number, page:number)
   {
+    addLog('getBookShelfMoreInfo', `获取书单${shelfID},page=${page}`)
     let req = http.createHttp()
     await req.request(`${this.baseApi_url}/booklist/${shelfID}/get-books/${page}`, {
       method: http.RequestMethod.POST,
@@ -310,7 +327,7 @@ export class zlib {
         this.bookshelfBooks.pushData(item)
         console.log(`FUCK${JSON.stringify(item)}`);
       })
-
+      addLog('getBookShelfMoreInfo', `书单${shelfID},page=${page}成功`)
     }).catch((err: Error) => {
       addLog('getBookShelfMoreInfo', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
@@ -319,8 +336,9 @@ export class zlib {
   }
 
   async getBookDownloadsInfo(bookID: number): Promise<I_DownloadInfo[]> {
-    let req = http.createHttp()
+    addLog('getBookDownloadsInfo', `尝试获取${bookID}下载信息`)
 
+    let req = http.createHttp()
     let res: I_DownloadInfo[] = []
 
     await req.request(`${this.baseApi_url}/book/${bookID}/formats`, {
@@ -334,6 +352,7 @@ export class zlib {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
       res = (result as object)?.['books']
+      addLog('getBookDownloadsInfo', `获取${bookID}下载信息成功`)
     }).catch((err: Error) => {
       addLog('getBookDownloadsInfo', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
@@ -345,6 +364,7 @@ export class zlib {
 
 
   async searchBooks(bookName: string, page: number = 1, needClear: boolean = false): Promise<boolean> {
+    addLog('searchBooks', `尝试获取${bookName}搜索信息page=${page}`)
     return new Promise<boolean>(async (resolve)=>{
       if (needClear) {
         this.searchBooksArray.clearData()
@@ -366,12 +386,13 @@ export class zlib {
         if (jsonArray.length == 0 || jsonArray == undefined) {
           //todo:API18后换成openToast
           promptAction.showToast({ message: `无更多结果`, duration: 2000 })
+          addLog('searchBooks', `无更多结果`)
         }
 
         jsonArray.forEach((item) => {
           this.searchBooksArray.pushData(item)
         })
-
+        addLog('searchBooks', `获取成功`)
         resolve(true)
 
       }).catch((err: Error) => {
@@ -386,9 +407,9 @@ export class zlib {
   }
 
   async getTrueDownloadBookUrl(context: Context, bookUrl: string, bookInfo: I_BookInfo) {
-
+    addLog('getTrueDownloadBookUrl', `正在尝试下载`)
     //todo:API18后换成openToast
-    promptAction.showToast({ message: `开始下载,通知栏查看进度`, duration: 800 })
+    promptAction.showToast({ message: `正在尝试下载`, duration: 800 })
     let req = http.createHttp()
     let url: string = this.base_url + bookUrl
     await req.request(url, {
@@ -399,7 +420,6 @@ export class zlib {
         'Cookie': this.cookie,
       }
     }).then((data: http.HttpResponse) => {
-
       let temp: I_trulyDownloadUrl = JSON.parse(JSON.stringify(data.header)) as I_trulyDownloadUrl
       let urlParams = JSON.stringify(temp.location.split('/')[7])
       let pattern = 'filename=([^&]+)'; // 匹配filename参数直到下一个&符号
@@ -419,7 +439,9 @@ export class zlib {
 
   async downloadBook(context: Context, bookHref: string, fileName: string, bookInfo: I_BookInfo) {
     let notificationID = __Notification__.id++
-
+    addLog('downloadBook', `正在下载,查看通知栏下载进度`)
+    //todo:API18后换成openToast
+    promptAction.showToast({ message: `正在下载,查看通知栏下载进度`, duration: 800 })
     try {
       let cachedir = context.cacheDir
       let filePath = cachedir + '/' + fileName
@@ -443,7 +465,7 @@ export class zlib {
           console.log('FUCK:downloadTask complete,status: %s', taskInfo.status);
           //todo:API18后换成openToast
           promptAction.showToast({ message: `下载完成`, duration: 800 })
-
+          addLog('downloadBook', `下载完成`)
           try {
             let file0 = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE)
             let testFilePath = new fileUri.FileUri(downloadPath + fileName).path;
@@ -486,6 +508,7 @@ export class zlib {
         });
         //todo:API18后换成openToast
         promptAction.showToast({ message: `下载失败`, duration: 800 })
+        addLog('downloadBook', `下载失败${JSON.stringify(err)}`,true)
         linderNotificationManager.pushNotification(notificationID, '下载失败', fileName)
         // 下载请求失败回调，可以弹窗提示失败
         console.log(`FUCK:Invoke downloadTask failed-----, message is: ${err.message}`);
