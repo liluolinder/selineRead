@@ -449,7 +449,7 @@ export struct personal {
       .bindSheet(__UI__.showLogger, loggerBuilder(), {
         preferType: SheetType.CENTER,
         height: SheetSize.LARGE,
-        title: {title: '运行日志'},
+        showClose: false,
         onDisappear: ()=> __UI__.showLogger = false
       })
       .contentStartOffset(Math.max(__System__.topRectHeight, 16))
