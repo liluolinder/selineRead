@@ -19,7 +19,7 @@ import { I_ZlibHaveDownloadTable } from '../interfaces/I_zlibHaveDownloadTable';
 import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { I_UserInfo } from '../interfaces/I_UserInfo';
 import { globlContext } from '../../../entryability/EntryAbility';
-import { getDownloadFolderPath, shareBook } from '../../utils/ToolsUtil';
+import { addLog, getDownloadFolderPath, shareBook } from '../../utils/ToolsUtil';
 import { I_Bookshelf, I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
 
 @ObservedV2
@@ -88,7 +88,7 @@ export class zlib {
         __User__.isLoginZlib = false
       }
     }).catch((err: Error) => {
-      console.error('error:' + JSON.stringify(err));
+      addLog('loginIn', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
@@ -113,7 +113,7 @@ export class zlib {
         this.userInfo.userName = userName
       }
     }).catch((err: Error) => {
-      console.error('error2:' + JSON.stringify(err));
+      addLog('getUserInfo', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
@@ -147,7 +147,7 @@ export class zlib {
       }
 
     }).catch((err: Error) => {
-      console.error('error2:' + JSON.stringify(err));
+      addLog('refreshUrl', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
@@ -179,7 +179,7 @@ export class zlib {
             resolve(false)
           }
         } else {
-          console.error('FUCK error:' + JSON.stringify(err));
+          addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
           promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
           resolve(false)
         }
@@ -219,7 +219,7 @@ export class zlib {
 
     }).catch((err: Error) => {
       res = 'error'
-      console.error('error1:' + JSON.stringify(err));
+      addLog('getBookInfo', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
 
@@ -240,7 +240,7 @@ export class zlib {
       }catch (e)
       {
         promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
-        console.log(`FUCK12412444${JSON.stringify(e)}`)
+        addLog('getBookInfo', `error! ${e.name} ${e.message}`, true)
       }
     }
     console.log(`FUCK${JSON.stringify(resBookInfo)}`)
@@ -280,7 +280,7 @@ export class zlib {
       })
 
     }).catch((err: Error) => {
-      console.error('error11:' + JSON.stringify(err));
+      addLog('getBookShelf', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
@@ -312,7 +312,7 @@ export class zlib {
       })
 
     }).catch((err: Error) => {
-      console.error('error11:' + JSON.stringify(err));
+      addLog('getBookShelfMoreInfo', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
@@ -335,7 +335,7 @@ export class zlib {
       let result = JSON.parse((obj as object)?.['result'])
       res = (result as object)?.['books']
     }).catch((err: Error) => {
-      console.error('error2:' + JSON.stringify(err));
+      addLog('getBookDownloadsInfo', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
@@ -376,7 +376,7 @@ export class zlib {
 
       }).catch((err: Error) => {
         promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-        console.error('error3:' + JSON.stringify(err));
+        addLog('searchBooks', `error! ${err.name} ${err.message}`, true)
         resolve(false)
       });
 
@@ -411,7 +411,7 @@ export class zlib {
     }).catch((err: Error) => {
       //todo:API18后换成openToast
       promptAction.showToast({ message: `下载失败，请检查是否登录，是否超出下载限制`, duration: 800 })
-      console.error('error4:' + JSON.stringify(err));
+      addLog('getTrueDownloadBookUrl', `error! ${err.name} ${err.message}`, true)
     });
 
     req.destroy()

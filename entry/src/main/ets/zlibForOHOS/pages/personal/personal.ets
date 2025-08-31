@@ -446,6 +446,12 @@ export struct personal {
         .padding({ bottom: 6, top: 6 })
 
       }
+      .bindSheet(__UI__.showLogger, loggerBuilder(), {
+        preferType: SheetType.CENTER,
+        height: SheetSize.LARGE,
+        title: {title: '运行日志'},
+        onDisappear: ()=> __UI__.showLogger = false
+      })
       .contentStartOffset(Math.max(__System__.topRectHeight, 16))
       .contentEndOffset(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 80), 16))
       .lanes(this.pageWidth > minWidth ? 2 : 1, 10)
@@ -453,11 +459,6 @@ export struct personal {
       .chainAnimation(true)
 
     }
-    .bindSheet(__UI__.showLogger, loggerBuilder(), {
-      preferType: SheetType.CENTER,
-      height: SheetSize.LARGE,
-      onDisappear: ()=> __UI__.showLogger = false
-    })
     .onAppear(()=>{
       if(__User__.isLoginZlib && __UI__.onlineMode){
         zlibClient.refreshUrl().then(async () => {
