@@ -185,7 +185,7 @@ export class zlib {
             tempArray.forEach((item) => {
               this.recommendBooksArray.pushData(item)
             })
-            addLog('getRecommendBooks', `获取成功`)
+            addLog('getRecommendBooks', `获取page=${page}成功`)
             resolve(true)
           } catch (e) {
             resolve(false)
