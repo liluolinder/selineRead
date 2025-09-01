@@ -81,7 +81,7 @@ export struct bookInfoPage {
                 })
                 .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
                 .onClick(()=>{
-                  XAnimation.runWithAnimation(()=>this.isViewingBigImage = true, true, 0.6, 0.8)
+                  XAnimation.runWithAnimation(()=>this.isViewingBigImage = true, true, 0.55, 0.75)
                 })
 
               Column({ space: 5 }) {
@@ -266,7 +266,7 @@ export struct bookInfoPage {
     })
     .onBackPressed(()=>{
       if(this.isViewingBigImage){
-        XAnimation.runWithAnimation(()=>this.isViewingBigImage = false, true, 0.6, 0.8)
+        XAnimation.runWithAnimation(()=>this.isViewingBigImage = false, true, 0.55, 0.75)
         return true
       }
       return false
