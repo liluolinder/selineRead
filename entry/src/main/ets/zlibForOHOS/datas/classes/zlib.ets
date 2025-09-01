@@ -377,9 +377,10 @@ export class zlib {
           'sec-ch-ua-platform': '"Windows"',
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
           'Cookie': this.cookie,
-        }
+        },
+        readTimeout:3000
       }).then((data: http.HttpResponse) => {
-        req.destroy()
+
 
         let jsonString: string = CJLoader.getSearchBookArray(JSON.stringify(data.result))
         let jsonArray: I_searchBook[] = JSON.parse(jsonString) as I_searchBook[]
@@ -402,6 +403,7 @@ export class zlib {
         resolve(false)
       });
 
+      req.destroy()
 
     })
 
