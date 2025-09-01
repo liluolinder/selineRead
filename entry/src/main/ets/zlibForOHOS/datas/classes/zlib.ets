@@ -380,7 +380,7 @@ export class zlib {
         },
         readTimeout:3000
       }).then((data: http.HttpResponse) => {
-
+        req.destroy()
 
         let jsonString: string = CJLoader.getSearchBookArray(JSON.stringify(data.result))
         let jsonArray: I_searchBook[] = JSON.parse(jsonString) as I_searchBook[]
@@ -402,8 +402,6 @@ export class zlib {
         addLog('searchBooks', `error! ${err.name} ${err.message}`, true)
         resolve(false)
       });
-
-      req.destroy()
 
     })
 

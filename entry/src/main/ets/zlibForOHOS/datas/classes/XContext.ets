@@ -1,0 +1,47 @@
+import { common } from "@kit.AbilityKit";
+
+export class XContext {
+  private static UIAbilityContext: common.UIAbilityContext
+  private static UIContext: UIContext
+
+  public static init(UIContext: UIContext) {
+    XContext.UIContext = UIContext;
+    XContext.UIAbilityContext = UIContext.getHostContext() as common.UIAbilityContext;
+  }
+
+  public static px2vp(px: number) {
+    return XContext.UIContext.px2vp(px);
+  }
+
+  public static vp2px(vp: number) {
+    return XContext.UIContext.vp2px(vp);
+  }
+
+  public static getContext() {
+    return XContext.UIContext;
+  }
+
+  public static getAbilityContext() {
+    return XContext.UIAbilityContext;
+  }
+
+  public static getStringFromResource(resource: Resource) {
+    return XContext.getAbilityContext().resourceManager.getStringSync(resource.id)
+  }
+
+  public static getColorFromResource(resource: Resource) {
+    return XContext.getAbilityContext().resourceManager.getColorSync(resource.id)
+  }
+
+  public static getFilesDir(){
+    return XContext.UIAbilityContext.filesDir;
+  }
+
+  public static getCacheDir(){
+    return XContext.UIAbilityContext.cacheDir;
+  }
+
+  public static getPromptAction(){
+    return XContext.UIContext.getPromptAction();
+  }
+}
