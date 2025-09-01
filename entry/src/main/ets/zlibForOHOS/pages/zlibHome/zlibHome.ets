@@ -25,6 +25,12 @@ import { XAnimation } from '../../datas/classes/XAnimation'
 import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod'
 import { loadingDialog, loadingNewDialog } from '../Builder'
+import { addLog } from '../../utils/ToolsUtil'
+import { scanBarcode, scanCore } from '@kit.ScanKit'
+import { globlContext } from '../../../entryability/EntryAbility'
+import { BusinessError } from '@kit.BasicServicesKit'
+import json from '@ohos.util.json'
+import { JSON } from '@kit.ArkTS'
 
 @ComponentV2
 export struct zlibHome {
@@ -261,6 +267,41 @@ export struct zlibHome {
       }
       //顶部搜索栏
       Row({ space: 10 }) {
+
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph($r('sys.symbol.circle_viewfinder'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .backdropBlur(100)
+        .onClick(() => {
+          addLog('ScanCode', `尝试扫码`)
+          let options: scanBarcode.ScanOptions = {
+            scanTypes: [scanCore.ScanType.ONE_D_CODE],
+            enableMultiMode: true,
+            enableAlbum: true
+          };
+          try {
+            scanBarcode.startScanForResult(globlContext, options).then((result: scanBarcode.ScanResult) => {
+              addLog('ScanCode', `扫码成功,书籍ISBN为${result.originalValue}`)
+              this.searchIndex = 1
+              this.searchBookName = result.originalValue
+              zlibClient.searchBooks(result.originalValue, 1, true)
+              XAnimation.runWithAnimation(() => {
+                __UI__.searchOrRecommend = zlibIndexShowMod.Search
+              })
+            }).catch((error: BusinessError) => {
+              addLog('ScanCode', `扫码错误,${JSON.stringify(error)}`,true)
+            });
+          } catch (error) {
+            addLog('ScanCode', `扫码错误,${JSON.stringify(error)}`,true)
+          }
+        })
+        .visibility(__UI__.isInSearchMode ? Visibility.None : Visibility.Visible)
+
         Button({ type: ButtonType.Circle }) {
           SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
           $r('sys.symbol.satellite_map'))
@@ -272,6 +313,7 @@ export struct zlibHome {
         .backgroundColor($r('sys.color.comp_background_tertiary'))
         .backdropBlur(100)
         .onClick(() => {
+          addLog('changeListOrWaterFlow', `切换列表/瀑布流`)
           XAnimation.runWithAnimation(() => {
             this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
             zlibIndexShowMod.WaterFlow
@@ -279,7 +321,7 @@ export struct zlibHome {
         })
         .visibility(__UI__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
-        Search()
+        Search({value:$$this.searchBookName})
           .backgroundColor($r('sys.color.comp_background_tertiary'))
           .backdropBlur(100)
           .focusable(__UI__.isInSearchMode)
