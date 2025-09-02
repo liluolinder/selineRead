@@ -32,6 +32,13 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: 'beta 0.3.2',
+      date: '2025/9/2',
+      addNewFunArray:['新增接续'],
+      optimizeArray: ['优化层级'],
+      fixBugsArray:['修复0.3.0搜索异常问题']
+    },
+    {
       version: 'beta 0.3.0',
       date: '2025/9/1',
       addNewFunArray:['新增查看大图(书籍详细页点击)','扫描条形码并自动搜索ISBN','运行日志'],
