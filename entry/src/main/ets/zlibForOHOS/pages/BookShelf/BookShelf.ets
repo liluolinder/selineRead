@@ -105,7 +105,7 @@ export struct BookShelf {
               .size({ width: 40, height: 40 })
               .backgroundColor($r('sys.color.comp_background_list_card'))
               .onClick(()=>{
-                if(!__UI__.indexPageStack.getAllPathName().includes('downloadPage')) __UI__.indexPageStack.pushPathByName('downloadPage', undefined)
+                if(!__UI__.HomePageStack.getAllPathName().includes('downloadPage')) __UI__.HomePageStack.pushPathByName('downloadPage', undefined)
               })
             }
 
@@ -176,7 +176,7 @@ export struct BookShelf {
                 .padding(8)
                 .onClick(() => {
                   if (fileIo.accessSync(item.BookFilePath)) {
-                    __UI__.indexPageStack.pushPath({ name: 'readerPage', param: item.BookFilePath }, true)
+                    __UI__.HomePageStack.pushPath({ name: 'readerPage', param: item.BookFilePath }, true)
                   } else {
                     promptAction.showToast({
                       message: '源文件不存在',
@@ -271,8 +271,8 @@ export struct BookShelf {
                 res.bookID = item.BookID
                 res.image = item.BookImage
                 res.href = item.BookHref
-                __UI__.indexPageStack.removeByName('bookInfoPage')
-                __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+                __UI__.HomePageStack.removeByName('bookInfoPage')
+                __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
               }
               this.isOpening = false
             })

@@ -23,12 +23,12 @@ import { XAnimation } from '../../datas/classes/XAnimation';
 import { zlib, zlibClient } from '../../datas/classes/zlib';
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod';
 import { I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../../datas/interfaces/I_BookShelf';
+import { setContinueState } from '../../utils/ToolsUtil';
 import { loadingDialog, loadingNewDialog } from '../Builder';
 
 
 @ComponentV2
 export default struct BookListPage {
-  private pageInfos: NavPathStack = new NavPathStack();
   @Local waterFlowColumnNumber : number = -1
   @Local waterFlowEmptyItem: number[] = []
   @Local isOpening: boolean = false
@@ -47,8 +47,9 @@ export default struct BookListPage {
             .size({width: 40, height: 40})
             .backgroundColor($r('sys.color.comp_background_list_card'))
             .onClick(()=>{
+              setContinueState(false, 'home', '', '')
               animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
-                this.pageInfos.pop(false);
+                __UI__.bookListPageStack.pop(false);
               })
             })
             Text(this.data?.title).fontSize(22).fontWeight(FontWeight.Medium)
@@ -95,8 +96,8 @@ export default struct BookListPage {
                     res.bookID = item.id
                     res.image = item.book.cover
                     res.href = item.book.href
-                    __UI__.indexPageStack.removeByName('bookInfoPage')
-                    __UI__.indexPageStack.pushPathByName('bookInfoPage', res)
+                    __UI__.HomePageStack.removeByName('bookInfoPage')
+                    __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
                   }
                   this.isOpening = false
                 })
@@ -145,13 +146,13 @@ export default struct BookListPage {
     .hideTitleBar(true)
     .backgroundColor(Color.Transparent)
     .onReady((context: NavDestinationContext) => {
-      this.pageInfos = context.pathStack;
       this.data = context.pathInfo.param as I_ReadLists_Bookshelf
     })
     .backgroundColor($r('sys.color.comp_background_gray'))
     .onBackPressed(() => {
+      setContinueState(false, 'home', '', '')
       animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
-        this.pageInfos.pop(false);
+        __UI__.bookListPageStack.pop(false);
       })
       return true;
     })

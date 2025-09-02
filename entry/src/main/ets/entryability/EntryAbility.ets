@@ -9,6 +9,8 @@ import { __DataBase__, __System__, __UI__, __User__ } from '../zlibForOHOS/datas
 import  NeoPreferencesUtil from '../zlibForOHOS/datas/classes/XPreferencesUtil'
 import WindowsUtil from '../zlibForOHOS/utils/WindowsUtil';
 import { zlibClient } from '../zlibForOHOS/datas/classes/zlib';
+import { JSON } from '@kit.ArkTS';
+import { addLog } from '../zlibForOHOS/utils/ToolsUtil';
 
 const DOMAIN = 0x0000;
 
@@ -29,6 +31,29 @@ export default class EntryAbility extends UIAbility {
     zlibClient.baseApi_url = zlibClient.base_url + '/papi'
     zlibClient.autoShare = NeoPreferencesUtil.getPreferencesValue("selineRead", 'autoShare', true) as boolean
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+    this.proccessContinueData(want, launchParam)
+    const context = this.context as common.UIAbilityContext
+    context.setMissionContinueState(1)
+  }
+
+  onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    this.proccessContinueData(want, launchParam)
+    const context = this.context as common.UIAbilityContext
+    context.setMissionContinueState(1)
+  }
+
+  proccessContinueData(want: Want, launchParam: AbilityConstant.LaunchParam){
+    if (launchParam.launchReason == AbilityConstant.LaunchReason.CONTINUATION) {
+      if (want.parameters != undefined) {
+        addLog('proccessContinueData', `成功获取接续信息：${want.parameters.data.toString()}`)
+        try{
+          const data = JSON.parse(want.parameters.data.toString()) as Record<string, string>
+          __UI__.currentViewingType = data.currentViewingType as 'book'|'bookList'|'home'
+          __UI__.currentBookData = data.currentBookData
+          __UI__.currentBookListData = data.currentBookListData
+        }catch{}
+      }
+    }
   }
 
   onDestroy(): void {
@@ -71,6 +96,24 @@ export default class EntryAbility extends UIAbility {
     });
 
   }
+
+  onWindowStageRestore(windowStage: window.WindowStage): void {
+    // Main window is created, set main page for this ability
+    hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
+    windowStage.loadContent('zlibForOHOS/pages/Index',  (err) => {
+      if (err.code) {
+        hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
+        return;
+      }
+      WindowsUtil.initWindow(this.context)
+      hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
+      globlUIContext = windowStage.getMainWindowSync().getUIContext()
+      globlContext =  globlUIContext.getHostContext() as common.UIAbilityContext
+
+
+    });
+  }
+
   onWindowStageDestroy(): void {
     // Main window is destroyed, release UI related resources
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageDestroy');
@@ -88,5 +131,16 @@ export default class EntryAbility extends UIAbility {
   onBackground(): void {
     // Ability has back to background
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
+  }
+
+  onContinue(wantParam: Record<string, Object>) {
+    let continueInput: string = JSON.stringify({currentViewingType: __UI__.currentViewingType, currentBookData: __UI__.currentBookData, currentBookListData: __UI__.currentBookListData})
+    if (continueInput) {
+      wantParam["data"] = continueInput;
+      addLog('onContinue', `即将发起接续：${continueInput}`)
+      return AbilityConstant.OnContinueResult.AGREE;
+    } else {
+      return AbilityConstant.OnContinueResult.REJECT
+    }
   }
 }

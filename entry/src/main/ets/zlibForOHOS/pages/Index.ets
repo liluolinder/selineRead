@@ -23,15 +23,20 @@ import { minWidth, __DataBase__, __System__, __UI__, __User__ } from '../datas/c
 import { zlibClient } from '../datas/classes/zlib';
 import NeoPreferencesUtil from '../datas/classes/XPreferencesUtil'
 import { personal } from './personal/personal';
-import { zlibHome } from './zlibHome/zlibHome';
+import { zlibHome, __zlibHomeData__ } from './zlibHome/zlibHome';
 import { linderDataBaseManger } from '../datas/classes/LDataBaseManager';
 import { zlibHaveDownloadTable } from '../datas/commons/zlibHaveDownloadTable';
 import { BookShelf } from './BookShelf/BookShelf';
 import { XAnimation } from '../datas/classes/XAnimation';
 import { zlibIndexShowMod } from '../datas/enums/zlibIndexShowMod';
 import { DecorBar } from './DecorBar';
-import { BookList } from './BookList/bookListList';
+import { BookList, __BookListData__ } from './BookList/bookListList';
 import { zlibDownloadingTable } from '../datas/commons/zlibDownloadingTable';
+import { I_searchBook } from '../datas/interfaces/I_BookInfo';
+import { setContinueState } from '../utils/ToolsUtil';
+import { I_RecommendBook } from '../datas/interfaces/I_RecommendBook';
+import { curves } from '@kit.ArkUI';
+import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
 
 
 @Entry
@@ -73,15 +78,70 @@ struct Index {
       __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
       zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
     }
+
+    this.proccessContinueData()
+
+  }
+
+  async proccessContinueData(){
+    if(!__UI__.onlineMode) return
+    switch (__UI__.currentViewingType){
+      case 'book':
+        if(__UI__.currentBookData != '') {
+          __zlibHomeData__.isOpening = true
+          if(__UI__.currentBookData.charAt(0) == '#'){
+            const item = JSON.parse(__UI__.currentBookData.replace('#', '')) as I_searchBook
+            await zlibClient.getBookInfo(item.href).then((res) => {
+              if (res.name != '' && res.name != undefined) {
+                res.bookID = Number(item.id)
+                res.image = item.image
+                res.href = item.href
+                __UI__.HomePageStack.removeByName('bookInfoPage')
+                __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
+              }
+              __zlibHomeData__.isOpening = false
+            })
+          }else{
+            const item = JSON.parse(__UI__.currentBookData.replace('#', '')) as I_RecommendBook
+            await zlibClient.getBookInfo(item.url).then((res) => {
+              if (res.name != '' && res.name != undefined) {
+                res.bookID = item.id
+                res.image = item.cover
+                res.href = item.url
+                __UI__.HomePageStack.removeByName('bookInfoPage')
+                __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
+              }
+              __zlibHomeData__.isOpening = false
+            })
+          }
+          setContinueState(true, 'book', __UI__.currentBookData, '')
+        }
+        break
+      case 'bookList':
+        if(__UI__.currentBookListData != ''){
+          const data = JSON.parse(__UI__.currentBookListData) as I_ReadLists_Bookshelf
+          __BookListData__.isOpening = true
+          setTimeout(()=>{
+            this.swiperController.changeIndex(1, true)
+          }, 100)
+          zlibClient.bookshelfBooks.clearData()
+          await zlibClient.getBookShelfMoreInfo(data.id,1)
+          animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
+            __UI__.bookListPageStack.pushPath({ name: 'bookShelfPage', param: data }, false);
+          })
+          __BookListData__.isOpening = false
+        }
+        break
+    }
   }
 
   onBackPress(): boolean | void {
-    if (__UI__.isInSearchMode) {
-      XAnimation.runWithAnimation(() => __UI__.isInSearchMode = false)
+    if (__zlibHomeData__.isInSearchMode) {
+      XAnimation.runWithAnimation(() => __zlibHomeData__.isInSearchMode = false)
       return true
     }
-    if (__UI__.searchOrRecommend == zlibIndexShowMod.Search) {
-      XAnimation.runWithAnimation(() => __UI__.searchOrRecommend = zlibIndexShowMod.Recommend)
+    if (__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search) {
+      XAnimation.runWithAnimation(() => __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Recommend)
       return true
     }
     return false
@@ -93,7 +153,7 @@ struct Index {
         DecorBar().zIndex(114514)
       }
 
-      Navigation(__UI__.indexPageStack) {
+      Navigation(__UI__.HomePageStack) {
 
         Stack({alignContent: Alignment.BottomStart}){
           Swiper(this.swiperController){
@@ -148,11 +208,11 @@ struct Index {
           return
         }
         if (mode == NavigationMode.Split) {
-          __UI__.indexPageStack.clear(true)
-          __UI__.indexPageStack.pushPathByName('emptyPage', false)
+          __UI__.HomePageStack.clear(true)
+          __UI__.HomePageStack.pushPathByName('emptyPage', false)
         }
         if (mode == NavigationMode.Stack) {
-          __UI__.indexPageStack.removeByName('emptyPage')
+          __UI__.HomePageStack.removeByName('emptyPage')
         }
       })
     }

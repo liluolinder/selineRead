@@ -18,16 +18,18 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 import { curves } from '@kit.ArkUI'
-import { __System__, minWidth } from '../../datas/classes/ShareDatas';
+import { globlContext, globlUIContext } from '../../../entryability/EntryAbility';
+import { __System__, minWidth, __UI__ } from '../../datas/classes/ShareDatas';
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { zlibClient } from '../../datas/classes/zlib';
 import { I_ReadLists_Bookshelf, I_BookInfo_Bookshelf } from '../../datas/interfaces/I_BookShelf';
 import { loadingDialog, loadingNewDialog } from '../Builder';
 import BookListPage from './BookListPage';
+import { common } from '@kit.AbilityKit';
+import { setContinueState } from '../../utils/ToolsUtil';
 
 @ComponentV2
 export struct BookList {
-  @Provider('bookShelfNavPathStack') bookShelfNavPathStack: NavPathStack = new NavPathStack()
 
   @Builder
   Pages(name: string){
@@ -39,11 +41,11 @@ export struct BookList {
   }
 
   build() {
-    Navigation(this.bookShelfNavPathStack)
+    Navigation(__UI__.bookListPageStack)
     .navDestination(this.Pages)
     .mode(NavigationMode.Stack)
       .onAppear(()=>{
-        this.bookShelfNavPathStack.pushPathByName('bookShelfList', false)
+        __UI__.bookListPageStack.pushPathByName('bookShelfList', false)
       })
   }
 }
@@ -51,12 +53,10 @@ export struct BookList {
 @ComponentV2
 export struct BookListList {
   @Local transitionEffect: TransitionEffect = TransitionEffect.IDENTITY;
-  @Consumer('bookShelfNavPathStack') bookShelfNavPathStack: NavPathStack = new NavPathStack()
   @Local bookShelfIndex: number = 1
   @Local isFlashing: boolean = false
   @Local waterFlowColumnNumber : number = -1
   @Local waterFlowEmptyItem: number[] = []
-  @Local isOpening: boolean = false
 
 
 
@@ -95,16 +95,16 @@ export struct BookListList {
               .padding(15)
               .borderRadius(20)
               .onClick(async ()=>{
-                XAnimation.runWithAnimation(()=> this.isOpening = true)
+                XAnimation.runWithAnimation(()=> __BookListData__.isOpening = true)
                 zlibClient.bookshelfBooks.clearData()
                 await zlibClient.getBookShelfMoreInfo(item.id,1)
-                XAnimation.runWithAnimation(()=> this.isOpening = false)
+                XAnimation.runWithAnimation(()=> __BookListData__.isOpening = false)
                 this.transitionEffect = TransitionEffect.OPACITY
                   .combine(TransitionEffect.scale({ x: 0.9, y: 0.9 }))
                   .animation({ curve: curves.springMotion(0.4, 0.7) })
-
+                setContinueState(true, 'bookList', '', JSON.stringify(item))
                 animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
-                  this.bookShelfNavPathStack.pushPath({ name: 'bookShelfPage', param: item }, false);
+                  __UI__.bookListPageStack.pushPath({ name: 'bookShelfPage', param: item }, false);
                 })
               })
             },(item:I_ReadLists_Bookshelf)=>item.id.toString()+item.title)
@@ -123,7 +123,7 @@ export struct BookListList {
           if(this.isFlashing){
             loadingNewDialog()
           }
-          if(this.isOpening){
+          if(__BookListData__.isOpening){
             loadingDialog()
           }
         }.size({width: '100%', height: '100%'})
@@ -154,3 +154,10 @@ export struct BookListList {
   }
 
 }
+
+@ObservedV2
+class bookList{
+  @Trace isOpening: boolean = false
+}
+
+export const __BookListData__ = new bookList()

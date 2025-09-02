@@ -27,6 +27,7 @@ import { minWidth, __System__ } from "../../datas/classes/ShareDatas"
 import { globlUIContext } from "../../../entryability/EntryAbility"
 import { LengthUnit } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
+import { setContinueState } from "../../utils/ToolsUtil"
 
 @Builder
 export function bookInfoPageBuilder() {
@@ -58,30 +59,30 @@ export struct bookInfoPage {
 
   build() {
     NavDestination() {
-      if(this.isViewingBigImage){
+      if (this.isViewingBigImage) {
         BigImage({
           image: this.bookInfo?.image
         })
 
 
-      }else {
+      } else {
         List({ space: 10 }) {
 
           ListItem() {
-            Row({space: 20}) {
+            Row({ space: 20 }) {
               Image(this.bookInfo?.image)
                 .transition(TransitionEffect.OPACITY)
                 .geometryTransition('image')
-                .size({ height: 160, width:116})
+                .size({ height: 160, width: 116 })
                 .shadow({
                   radius: 25,
                   color: Color.Gray,
                   offsetX: 0,
                   offsetY: 10
                 })
-                .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
-                .onClick(()=>{
-                  XAnimation.runWithAnimation(()=>this.isViewingBigImage = true, true, 0.4, 0.85)
+                .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                .onClick(() => {
+                  XAnimation.runWithAnimation(() => this.isViewingBigImage = true, true, 0.4, 0.85)
                 })
 
               Column({ space: 5 }) {
@@ -109,7 +110,7 @@ export struct bookInfoPage {
           .borderRadius(20)
 
           ListItem() {
-            Stack({alignContent: Alignment.Top}){
+            Stack({ alignContent: Alignment.Top }) {
               Scroll() {
                 Row() {
                   Text(this.bookInfo?.description == '' ? '暂无简介' :
@@ -127,7 +128,7 @@ export struct bookInfoPage {
               .edgeEffect(EdgeEffect.Spring)
               .scrollBar(BarState.Off)
               .fadingEdge(true)
-            }.constraintSize({maxHeight: 200, minHeight: this.pageWidth > minWidth? 200: 0}).padding(16)
+            }.constraintSize({ maxHeight: 200, minHeight: this.pageWidth > minWidth ? 200 : 0 }).padding(16)
           }
           .borderRadius(20)
           .backgroundColor($r('sys.color.comp_background_list_card'))
@@ -176,7 +177,7 @@ export struct bookInfoPage {
                 primaryText: '出版年份'
               },
               operateItem: {
-                text: this.bookInfo?.datePublished?.toString()??'暂无数据'
+                text: this.bookInfo?.datePublished?.toString() ?? '暂无数据'
               }
             })
 
@@ -195,22 +196,30 @@ export struct bookInfoPage {
           .divider(this.egDivider)
 
 
-          ListItem(){
-            Button({type: ButtonType.Normal, stateEffect: true}){
+          ListItem() {
+            Button({ type: ButtonType.Normal, stateEffect: true }) {
               Text(this.bookInfo?.firstDownloadInfo?.format + '   ' + this.bookInfo?.firstDownloadInfo?.size)
-            }.height(55).borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card')).width('100%')
-            .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+            }
+            .height(55)
+            .borderRadius(20)
+            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .width('100%')
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
             .onClick(() => {
               zlibClient.getTrueDownloadBookUrl(this.getUIContext().getHostContext() as common.UIAbilityContext,
                 this.bookInfo?.firstDownloadUrl!, this.bookInfo!)
             })
           }
 
-          ListItem(){
-            Button({type: ButtonType.Normal, stateEffect: true}){
+          ListItem() {
+            Button({ type: ButtonType.Normal, stateEffect: true }) {
               Text('更多下载选项')
-            }.height(55).borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card')).width('100%')
-            .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+            }
+            .height(55)
+            .borderRadius(20)
+            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .width('100%')
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
             .bindMenu(this.isShowDownloadMenu, this.DownloadMenu, {
               onDisappear: () => {
                 this.isShowDownloadMenu = false
@@ -235,40 +244,38 @@ export struct bookInfoPage {
             })
           }
 
-
-
-
         }
         .height('100%')
         .scrollBar(BarState.Off)
         .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
-        .lanes(this.pageWidth > minWidth? 2: 1, 10)
-        .borderRadius({topLeft: 20, topRight: 20}).clip(true)
+        .lanes(this.pageWidth > minWidth ? 2 : 1, 10)
+        .borderRadius({ topLeft: 20, topRight: 20 })
+        .clip(true)
         .margin({ left: Math.max(16, __System__.leftRectHeight), right: Math.max(16, __System__.rightRectHeight) })
         .chainAnimation(true)
       }
 
 
-
-    }.size({ width: '100%', height: '100%' })
+    }
+    .size({ width: '100%', height: '100%' })
     .backgroundColor($r('sys.color.comp_background_gray'))
     .title(this.bookInfo?.name)
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
       this.bookInfo = context.pathInfo.param as I_BookInfo
-
     })
-    .padding({top: __System__.topRectHeight})
-    .onAreaChange((_, newValue)=>{
-      XAnimation.runWithAnimation(()=>{
+    .padding({ top: __System__.topRectHeight })
+    .onAreaChange((_, newValue) => {
+      XAnimation.runWithAnimation(() => {
         this.pageWidth = new Number(newValue.width).valueOf()
       }, this.pageWidth > 0)
     })
-    .onBackPressed(()=>{
-      if(this.isViewingBigImage){
-        XAnimation.runWithAnimation(()=>this.isViewingBigImage = false, true, 0.4, 0.85)
+    .onBackPressed(() => {
+      if (this.isViewingBigImage) {
+        XAnimation.runWithAnimation(() => this.isViewingBigImage = false, true, 0.4, 0.85)
         return true
       }
+      setContinueState(false, 'home', '', '')
       return false
     })
   }
@@ -360,7 +367,7 @@ export struct BigImage {
         })
         .onActionEnd(() => {
           if (this.zoom < 0.7) {
-            XAnimation.runWithAnimation(()=>{
+            XAnimation.runWithAnimation(() => {
               this.zoom = 0.7
               this.startOffsetX += (this.lastZoom - this.zoom) * (this.centerX - this.offsetX) / this.zoom
               this.startOffsetY += (this.lastZoom - this.zoom) * (this.centerY - this.offsetY) / this.zoom
@@ -369,7 +376,7 @@ export struct BigImage {
             })
           }
           if (this.zoom > 3) {
-            XAnimation.runWithAnimation(()=>{
+            XAnimation.runWithAnimation(() => {
               this.zoom = 3
               this.startOffsetX += (this.lastZoom - this.zoom) * (this.centerX - this.offsetX) / this.zoom
               this.startOffsetY += (this.lastZoom - this.zoom) * (this.centerY - this.offsetY) / this.zoom
@@ -387,13 +394,13 @@ export struct BigImage {
           this.centerX = event.x - this.areaWidth / 2
           this.centerY = event.y - this.areaHeight / 2
           this.lastZoom = this.zoom
-          XAnimation.runWithAnimation(()=>{
+          XAnimation.runWithAnimation(() => {
             this.zoom = 1.75
             this.offsetX += (this.lastZoom - this.zoom) * (this.centerX - this.offsetX) * this.zoom
             this.offsetY += (this.lastZoom - this.zoom) * (this.centerY - this.offsetY) * this.zoom
           })
         } else {
-          XAnimation.runWithAnimation(()=>{
+          XAnimation.runWithAnimation(() => {
             this.zoom = 1
             this.offsetX = 0
             this.offsetY = 0
@@ -405,7 +412,7 @@ export struct BigImage {
       }
     })
     .size({ width: '100%', height: '100%' })
-    .onAreaChange((_, newValue)=>{
+    .onAreaChange((_, newValue) => {
       this.areaWidth = new Number(newValue.width).valueOf()
       this.areaHeight = new Number(newValue.height).valueOf()
     })

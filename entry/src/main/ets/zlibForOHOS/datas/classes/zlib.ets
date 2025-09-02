@@ -203,7 +203,6 @@ export class zlib {
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
     addLog('getBookInfo', `尝试获取书籍信息`)
-    __UI__.isHaveOpenBook=true
     let req = http.createHttp()
     let res: string = ''
     let resBookInfo: I_BookInfo = {
@@ -260,7 +259,6 @@ export class zlib {
       addLog('getBookInfo', `获取失败`,true)
     }
     console.log(`FUCK${JSON.stringify(resBookInfo)}`)
-    __UI__.isHaveOpenBook = false
     return resBookInfo;
 
 

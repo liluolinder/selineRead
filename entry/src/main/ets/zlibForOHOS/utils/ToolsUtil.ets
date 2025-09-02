@@ -4,7 +4,7 @@ import { common } from '@kit.AbilityKit';
 import { fileUri, picker } from '@kit.CoreFileKit';
 import { globlContext } from '../../entryability/EntryAbility';
 import { LogLine } from '../pages/personal/pages/LoggerPage';
-import { __Logger__ } from '../datas/classes/ShareDatas';
+import { __Logger__, __UI__ } from '../datas/classes/ShareDatas';
 
 export function dateGetTime(timestamp: number|string, time: boolean = true, date: boolean = true): string {
   try {
@@ -69,6 +69,17 @@ export function shareBook(path: string){
     previewMode: systemShare.SharePreviewMode.DETAIL,
     selectionMode: systemShare.SelectionMode.SINGLE
   });
+}
+
+
+export function setContinueState(allowContinue: boolean, currentViewingType: 'book'|'bookList'|'home', currentBookData: string, currentBookListData: string){
+  __UI__.currentViewingType = currentViewingType
+  __UI__.currentBookData = currentBookData
+  __UI__.currentBookListData = currentBookListData
+  try{
+    const context = globlContext as common.UIAbilityContext
+    context.setMissionContinueState(allowContinue? 0: 1)
+  }catch{}
 }
 
 export async function getDownloadFolderPath() {

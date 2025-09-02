@@ -73,14 +73,15 @@ export let __Logger__: Logger = new Logger()
 @ObservedV2
 export class UIShareData {
   @Trace isInReader: boolean = false
-  @Trace isHaveOpenBook: boolean = false
-  @Trace isInSearchMode: boolean = false
-  @Trace searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend
   @Trace currentColorMode: number = 1
-  indexPageStack: NavPathStack = new NavPathStack()
+  HomePageStack: NavPathStack = new NavPathStack()
+  bookListPageStack: NavPathStack = new NavPathStack()
   @Trace onlineMode: boolean = false
   @Trace showSettings: boolean = false
   @Trace showLogger: boolean = false
+  currentBookData: string = ''
+  currentBookListData: string = ''
+  currentViewingType: 'book'|'bookList'|'home' = 'home'
 }
 
 export let __UI__: UIShareData = new UIShareData()
