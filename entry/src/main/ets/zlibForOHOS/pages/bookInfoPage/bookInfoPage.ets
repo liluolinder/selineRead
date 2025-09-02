@@ -63,6 +63,7 @@ export struct bookInfoPage {
         BigImage({
           image: this.bookInfo?.image
         })
+          .zIndex(114514)
 
 
       } else {
@@ -71,7 +72,7 @@ export struct bookInfoPage {
           ListItem() {
             Row({ space: 20 }) {
               Image(this.bookInfo?.image)
-                .zIndex(114514)
+                .zIndex(114513)
                 .transition(TransitionEffect.OPACITY)
                 .geometryTransition('image')
                 .size({ height: 160, width: 116 })
