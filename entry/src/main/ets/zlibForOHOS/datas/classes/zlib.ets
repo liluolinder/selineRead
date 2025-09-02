@@ -5,7 +5,7 @@ import { JSON } from '@kit.ArkTS';
 import { CJLoader } from '../../CJloader/CJLoader';
 import { firstDownloadInfo, I_BookInfo, I_searchBook } from '../interfaces/I_BookInfo';
 import { I_DownloadInfo, I_trulyDownloadUrl } from '../interfaces/I_DownloadInfo';
-import { fileUri, fileIo as fs, picker } from '@kit.CoreFileKit';
+import { fileUri, fileIo as fs } from '@kit.CoreFileKit';
 import { promptAction } from '@kit.ArkUI';
 import { I_CookieInfo } from '../interfaces/I_CookieInfo';
 import http from '@ohos.net.http';
@@ -16,9 +16,7 @@ import { linderDataBaseManger } from './LDataBaseManager';
 import { relationalStore } from '@kit.ArkData';
 import { zlibHaveDownloadTable } from '../commons/zlibHaveDownloadTable';
 import { I_ZlibHaveDownloadTable } from '../interfaces/I_zlibHaveDownloadTable';
-import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { I_UserInfo } from '../interfaces/I_UserInfo';
-import { globlContext } from '../../../entryability/EntryAbility';
 import { addLog, getDownloadFolderPath, shareBook } from '../../utils/ToolsUtil';
 import { I_Bookshelf, I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
 
@@ -376,7 +374,6 @@ export class zlib {
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
           'Cookie': this.cookie,
         },
-        readTimeout:3000
       }).then((data: http.HttpResponse) => {
         req.destroy()
 
