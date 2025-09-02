@@ -71,6 +71,7 @@ export struct bookInfoPage {
           ListItem() {
             Row({ space: 20 }) {
               Image(this.bookInfo?.image)
+                .zIndex(114514)
                 .transition(TransitionEffect.OPACITY)
                 .geometryTransition('image')
                 .size({ height: 160, width: 116 })
