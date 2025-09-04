@@ -23,7 +23,7 @@ import { zlibClient } from "../../datas/classes/zlib"
 import { I_DownloadInfo } from "../../datas/interfaces/I_DownloadInfo"
 import common from "@ohos.app.ability.common"
 import { DividerTmp } from "../../datas/classes/DividerTmp"
-import { minWidth, __System__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __CustomBackgroundData__, __System__ } from "../../datas/classes/ShareDatas"
 import { globlUIContext } from "../../../entryability/EntryAbility"
 import { LengthUnit } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
@@ -107,7 +107,12 @@ export struct bookInfoPage {
 
             }.padding(16).justifyContent(FlexAlign.SpaceBetween).width('100%')
 
-          }.backgroundColor($r('sys.color.comp_background_list_card'))
+          }
+          .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+          $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+          .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+            undefined)
+          .useEffect(true)
           .size({ width: '100%', height: 200 })
           .borderRadius(20)
 
@@ -133,7 +138,11 @@ export struct bookInfoPage {
             }.constraintSize({ maxHeight: 200, minHeight: this.pageWidth > minWidth ? 200 : 0 }).padding(16)
           }
           .borderRadius(20)
-          .backgroundColor($r('sys.color.comp_background_list_card'))
+          .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+          $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+          .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+            undefined)
+          .useEffect(true)
           .width('100%')
 
           ListItemGroup() {
@@ -192,8 +201,13 @@ export struct bookInfoPage {
               }
             })
 
-          }.borderRadius(20)
-          .backgroundColor($r('sys.color.comp_background_list_card'))
+          }
+          .borderRadius(20)
+          .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+          $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+          .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+            undefined)
+          .useEffect(true)
           .size({ height: '48', width: '100%' })
           .divider(this.egDivider)
 
@@ -204,7 +218,11 @@ export struct bookInfoPage {
             }
             .height(55)
             .borderRadius(20)
-            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+            $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+            .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+              undefined)
+            .useEffect(true)
             .width('100%')
             .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
             .onClick(() => {
@@ -219,7 +237,11 @@ export struct bookInfoPage {
             }
             .height(55)
             .borderRadius(20)
-            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+            $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+            .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+              undefined)
+            .useEffect(true)
             .width('100%')
             .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
             .bindMenu(this.isShowDownloadMenu, this.DownloadMenu, {
@@ -260,7 +282,8 @@ export struct bookInfoPage {
 
     }
     .size({ width: '100%', height: '100%' })
-    .backgroundColor($r('sys.color.comp_background_gray'))
+    .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+    Color.Transparent : $r('sys.color.comp_background_gray'))
     .title(this.bookInfo?.name)
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
