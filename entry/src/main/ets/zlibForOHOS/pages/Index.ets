@@ -19,7 +19,9 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { globlContext, globlUIContext } from '../../entryability/EntryAbility';
 import { linderPixelMap } from '../datas/classes/LPixelMap';
-import { minWidth, __DataBase__, __System__, __UI__, __User__ } from '../datas/classes/ShareDatas';
+import { minWidth,
+  __CustomBackgroundData__,
+  __DataBase__, __System__, __UI__, __User__ } from '../datas/classes/ShareDatas';
 import { zlibClient } from '../datas/classes/zlib';
 import NeoPreferencesUtil from '../datas/classes/XPreferencesUtil'
 import { personal } from './personal/personal';
@@ -37,6 +39,7 @@ import { setContinueState } from '../utils/ToolsUtil';
 import { I_RecommendBook } from '../datas/interfaces/I_RecommendBook';
 import { curves } from '@kit.ArkUI';
 import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
+import { customBackground } from './Builder';
 
 
 @Entry
@@ -153,6 +156,10 @@ struct Index {
         DecorBar().zIndex(114514)
       }
 
+      if(__CustomBackgroundData__.customBackground){
+        customBackground()
+      }
+
       Navigation(__UI__.HomePageStack) {
 
         Stack({alignContent: Alignment.BottomStart}){
@@ -187,7 +194,7 @@ struct Index {
             })
 
           }
-          .backgroundColor(__System__.windowWidth > minWidth? Color.Transparent: $r('app.color.start_window_background_blur')).backdropBlur(__System__.windowWidth > minWidth? 65 + __System__.bottomRectHeight: 100)
+          .backgroundColor(__System__.windowWidth > minWidth && !__CustomBackgroundData__.customBackground? Color.Transparent: $r('app.color.start_window_background_blur')).backdropBlur(__System__.windowWidth > minWidth? 65 + __System__.bottomRectHeight: 100)
           .width(__System__.windowWidth > minWidth ? 65 + __System__.leftRectHeight : '100%')
           .height(__System__.windowWidth > minWidth ? '100%' : 65 + __System__.bottomRectHeight * 0.8)
           .padding({bottom: Math.max(__System__.bottomRectHeight * 0.8, 5), top: __System__.windowWidth > minWidth? __System__.topRectHeight: 0, left: __System__.windowWidth > minWidth? __System__.leftRectHeight: 5})
@@ -199,7 +206,7 @@ struct Index {
       .hideTitleBar(true)
       .hideToolBar(true)
       .size({ width: '100%', height: '100%' })
-      .backgroundColor($r('sys.color.comp_background_gray'))
+      .backgroundColor(__CustomBackgroundData__.customBackground? Color.Transparent: $r('sys.color.comp_background_gray'))
       .navBarWidthRange([550, 1200])
       .navBarWidth(800)
       .mode(__UI__.isInReader ? NavigationMode.Stack : NavigationMode.Auto)

@@ -18,7 +18,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 import { curves } from '@kit.ArkUI';
-import { __System__, __UI__, minWidth } from '../../datas/classes/ShareDatas';
+import { __System__, __UI__, minWidth, __CustomBackgroundData__ } from '../../datas/classes/ShareDatas';
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { zlib, zlibClient } from '../../datas/classes/zlib';
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod';
@@ -29,31 +29,36 @@ import { loadingDialog, loadingNewDialog } from '../Builder';
 
 @ComponentV2
 export default struct BookListPage {
-  @Local waterFlowColumnNumber : number = -1
+  @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
   @Local isOpening: boolean = false
   @Local isFlashing: boolean = false
   @Local bookShelfIndex: number = 1
-  private data:I_ReadLists_Bookshelf|undefined
+  private data: I_ReadLists_Bookshelf | undefined
 
   build() {
     NavDestination() {
-      Stack({alignContent: Alignment.Top}){
-        Column({space: 10}){
-          Row({space: 10}){
-            Button({stateEffect: true}){
+      Stack({ alignContent: Alignment.Top }) {
+        Column({ space: 10 }) {
+          Row({ space: 10 }) {
+            Button({ stateEffect: true }) {
               SymbolGlyph($r('sys.symbol.chevron_left')).fontSize(26).fontColor([$r('sys.color.font')])
             }
-            .size({width: 40, height: 40})
-            .backgroundColor($r('sys.color.comp_background_list_card'))
-            .onClick(()=>{
+            .size({ width: 40, height: 40 })
+            .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+            $r('sys.color.comp_background_list_card'))
+            .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+            .useEffect(true)
+            .onClick(() => {
               setContinueState(false, 'home', '', '')
               animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
                 __UI__.bookListPageStack.pop(false);
               })
             })
+
             Text(this.data?.title).fontSize(22).fontWeight(FontWeight.Medium)
           }
+
           WaterFlow() {
             LazyForEach(zlibClient.bookshelfBooks, (item: I_Bookshelf_extraBooks) => {
               FlowItem() {
@@ -67,7 +72,7 @@ export default struct BookListPage {
                       offsetY: 10
                     })
 
-                  Column({space: 2}){
+                  Column({ space: 2 }) {
                     Text(item.book.title)
                       .fontSize(16)
                       .maxLines(1)
@@ -78,21 +83,23 @@ export default struct BookListPage {
                       .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
                   }.alignItems(HorizontalAlign.Start)
 
-
                 }.alignItems(HorizontalAlign.Start)
               }
-              .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.95})
+              .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
               .padding(15)
               .width('100%')
-              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .backgroundColor(__CustomBackgroundData__.customBackground ?
+              $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+              .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+              .useEffect(true)
               .borderRadius(15)
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
-              .onClick(async ()=>{
+              .onClick(async () => {
                 this.isOpening = true
                 await zlibClient.getBookInfo(item.book.href).then((res) => {
-                  if (res.name!='' && res.name!=undefined ) {
+                  if (res.name != '' && res.name != undefined) {
                     res.bookID = item.id
                     res.image = item.book.cover
                     res.href = item.book.href
@@ -104,13 +111,16 @@ export default struct BookListPage {
               })
             }, (item: string) => item)
 
-            ForEach(this.waterFlowEmptyItem, ()=>{FlowItem().height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth? 0: 70), 16))})
+            ForEach(this.waterFlowEmptyItem, () => {
+              FlowItem()
+                .height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70), 16))
+            })
           }
-          .borderRadius({topLeft: 15, topRight: 15})
+          .borderRadius({ topLeft: 15, topRight: 15 })
           .clip(true)
           .rowsGap(10)
           .columnsGap(10)
-          .onReachEnd(()=>{
+          .onReachEnd(() => {
           })
           .edgeEffect(EdgeEffect.Spring)
 
@@ -119,8 +129,8 @@ export default struct BookListPage {
             await zlibClient.getBookShelfMoreInfo(this.data!.id, ++this.bookShelfIndex)
             this.isFlashing = false
           })
-          .onAreaChange((_, newValue)=>{
-            XAnimation.runWithAnimation(()=>{
+          .onAreaChange((_, newValue) => {
+            XAnimation.runWithAnimation(() => {
               this.waterFlowColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
               let itemList: number[] = []
               for (let index = 0; index < this.waterFlowColumnNumber; index++) {
@@ -132,12 +142,13 @@ export default struct BookListPage {
           .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
           .layoutWeight(1)
         }.alignItems(HorizontalAlign.Start).width('100%')
-        .padding({left: 16, right: 16, top: Math.max(16, __System__.topRectHeight)})
+        .padding({ left: 16, right: 16, top: Math.max(16, __System__.topRectHeight) })
         .geometryTransition(this.data?.id.toString())
-        if(this.isOpening){
+
+        if (this.isOpening) {
           loadingDialog()
         }
-        if(this.isFlashing){
+        if (this.isFlashing) {
           loadingNewDialog()
         }
       }
@@ -148,7 +159,6 @@ export default struct BookListPage {
     .onReady((context: NavDestinationContext) => {
       this.data = context.pathInfo.param as I_ReadLists_Bookshelf
     })
-    .backgroundColor($r('sys.color.comp_background_gray'))
     .onBackPressed(() => {
       setContinueState(false, 'home', '', '')
       animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {

@@ -18,7 +18,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 
-import { __System__, __User__, minWidth, __UI__ } from '../../datas/classes/ShareDatas';
+import { __System__, __User__, minWidth, __UI__, __CustomBackgroundData__ } from '../../datas/classes/ShareDatas';
 import { CircleShape, ComposeListItem, CustomContentDialog, promptAction } from '@kit.ArkUI';
 import { zlibClient } from '../../datas/classes/zlib';
 import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
@@ -123,7 +123,9 @@ export struct personal {
           contentItem:{
             primaryText:'登录'
           }
-        }).backgroundColor($r('sys.color.comp_background_list_card'))
+        }).backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
           .borderRadius(10)
           .onClick(()=>{
             this.zlibLoginDialogController.open()
@@ -134,7 +136,9 @@ export struct personal {
           contentItem:{
             primaryText:'注册'
           }
-        }).backgroundColor($r('sys.color.comp_background_list_card'))
+        }).backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
           .borderRadius(10)
           .onClick(()=>{
             AlertDialog.show({
@@ -215,7 +219,9 @@ export struct personal {
             }.size({ width: '100%', height: '100%' })
             .padding(15)
           }.size({ width: '100%', height: 120 })
-          .backgroundColor($r('sys.color.comp_background_list_card'))
+          .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
           .borderRadius(20)
           .bindSheet($$this.showLoginInOrRegister,this.loginOrRegister(),{
             title:{title:'注册/登录'},
@@ -249,7 +255,9 @@ export struct personal {
               }
               .layoutWeight(1)
               .height('100%')
-              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
               .borderRadius(20)
               .bindPopup($$this.showDownloadLimitTips, {
                 message: '下载限制是Zlibrary官方设置的,可以通过对zlib官网捐赠提高限制值',
@@ -276,7 +284,9 @@ export struct personal {
               }
               .layoutWeight(1)
               .height('100%')
-              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
               .borderRadius(20)
               .bindPopup(this.showDonationTips, {
                 message: '此处捐赠额度指的是对zlib官方的捐赠，不是对此APP开发者的捐赠',
@@ -332,7 +342,9 @@ export struct personal {
           height: SheetSize.LARGE,
         })
         .borderRadius(20)
-        .backgroundColor($r('sys.color.comp_background_list_card'))
+        .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
         .padding({ bottom: 6, top: 6 })
         .transition(XAnimation.getAnimation('bottom'))
 
@@ -442,7 +454,9 @@ export struct personal {
           endMargin: 18
         })
         .borderRadius(20)
-        .backgroundColor($r('sys.color.comp_background_list_card'))
+        .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
         .padding({ bottom: 6, top: 6 })
 
       }

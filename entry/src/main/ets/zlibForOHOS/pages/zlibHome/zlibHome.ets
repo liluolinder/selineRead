@@ -20,7 +20,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 import { zlibClient } from '../../datas/classes/zlib'
 import { I_RecommendBook } from '../../datas/interfaces/I_RecommendBook'
 import { curves, promptAction } from '@kit.ArkUI'
-import { __System__, minWidth, __UI__ } from '../../datas/classes/ShareDatas'
+import { __System__, minWidth, __UI__, __CustomBackgroundData__ } from '../../datas/classes/ShareDatas'
 import { XAnimation } from '../../datas/classes/XAnimation'
 import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod'
@@ -73,7 +73,9 @@ export struct zlibHome {
       .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
       .padding(15)
       .width('100%')
-      .backgroundColor($r('sys.color.comp_background_list_card'))
+      .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
       .borderRadius(15)
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
@@ -119,7 +121,9 @@ export struct zlibHome {
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
         .animation({ curve: curves.springMotion(0.5, 0.7) }))
-      .backgroundColor($r('sys.color.comp_background_list_card'))
+      .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
       .borderRadius(20)
       .size({ width: '100%', height: 120 })
     })
@@ -158,7 +162,9 @@ export struct zlibHome {
       }
       .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
       .padding(15)
-      .backgroundColor($r('sys.color.comp_background_list_card'))
+      .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
       .borderRadius(15)
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
@@ -209,7 +215,9 @@ export struct zlibHome {
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
         .animation({ curve: curves.springMotion(0.5, 0.7) }))
-      .backgroundColor($r('sys.color.comp_background_list_card'))
+      .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+      .useEffect(true)
       .borderRadius(20)
       .size({ width: '100%', height: 120 })
     })
@@ -260,8 +268,9 @@ export struct zlibHome {
         }
         .width(40)
         .height(40)
-        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .backgroundColor($r('app.color.start_window_background_blur'))
         .backdropBlur(100)
+        .useEffect(true)
         .onClick(() => {
           addLog('ScanCode', `尝试扫码`)
           let options: scanBarcode.ScanOptions = {
@@ -295,8 +304,9 @@ export struct zlibHome {
         }
         .width(40)
         .height(40)
-        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .backgroundColor($r('app.color.start_window_background_blur'))
         .backdropBlur(100)
+        .useEffect(true)
         .onClick(() => {
           addLog('changeListOrWaterFlow', `切换列表/瀑布流`)
           XAnimation.runWithAnimation(() => {
@@ -307,8 +317,9 @@ export struct zlibHome {
         .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
         Search({value:$$this.searchBookName})
-          .backgroundColor($r('sys.color.comp_background_tertiary'))
+          .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
+          .useEffect(true)
           .focusable(__zlibHomeData__.isInSearchMode)
           .enableKeyboardOnFocus(__zlibHomeData__.isInSearchMode)
           .onEditChange((isInFocus) => {

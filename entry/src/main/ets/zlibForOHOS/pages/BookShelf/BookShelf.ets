@@ -17,7 +17,7 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-import { minWidth, __DataBase__, __System__, __UI__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __CustomBackgroundData__, __DataBase__, __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { zlibClient } from "../../datas/classes/zlib"
 import { I_ZlibHaveDownloadTable } from "../../datas/interfaces/I_zlibHaveDownloadTable"
@@ -48,7 +48,9 @@ export struct BookShelf {
               SymbolGlyph($r('sys.symbol.plus')).fontSize(26).fontColor([$r('sys.color.font')])
             }
             .size({ width: 40, height: 40 })
-            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+            .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+            .useEffect(true)
             .onClick(() => {
               new picker.DocumentViewPicker().select({ fileSuffixFilters: ['epub', 'pdf'], maxSelectNumber: 1 })
                 .then(async (result) => {
@@ -103,7 +105,9 @@ export struct BookShelf {
                 SymbolGlyph($r('sys.symbol.download')).fontSize(26).fontColor([$r('sys.color.font')])
               }
               .size({ width: 40, height: 40 })
-              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+              .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+              .useEffect(true)
               .onClick(()=>{
                 if(!__UI__.HomePageStack.getAllPathName().includes('downloadPage')) __UI__.HomePageStack.pushPathByName('downloadPage', undefined)
               })
@@ -186,7 +190,9 @@ export struct BookShelf {
                 })
               }
               .transition(XAnimation.getAnimation('bottom'))
-              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+              .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+              .useEffect(true)
               .draggable(fileIo.accessSync(item.BookFilePath))
               .onDragStart((event) => {
                 if (fileIo.accessSync(item.BookFilePath)) {
