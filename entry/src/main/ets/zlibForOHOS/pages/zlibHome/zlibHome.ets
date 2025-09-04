@@ -49,6 +49,7 @@ export struct zlibHome {
       FlowItem() {
         Column({ space: 20 }) {
           Image(item.cover)
+            .draggable(false)
             .size({ width: '100%' })
             .shadow({
               radius: 25,
@@ -92,6 +93,7 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Image(item.cover)
+            .draggable(false)
             .size({ height: '100%', width: '62' })
             .shadow({
               radius: 25,
@@ -136,6 +138,7 @@ export struct zlibHome {
         Column({ space: 20 }) {
           Stack({alignContent: Alignment.BottomEnd}){
             Image(item.image)
+              .draggable(false)
               .size({ width: '100%' })
               .shadow({
                 radius: 25,
@@ -182,6 +185,7 @@ export struct zlibHome {
         Row({ space: 10 }) {
           Stack({alignContent: Alignment.BottomEnd}){
             Image(item.image)
+              .draggable(false)
               .size({ height: '100%', width: '62' })
               .shadow({
                 radius: 25,

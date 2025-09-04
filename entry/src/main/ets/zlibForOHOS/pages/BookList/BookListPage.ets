@@ -64,6 +64,7 @@ export default struct BookListPage {
               FlowItem() {
                 Column({ space: 20 }) {
                   Image(item.book.cover)
+                    .draggable(false)
                     .size({ width: '100%' })
                     .shadow({
                       radius: 25,
