@@ -2,56 +2,56 @@ import curves from '@ohos.curves'
 import Curves from '@ohos.curves'
 
 export class XAnimation {
-  private static MoveFromTop: object =
-    TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease })
-      .combine(TransitionEffect.translate({ x: 0, y: -20 })
-        .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.TOP),
-          TransitionEffect.move(TransitionEdge.TOP))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
-  private static MoveFromBottom: object =
-    TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease })
-      .combine(TransitionEffect.translate({ x: 0, y: 20 })
-        .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.BOTTOM),
-          TransitionEffect.move(TransitionEdge.BOTTOM))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
-  private static MoveFromStart: object =
-    TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease })
-      .combine(TransitionEffect.translate({ x: -20, y: 0 })
-        .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.START),
-          TransitionEffect.move(TransitionEdge.START))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
-  private static MoveFromEnd: object =
-    TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease })
-      .combine(TransitionEffect.translate({ x: 20, y: 0 })
-        .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.END),
-          TransitionEffect.move(TransitionEdge.END))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
   private static mode: string = 'auto'
 
   public static setAnimation(mode: string) {
     XAnimation.mode = mode;
   }
 
-  public static getAnimation(dir: 'left'|'right'|'up'|'bottom') {
+  public static getAnimation(dir: 'left'|'right'|'up'|'bottom', delay: number = 0) {
+    const MoveFromTop: object =
+      TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
+        .combine(TransitionEffect.translate({ x: 0, y: -20 })
+          .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.TOP),
+            TransitionEffect.move(TransitionEdge.TOP))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
+    const MoveFromBottom: object =
+      TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
+        .combine(TransitionEffect.translate({ x: 0, y: 20 })
+          .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.BOTTOM),
+            TransitionEffect.move(TransitionEdge.BOTTOM))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
+    const MoveFromStart: object =
+      TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
+        .combine(TransitionEffect.translate({ x: -20, y: 0 })
+          .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.START),
+            TransitionEffect.move(TransitionEdge.START))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
+    const MoveFromEnd: object =
+      TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
+        .combine(TransitionEffect.translate({ x: 20, y: 0 })
+          .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.END),
+            TransitionEffect.move(TransitionEdge.END))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
     switch (XAnimation.mode) {
       case 'auto': {
         switch (dir) {
           case 'up':
-            return XAnimation.MoveFromTop;
+            return MoveFromTop;
           case 'bottom':
-            return XAnimation.MoveFromBottom;
+            return MoveFromBottom;
           case 'left':
-            return XAnimation.MoveFromStart;
+            return MoveFromStart;
           case 'right':
-            return XAnimation.MoveFromEnd;
+            return MoveFromEnd;
         }
       }
       case 'up':
-        return XAnimation.MoveFromBottom;
+        return MoveFromBottom;
       case 'bottom':
-        return XAnimation.MoveFromTop;
+        return MoveFromTop;
       case 'left':
-        return XAnimation.MoveFromEnd;
+        return MoveFromEnd;
       case 'right':
-        return XAnimation.MoveFromStart;
+        return MoveFromStart;
       default:
-        return XAnimation.MoveFromBottom;
+        return MoveFromBottom;
     }
   }
 
