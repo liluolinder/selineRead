@@ -37,18 +37,16 @@ export struct personal {
   @Local userPassword: string = ''
   @Local showDownloadLimitTips: boolean = false
   @Local showDonationTips: boolean = false
-  @Local showLoginInOrRegister:boolean = false
+  @Local showLoginInOrRegister: boolean = false
   @Local showUpdateInfo: boolean = false
   @Local showTanks: boolean = false
   @Local pageWidth: number = -1
-
   buttonsArray: string[] = [
     '设置', '版本信息'
   ]
   buttonsArray2: string[] = [
     '鸣谢',
   ]
-
   zlibLoginDialogController: CustomDialogController = new CustomDialogController({
     builder: CustomContentDialog({
       primaryTitle: 'zlib登录',
@@ -79,7 +77,6 @@ export struct personal {
 
     }),
   });
-
 
   @Builder
   loginPageBuilder() {
@@ -112,35 +109,36 @@ export struct personal {
     .padding({ left: 16, right: 16 })
   }
 
-
-
   @Builder
-  loginOrRegister()
-  {
-    Column(){
-      List({space:20}){
+  loginOrRegister() {
+    Column() {
+      List({ space: 20 }) {
         ComposeListItem({
-          contentItem:{
-            primaryText:'登录'
+          contentItem: {
+            primaryText: '登录'
           }
-        }).backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-      .useEffect(true)
+        })
+          .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+          $r('sys.color.comp_background_list_card'))
+          .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+          .useEffect(true)
           .borderRadius(10)
-          .onClick(()=>{
+          .onClick(() => {
             this.zlibLoginDialogController.open()
             this.showLoginInOrRegister = false
           })
 
         ComposeListItem({
-          contentItem:{
-            primaryText:'注册'
+          contentItem: {
+            primaryText: '注册'
           }
-        }).backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-      .useEffect(true)
+        })
+          .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+          $r('sys.color.comp_background_list_card'))
+          .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+          .useEffect(true)
           .borderRadius(10)
-          .onClick(()=>{
+          .onClick(() => {
             AlertDialog.show({
               title: '提醒',
               message: '即将打开网站',
@@ -168,24 +166,23 @@ export struct personal {
             this.showLoginInOrRegister = false
           })
       }
-    }.padding({left:16, right:16,bottom:50})
+    }.padding({ left: 16, right: 16, bottom: 50 })
   }
-
 
   build() {
     Column() {
       List({ space: 10 }) {
 
-        if(__UI__.onlineMode){
+        if (__UI__.onlineMode) {
           ListItem() {
             Row({ space: 15 }) {
-              if(zlibClient.userInfo?.avatar){
+              if (zlibClient.userInfo?.avatar) {
                 Image(zlibClient.userInfo?.avatar)
                   .width(80)
                   .height(80)
                   .borderRadius(40)
-              }else{
-                Stack(){
+              } else {
+                Stack() {
                   SymbolGlyph($r('sys.symbol.person')).opacity(0.5).fontColor([$r('sys.color.font')]).fontSize(40)
                 }.backgroundColor($r('sys.color.comp_background_gray'))
                 .width(80)
@@ -195,17 +192,17 @@ export struct personal {
 
 
               Column({ space: 5 }) {
-                Text(__User__.isLoginZlib ? zlibClient.userInfo?.userName??'正在获取' : '点击登录')
+                Text(__User__.isLoginZlib ? zlibClient.userInfo?.userName ?? '正在获取' : '点击登录')
                   .fontSize(18).maxLines(2)
                   .fontWeight(FontWeight.Medium)
                 if (__User__.isLoginZlib) {
-                  Button({stateEffect: true}){
+                  Button({ stateEffect: true }) {
                     SymbolGlyph($r('sys.symbol.arrow_right_and_square')).fontSize(18).fontColor([$r('sys.color.font')])
                   }
                   .size({ width: 30, height: 30 })
                   .backgroundColor(Color.Transparent)
                   .opacity(0.8)
-                  .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
                     NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", false)
                     NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", '')
@@ -218,22 +215,24 @@ export struct personal {
               }.layoutWeight(1).alignItems(HorizontalAlign.Start)
             }.size({ width: '100%', height: '100%' })
             .padding(15)
-          }.size({ width: '100%', height: 120 })
-          .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-      .useEffect(true)
+          }
+          .size({ width: '100%', height: 120 })
+          .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+          $r('sys.color.comp_background_list_card'))
+          .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+          .useEffect(true)
           .borderRadius(20)
-          .bindSheet($$this.showLoginInOrRegister,this.loginOrRegister(),{
-            title:{title:'注册/登录'},
-            preferType:SheetType.CENTER,
-            height:SheetSize.FIT_CONTENT
+          .bindSheet($$this.showLoginInOrRegister, this.loginOrRegister(), {
+            title: { title: '注册/登录' },
+            preferType: SheetType.CENTER,
+            height: SheetSize.FIT_CONTENT
           })
           .onClick(() => {
             if (!__User__.isLoginZlib) {
               this.showLoginInOrRegister = true
             }
           })
-          .transition(XAnimation.getAnimation('bottom'))
+          .transition(XAnimation.getAnimation('bottom', 50))
 
           ListItem() {
             Row({ space: 10 }) {
@@ -255,9 +254,10 @@ export struct personal {
               }
               .layoutWeight(1)
               .height('100%')
-              .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-      .useEffect(true)
+              .backgroundColor(__CustomBackgroundData__.customBackground ?
+              $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+              .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+              .useEffect(true)
               .borderRadius(20)
               .bindPopup($$this.showDownloadLimitTips, {
                 message: '下载限制是Zlibrary官方设置的,可以通过对zlib官网捐赠提高限制值',
@@ -284,9 +284,10 @@ export struct personal {
               }
               .layoutWeight(1)
               .height('100%')
-              .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-      .useEffect(true)
+              .backgroundColor(__CustomBackgroundData__.customBackground ?
+              $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+              .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+              .useEffect(true)
               .borderRadius(20)
               .bindPopup(this.showDonationTips, {
                 message: '此处捐赠额度指的是对zlib官方的捐赠，不是对此APP开发者的捐赠',
@@ -301,25 +302,29 @@ export struct personal {
 
             }
 
-          }.size({ width: '100%', height: 120 }).transition(XAnimation.getAnimation('bottom'))
+          }.size({ width: '100%', height: 120 }).transition(XAnimation.getAnimation('bottom', 100))
         }
 
         ListItemGroup() {
           ForEach(this.buttonsArray, (item: string, index: number) => {
             ComposeListItem({
               contentItem: { primaryText: item },
-              operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right'),action:()=>{
-                switch (index){
-                  case 0:
-                    __UI__.showSettings = true
-                    break
-                  case 1:
-                    this.showUpdateInfo = true;
-                    break
+              operateItem: {
+                icon: {
+                  value: $r('sys.media.ohos_ic_public_arrow_right'), action: () => {
+                    switch (index) {
+                      case 0:
+                        __UI__.showSettings = true
+                        break
+                      case 1:
+                        this.showUpdateInfo = true;
+                        break
+                    }
+                  }
                 }
-              } } }
+              }
             }).onClick(() => {
-              switch (index){
+              switch (index) {
                 case 0:
                   __UI__.showSettings = true
                   break
@@ -342,106 +347,111 @@ export struct personal {
           height: SheetSize.LARGE,
         })
         .borderRadius(20)
-        .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-      .useEffect(true)
+        .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+        $r('sys.color.comp_background_list_card'))
+        .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+        .useEffect(true)
         .padding({ bottom: 6, top: 6 })
-        .transition(XAnimation.getAnimation('bottom'))
+        .transition(XAnimation.getAnimation('bottom', 150))
 
         ListItemGroup() {
           ForEach(this.buttonsArray2, (item: string, index: number) => {
             ComposeListItem({
               contentItem: { primaryText: item },
-              operateItem: { icon: { value: $r('sys.media.ohos_ic_public_arrow_right') ,action:()=>{
-                if (index == 0) {
-                  this.showTanks = true;
-                  return
-                }
-   /*             let url: string = ''
-                if (index == 1) {
-                  url = 'https://atomgit.com/liluolinder/selineRead'
-                } else if (index == 2) {
-                  url = 'https://atomgit.com/liluolinder/selineRead/issues'
-                }
+              operateItem: {
+                icon: {
+                  value: $r('sys.media.ohos_ic_public_arrow_right'), action: () => {
+                    if (index == 0) {
+                      this.showTanks = true;
+                      return
+                    }
+                    /*             let url: string = ''
+                                 if (index == 1) {
+                                   url = 'https://atomgit.com/liluolinder/selineRead'
+                                 } else if (index == 2) {
+                                   url = 'https://atomgit.com/liluolinder/selineRead/issues'
+                                 }
 
-                AlertDialog.show({
-                  title: '提醒',
-                  message: '即将打开网站',
-                  autoCancel: true,
-                  primaryButton: {
-                    value: '取消',
-                    action: () => {
-                    }
-                  },
-                  secondaryButton: {
-                    enabled: true,
-                    defaultFocus: true,
-                    style: DialogButtonStyle.HIGHLIGHT,
-                    value: '确定',
-                    action: () => {
-                      let want: Want = {
-                        action: 'ohos.want.action.viewData',
-                        entities: ['entity.system.browsable'],
-                        uri: url,
-                      };
-                      (globlContext as common.UIAbilityContext).startAbility(want)
-                    }
+                                 AlertDialog.show({
+                                   title: '提醒',
+                                   message: '即将打开网站',
+                                   autoCancel: true,
+                                   primaryButton: {
+                                     value: '取消',
+                                     action: () => {
+                                     }
+                                   },
+                                   secondaryButton: {
+                                     enabled: true,
+                                     defaultFocus: true,
+                                     style: DialogButtonStyle.HIGHLIGHT,
+                                     value: '确定',
+                                     action: () => {
+                                       let want: Want = {
+                                         action: 'ohos.want.action.viewData',
+                                         entities: ['entity.system.browsable'],
+                                         uri: url,
+                                       };
+                                       (globlContext as common.UIAbilityContext).startAbility(want)
+                                     }
+                                   }
+                                 })*/
                   }
-                })*/
-              }} }
+                }
+              }
             }).onClick(() => {
               if (index == 0) {
                 this.showTanks = true;
                 return
               }
               let url: string = ''
-/*              if (index == 1) {
-                url = 'https://atomgit.com/liluolinder/selineRead'
-              } else if (index == 2) {
-                url = 'https://atomgit.com/liluolinder/selineRead/issues'
-              }
+              /*              if (index == 1) {
+                              url = 'https://atomgit.com/liluolinder/selineRead'
+                            } else if (index == 2) {
+                              url = 'https://atomgit.com/liluolinder/selineRead/issues'
+                            }
 
-              AlertDialog.show({
-                title: '提醒',
-                message: '即将打开网站',
-                autoCancel: true,
-                primaryButton: {
-                  value: '取消',
-                  action: () => {
-                  }
-                },
-                secondaryButton: {
-                  enabled: true,
-                  defaultFocus: true,
-                  style: DialogButtonStyle.HIGHLIGHT,
-                  value: '确定',
-                  action: () => {
-                    let want: Want = {
-                      action: 'ohos.want.action.viewData',
-                      entities: ['entity.system.browsable'],
-                      uri: url,
-                    };
-                    (globlContext as common.UIAbilityContext).startAbility(want)
-                  }
-                }
-              })*/
+                            AlertDialog.show({
+                              title: '提醒',
+                              message: '即将打开网站',
+                              autoCancel: true,
+                              primaryButton: {
+                                value: '取消',
+                                action: () => {
+                                }
+                              },
+                              secondaryButton: {
+                                enabled: true,
+                                defaultFocus: true,
+                                style: DialogButtonStyle.HIGHLIGHT,
+                                value: '确定',
+                                action: () => {
+                                  let want: Want = {
+                                    action: 'ohos.want.action.viewData',
+                                    entities: ['entity.system.browsable'],
+                                    uri: url,
+                                  };
+                                  (globlContext as common.UIAbilityContext).startAbility(want)
+                                }
+                              }
+                            })*/
             })
           })
 
           ComposeListItem({
             contentItem: { primaryText: '反馈QQ群' },
-            operateItem: { text:'228546422'}
-          }).onClick(()=>{
+            operateItem: { text: '228546422' }
+          }).onClick(() => {
             let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, '718559395');
             pasteboard.getSystemPasteboard().setData(pasteData) //写入剪切板
             promptAction.showToast({
-              message:'复制成功',
+              message: '复制成功',
               duration: 2000
             });
           })
 
         }
-        .transition(XAnimation.getAnimation('bottom'))
+        .transition(XAnimation.getAnimation('bottom', 200))
         .bindSheet($$this.showTanks, TanksForBuilder(), {
           preferType: SheetType.CENTER,
           title: { title: '鸣谢' },
@@ -454,17 +464,19 @@ export struct personal {
           endMargin: 18
         })
         .borderRadius(20)
-        .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-      .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-      .useEffect(true)
+        .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+        $r('sys.color.comp_background_list_card'))
+        .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+        .useEffect(true)
         .padding({ bottom: 6, top: 6 })
 
       }
+      .layoutWeight(1)
       .bindSheet(__UI__.showLogger, loggerBuilder(), {
         preferType: SheetType.CENTER,
         height: SheetSize.LARGE,
         showClose: false,
-        onDisappear: ()=> __UI__.showLogger = false
+        onDisappear: () => __UI__.showLogger = false
       })
       .contentStartOffset(Math.max(__System__.topRectHeight, 16))
       .contentEndOffset(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 80), 16))
@@ -473,8 +485,8 @@ export struct personal {
       .chainAnimation(true)
 
     }
-    .onAppear(()=>{
-      if(__User__.isLoginZlib && __UI__.onlineMode){
+    .onAppear(() => {
+      if (__User__.isLoginZlib && __UI__.onlineMode) {
         zlibClient.refreshUrl().then(async () => {
           zlibClient.getUserInfo()
         })
@@ -491,7 +503,7 @@ export struct personal {
     .bindSheet(__UI__.showSettings, settingsBuilder(), {
       preferType: SheetType.CENTER,
       height: SheetSize.LARGE,
-      onDisappear: ()=> __UI__.showSettings = false
+      onDisappear: () => __UI__.showSettings = false
     })
   }
 }
