@@ -215,7 +215,7 @@ export class zlib {
       inLanguage: { name: '' },
       review: { reviewBody: '', datePublished: '', reviewRating: { ratingValue: '' } }
     }
-    console.log(`FUCK${bookHref}`)
+    console.log(`Liquid${bookHref}`)
     await req.request(`${this.base_url}${bookHref}`, {
       method: http.RequestMethod.GET,
       header: {
@@ -225,7 +225,7 @@ export class zlib {
       }
     }).then((data: http.HttpResponse) => {
       res = JSON.stringify(data.result)
-      console.log(`FUCK${res}`)
+      console.log(`Liquid${res}`)
 
     }).catch((err: Error) => {
       res = 'error'
@@ -236,14 +236,14 @@ export class zlib {
     req.destroy()
 
     if (res != 'error') {
-      console.log(`FUCK123124`)
+      console.log(`Liquid123124`)
       try {
         let firstDownloadUrl: string = CJLoader.getBookFirstDownloadUrl(res)
-        console.log(`FUCK!${firstDownloadUrl}`)
+        console.log(`Liquid!${firstDownloadUrl}`)
         let firstDownloadInfo: string = CJLoader.getBookFirstDownloadInfo(res)
-        console.log(`FUCK!!${firstDownloadInfo}`)
+        console.log(`Liquid!!${firstDownloadInfo}`)
         res = CJLoader.getBookInfo(res).replaceAll("\\n", "").replaceAll("\\\"", "\"").replaceAll("\"datePublished\": ,","")
-        console.log(`FUCK!!!${res}`)
+        console.log(`Liquid!!!${res}`)
         resBookInfo = (JSON.parse(res) as object) as I_BookInfo
         resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
@@ -256,7 +256,7 @@ export class zlib {
     }else {
       addLog('getBookInfo', `获取失败`,true)
     }
-    console.log(`FUCK${JSON.stringify(resBookInfo)}`)
+    console.log(`Liquid${JSON.stringify(resBookInfo)}`)
     return resBookInfo;
 
 
@@ -266,7 +266,7 @@ export class zlib {
   {
     addLog('getBookShelf', `尝试获取书单page=${page}`)
     let req = http.createHttp()
-    console.log(`FUCK${`${this.baseApi_url}/booklist/get-page/${page}`}`)
+    console.log(`Liquid${`${this.baseApi_url}/booklist/get-page/${page}`}`)
     await req.request(`${this.baseApi_url}/booklist/get-page/${page}`, {
       method: http.RequestMethod.POST,
       header: {
@@ -322,7 +322,7 @@ export class zlib {
 
       tempArray.forEach((item:I_Bookshelf_extraBooks)=>{
         this.bookshelfBooks.pushData(item)
-        console.log(`FUCK${JSON.stringify(item)}`);
+        console.log(`Liquid${JSON.stringify(item)}`);
       })
       addLog('getBookShelfMoreInfo', `书单${shelfID},page=${page}成功`)
     }).catch((err: Error) => {
@@ -458,7 +458,7 @@ export class zlib {
         //开启下载完成回调
         downloadTask.on('complete', async () => {
           const taskInfo = await downloadTask.getTaskInfo();
-          console.log('FUCK:downloadTask complete,status: %s', taskInfo.status);
+          console.log('Liquid:downloadTask complete,status: %s', taskInfo.status);
           //todo:API18后换成openToast
           promptAction.showToast({ message: `下载完成`, duration: 800 })
           addLog('downloadBook', `下载完成`)
@@ -494,7 +494,7 @@ export class zlib {
 
           }catch (e)
           {
-            console.log(`FUCK${JSON.stringify(e)}`)
+            console.log(`Liquid${JSON.stringify(e)}`)
           }
 
         })
@@ -507,7 +507,7 @@ export class zlib {
         addLog('downloadBook', `下载失败${JSON.stringify(err)}`,true)
         linderNotificationManager.pushNotification(notificationID, '下载失败', fileName)
         // 下载请求失败回调，可以弹窗提示失败
-        console.log(`FUCK:Invoke downloadTask failed-----, message is: ${err.message}`);
+        console.log(`Liquid:Invoke downloadTask failed-----, message is: ${err.message}`);
       });
 
     } catch (error) {

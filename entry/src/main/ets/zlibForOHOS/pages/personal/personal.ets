@@ -286,7 +286,7 @@ export struct personal {
               })
               .onClick(() => {
                 this.showDonationTips = true;
-                console.log(`FUCK${this.showDonationTips}`)
+                console.log(`Liquid${this.showDonationTips}`)
               })
 
             }

@@ -64,10 +64,10 @@ export class LDataBaseManager {
     };
 
      await relationalStore.getRdbStore(context, STORE_CONFIG).then((store)=>{
-       console.info('FUCK:Succeeded in getting RdbStore.');
+       console.info('Liquid:Succeeded in getting RdbStore.');
        resStore = store
      }).catch((err:BusinessError)=>{
-       console.error(`FUCK:Failed to get RdbStore. Code:${err.code}, message:${err.message}`);
+       console.error(`Liquid:Failed to get RdbStore. Code:${err.code}, message:${err.message}`);
        return;
      })
     return resStore;
@@ -78,23 +78,23 @@ export class LDataBaseManager {
     if (store) {
       const SQL_CREATE_TABLE =
         `CREATE TABLE IF NOT EXISTS ${TableName} (${this.generateTableForm(tableForms)})`;
-      console.log(`FUCK${SQL_CREATE_TABLE}`)
+      console.log(`Liquid${SQL_CREATE_TABLE}`)
       let storeVersion = store.version;
       // 当数据库创建时，数据库默认版本为0
       if (storeVersion != version) {
         try {
           await store.execute(SQL_CREATE_TABLE); // 创建数据表，以便后续调用insert接口插入数据
           storeVersion = version;
-          console.log(`FUCK:succeed create table`)
+          console.log(`Liquid:succeed create table`)
           // 设置数据库的版本，入参为大于0的整数
         } catch (e) {
           const err = e as BusinessError;
-          console.error(`FUCK:Failed to execute sql. Code:${err.code}, message:${err.message}`);
+          console.error(`Liquid:Failed to execute sql. Code:${err.code}, message:${err.message}`);
         }
       }
       store.version = storeVersion;
     } else {
-      console.error("FUCK:数据库不存在")
+      console.error("Liquid:数据库不存在")
     }
   }
 
@@ -110,10 +110,10 @@ export class LDataBaseManager {
     if (store !== undefined) {
       try {
         const rowId = await store.insert(`${TableName}`, valueBucket);
-        console.info(`FUCK:Succeeded in inserting data. rowId:${rowId}`);
+        console.info(`Liquid:Succeeded in inserting data. rowId:${rowId}`);
       } catch (error) {
         const err = error as BusinessError;
-        console.error(`FUCK:Failed to insert data. Code:${err.code}, message:${err.message}`);
+        console.error(`Liquid:Failed to insert data. Code:${err.code}, message:${err.message}`);
       }
     }
   }
@@ -129,10 +129,10 @@ export class LDataBaseManager {
     if (store !== undefined) {
       (store as relationalStore.RdbStore).update(valueBucket, predicates, (err: BusinessError, rows: number) => {
         if (err) {
-          console.error(`FUCK:Failed to update data. Code:${err.code}, message:${err.message}`);
+          console.error(`Liquid:Failed to update data. Code:${err.code}, message:${err.message}`);
           return;
         }
-        console.info(`FUCK:Succeeded in updating data. row count: ${rows}`);
+        console.info(`Liquid:Succeeded in updating data. row count: ${rows}`);
       })
     }
   }
@@ -146,10 +146,10 @@ export class LDataBaseManager {
     if (store !== undefined) {
       (store as relationalStore.RdbStore).delete(predicates, (err: BusinessError, rows: number) => {
         if (err) {
-          console.error(`FUCK:Failed to delete data. Code:${err.code}, message:${err.message}`);
+          console.error(`Liquid:Failed to delete data. Code:${err.code}, message:${err.message}`);
           return;
         }
-        console.info(`FUCK:Delete rows: ${rows}`);
+        console.info(`Liquid:Delete rows: ${rows}`);
       })
     }
   }
@@ -172,7 +172,7 @@ export class LDataBaseManager {
     if (store !== undefined) {
        await (store as relationalStore.RdbStore).query(predicates, needReturnValueStringArray)
          .then((resultSet)=>{
-           console.info(`FUCK:ResultSet column names: ${resultSet.columnNames}, column count: ${resultSet.columnCount}`);
+           console.info(`Liquid:ResultSet column names: ${resultSet.columnNames}, column count: ${resultSet.columnCount}`);
            // resultSet是一个数据集合的游标，默认指向第-1个记录，有效的数据从0开始。
            while (resultSet.goToNextRow()) {
              let obj:object = new Object
@@ -204,12 +204,12 @@ export class LDataBaseManager {
            resultSet.close();
          }).catch((err:BusinessError)=>{
          if (err) {
-           console.error(`FUCK:Failed to query data. Code:${err.code}, message:${err.message}`);
+           console.error(`Liquid:Failed to query data. Code:${err.code}, message:${err.message}`);
            return;
          }
        })
     }
-    console.log(`FUCK${JSON.stringify(jsonArray)}`)
+    console.log(`Liquid${JSON.stringify(jsonArray)}`)
     return JSON.stringify(jsonArray);
   }
 }
