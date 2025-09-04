@@ -349,66 +349,61 @@ export struct BigImage {
   speed: number = 0
   clicked: boolean = false
 
-  close() {
-    AppStorage.setOrCreate('bigCoverImage_show', false)
-  }
-
   build() {
     Stack() {
-      Column() {
         Image(this.image)
-          .size({ width: '100%', height: '100%' })
+          .draggable(false)
           .geometryTransition('image')
           .objectFit(ImageFit.Contain)
           .rotate({ z: 1, angle: this.angle })
           .offset({ x: this.offsetX, y: this.offsetY })
-          .enableAnalyzer(true)
           .scale({ x: this.zoom, y: this.zoom })
-      }.height('100%')
-      .gesture(PanGesture().onActionStart((event) => {
+    }
+    .gesture(PanGesture().onActionStart((event) => {
+      try {
+        this.startOffsetX = this.offsetX
+        this.startOffsetY = this.offsetY
+        if (event.fingerList.length == 1 && this.type == 0) {
+          this.type = 1
+          this.finger1startX = event.fingerList[0].localX
+          this.finger1startY = event.fingerList[0].localY
+        } else if (event.fingerList.length == 2 && this.type == 0) {
+          this.centerStartX = (event.fingerList[0].localX + event.fingerList[1].localX) / 2 - this.areaWidth / 2
+          this.centerStartY = (event.fingerList[0].localY + event.fingerList[1].localY) / 2 - this.areaHeight / 2
+          this.type = 2
+          this.startDistant = Math.sqrt(Math.pow(event.fingerList[0].localX - event.fingerList[1].localX, 2) +
+          Math.pow(event.fingerList[0].localY - event.fingerList[1].localY, 2))
+          this.startZoom = this.zoom
+          this.lastZoom = this.zoom
+        }
+      } catch {
+      }
+    })
+      .onActionUpdate((event) => {
         try {
-          this.startOffsetX = this.offsetX
-          this.startOffsetY = this.offsetY
-          if (event.fingerList.length == 1 && this.type == 0) {
-            this.type = 1
-            this.finger1startX = event.fingerList[0].localX
-            this.finger1startY = event.fingerList[0].localY
-          } else if (event.fingerList.length == 2 && this.type == 0) {
-            this.centerStartX = (event.fingerList[0].localX + event.fingerList[1].localX) / 2 - this.areaWidth / 2
-            this.centerStartY = (event.fingerList[0].localY + event.fingerList[1].localY) / 2 - this.areaHeight / 2
-            this.type = 2
-            this.startDistant = Math.sqrt(Math.pow(event.fingerList[0].localX - event.fingerList[1].localX, 2) +
-            Math.pow(event.fingerList[0].localY - event.fingerList[1].localY, 2))
-            this.startZoom = this.zoom
+          if (event.fingerList.length == 1 && this.type == 1) {
+            this.offsetX =
+              this.startOffsetX + (event.fingerList[0].localX - this.finger1startX) * Math.sqrt(this.zoom)
+            this.offsetY =
+              this.startOffsetY + (event.fingerList[0].localY - this.finger1startY) * Math.sqrt(this.zoom)
+          } else if (event.fingerList.length == 2 && this.type == 2) {
+            this.centerX = (event.fingerList[0].localX + event.fingerList[1].localX) / 2 - this.areaWidth / 2
+            this.centerY = (event.fingerList[0].localY + event.fingerList[1].localY) / 2 - this.areaHeight / 2
+            this.zoom = Math.min(Math.max(this.startZoom +
+              (Math.sqrt(Math.pow(event.fingerList[0].localX - event.fingerList[1].localX, 2) +
+              Math.pow(event.fingerList[0].localY - event.fingerList[1].localY, 2)) - this.startDistant) *
+                (0.002 + Math.sqrt(this.zoom) * 0.004), 0.6), 3.5)
+            this.startOffsetX += (this.lastZoom - this.zoom) * (this.centerX - this.offsetX) / this.zoom
+            this.startOffsetY += (this.lastZoom - this.zoom) * (this.centerY - this.offsetY) / this.zoom
+            this.offsetX = this.startOffsetX + (this.centerX - this.centerStartX) * Math.sqrt(this.zoom)
+            this.offsetY = this.startOffsetY + (this.centerY - this.centerStartY) * Math.sqrt(this.zoom)
             this.lastZoom = this.zoom
           }
         } catch {
         }
       })
-        .onActionUpdate((event) => {
-          try {
-            if (event.fingerList.length == 1 && this.type == 1) {
-              this.offsetX =
-                this.startOffsetX + (event.fingerList[0].localX - this.finger1startX) * Math.sqrt(this.zoom)
-              this.offsetY =
-                this.startOffsetY + (event.fingerList[0].localY - this.finger1startY) * Math.sqrt(this.zoom)
-            } else if (event.fingerList.length == 2 && this.type == 2) {
-              this.centerX = (event.fingerList[0].localX + event.fingerList[1].localX) / 2 - this.areaWidth / 2
-              this.centerY = (event.fingerList[0].localY + event.fingerList[1].localY) / 2 - this.areaHeight / 2
-              this.zoom = Math.min(Math.max(this.startZoom +
-                (Math.sqrt(Math.pow(event.fingerList[0].localX - event.fingerList[1].localX, 2) +
-                Math.pow(event.fingerList[0].localY - event.fingerList[1].localY, 2)) - this.startDistant) *
-                  (0.002 + Math.sqrt(this.zoom) * 0.004), 0.6), 3.5)
-              this.startOffsetX += (this.lastZoom - this.zoom) * (this.centerX - this.offsetX) / this.zoom
-              this.startOffsetY += (this.lastZoom - this.zoom) * (this.centerY - this.offsetY) / this.zoom
-              this.offsetX = this.startOffsetX + (this.centerX - this.centerStartX) * Math.sqrt(this.zoom)
-              this.offsetY = this.startOffsetY + (this.centerY - this.centerStartY) * Math.sqrt(this.zoom)
-              this.lastZoom = this.zoom
-            }
-          } catch {
-          }
-        })
-        .onActionEnd(() => {
+      .onActionEnd(() => {
+        if(this.type == 2){
           if (this.zoom < 0.7) {
             XAnimation.runWithAnimation(() => {
               this.zoom = 0.7
@@ -427,10 +422,24 @@ export struct BigImage {
               this.offsetY = this.startOffsetY + (this.centerY - this.centerStartY) * Math.sqrt(this.zoom)
             })
           }
+        }
+        this.type = 0
+      })
+    )
+    .onAxisEvent((event)=>{
+      if(event.action == AxisAction.BEGIN){
+        this.startZoom = this.zoom
+        this.type = 3
+      }
+      if(event.action == AxisAction.UPDATE){
+        animateToImmediately({duration: 100, curve: Curve.Ease}, ()=> this.zoom = Math.min(Math.max(this.startZoom - (event.axisVertical ?? 0)  * (0.003 + Math.sqrt(this.zoom) * 0.003), 0.6), 3.5))
+      }
+      if(event.action == AxisAction.END || event.action == AxisAction.CANCEL){
+          if (this.zoom < 0.7) XAnimation.runWithAnimation(() => this.zoom = 0.7)
+          if (this.zoom > 3) XAnimation.runWithAnimation(() => this.zoom = 3)
           this.type = 0
-        })
-      )
-    }
+      }
+    })
     .onClick((event) => {
       if (this.clicked) {
         if (this.zoom == 1) {
