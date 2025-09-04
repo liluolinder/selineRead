@@ -43,6 +43,7 @@ export struct bookInfoPage {
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
   @Local pageWidth: number = -1
   @Local isViewingBigImage: boolean = false
+  @Local pageOpacity: number = 0
 
   @Builder
   DownloadMenu() {
@@ -288,6 +289,17 @@ export struct bookInfoPage {
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
       this.bookInfo = context.pathInfo.param as I_BookInfo
+    })
+    .opacity(this.pageOpacity)
+    .onShown(() => {
+      animateToImmediately({ duration: 500, curve: Curve.Ease }, () => {
+        this.pageOpacity = 1
+      })
+    })
+    .onWillHide(() => {
+      animateToImmediately({ duration: 300, curve: Curve.Ease }, () => {
+        this.pageOpacity = 0
+      })
     })
     .padding({ top: __System__.topRectHeight })
     .onAreaChange((_, newValue) => {
