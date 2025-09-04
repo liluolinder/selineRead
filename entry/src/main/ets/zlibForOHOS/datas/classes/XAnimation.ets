@@ -13,22 +13,22 @@ export class XAnimation {
       TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
         .combine(TransitionEffect.translate({ x: 0, y: -20 })
           .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.TOP),
-            TransitionEffect.move(TransitionEdge.TOP))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
+            TransitionEffect.move(TransitionEdge.TOP))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85), delay: delay }))
     const MoveFromBottom: object =
       TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
         .combine(TransitionEffect.translate({ x: 0, y: 20 })
           .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.BOTTOM),
-            TransitionEffect.move(TransitionEdge.BOTTOM))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
+            TransitionEffect.move(TransitionEdge.BOTTOM))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85), delay: delay }))
     const MoveFromStart: object =
       TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
         .combine(TransitionEffect.translate({ x: -20, y: 0 })
           .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.START),
-            TransitionEffect.move(TransitionEdge.START))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
+            TransitionEffect.move(TransitionEdge.START))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85), delay: delay }))
     const MoveFromEnd: object =
       TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
         .combine(TransitionEffect.translate({ x: 20, y: 0 })
           .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.END),
-            TransitionEffect.move(TransitionEdge.END))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85) }))
+            TransitionEffect.move(TransitionEdge.END))).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85), delay: delay }))
     switch (XAnimation.mode) {
       case 'auto': {
         switch (dir) {
