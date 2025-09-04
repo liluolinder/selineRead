@@ -86,6 +86,16 @@ export class UIShareData {
 
 export let __UI__: UIShareData = new UIShareData()
 
+@ObservedV2
+export class CustomBackgroundData {
+  @Trace customBackground: boolean = false
+  @Trace refresh: boolean = false
+  @Trace blur: number = 0
+  @Trace darkness: number = 0
+}
+
+export let __CustomBackgroundData__: CustomBackgroundData = new CustomBackgroundData()
+
 export const minHeight = 600
 
 export const minWidth = 700

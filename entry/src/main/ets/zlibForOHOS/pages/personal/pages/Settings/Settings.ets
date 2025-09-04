@@ -1,28 +1,30 @@
-import { __System__, __UI__, __User__ } from "../../../../datas/classes/ShareDatas"
+import { __CustomBackgroundData__, __System__, __UI__, __User__ } from "../../../../datas/classes/ShareDatas"
 import { XAnimation } from "../../../../datas/classes/XAnimation"
-import  NeoPreferencesUtil from '../../../../datas/classes/XPreferencesUtil'
+import NeoPreferencesUtil from '../../../../datas/classes/XPreferencesUtil'
 import { zlib, zlibClient } from "../../../../datas/classes/zlib"
 import { promptAction } from "@kit.ArkUI"
+import { selectImage } from "../../../../utils/ToolsUtil"
+import { fileIo } from "@kit.CoreFileKit"
+import { globlContext } from "../../../../../entryability/EntryAbility"
 
 @Builder
-export function settingsBuilder(){
+export function settingsBuilder() {
   Settings()
 }
 
 @ComponentV2
-struct Settings{
-
+struct Settings {
   @Provider('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
 
   @Builder
-  Page(name: string){
-    if(name == 'settings'){
+  Page(name: string) {
+    if (name == 'settings') {
       SettingsPage()
     }
   }
 
   aboutToAppear(): void {
-    this.settingsPagesInfo.pushPath({name: 'settings'}, false)
+    this.settingsPagesInfo.pushPath({ name: 'settings' }, false)
   }
 
   build() {
@@ -33,40 +35,80 @@ struct Settings{
 }
 
 @ComponentV2
-struct SettingsPage{
-
+struct SettingsPage {
   @Consumer('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
   @Local apiAddress: string = zlibClient.base_url
 
   build() {
-    NavDestination(){
-      List({space: 10}){
-        ListItem(){
+    NavDestination() {
+      List({ space: 10 }) {
+        ListItem() {
+          SettingsToggleItem({
+            symbol: $r('sys.symbol.brush'),
+            message: '主界面背景',
+            checked: __CustomBackgroundData__.customBackground,
+            onChange: (checked: boolean) => {
+              XAnimation.runWithAnimation(() => __CustomBackgroundData__.customBackground = checked)
+              NeoPreferencesUtil.putPreferencesValue("selineRead", 'customBackground', checked)
+            }
+          })
+        }
+
+        if (__CustomBackgroundData__.customBackground) {
+          SettingsClickItem({
+            symbol: $r('sys.symbol.plus'),
+            message: '选取图片',
+            onPress: async () => {
+              const uri = await selectImage()
+              if (uri) {
+                __CustomBackgroundData__.refresh = true
+                const file0 = fileIo.openSync(uri)
+                const file1 = fileIo.openSync(globlContext.filesDir + '/background',
+                  fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.CREATE)
+                fileIo.copyFileSync(file0.fd, file1.fd)
+                fileIo.closeSync(file0)
+                fileIo.closeSync(file1)
+                setTimeout(() => __CustomBackgroundData__.refresh = false, 50)
+              }
+            }
+          })
+        }
+
+
+        ListItem() {
           SettingsToggleItem({
             symbol: $r('sys.symbol.link_slash'),
             symbol1: $r('sys.symbol.link'),
             message: '使用局域网书库',
             checked: __UI__.onlineMode,
-            onChange: (checked: boolean)=>{
-              XAnimation.runWithAnimation(()=>__UI__.onlineMode = checked)
+            onChange: (checked: boolean) => {
+              XAnimation.runWithAnimation(() => __UI__.onlineMode = checked)
               NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', checked)
-              if(checked) zlibClient.getUserInfo()
+              if (checked) {
+                zlibClient.getUserInfo()
+              }
               zlibClient.recommendBooksArray.clearData()
               zlibClient.bookshelfArray.clearData()
             }
           })
         }
 
-        if(__UI__.onlineMode){
-          ListItem(){
-            Column({space: 10}){
-              Text('服务地址').fontSize(15).fontWeight(FontWeight.Medium).padding({left: 5, right: 5})
-              Row({space: 10}){
-                TextInput({text: $$this.apiAddress}).backgroundColor($r('sys.color.comp_background_secondary')).layoutWeight(1).height(40)
-                Button({stateEffect: true}){
+        if (__UI__.onlineMode) {
+          ListItem() {
+            Column({ space: 10 }) {
+              Text('服务地址').fontSize(15).fontWeight(FontWeight.Medium).padding({ left: 5, right: 5 })
+              Row({ space: 10 }) {
+                TextInput({ text: $$this.apiAddress })
+                  .backgroundColor($r('sys.color.comp_background_secondary'))
+                  .layoutWeight(1)
+                  .height(40)
+                Button({ stateEffect: true }) {
                   SymbolGlyph($r('sys.symbol.checkmark')).fontSize(17).fontColor([$r('sys.color.font')])
-                }.backgroundColor($r('sys.color.comp_background_secondary')).size({width: 40, height: 40}).clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
-                .onClick(()=>{
+                }
+                .backgroundColor($r('sys.color.comp_background_secondary'))
+                .size({ width: 40, height: 40 })
+                .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                .onClick(() => {
                   zlibClient.base_url = this.apiAddress
                   zlibClient.baseApi_url = zlibClient.base_url + '/papi'
                   NeoPreferencesUtil.putPreferencesValue("selineRead", 'zlibUrl', this.apiAddress)
@@ -77,20 +119,25 @@ struct SettingsPage{
                     zlibClient.getBookShelf(1)
                   })
                   promptAction.showToast({
-                    message:'已保存',
+                    message: '已保存',
                     duration: 2000
                   });
                 })
               }.width('100%')
-            }.width('100%').borderRadius(20).backgroundColor($r('sys.color.comp_background_list_card')).padding(15).alignItems(HorizontalAlign.Start)
+            }
+            .width('100%')
+            .borderRadius(20)
+            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .padding(15)
+            .alignItems(HorizontalAlign.Start)
           }
 
-          ListItem(){
+          ListItem() {
             SettingsToggleItem({
               symbol: $r('sys.symbol.share'),
               message: '下载完成后自动分享',
               checked: zlibClient.autoShare,
-              onChange: (checked: boolean)=>{
+              onChange: (checked: boolean) => {
                 zlibClient.autoShare = checked
                 NeoPreferencesUtil.putPreferencesValue("selineRead", 'autoShare', checked)
               }
@@ -98,11 +145,11 @@ struct SettingsPage{
           }
         }
 
-        ListItem(){
+        ListItem() {
           SettingsClickItem({
             symbol: $r('sys.symbol.text_clipboard'),
             message: '运行日志',
-            onPress: () =>{
+            onPress: () => {
               __UI__.showSettings = false
               __UI__.showLogger = true
             }
@@ -111,13 +158,14 @@ struct SettingsPage{
       }
       .contentEndOffset(Math.max(16, __System__.bottomRectHeight))
       .layoutWeight(1)
-      .margin({left: 16, right: 16})
+      .margin({ left: 16, right: 16 })
       .chainAnimation(true)
-    }.padding({ top: 8 })
+    }
+    .padding({ top: 8 })
     .backgroundColor(Color.Transparent)
     .title('设置')
     .hideBackButton(true)
-    .onBackPressed(()=>{
+    .onBackPressed(() => {
       __UI__.showSettings = false
       return true
     })
@@ -238,7 +286,7 @@ export struct SettingsClickItem {
     }
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
     .onClick(() => {
-        this.onPress()
+      this.onPress()
 
     })
     .gesture(LongPressGesture().onAction(() => {

@@ -5,7 +5,9 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { __DataBase__, __System__, __UI__, __User__ } from '../zlibForOHOS/datas/classes/ShareDatas';
+import {
+  __CustomBackgroundData__,
+  __DataBase__, __System__, __UI__, __User__ } from '../zlibForOHOS/datas/classes/ShareDatas';
 import  NeoPreferencesUtil from '../zlibForOHOS/datas/classes/XPreferencesUtil'
 import WindowsUtil from '../zlibForOHOS/utils/WindowsUtil';
 import { zlibClient } from '../zlibForOHOS/datas/classes/zlib';
@@ -26,6 +28,7 @@ export default class EntryAbility extends UIAbility {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     NeoPreferencesUtil.localPreferences(this.context, 'selineRead');
     __UI__.onlineMode = NeoPreferencesUtil.getPreferencesValue("selineRead", 'onlineMode', false) as boolean
+    __CustomBackgroundData__.customBackground = NeoPreferencesUtil.getPreferencesValue("selineRead", 'customBackground', false) as boolean
     zlibClient.base_url =
       NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', '') as string
     zlibClient.baseApi_url = zlibClient.base_url + '/papi'

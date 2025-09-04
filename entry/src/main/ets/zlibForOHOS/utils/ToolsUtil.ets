@@ -5,6 +5,7 @@ import { fileUri, picker } from '@kit.CoreFileKit';
 import { globlContext } from '../../entryability/EntryAbility';
 import { LogLine } from '../pages/personal/pages/LoggerPage';
 import { __Logger__, __UI__ } from '../datas/classes/ShareDatas';
+import { photoAccessHelper } from '@kit.MediaLibraryKit';
 
 export function dateGetTime(timestamp: number|string, time: boolean = true, date: boolean = true): string {
   try {
@@ -80,6 +81,21 @@ export function setContinueState(allowContinue: boolean, currentViewingType: 'bo
     const context = globlContext as common.UIAbilityContext
     context.setMissionContinueState(allowContinue? 0: 1)
   }catch{}
+}
+
+export async function selectImage(): Promise<string | undefined> {
+  return new Promise<string | undefined>(async (resolve) => {
+    let photoPicker = new photoAccessHelper.PhotoViewPicker();
+    const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
+    photoSelectOptions.maxSelectNumber = 1;
+    photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE
+    photoPicker.select(photoSelectOptions).then((photoSelectResult: photoAccessHelper.PhotoSelectResult) => {
+      if (photoSelectResult.photoUris.length > 0) {
+        resolve(photoSelectResult.photoUris[0])
+      }
+      resolve(undefined)
+    })
+  })
 }
 
 export async function getDownloadFolderPath() {
