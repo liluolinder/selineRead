@@ -111,7 +111,7 @@ export struct TanksFor {
     Column() {
 
       List({ space: 10 }) {
-        ForEach(this.acknowledgmentArray, (list: I_Acknowledgment_List) => {
+        ForEach(this.acknowledgmentArray, (list: I_Acknowledgment_List, index: number) => {
 
           ListItem(){
            Stack({alignContent: Alignment.Start}){
@@ -248,7 +248,7 @@ export struct TanksFor {
               }.width('100%')
 
             }
-            .transition(XAnimation.getAnimation('bottom'))
+            .transition(XAnimation.getAnimation('bottom', (index + 1) * 50))
             .height('125')
             .width('100%')
             .backgroundColor($r('sys.color.comp_background_list_card'))
@@ -258,6 +258,7 @@ export struct TanksFor {
         })
 
       }
+      .layoutWeight(1)
       .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
       .chainAnimation(true)
       .margin({ left: 16, right: 16 })

@@ -116,6 +116,7 @@ export struct bookInfoPage {
           .useEffect(true)
           .size({ width: '100%', height: 200 })
           .borderRadius(20)
+          .transition(XAnimation.getAnimation('bottom', 50))
 
           ListItem() {
             Stack({ alignContent: Alignment.Top }) {
@@ -145,6 +146,7 @@ export struct bookInfoPage {
             undefined)
           .useEffect(true)
           .width('100%')
+          .transition(XAnimation.getAnimation('bottom', 100))
 
           ListItemGroup() {
 
@@ -203,6 +205,7 @@ export struct bookInfoPage {
             })
 
           }
+          .transition(XAnimation.getAnimation('bottom', 150))
           .borderRadius(20)
           .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
           $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
@@ -231,6 +234,7 @@ export struct bookInfoPage {
                 this.bookInfo?.firstDownloadUrl!, this.bookInfo!)
             })
           }
+          .transition(XAnimation.getAnimation('bottom', 200))
 
           ListItem() {
             Button({ type: ButtonType.Normal, stateEffect: true }) {
@@ -268,8 +272,10 @@ export struct bookInfoPage {
               })
             })
           }
+          .transition(XAnimation.getAnimation('bottom', 250))
 
         }
+        .layoutWeight(1)
         .height('100%')
         .scrollBar(BarState.Off)
         .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
