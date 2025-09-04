@@ -46,7 +46,7 @@ export struct personal {
     '设置', '版本信息'
   ]
   buttonsArray2: string[] = [
-    '鸣谢', '开源仓库', '问题反馈'
+    '鸣谢',
   ]
 
   zlibLoginDialogController: CustomDialogController = new CustomDialogController({
@@ -345,7 +345,7 @@ export struct personal {
                   this.showTanks = true;
                   return
                 }
-                let url: string = ''
+   /*             let url: string = ''
                 if (index == 1) {
                   url = 'https://atomgit.com/liluolinder/selineRead'
                 } else if (index == 2) {
@@ -375,7 +375,7 @@ export struct personal {
                       (globlContext as common.UIAbilityContext).startAbility(want)
                     }
                   }
-                })
+                })*/
               }} }
             }).onClick(() => {
               if (index == 0) {
@@ -383,7 +383,7 @@ export struct personal {
                 return
               }
               let url: string = ''
-              if (index == 1) {
+/*              if (index == 1) {
                 url = 'https://atomgit.com/liluolinder/selineRead'
               } else if (index == 2) {
                 url = 'https://atomgit.com/liluolinder/selineRead/issues'
@@ -412,13 +412,13 @@ export struct personal {
                     (globlContext as common.UIAbilityContext).startAbility(want)
                   }
                 }
-              })
+              })*/
             })
           })
 
           ComposeListItem({
             contentItem: { primaryText: '反馈QQ群' },
-            operateItem: { text:'718559395'}
+            operateItem: { text:'228546422'}
           }).onClick(()=>{
             let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, '718559395');
             pasteboard.getSystemPasteboard().setData(pasteData) //写入剪切板

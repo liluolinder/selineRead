@@ -37,7 +37,6 @@ public func getUserName(runtime: JSContext, callInfo: JSCallInfo): JSValue
         {
             if (index == 1)
             {
-                AppLog.info('FUCK${i.html()}')
                 res=i.html()
             }
 
