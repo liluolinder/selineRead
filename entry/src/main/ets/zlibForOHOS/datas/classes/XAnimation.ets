@@ -11,16 +11,16 @@ export class XAnimation {
   public static getAnimation(dir: 'left'|'right'|'up'|'bottom', delay: number = 0) {
     const MoveFromTop: object =
       TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
-        .combine(TransitionEffect.translate({ x: 0, y: -50 }).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85), delay: delay }))
+        .combine(TransitionEffect.translate({ x: 0, y: -100 }).animation({ curve: Curves.responsiveSpringMotion(0.4,0.75), delay: delay }))
     const MoveFromBottom: object =
       TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
-        .combine(TransitionEffect.translate({ x: 0, y: 50 }).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85), delay: delay }))
+        .combine(TransitionEffect.translate({ x: 0, y: 100 }).animation({ curve: Curves.responsiveSpringMotion(0.4,0.75), delay: delay }))
     const MoveFromStart: object =
       TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
-        .combine(TransitionEffect.translate({ x: -50, y: 0 }).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85), delay: delay }))
+        .combine(TransitionEffect.translate({ x: -100, y: 0 }).animation({ curve: Curves.responsiveSpringMotion(0.4,0.75), delay: delay }))
     const MoveFromEnd: object =
       TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease, delay: delay })
-        .combine(TransitionEffect.translate({ x: 50, y: 0 }).animation({ curve: Curves.responsiveSpringMotion(0.5,0.85), delay: delay }))
+        .combine(TransitionEffect.translate({ x: 100, y: 0 }).animation({ curve: Curves.responsiveSpringMotion(0.4,0.75), delay: delay }))
     switch (XAnimation.mode) {
       case 'auto': {
         switch (dir) {

@@ -150,7 +150,7 @@ export struct UpdateInfo {
             }
 
           }
-          .transition(XAnimation.getAnimation('bottom'))
+          .transition(XAnimation.getAnimation('bottom', (index + 1) * 50))
           .backgroundColor($r('sys.color.comp_background_list_card'))
           .borderRadius(20)
           .onClick(() => {

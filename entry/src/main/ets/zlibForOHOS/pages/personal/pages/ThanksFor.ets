@@ -111,15 +111,15 @@ export struct TanksFor {
     Column() {
 
       List({ space: 10 }) {
-        ForEach(this.acknowledgmentArray, (list: I_Acknowledgment_List, index: number) => {
+        ForEach(this.acknowledgmentArray, (list: I_Acknowledgment_List, index0: number) => {
 
           ListItem(){
            Stack({alignContent: Alignment.Start}){
              Text(list.name).fontSize(20).fontWeight(FontWeight.Bold)
            } .width('100%').padding({left: 10, right: 10, top: 10})
-          }.transition(XAnimation.getAnimation('bottom'))
+          }.transition(XAnimation.getAnimation('bottom', index0 * 50))
 
-          ForEach(list.list, (item: I_Acknowledgment)=>{
+          ForEach(list.list, (item: I_Acknowledgment, index: number)=>{
             ListItem() {
 
               RelativeContainer() {
