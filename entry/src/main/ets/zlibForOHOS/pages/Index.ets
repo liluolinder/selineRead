@@ -35,7 +35,7 @@ import { DecorBar } from './DecorBar';
 import { BookList, __BookListData__ } from './BookList/bookListList';
 import { zlibDownloadingTable } from '../datas/commons/zlibDownloadingTable';
 import { I_searchBook } from '../datas/interfaces/I_BookInfo';
-import { setContinueState } from '../utils/ToolsUtil';
+import { addLog, setContinueState } from '../utils/ToolsUtil';
 import { I_RecommendBook } from '../datas/interfaces/I_RecommendBook';
 import { curves } from '@kit.ArkUI';
 import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
@@ -80,6 +80,9 @@ struct Index {
       __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
       __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
       zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
+      addLog('getPreferencesValue', `zlibAccount:${__User__.zlibAccount}`)
+      addLog('getPreferencesValue', `zlibPassword:${__User__.zlibPassword}`)
+      addLog('getPreferencesValue', `cookie:${zlibClient.cookie}`)
     }
 
     this.proccessContinueData()
