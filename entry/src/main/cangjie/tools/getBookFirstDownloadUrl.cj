@@ -24,6 +24,8 @@ import encoding.json.*
 
 import ohos.base.AppLog
 import std.console.Console
+import ohos.asset_store.query
+import encoding.url.Form
 
 public func getBookFirstDownloadUrl(runtime: JSContext, callInfo: JSCallInfo): JSValue {
     let htmlString:String = callInfo[0].toString(runtime)
@@ -35,12 +37,12 @@ public func getBookFirstDownloadUrl(runtime: JSContext, callInfo: JSCallInfo): J
     {
         if (i.attr('class')==#"\"btn"#)
         {
-            if (index == 1 )
+            if (i.hasAttr('href'))
             {
                 res = i.attr('href').toString()
                 break
             }
-            index++
+
         }
     }
      runtime.string(res).toJSValue()
@@ -67,6 +69,7 @@ public func getBookFirstDownloadInfo(runtime: JSContext, callInfo: JSCallInfo): 
         if (i.attr('class')==#"\"book-property__extension\""#)
         {
             format = i.html()
+
         }
     }
 
@@ -76,21 +79,16 @@ public func getBookFirstDownloadInfo(runtime: JSContext, callInfo: JSCallInfo): 
     {
         if (i.attr('class')==#"\"btn"#)
         {
-             if (index == 1 )
+            tempStr = i.html()
+            var tempArray:Array<String> =  tempStr.split(',')
+            if (tempArray.size==2)
             {
-               tempStr = i.html()
+                size = tempArray[tempArray.size-1].replace(" ",'')
                 break
             }
-            index++
         }
     }
-
-   var tempArray:Array<String> =  tempStr.split(',')
-
-   size = tempArray[tempArray.size-1].replace(" ",'')
-
     map.put("format",JsonString(format))
     map.put("size",JsonString(size))
-
-     runtime.string(map.toString()).toJSValue()
+    runtime.string(map.toString()).toJSValue()
 }
