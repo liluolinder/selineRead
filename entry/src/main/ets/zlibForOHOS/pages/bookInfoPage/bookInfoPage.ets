@@ -24,10 +24,13 @@ import { I_DownloadInfo } from "../../datas/interfaces/I_DownloadInfo"
 import common from "@ohos.app.ability.common"
 import { DividerTmp } from "../../datas/classes/DividerTmp"
 import { minWidth, __CustomBackgroundData__, __System__ } from "../../datas/classes/ShareDatas"
-import { globlUIContext } from "../../../entryability/EntryAbility"
-import { LengthUnit } from "@kit.ArkUI"
+import { globlContext, globlUIContext } from "../../../entryability/EntryAbility"
+import { LengthUnit, promptAction, PromptAction } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { setContinueState } from "../../utils/ToolsUtil"
+import { request } from "@kit.BasicServicesKit"
+import { fileUri } from "@kit.CoreFileKit"
+import { photoAccessHelper } from "@kit.MediaLibraryKit"
 
 @Builder
 export function bookInfoPageBuilder() {
@@ -350,7 +353,7 @@ export struct BigImage {
   clicked: boolean = false
 
   build() {
-    Stack() {
+    Stack({alignContent: Alignment.BottomEnd}) {
         Image(this.image)
           .draggable(false)
           .geometryTransition('image')
@@ -358,6 +361,52 @@ export struct BigImage {
           .rotate({ z: 1, angle: this.angle })
           .offset({ x: this.offsetX, y: this.offsetY })
           .scale({ x: this.zoom, y: this.zoom })
+
+      Stack(){
+        SaveButton({
+          icon: SaveIconStyle.FULL_FILLED,
+          buttonType: ButtonType.Circle
+        })
+          .backgroundColor($r('app.color.start_window_background_blur'))
+          .fontColor($r('sys.color.font'))
+          .iconColor($r('sys.color.font'))
+          .iconSize(20)
+          .size({width: 35, height: 35})
+          .onClick(async (event, result: SaveButtonOnClickResult) => {
+            if (result == SaveButtonOnClickResult.SUCCESS) {
+              promptAction.showToast({message: '正在保存'})
+              const path = globlContext.cacheDir + '/SelineRead_' + new Date().getTime().toString() + '.png'
+              request.downloadFile(globlContext, {
+                //替换下载地址
+                url: this.image.toString(),
+                //文件下载后保存的沙箱路径
+                filePath: path,
+                background: true
+              }).then((downloadTask: request.DownloadTask) => {
+                downloadTask.on('complete', async ()=>{
+                  try {
+                    let context: Context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+                    let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(context);
+                    // 需要确保fileUri对应的资源存在。
+                    let uri = fileUri.getUriFromPath(path)
+                    let assetChangeRequest: photoAccessHelper.MediaAssetChangeRequest = photoAccessHelper.MediaAssetChangeRequest.createImageAssetRequest(context, uri);
+                    await phAccessHelper.applyChanges(assetChangeRequest);
+                    promptAction.showToast({message: '已保存'})
+                  } catch (err) {
+                    promptAction.showToast({message: '保存失败'})
+                  }
+                })
+                downloadTask.on('fail', ()=>{
+                  promptAction.showToast({message: '保存失败'})
+                })
+              })
+
+            } else {
+              promptAction.showToast({message: '保存失败'})
+            }
+          })
+      }.margin(25)
+
     }
     .gesture(PanGesture().onActionStart((event) => {
       try {
