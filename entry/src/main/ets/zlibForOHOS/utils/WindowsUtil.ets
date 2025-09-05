@@ -29,7 +29,9 @@ class Windows {
       this.updateAvoidArea(this.windowClass!)
     })
   }
-
+  isPC(): boolean {
+    return deviceInfo.deviceType.toUpperCase() == 'PC' || deviceInfo.deviceType.toUpperCase() == '2IN1'
+  }
   pcMode(context: Context) {
     if (deviceInfo.deviceType.toUpperCase() == 'PC' || deviceInfo.deviceType.toUpperCase() == '2IN1') {
       __System__.pcMode = true

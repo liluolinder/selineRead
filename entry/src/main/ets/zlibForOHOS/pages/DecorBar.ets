@@ -73,7 +73,8 @@ export struct DecorBar {
                     __System__.windowState == window.WindowStatusType.MAXIMIZE) {
                     WindowsUtil.getWindowClass()?.recover()
                   } else {
-                    WindowsUtil.getWindowClass()?.maximize(window.MaximizePresentation.EXIT_IMMERSIVE)
+                    WindowsUtil.getWindowClass()?.maximize(WindowsUtil.isPC() ? window.MaximizePresentation.EXIT_IMMERSIVE :
+                    window.MaximizePresentation.ENTER_IMMERSIVE)
                   }
                 } catch {
                 }

@@ -32,6 +32,13 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: 'beta 0.4.0',
+      date: '2025/9/5',
+      addNewFunArray:['新增保存封面按钮','新增鼠标控制封面','新增自定义背景'],
+      optimizeArray: ['优化动画','优化卡片效果'],
+      fixBugsArray:['修复P80无法正常使用问题']
+    },
+    {
       version: 'beta 0.3.2',
       date: '2025/9/2',
       addNewFunArray:['新增接续'],
