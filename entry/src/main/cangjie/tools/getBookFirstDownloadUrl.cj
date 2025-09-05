@@ -37,7 +37,7 @@ public func getBookFirstDownloadUrl(runtime: JSContext, callInfo: JSCallInfo): J
     {
         if (i.attr('class')==#"\"btn"#)
         {
-            if (i.hasAttr('href'))
+            if (i.attr('href').toString().contains('/dl/'))
             {
                 res = i.attr('href').toString()
                 break
