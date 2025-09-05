@@ -200,7 +200,7 @@ export class zlib {
 
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
-    addLog('getBookInfo', `尝试获取书籍信息`)
+    addLog('getBookInfo', `尝试获取书籍信息：${bookHref}`)
     let req = http.createHttp()
     let res: string = ''
     let resBookInfo: I_BookInfo = {
