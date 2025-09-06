@@ -7,7 +7,7 @@
     },
     {
       "name": "emptyPage",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/EmptyPage.ets",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/others/EmptyPage.ets",
       "buildFunction": "emptyPageBuilder"
     },
     {

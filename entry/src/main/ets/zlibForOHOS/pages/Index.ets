@@ -31,7 +31,7 @@ import { zlibHaveDownloadTable } from '../datas/commons/zlibHaveDownloadTable';
 import { BookShelf } from './BookShelf/BookShelf';
 import { XAnimation } from '../datas/classes/XAnimation';
 import { zlibIndexShowMod } from '../datas/enums/zlibIndexShowMod';
-import { DecorBar } from './DecorBar';
+import { DecorBar } from './others/DecorBar';
 import { BookList, __BookListData__ } from './BookList/bookListList';
 import { zlibDownloadingTable } from '../datas/commons/zlibDownloadingTable';
 import { I_searchBook } from '../datas/interfaces/I_BookInfo';
@@ -39,7 +39,7 @@ import { addLog, setContinueState } from '../utils/ToolsUtil';
 import { I_RecommendBook } from '../datas/interfaces/I_RecommendBook';
 import { curves } from '@kit.ArkUI';
 import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
-import { customBackground } from './Builder';
+import { customBackground } from './others/Builder';
 
 
 @Entry

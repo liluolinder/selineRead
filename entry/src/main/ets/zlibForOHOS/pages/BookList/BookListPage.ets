@@ -24,7 +24,7 @@ import { zlib, zlibClient } from '../../datas/classes/zlib';
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod';
 import { I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../../datas/interfaces/I_BookShelf';
 import { setContinueState } from '../../utils/ToolsUtil';
-import { loadingDialog, loadingNewDialog } from '../Builder';
+import { loadingDialog, loadingNewDialog } from '../others/Builder';
 
 
 @ComponentV2

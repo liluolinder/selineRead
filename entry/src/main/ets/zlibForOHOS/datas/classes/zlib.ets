@@ -360,14 +360,14 @@ export class zlib {
   }
 
 
-  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false): Promise<boolean> {
-    addLog('searchBooks', `尝试获取${bookName}搜索信息page=${page}`)
+  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false,speaclNeed:string=''): Promise<boolean> {
+    addLog('searchBooks', `尝试获取${this.base_url}/s/${encodeURI(bookName)}?${speaclNeed==''?'':`${encodeURI(speaclNeed)}&`}page=${page}`)
     return new Promise<boolean>(async (resolve)=>{
       if (needClear) {
         this.searchBooksArray.clearData()
       }
       let req = http.createHttp()
-      req.request(`${this.base_url}/s/${encodeURI(bookName)}?page=${page}`, {
+      req.request(`${this.base_url}/s/${encodeURI(bookName)}?${speaclNeed==''?'':`${encodeURI(speaclNeed)}&`}page=${page}`, {
         method: http.RequestMethod.GET,
         header: {
           'sec-ch-ua-platform': '"Windows"',

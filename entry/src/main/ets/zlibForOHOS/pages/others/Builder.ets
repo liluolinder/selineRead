@@ -1,7 +1,7 @@
-import { __System__, minWidth, __CustomBackgroundData__ } from "../datas/classes/ShareDatas"
-import { XAnimation } from "../datas/classes/XAnimation"
+import { __System__, minWidth, __CustomBackgroundData__ } from "../../datas/classes/ShareDatas"
+import { XAnimation } from "../../datas/classes/XAnimation"
 import { fileUri } from "@kit.CoreFileKit"
-import { globlContext } from "../../entryability/EntryAbility"
+import { globlContext } from "../../../entryability/EntryAbility"
 
 
 @Builder

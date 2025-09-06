@@ -1,4 +1,4 @@
-import { __CustomBackgroundData__ } from "../datas/classes/ShareDatas"
+import { __CustomBackgroundData__ } from "../../datas/classes/ShareDatas"
 
 @ComponentV2
 export struct EmptyPage {

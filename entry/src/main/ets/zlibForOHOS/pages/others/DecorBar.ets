@@ -1,7 +1,7 @@
 import { common } from '@kit.AbilityKit'
 import { window } from '@kit.ArkUI'
-import { __System__ } from '../datas/classes/ShareDatas'
-import WindowsUtil from '../utils/WindowsUtil'
+import { __System__ } from '../../datas/classes/ShareDatas'
+import WindowsUtil from '../../utils/WindowsUtil'
 
 @ComponentV2
 export struct DecorBar {

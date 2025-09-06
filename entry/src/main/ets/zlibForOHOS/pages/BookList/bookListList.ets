@@ -23,7 +23,7 @@ import { __System__, minWidth, __UI__, __CustomBackgroundData__ } from '../../da
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { zlibClient } from '../../datas/classes/zlib';
 import { I_ReadLists_Bookshelf, I_BookInfo_Bookshelf } from '../../datas/interfaces/I_BookShelf';
-import { loadingDialog, loadingNewDialog } from '../Builder';
+import { loadingDialog, loadingNewDialog } from '../others/Builder';
 import BookListPage from './BookListPage';
 import { common } from '@kit.AbilityKit';
 import { setContinueState } from '../../utils/ToolsUtil';
