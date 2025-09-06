@@ -32,6 +32,12 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: 'beta 0.5.0',
+      date: '2025/9/6',
+      addNewFunArray:['一键回到列表顶部','搜索筛选','滚动时自动隐藏侧边按钮和搜索栏'],
+      fixBugsArray:['无法获取下载链接']
+    },
+    {
       version: 'beta 0.4.0',
       date: '2025/9/5',
       addNewFunArray:['新增保存封面按钮','新增鼠标控制封面','新增自定义背景'],
