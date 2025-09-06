@@ -40,9 +40,10 @@ export struct personal {
   @Local showLoginInOrRegister: boolean = false
   @Local showUpdateInfo: boolean = false
   @Local showTanks: boolean = false
+  @Local showZZ: boolean = false
   @Local pageWidth: number = -1
   buttonsArray: string[] = [
-    '设置', '版本信息'
+    '设置', '版本信息', '赞赏'
   ]
   buttonsArray2: string[] = [
     '鸣谢',
@@ -167,6 +168,17 @@ export struct personal {
           })
       }
     }.padding({ left: 16, right: 16, bottom: 50 })
+  }
+
+  @Builder
+  zzPageBuilder()
+  {
+    Column({space:10}){
+      Text('注意:该赞助是对开发者的赞助，不是zlib的赞助，不会增加你的下载额度，不会在个人页面显示您的赞助额度（仅赞助zlib的额度）')
+      Image($r('app.media.zfm'))
+        .width(250)
+    }.size({width:'100%', height:'100%'})
+    .padding({left:16, right:16})
   }
 
   build() {
@@ -331,9 +343,13 @@ export struct personal {
                 case 1:
                   this.showUpdateInfo = true;
                   break
+                case 2:
+                  this.showZZ = true;
+                  break
               }
             })
           })
+
         }
         .divider({
           strokeWidth: 0.5,
@@ -484,6 +500,13 @@ export struct personal {
       .scrollBar(BarState.Off)
       .chainAnimation(true)
 
+      Blank()
+        .bindSheet($$this.showZZ, this.zzPageBuilder(), {
+          preferType: SheetType.CENTER,
+          title: { title: '赞助开发者',subtitle:'您的赞助，我们的动力(^~^)' },
+          height: SheetSize.MEDIUM,
+        })
+
     }
     .onAppear(() => {
       if (__User__.isLoginZlib && __UI__.onlineMode) {
@@ -492,6 +515,7 @@ export struct personal {
         })
 
       }
+
     })
     .size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
@@ -505,5 +529,6 @@ export struct personal {
       height: SheetSize.LARGE,
       onDisappear: () => __UI__.showSettings = false
     })
+
   }
 }
