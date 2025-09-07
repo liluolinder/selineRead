@@ -884,9 +884,9 @@ export struct zlibHome {
             ForEach(zlibClient.searchHistoryArray,(item:I_SearchHistory)=>{
               Button(){
                 Row({space: 10}){
-                  Text(item.value.slice(0, 8) + (item.value.length > 8? '...': '')).maxLines(1).fontSize(16)
+                  Text(item.value.slice(0, 8) + (item.value.length > 8? '...': '')).maxLines(1).fontSize(14)
                   Button(){
-                    SymbolGlyph($r('sys.symbol.xmark')).fontColor([$r('sys.color.font')]).fontSize(17)
+                    SymbolGlyph($r('sys.symbol.xmark')).fontColor([$r('sys.color.font')]).fontSize(15)
                   }.padding(5)
                   .backgroundColor(Color.Transparent)
                   .onClick(()=>{
@@ -915,7 +915,7 @@ export struct zlibHome {
 
             if(zlibClient.searchHistoryArray.length > 0){
               Button(){
-                SymbolGlyph($r('sys.symbol.trash')).fontColor([$r('sys.color.font')]).fontSize(17)
+                SymbolGlyph($r('sys.symbol.trash')).fontColor([$r('sys.color.font')]).fontSize(15)
               }
               .padding(9)
               .backgroundColor($r('app.color.start_window_background_blur'))
