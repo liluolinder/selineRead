@@ -34,9 +34,9 @@ export struct UpdateInfo {
     {
       version: 'beta 0.6.0',
       date: '2025/9/7',
-      addNewFunArray:['查看书籍评论','在线预览书籍','搜索历史记录','导出至华为阅读','自定义导出','键盘导读监听'],
+      addNewFunArray:['查看书籍评论','在线预览书籍','搜索历史记录','导出至华为阅读','自定义导出','键盘高度监听'],
       optimizeArray:['优化滚动效果','禁用Tab栏滚动','优化双栏显示效果'],
-      fixBugsArray:['PC系统单机标题栏全屏','解决版本号过低bug']
+      fixBugsArray:['PC系统单击标题栏全屏','解决版本号过低bug']
     },
     {
       version: 'beta 0.5.0',
