@@ -161,6 +161,9 @@ struct SettingsPage {
       .layoutWeight(1)
       .margin({ left: 16, right: 16 })
       .chainAnimation(true)
+      .scrollBar(BarState.Off)
+      .borderRadius(20)
+      .clip(true)
     }
     .padding({ top: 8 })
     .backgroundColor(Color.Transparent)
