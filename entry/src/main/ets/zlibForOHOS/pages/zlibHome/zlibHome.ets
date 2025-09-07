@@ -928,7 +928,7 @@ export struct zlibHome {
         }
         .scrollBar(BarState.Off)
         .edgeEffect(EdgeEffect.Spring)
-        .transition(XAnimation.getAnimation('up'))
+        .transition(XAnimation.getAnimation('bottom'))
         .margin({top:__System__.topRectHeight + 60,left:16,right:16, bottom: Math.max(__System__.keyboardHeight, __System__.bottomRectHeight)})
         .zIndex(114513)
       }
