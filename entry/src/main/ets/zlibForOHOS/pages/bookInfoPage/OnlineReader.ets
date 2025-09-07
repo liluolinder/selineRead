@@ -18,7 +18,7 @@ struct OnlineReader{
 
   build() {
     NavDestination(){
-      Column() {
+      Stack({alignContent: Alignment.TopStart}) {
         Web({ src: '', controller: this.controller })
           .height('100%')
           .height('100%')
@@ -36,6 +36,18 @@ struct OnlineReader{
             })
             this.controller.loadUrl(this.url)
           })
+
+        if(__System__.pcMode){
+          Button(){
+            SymbolGlyph($r('sys.symbol.chevron_left')).fontSize(30)
+          }.backgroundColor($r('app.color.start_window_background')).size({width: 40, height: 40})
+          .margin(10)
+          .opacity(0.7)
+          .onClick(()=>{
+            __UI__.HomePageStack.pop()
+          })
+        }
+
       }.size({width:'100%', height:'100%'})
     }.onWillAppear(()=> {
       XAnimation.runWithAnimation(() => __UI__.isInReader = true)
