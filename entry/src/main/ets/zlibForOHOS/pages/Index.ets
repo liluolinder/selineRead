@@ -80,7 +80,10 @@ struct Index {
 
     const  searchHistoryStr = NeoPreferencesUtil.getPreferencesValue("selineRead", 'searchHistory', '') as string
 
-    zlibClient.searchHistoryArray = JSON.parse(searchHistoryStr) as I_SearchHistory[]
+    if (searchHistoryStr!='')
+    {
+      zlibClient.searchHistoryArray = JSON.parse(searchHistoryStr) as I_SearchHistory[]
+    }
 
     console.log(`Liquid${JSON.stringify(zlibClient.searchHistoryArray)}`)
 
