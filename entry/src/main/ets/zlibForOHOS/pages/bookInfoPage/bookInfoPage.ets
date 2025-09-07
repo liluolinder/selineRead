@@ -25,12 +25,13 @@ import common from "@ohos.app.ability.common"
 import { DividerTmp } from "../../datas/classes/DividerTmp"
 import { minWidth, __CustomBackgroundData__, __System__ } from "../../datas/classes/ShareDatas"
 import { globlContext, globlUIContext } from "../../../entryability/EntryAbility"
-import { LengthUnit, promptAction, PromptAction } from "@kit.ArkUI"
+import { curves, LengthUnit, promptAction, PromptAction } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { setContinueState } from "../../utils/ToolsUtil"
 import { request } from "@kit.BasicServicesKit"
 import { fileUri } from "@kit.CoreFileKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
+import { I_BookComment } from "../../datas/interfaces/I_BookComment"
 
 @Builder
 export function bookInfoPageBuilder() {
@@ -47,6 +48,71 @@ export struct bookInfoPage {
   @Local pageWidth: number = -1
   @Local isViewingBigImage: boolean = false
   @Local pageOpacity: number = 0
+  @Local showComment: boolean = false
+
+  @Builder
+  NavigationMenus() {
+    Row() {
+      Button({ type: ButtonType.Circle }) {
+        SymbolGlyph($r('sys.symbol.ellipsis_message'))
+          .fontSize(30)
+          .fontColor([$r('sys.color.font_secondary')])
+      }
+      .onClick(() => {
+        zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, 1).then((get)=>{
+          if (get) {
+            this.showComment = true
+          }else{
+            promptAction.showToast({ message: `获取失败`, duration: 2000 })
+          }
+        })
+
+
+      })
+      .bindSheet($$this.showComment, this.commentPageBuilder(), {
+        preferType: SheetType.CENTER,
+        height: SheetSize.LARGE,
+        title:{title:'评论'}
+      })
+      .transition(TransitionEffect.OPACITY
+        .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+        .animation({ curve: curves.springMotion(0.5, 0.7) }))
+      .width(50)
+      .height(50)
+      .backgroundColor($r('app.color.start_window_background_blur'))
+      .backdropBlur(100)
+      .useEffect(true)
+    }.margin({ right: 16, top: 5 })
+  }
+
+  @Builder
+  commentPageBuilder() {
+    Column() {
+      List() {
+        LazyForEach(zlibClient.bookCommentArray, (item:I_BookComment) => {
+          ListItem() {
+            Row(){
+              Text(item.text)
+            }
+          }.size({width:'100%',height:'48'})
+          .transition(TransitionEffect.OPACITY
+            .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+            .animation({ curve: curves.springMotion(0.5, 0.7) }))
+          .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+          $r('sys.color.comp_background_list_card'))
+          .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+          .useEffect(true)
+          .borderRadius(20)
+        })
+      }
+      .width('100%')
+      .height('100%')
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
+      .padding({ bottom: 16 })
+    }.size({ width: '100%', height: '100%' })
+    .padding({ left: 16, right: 16 })
+  }
 
   @Builder
   DownloadMenu() {
@@ -295,6 +361,7 @@ export struct bookInfoPage {
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
     Color.Transparent : $r('sys.color.comp_background_gray'))
     .title(this.bookInfo?.name)
+    .menus(this.NavigationMenus())
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
       this.bookInfo = context.pathInfo.param as I_BookInfo
@@ -353,16 +420,16 @@ export struct BigImage {
   clicked: boolean = false
 
   build() {
-    Stack({alignContent: Alignment.BottomEnd}) {
-        Image(this.image)
-          .draggable(false)
-          .geometryTransition('image')
-          .objectFit(ImageFit.Contain)
-          .rotate({ z: 1, angle: this.angle })
-          .offset({ x: this.offsetX, y: this.offsetY })
-          .scale({ x: this.zoom, y: this.zoom })
+    Stack({ alignContent: Alignment.BottomEnd }) {
+      Image(this.image)
+        .draggable(false)
+        .geometryTransition('image')
+        .objectFit(ImageFit.Contain)
+        .rotate({ z: 1, angle: this.angle })
+        .offset({ x: this.offsetX, y: this.offsetY })
+        .scale({ x: this.zoom, y: this.zoom })
 
-      Stack(){
+      Stack() {
         SaveButton({
           icon: SaveIconStyle.FULL_FILLED,
           buttonType: ButtonType.Circle
@@ -371,10 +438,10 @@ export struct BigImage {
           .fontColor($r('sys.color.font'))
           .iconColor($r('sys.color.font'))
           .iconSize(20)
-          .size({width: 35, height: 35})
+          .size({ width: 35, height: 35 })
           .onClick(async (event, result: SaveButtonOnClickResult) => {
             if (result == SaveButtonOnClickResult.SUCCESS) {
-              promptAction.showToast({message: '正在保存'})
+              promptAction.showToast({ message: '正在保存' })
               const path = globlContext.cacheDir + '/SelineRead_' + new Date().getTime().toString() + '.png'
               request.downloadFile(globlContext, {
                 //替换下载地址
@@ -383,26 +450,27 @@ export struct BigImage {
                 filePath: path,
                 background: true
               }).then((downloadTask: request.DownloadTask) => {
-                downloadTask.on('complete', async ()=>{
+                downloadTask.on('complete', async () => {
                   try {
                     let context: Context = this.getUIContext().getHostContext() as common.UIAbilityContext;
                     let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(context);
                     // 需要确保fileUri对应的资源存在。
                     let uri = fileUri.getUriFromPath(path)
-                    let assetChangeRequest: photoAccessHelper.MediaAssetChangeRequest = photoAccessHelper.MediaAssetChangeRequest.createImageAssetRequest(context, uri);
+                    let assetChangeRequest: photoAccessHelper.MediaAssetChangeRequest =
+                      photoAccessHelper.MediaAssetChangeRequest.createImageAssetRequest(context, uri);
                     await phAccessHelper.applyChanges(assetChangeRequest);
-                    promptAction.showToast({message: '已保存'})
+                    promptAction.showToast({ message: '已保存' })
                   } catch (err) {
-                    promptAction.showToast({message: '保存失败'})
+                    promptAction.showToast({ message: '保存失败' })
                   }
                 })
-                downloadTask.on('fail', ()=>{
-                  promptAction.showToast({message: '保存失败'})
+                downloadTask.on('fail', () => {
+                  promptAction.showToast({ message: '保存失败' })
                 })
               })
 
             } else {
-              promptAction.showToast({message: '保存失败'})
+              promptAction.showToast({ message: '保存失败' })
             }
           })
       }.margin(25)
@@ -452,7 +520,7 @@ export struct BigImage {
         }
       })
       .onActionEnd(() => {
-        if(this.type == 2){
+        if (this.type == 2) {
           if (this.zoom < 0.7) {
             XAnimation.runWithAnimation(() => {
               this.zoom = 0.7
@@ -475,18 +543,24 @@ export struct BigImage {
         this.type = 0
       })
     )
-    .onAxisEvent((event)=>{
-      if(event.action == AxisAction.BEGIN){
+    .onAxisEvent((event) => {
+      if (event.action == AxisAction.BEGIN) {
         this.startZoom = this.zoom
         this.type = 3
       }
-      if(event.action == AxisAction.UPDATE){
-        animateToImmediately({duration: 100, curve: Curve.Ease}, ()=> this.zoom = Math.min(Math.max(this.startZoom - (event.axisVertical ?? 0)  * (0.003 + Math.sqrt(this.zoom) * 0.003), 0.6), 3.5))
+      if (event.action == AxisAction.UPDATE) {
+        animateToImmediately({ duration: 100, curve: Curve.Ease }, () => this.zoom =
+          Math.min(Math.max(this.startZoom - (event.axisVertical ?? 0) * (0.003 + Math.sqrt(this.zoom) * 0.003), 0.6),
+            3.5))
       }
-      if(event.action == AxisAction.END || event.action == AxisAction.CANCEL){
-          if (this.zoom < 0.7) XAnimation.runWithAnimation(() => this.zoom = 0.7)
-          if (this.zoom > 3) XAnimation.runWithAnimation(() => this.zoom = 3)
-          this.type = 0
+      if (event.action == AxisAction.END || event.action == AxisAction.CANCEL) {
+        if (this.zoom < 0.7) {
+          XAnimation.runWithAnimation(() => this.zoom = 0.7)
+        }
+        if (this.zoom > 3) {
+          XAnimation.runWithAnimation(() => this.zoom = 3)
+        }
+        this.type = 0
       }
     })
     .onClick((event) => {

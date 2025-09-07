@@ -19,6 +19,7 @@ import { I_ZlibHaveDownloadTable } from '../interfaces/I_zlibHaveDownloadTable';
 import { I_UserInfo } from '../interfaces/I_UserInfo';
 import { addLog, getDownloadFolderPath, shareBook } from '../../utils/ToolsUtil';
 import { I_Bookshelf, I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../interfaces/I_BookShelf';
+import { I_BookComment } from '../interfaces/I_BookComment';
 
 @ObservedV2
 export class zlib {
@@ -27,6 +28,7 @@ export class zlib {
   @Trace localDownloadHistoryArray: BasicDataSource<I_ZlibHaveDownloadTable> = new BasicDataSource<I_ZlibHaveDownloadTable>()
   @Trace bookshelfArray: BasicDataSource<I_ReadLists_Bookshelf> = new BasicDataSource<I_ReadLists_Bookshelf>()
   @Trace bookshelfBooks: BasicDataSource<I_Bookshelf_extraBooks> = new BasicDataSource<I_Bookshelf_extraBooks>()
+  @Trace bookCommentArray: BasicDataSource<I_BookComment> = new BasicDataSource<I_BookComment>()
   @Trace userInfo: I_UserInfo | undefined
   //官方:https://zh.z-library.sk
   base_url: string = ''
@@ -198,7 +200,6 @@ export class zlib {
 
   }
 
-
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
     addLog('getBookInfo', `尝试获取书籍信息：${bookHref}`)
     let req = http.createHttp()
@@ -262,8 +263,42 @@ export class zlib {
 
   }
 
-  async getBookShelf(page:number)
+  async getBookCommit(bookID:string, page:number) :Promise<boolean>
   {
+    this.bookCommentArray.clearData()
+    addLog('getBookCommit', `尝试获取书籍评论：${bookID},Page=${page}`)
+    let req = http.createHttp()
+    return await req.request(`${this.baseApi_url}/comments/book/${bookID}/${page}`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      }
+    }).then((data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let tempArray: I_BookComment[] = (result as object)?.['comments']
+     if (tempArray && tempArray.length!=0)
+     {
+       tempArray.forEach((item) => {
+         this.bookCommentArray.pushData(item)
+       })
+       addLog('getBookCommit', `获取书籍评论：${bookID},Page=${page}成功`)
+       return true
+     }else {
+       addLog('getBookCommit', `获取书籍评论：${bookID},Page=${page}失败,数目为空`,true)
+       return false
+     }
+    }).catch((err: Error) => {
+      addLog('getBookCommit', `error! ${err.name} ${err.message}`, true)
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      return false
+    });
+
+  }
+
+  async getBookShelf(page:number) {
     addLog('getBookShelf', `尝试获取书单page=${page}`)
     let req = http.createHttp()
     console.log(`Liquid${`${this.baseApi_url}/booklist/get-page/${page}`}`)
@@ -299,8 +334,7 @@ export class zlib {
     req.destroy()
   }
 
-  async getBookShelfMoreInfo(shelfID:number, page:number)
-  {
+  async getBookShelfMoreInfo(shelfID:number, page:number) {
     addLog('getBookShelfMoreInfo', `获取书单${shelfID},page=${page}`)
     let req = http.createHttp()
     await req.request(`${this.baseApi_url}/booklist/${shelfID}/get-books/${page}`, {
@@ -358,7 +392,6 @@ export class zlib {
 
     return res
   }
-
 
   async searchBooks(bookName: string, page: number = 1, needClear: boolean = false,speaclNeed:string=''): Promise<boolean> {
     addLog('searchBooks', `尝试获取${this.base_url}/s/${encodeURI(bookName)}?${speaclNeed==''?'':`${encodeURI(speaclNeed)}&`}page=${page}`)

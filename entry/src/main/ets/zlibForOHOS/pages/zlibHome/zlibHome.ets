@@ -525,10 +525,10 @@ export struct zlibHome {
         }.size({ width: '100%', height: '100%' })
         .padding(15)
       }
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
       .onClick(() => {
         this.openSearch(item)
       })
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
       .transition(TransitionEffect.OPACITY
         .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
         .animation({ curve: curves.springMotion(0.5, 0.7) }))
