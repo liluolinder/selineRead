@@ -40,6 +40,8 @@ import { I_RecommendBook } from '../datas/interfaces/I_RecommendBook';
 import { curves } from '@kit.ArkUI';
 import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
 import { customBackground } from './others/Builder';
+import { JSON } from '@kit.ArkTS';
+import { I_SearchHistory } from '../datas/interfaces/I_SearchHistory';
 
 
 @Entry
@@ -76,13 +78,16 @@ struct Index {
     __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
     __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
 
+    const  searchHistoryStr = NeoPreferencesUtil.getPreferencesValue("selineRead", 'searchHistory', '') as string
+
+    zlibClient.searchHistoryArray = JSON.parse(searchHistoryStr) as I_SearchHistory[]
+
+    console.log(`Liquid${JSON.stringify(zlibClient.searchHistoryArray)}`)
+
     if (__User__.isLoginZlib) {
       __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
       __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
       zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
-     /* addLog('getPreferencesValue', `zlibAccount:${__User__.zlibAccount}`)
-      addLog('getPreferencesValue', `zlibPassword:${__User__.zlibPassword}`)
-      addLog('getPreferencesValue', `cookie:${zlibClient.cookie}`)*/
     }
 
     this.proccessContinueData()

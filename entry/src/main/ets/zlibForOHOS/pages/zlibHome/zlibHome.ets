@@ -19,7 +19,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { zlibClient } from '../../datas/classes/zlib'
 import { I_RecommendBook } from '../../datas/interfaces/I_RecommendBook'
-import { curves } from '@kit.ArkUI'
+import { Chip, ChipSize, curves, LengthMetrics } from '@kit.ArkUI'
 import { __CustomBackgroundData__, __System__, __UI__, minWidth } from '../../datas/classes/ShareDatas'
 import { XAnimation } from '../../datas/classes/XAnimation'
 import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
@@ -33,6 +33,8 @@ import { JSON } from '@kit.ArkTS'
 import { ListItemWithText } from '../others/ListItem'
 import { formatArray, languageArray, timeArray } from '../../datas/commons/zlibSearchOption'
 import { I_KV } from '../../datas/interfaces/I_KV'
+import { I_SearchHistory } from '../../datas/interfaces/I_SearchHistory'
+import NeoPreferencesUtil from '../../datas/classes//XPreferencesUtil'
 
 @ComponentV2
 export struct zlibHome {
@@ -662,8 +664,10 @@ export struct zlibHome {
               XAnimation.runWithAnimation(() => {
                 __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
               })
+              zlibClient.searchHistoryArray = zlibClient.searchHistoryArray.filter((item:I_SearchHistory)=>item.value!=value)
+              zlibClient.searchHistoryArray.unshift({value:value,time:Date.parse(new Date().toString())})
+              NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory', JSON.stringify(zlibClient.searchHistoryArray))
             }
-
           })
           .onChange((value: string) => {
             if (value == '' || value == undefined) {
@@ -683,6 +687,7 @@ export struct zlibHome {
       .offset({
         y: this.searchBarOffsetY
       })
+
 
 
       if ((__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Recommend &&
@@ -811,8 +816,11 @@ export struct zlibHome {
                 })
               })
           }
+
         }.padding({ left: 20, right: 20 }).blur(__zlibHomeData__.isInSearchMode ? 50 : 0)
       }
+
+
 
       Column({ space: 15 }) {
         //返回顶部
@@ -854,6 +862,7 @@ export struct zlibHome {
           .onClick(() => {
             this.showSearchOption = true
           })
+          .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search?Visibility.Visible:Visibility.Hidden)
           .bindSheet($$this.showSearchOption, this.searchOptionBuilder(), {
             preferType: SheetType.CENTER,
             height: SheetSize.MEDIUM,
@@ -866,6 +875,54 @@ export struct zlibHome {
 
       if (this.isFlashing) {
         loadingNewDialog()
+      }
+
+      if (__zlibHomeData__.isInSearchMode) {
+        Column() {
+          Flex({ wrap: FlexWrap.Wrap ,space:{main:LengthMetrics.px(15),cross:LengthMetrics.px(15)}}){
+            ForEach(zlibClient.searchHistoryArray,(item:I_SearchHistory)=>{
+              Column(){
+                Chip({
+                  label: {
+                    text: item.value,
+                    fontSize: 16,
+                    labelMargin: { left: 16, right: 16 }
+                  },
+                  suffixIcon: {
+                    src: $r('sys.media.ohos_ic_public_close'),
+                    size: { width: 25, height: 25 },
+                    fillColor: Color.Red,
+                    action:()=>{
+                      zlibClient.searchHistoryArray = zlibClient.searchHistoryArray.filter((itemA:I_SearchHistory)=>itemA.value!=item.value)
+                      NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory', JSON.stringify(zlibClient.searchHistoryArray))
+                    }
+                  },
+                  size: {height:38},
+                  allowClose: true,
+                  enabled: true,
+                  backgroundColor: $r('sys.color.background_fourth'),
+                  borderRadius: 20,
+                  onClicked: () => {
+                    this.scrollerOffset = 0
+                    this.searchIndex = 1
+                    this.searchBookName = item.value
+                    const specialUrl = this.generateUrl()
+                    zlibClient.searchBooks(item.value, 1, true, specialUrl)
+                    XAnimation.runWithAnimation(() => {
+                      __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
+                      __zlibHomeData__.isInSearchMode = false
+                    })
+                    zlibClient.searchHistoryArray = zlibClient.searchHistoryArray.filter((itemA:I_SearchHistory)=>itemA.value!=item.value)
+                    zlibClient.searchHistoryArray.unshift({value:item.value,time:Date.parse(new Date().toString())})
+                    NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory', JSON.stringify(zlibClient.searchHistoryArray))
+                  }
+                })
+              }.useEffect(false)
+            })
+          }
+        }
+        .padding({top:__System__.topRectHeight + 60,left:16,right:16})
+        .zIndex(114514)
       }
 
     }

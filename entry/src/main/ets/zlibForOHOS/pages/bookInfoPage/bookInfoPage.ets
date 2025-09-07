@@ -32,8 +32,7 @@ import { request } from "@kit.BasicServicesKit"
 import { fileUri } from "@kit.CoreFileKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
 import { I_BookComment } from "../../datas/interfaces/I_BookComment"
-import { DecorBar } from "../others/DecorBar"
-import { webview } from "@kit.ArkWeb"
+
 
 @Builder
 export function bookInfoPageBuilder() {
