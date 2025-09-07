@@ -40,200 +40,203 @@ export struct BookShelf {
 
   build() {
     Stack() {
-      Column({ space: 10 }) {
-        Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-          Text('书架').fontSize(25).fontWeight(FontWeight.Medium)
+      Scroll() {
+        Column({space: 10}){
+          Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
+            Text('书架').fontSize(25).fontWeight(FontWeight.Medium)
 
-          Row({space: 10}){
-            Button({ stateEffect: true }) {
-              SymbolGlyph($r('sys.symbol.plus')).fontSize(26).fontColor([$r('sys.color.font')])
-            }
-            .size({ width: 40, height: 40 })
-            .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-            .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-            .useEffect(true)
-            .onClick(() => {
-              new picker.DocumentViewPicker().select({ fileSuffixFilters: ['epub', 'pdf'], maxSelectNumber: 1 })
-                .then(async (result) => {
-                  const file0 = fileIo.openSync(result[0])
-                  if (fileIo.accessSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name)) {
-                    promptAction.showToast({ message: '文件已存在', duration: 2000 })
-                    return
-                  }
-                  const file1 = fileIo.openSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name,
-                    fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
-                  fileIo.copyFile(file0.fd, file1.fd).then(async () => {
-                    const id = new Date().getTime() * -1
-                    const valueBucket: relationalStore.ValuesBucket = {
-                      BookID: id,
-                      BookName: file0.name,
-                      BookHref: '',
-                      BookAuthor: '未知',
-                      BookPublisher: '未知',
-                      BookImage: '',
-                      BookDownLoadTime: new Date().toISOString(),
-                      BookFilePath: file1.path,
-                      haveDownload: 0
-                    };
-                    try {
-                      const bookParserHandler = await bookParser.getDefaultHandler(file1.path)
-                      const bookInfo = bookParserHandler.getBookInfo();
-                      valueBucket.BookName = bookInfo.bookTitle
-                      valueBucket.BookAuthor = bookInfo.bookCreator || valueBucket.BookAuthor
-                      if (bookInfo.bookCoverImage) {
-                        fileIo.mkdir(globlContext.cacheDir + '/tmp/')
-                        await zlib.decompressFile(file1.path, globlContext.cacheDir + '/tmp/')
-                        const file2 = fileIo.openSync(globlContext.filesDir + '/' + id.toString(),
-                          fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
-                        const coverImage = fileIo.openSync(globlContext.cacheDir + '/tmp/' + bookInfo.bookCoverImage)
-                        fileIo.copyFileSync(coverImage.fd, file2.fd)
-                        valueBucket.BookImage = fileUri.getUriFromPath(file2.path)
-                        fileIo.rmdirSync(globlContext.cacheDir + '/tmp/')
-                      }
-                    } catch {
-                    }
-
-                    linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
-                      valueBucket).then(() => {
-                      zlibClient.flashDownloadHistoryAndLocalBooksList()
-                    })
-                    promptAction.showToast({ message: '导入完成', duration: 2000 })
-                  })
-                })
-            })
-            if(__UI__.onlineMode){
+            Row({space: 10}){
               Button({ stateEffect: true }) {
-                SymbolGlyph($r('sys.symbol.download')).fontSize(26).fontColor([$r('sys.color.font')])
+                SymbolGlyph($r('sys.symbol.plus')).fontSize(26).fontColor([$r('sys.color.font')])
               }
               .size({ width: 40, height: 40 })
               .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
               .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
               .useEffect(true)
-              .onClick(()=>{
-                if(!__UI__.HomePageStack.getAllPathName().includes('downloadPage')) __UI__.HomePageStack.pushPathByName('downloadPage', undefined)
-              })
-            }
-
-          }
-
-
-        }.padding({ top: Math.max(__System__.topRectHeight, 16), left: 16, right: 16 })
-
-        if (zlibClient.localDownloadHistoryArray.totalCount() == 0) {
-          Stack() {
-            Text('空空如也')
-              .fontSize(30)
-              .fontWeight(FontWeight.Medium)
-              .offset({ y: __System__.windowWidth > minWidth ? 0 : (70 + __System__.bottomRectHeight) * -1 })
-          }.height('100%')
-        } else {
-          List({ space: 10 }) {
-
-            LazyForEach(zlibClient.localDownloadHistoryArray, (item: I_ZlibHaveDownloadTable, index: number) => {
-              ListItem() {
-                Row({ space: 10 }) {
-                  Image(item.BookImage.length == 0 ? $r('app.media.zlib') : item.BookImage)
-                    .size({ height: '100%', width: 82 })
-                    .borderRadius(15)
-                    .autoResize(true)
-                    .draggable(false)
-                  Flex({
-                    justifyContent: FlexAlign.SpaceBetween,
-                    alignItems: ItemAlign.Start,
-                    direction: FlexDirection.Column
-                  }) {
-                    Column({ space: 2 }) {
-                      Text(item.BookName)
-                        .fontWeight(FontWeight.Medium)
-                        .fontSize(21)
-                        .maxLines(2)
-                      Text(item.BookAuthor)
-                        .maxLines(1)
-                        .fontSize(16)
-                        .opacity(0.8)
-
-                    }.alignItems(HorizontalAlign.Start)
-
-                    Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.End }) {
-                      Text(dateGetTime(item.BookDownLoadTime))
-                        .maxLines(1)
-                        .fontSize(12)
-                        .opacity(0.6)
-                      Row({ space: 5 }) {
-                        if (!fileIo.accessSync(item.BookFilePath)) {
-                          SymbolGlyph($r('sys.symbol.ohos_trash'))
-                            .fontSize(20)
-                            .fontColor([$r('sys.color.warning')])
-
-                        }
-                        if (item.BookID > 0) {
-                          SymbolGlyph($r('sys.symbol.cloud'))
-                            .fontSize(20)
-                            .fontColor([$r('sys.color.font')])
-                        }
-                      }.opacity(0.4).padding({ left: 10, right: 10 })
-
+              .onClick(() => {
+                new picker.DocumentViewPicker().select({ fileSuffixFilters: ['epub', 'pdf'], maxSelectNumber: 1 })
+                  .then(async (result) => {
+                    const file0 = fileIo.openSync(result[0])
+                    if (fileIo.accessSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name)) {
+                      promptAction.showToast({ message: '文件已存在', duration: 2000 })
+                      return
                     }
+                    const file1 = fileIo.openSync(await getDownloadFolderPath() + new fileUri.FileUri(result[0]).name,
+                      fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
+                    fileIo.copyFile(file0.fd, file1.fd).then(async () => {
+                      const id = new Date().getTime() * -1
+                      const valueBucket: relationalStore.ValuesBucket = {
+                        BookID: id,
+                        BookName: file0.name,
+                        BookHref: '',
+                        BookAuthor: '未知',
+                        BookPublisher: '未知',
+                        BookImage: '',
+                        BookDownLoadTime: new Date().toISOString(),
+                        BookFilePath: file1.path,
+                        haveDownload: 0
+                      };
+                      try {
+                        const bookParserHandler = await bookParser.getDefaultHandler(file1.path)
+                        const bookInfo = bookParserHandler.getBookInfo();
+                        valueBucket.BookName = bookInfo.bookTitle
+                        valueBucket.BookAuthor = bookInfo.bookCreator || valueBucket.BookAuthor
+                        if (bookInfo.bookCoverImage) {
+                          fileIo.mkdir(globlContext.cacheDir + '/tmp/')
+                          await zlib.decompressFile(file1.path, globlContext.cacheDir + '/tmp/')
+                          const file2 = fileIo.openSync(globlContext.filesDir + '/' + id.toString(),
+                            fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
+                          const coverImage = fileIo.openSync(globlContext.cacheDir + '/tmp/' + bookInfo.bookCoverImage)
+                          fileIo.copyFileSync(coverImage.fd, file2.fd)
+                          valueBucket.BookImage = fileUri.getUriFromPath(file2.path)
+                          fileIo.rmdirSync(globlContext.cacheDir + '/tmp/')
+                        }
+                      } catch {
+                      }
 
-                  }.layoutWeight(1).padding({ top: 5, bottom: 5 })
-
-                }.size({ width: '100%', height: '100%' })
-                .padding(8)
-                .onClick(() => {
-                  if (fileIo.accessSync(item.BookFilePath)) {
-                    if(item.BookFilePath.split('.')[item.BookFilePath.split('.').length - 1]?.toLowerCase() == 'pdf'){
-                      __UI__.HomePageStack.pushPath({ name: 'pdfViewerPage', param: item.BookFilePath }, true)
-                    }else{
-                      __UI__.HomePageStack.pushPath({ name: 'readerPage', param: item.BookFilePath }, true)
-                    }
-                  } else {
-                    promptAction.showToast({
-                      message: '源文件不存在',
-                      duration: 2000
+                      linderDataBaseManger.insertValueToRelationalDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
+                        valueBucket).then(() => {
+                        zlibClient.flashDownloadHistoryAndLocalBooksList()
+                      })
+                      promptAction.showToast({ message: '导入完成', duration: 2000 })
                     })
-                  }
+                  })
+              })
+              if(__UI__.onlineMode){
+                Button({ stateEffect: true }) {
+                  SymbolGlyph($r('sys.symbol.download')).fontSize(26).fontColor([$r('sys.color.font')])
+                }
+                .size({ width: 40, height: 40 })
+                .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+                .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+                .useEffect(true)
+                .onClick(()=>{
+                  if(!__UI__.HomePageStack.getAllPathName().includes('downloadPage')) __UI__.HomePageStack.pushPathByName('downloadPage', undefined)
                 })
               }
-              .transition(XAnimation.getAnimation('bottom'))
-              .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
-              .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
-              .useEffect(true)
-              .draggable(fileIo.accessSync(item.BookFilePath))
-              .onDragStart((event) => {
-                if (fileIo.accessSync(item.BookFilePath)) {
-                  let data: unifiedDataChannel.File = new unifiedDataChannel.File()
-                  data.uri = item.BookFilePath
-                  event.setData(new unifiedDataChannel.UnifiedData(data))
-                }
-                return this.draggingPreview(item)
-              })
-              .bindContextMenu(this.BookMenu(item), ResponseType.RightClick)
-              .bindContextMenu(this.BookMenu(item), ResponseType.LongPress,
-                { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
-              .borderRadius(20)
-              .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-              .size({ width: '100%', height: 120 })
-            }, (item: string) => item)
 
+            }
+
+
+          }.padding({ top: Math.max(__System__.topRectHeight, 16), left: 16, right: 16 })
+
+
+          if (zlibClient.localDownloadHistoryArray.totalCount() == 0) {
+            Stack() {
+              Text('空空如也')
+                .fontSize(30)
+                .fontWeight(FontWeight.Medium)
+                .offset({ y: __System__.windowWidth > minWidth ? 0 : (70 + __System__.bottomRectHeight) * -1 })
+            }.height('100%')
+          } else {
+            List({ space: 10 }) {
+
+              LazyForEach(zlibClient.localDownloadHistoryArray, (item: I_ZlibHaveDownloadTable, index: number) => {
+                ListItem() {
+                  Row({ space: 10 }) {
+                    Image(item.BookImage.length == 0 ? $r('app.media.zlib') : item.BookImage)
+                      .size({ height: '100%', width: 82 })
+                      .borderRadius(15)
+                      .autoResize(true)
+                      .draggable(false)
+                    Flex({
+                      justifyContent: FlexAlign.SpaceBetween,
+                      alignItems: ItemAlign.Start,
+                      direction: FlexDirection.Column
+                    }) {
+                      Column({ space: 2 }) {
+                        Text(item.BookName)
+                          .fontWeight(FontWeight.Medium)
+                          .fontSize(21)
+                          .maxLines(2)
+                        Text(item.BookAuthor)
+                          .maxLines(1)
+                          .fontSize(16)
+                          .opacity(0.8)
+
+                      }.alignItems(HorizontalAlign.Start)
+
+                      Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.End }) {
+                        Text(dateGetTime(item.BookDownLoadTime))
+                          .maxLines(1)
+                          .fontSize(12)
+                          .opacity(0.6)
+                        Row({ space: 5 }) {
+                          if (!fileIo.accessSync(item.BookFilePath)) {
+                            SymbolGlyph($r('sys.symbol.ohos_trash'))
+                              .fontSize(20)
+                              .fontColor([$r('sys.color.warning')])
+
+                          }
+                          if (item.BookID > 0) {
+                            SymbolGlyph($r('sys.symbol.cloud'))
+                              .fontSize(20)
+                              .fontColor([$r('sys.color.font')])
+                          }
+                        }.opacity(0.4).padding({ left: 10, right: 10 })
+
+                      }
+
+                    }.layoutWeight(1).padding({ top: 5, bottom: 5 })
+
+                  }.size({ width: '100%', height: '100%' })
+                  .padding(8)
+                  .onClick(() => {
+                    if (fileIo.accessSync(item.BookFilePath)) {
+                      if(item.BookFilePath.split('.')[item.BookFilePath.split('.').length - 1]?.toLowerCase() == 'pdf'){
+                        __UI__.HomePageStack.pushPath({ name: 'pdfViewerPage', param: item.BookFilePath }, true)
+                      }else{
+                        __UI__.HomePageStack.pushPath({ name: 'readerPage', param: item.BookFilePath }, true)
+                      }
+                    } else {
+                      promptAction.showToast({
+                        message: '源文件不存在',
+                        duration: 2000
+                      })
+                    }
+                  })
+                }
+                .transition(XAnimation.getAnimation('bottom'))
+                .backgroundColor(__CustomBackgroundData__.customBackground? $r('app.color.start_window_background_blur'): $r('sys.color.comp_background_list_card'))
+                .backdropBlur(__CustomBackgroundData__.customBackground? 100: undefined)
+                .useEffect(true)
+                .draggable(fileIo.accessSync(item.BookFilePath))
+                .onDragStart((event) => {
+                  if (fileIo.accessSync(item.BookFilePath)) {
+                    let data: unifiedDataChannel.File = new unifiedDataChannel.File()
+                    data.uri = item.BookFilePath
+                    event.setData(new unifiedDataChannel.UnifiedData(data))
+                  }
+                  return this.draggingPreview(item)
+                })
+                .bindContextMenu(this.BookMenu(item), ResponseType.RightClick)
+                .bindContextMenu(this.BookMenu(item), ResponseType.LongPress,
+                  { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
+                .borderRadius(20)
+                .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+                .size({ width: '100%', height: 120 })
+              }, (item: string) => item)
+
+            }
+            .nestedScroll({
+              scrollForward: NestedScrollMode.PARENT_FIRST,
+              scrollBackward: NestedScrollMode.SELF_FIRST
+            })
+            .height('100%')
+            .lanes(this.lanes, 10)
+            .scrollBar(BarState.Off)
+            .edgeEffect(EdgeEffect.Spring)
+            .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70)))
+            .onAreaChange((_, newValue) => {
+              XAnimation.runWithAnimation(() => {
+                this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 400), 1)
+              }, this.lanes > 0)
+            })
+            .margin({ left: 16, right: 16 })
           }
-          .height('100%')
-          .lanes(this.lanes, 10)
-          .scrollBar(BarState.Off)
-          .edgeEffect(EdgeEffect.Spring)
-          .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70)))
-          .onAreaChange((_, newValue) => {
-            XAnimation.runWithAnimation(() => {
-              this.lanes = Math.max(Math.floor(new Number(newValue.width).valueOf() / 400), 1)
-            }, this.lanes > 0)
-          })
-          .layoutWeight(1)
-          .margin({ left: 16, right: 16 })
-          .borderRadius({ topLeft: 20, topRight: 20 })
-          .clip(true)
         }
 
-      }
-
+      }.size({ height: '100%', width: '100%' }).scrollBar(BarState.Off)
 
       if (this.isOpening) {
         loadingDialog()
