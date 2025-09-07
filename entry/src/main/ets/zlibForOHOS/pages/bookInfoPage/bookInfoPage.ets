@@ -23,7 +23,7 @@ import { zlibClient } from "../../datas/classes/zlib"
 import { I_DownloadInfo } from "../../datas/interfaces/I_DownloadInfo"
 import common from "@ohos.app.ability.common"
 import { DividerTmp } from "../../datas/classes/DividerTmp"
-import { minWidth, __CustomBackgroundData__, __System__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __CustomBackgroundData__, __System__, __UI__ } from "../../datas/classes/ShareDatas"
 import { globlContext, globlUIContext } from "../../../entryability/EntryAbility"
 import { curves, LengthUnit, promptAction, PromptAction, SymbolGlyphModifier } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
@@ -51,32 +51,42 @@ export struct bookInfoPage {
   @Local isViewingBigImage: boolean = false
   @Local pageOpacity: number = 0
   @Local showComment: boolean = false
-  @Local showOnlineRead:boolean = false
-  controller: webview.WebviewController = new webview.WebviewController();
+  @Local showOnlineRead: boolean = false
   commitPage: number = 1
 
   @Builder
   commentPageBuilder() {
     Column() {
-      List({space: 10}) {
-        LazyForEach(zlibClient.bookCommentArray, (item:I_BookComment) => {
+      List({ space: 10 }) {
+        LazyForEach(zlibClient.bookCommentArray, (item: I_BookComment) => {
           ListItem() {
-            Column({space: 6}){
-              Row({space: 6}){
-                if(item.user.avatar.length == 0){
-                  Stack(){
+            Column({ space: 6 }) {
+              Row({ space: 6 }) {
+                if (item.user.avatar.length == 0) {
+                  Stack() {
                     SymbolGlyph($r('sys.symbol.person')).fontColor([$r('sys.color.font')]).fontSize(16)
-                  }.size({width: 24, height: 24}).backgroundColor($r('sys.color.comp_background_gray')).borderRadius('50%').opacity(0.7)
-                }else{
-                  Image(item.user.avatar).size({width: 24, height: 24}).borderRadius('50%').clip(true)
+                  }
+                  .size({ width: 24, height: 24 })
+                  .backgroundColor($r('sys.color.comp_background_gray'))
+                  .borderRadius('50%')
+                  .opacity(0.7)
+                } else {
+                  Image(item.user.avatar).size({ width: 24, height: 24 }).borderRadius('50%').clip(true)
                 }
                 Text(item.user.name).fontSize(18).fontWeight(FontWeight.Medium).opacity(0.8)
               }
+
               Text(item.text).fontSize(17)
               Text(item.date).width('100%').textAlign(TextAlign.End).fontSize(10).opacity(0.5)
             }.alignItems(HorizontalAlign.Start).width('100%')
-          }.width('100%')
-          .padding({left: 15, right: 15, top: 10, bottom: 10})
+          }
+          .width('100%')
+          .padding({
+            left: 15,
+            right: 15,
+            top: 10,
+            bottom: 10
+          })
           .transition(TransitionEffect.OPACITY
             .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
             .animation({ curve: curves.springMotion(0.5, 0.7) }))
@@ -88,12 +98,14 @@ export struct bookInfoPage {
       .contentEndOffset(16)
       .chainAnimation(true)
       .clip(true)
-      .borderRadius({topLeft: 20, topRight: 20})
-      .margin({left: 16, right: 16})
+      .borderRadius({ topLeft: 20, topRight: 20 })
+      .margin({ left: 16, right: 16 })
       .scrollBar(BarState.Off)
-      .onReachEnd(()=>{
-        zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage + 1).then((get)=>{
-          if(get) this.commitPage++
+      .onReachEnd(() => {
+        zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage + 1).then((get) => {
+          if (get) {
+            this.commitPage++
+          }
         })
       })
     }.size({ width: '100%', height: '100%' })
@@ -110,17 +122,6 @@ export struct bookInfoPage {
           })
       })
     }
-  }
-
-
-  @Builder
-  viewBookOnline() {
-    Column() {
-      Web({ src: this.bookInfo?.readUrl, controller: this.controller })
-        .javaScriptAccess(true)
-        .multiWindowAccess(true)
-    }.size({width:'100%', height:'100%'})
-    .backgroundColor($r('sys.color.comp_background_gray'))
   }
 
   build() {
@@ -294,16 +295,12 @@ export struct bookInfoPage {
             .useEffect(true)
             .width('100%')
             .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-            .bindSheet($$this.showOnlineRead, this.viewBookOnline(), {
-              preferType:SheetType.BOTTOM,
-              height:SheetSize.LARGE,
-              title:{title:'在线阅读'}
-            })
             .onClick(async () => {
-             this.showOnlineRead = true
+              this.pageInfos.pop(true)
+              __UI__.HomePageStack.pushPathByName('onlineReaderPage', this.bookInfo?.readUrl, true)
             })
           }
-          .transition(XAnimation.getAnimation('bottom', 250))
+          .transition(XAnimation.getAnimation('bottom', 200))
 
           ListItem() {
             Button({ type: ButtonType.Normal, stateEffect: true }) {
@@ -323,7 +320,7 @@ export struct bookInfoPage {
                 this.bookInfo?.firstDownloadUrl!, this.bookInfo!)
             })
           }
-          .transition(XAnimation.getAnimation('bottom', 200))
+          .transition(XAnimation.getAnimation('bottom', 250))
 
           ListItem() {
             Button({ type: ButtonType.Normal, stateEffect: true }) {
@@ -361,7 +358,7 @@ export struct bookInfoPage {
               })
             })
           }
-          .transition(XAnimation.getAnimation('bottom', 250))
+          .transition(XAnimation.getAnimation('bottom', 300))
 
         }
         .layoutWeight(1)
@@ -381,17 +378,17 @@ export struct bookInfoPage {
       {
         value: '评论',
         symbolIcon: new SymbolGlyphModifier($r('sys.symbol.ellipsis_bubble')),
-        action: ()=>{
+        action: () => {
           promptAction.showToast({ message: `尝试获取`, duration: 2000 })
           zlibClient.bookCommentArray.clearData()
           this.commitPage = 1
-            zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage).then((get)=>{
-              if (get) {
-                this.showComment = true
-              }else{
-                promptAction.showToast({ message: `获取失败`, duration: 2000 })
-              }
-            })
+          zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage).then((get) => {
+            if (get) {
+              this.showComment = true
+            } else {
+              promptAction.showToast({ message: `获取失败`, duration: 2000 })
+            }
+          })
 
         }
       }
@@ -399,7 +396,7 @@ export struct bookInfoPage {
     .bindSheet($$this.showComment, this.commentPageBuilder(), {
       preferType: SheetType.CENTER,
       height: SheetSize.LARGE,
-      title:{title:'评论'}
+      title: { title: '评论' }
     })
     .size({ width: '100%', height: '100%' })
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?

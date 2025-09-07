@@ -19,6 +19,11 @@
       "name": "downloadPage",
       "pageSourceFile": "src/main/ets/zlibForOHOS/pages/BookShelf/DownloadPage.ets",
       "buildFunction": "downloadPageBuilder"
+    },
+    {
+      "name": "onlineReaderPage",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/bookInfoPage/OnlineReader.ets",
+      "buildFunction": "onlineReaderBuilder"
     }
   ]
 }
