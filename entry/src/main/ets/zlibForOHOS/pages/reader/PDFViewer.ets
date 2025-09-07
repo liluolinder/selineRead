@@ -1,5 +1,6 @@
 import { PdfView, pdfViewManager } from '@hms.officeservice.PdfView';
 import pdfService from '@hms.officeservice.pdfservice';
+import { __System__ } from '../../datas/classes/ShareDatas';
 
 @Builder
 export function pdfViewerBuilder(){
@@ -34,7 +35,7 @@ struct PDFViewer{
           })
       }.size({width: '100%', height: '100%'})
     }.backgroundColor($r('app.color.start_window_background'))
-    .expandSafeArea([SafeAreaType.SYSTEM])
+    .padding({top: __System__.topRectHeight})
     .title('PDF查看器')
     .onReady((context)=>{
       this.path = context.pathInfo.param as string
