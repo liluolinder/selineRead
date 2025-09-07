@@ -19,15 +19,6 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 package ohos_app_cangjie_entry.tools
 
-import html4cj.*
-
-internal import ohos.ark_interop.JSModule
-internal import ohos.ark_interop.JSContext
-internal import ohos.ark_interop.JSCallInfo
-internal import ohos.ark_interop.JSValue
-import ohos.base.AppLog
-
-
 public func getBookInfo(runtime: JSContext, callInfo: JSCallInfo): JSValue {
     let htmlString:String = callInfo[0].toString(runtime)
     var doc: Document = Html4cj.parse(htmlString)

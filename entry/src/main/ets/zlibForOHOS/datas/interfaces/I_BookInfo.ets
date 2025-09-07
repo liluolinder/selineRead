@@ -33,6 +33,7 @@ export interface I_BookInfo{
   firstDownloadUrl?:string
   firstDownloadInfo?:firstDownloadInfo
   href?:string
+  readUrl?:string
 }
 
 export function getEmptyBookInfo(): I_BookInfo{

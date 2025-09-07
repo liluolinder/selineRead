@@ -243,11 +243,14 @@ export class zlib {
         console.log(`Liquid!${firstDownloadUrl}`)
         let firstDownloadInfo: string = CJLoader.getBookFirstDownloadInfo(res)
         console.log(`Liquid!!${firstDownloadInfo}`)
+        let readUrl: string = CJLoader.getReadUrl(res)
+        console.log(`Liquid!!${readUrl}`)
         res = CJLoader.getBookInfo(res).replaceAll("\\n", "").replaceAll("\\\"", "\"").replaceAll("\"datePublished\": ,","")
         console.log(`Liquid!!!${res}`)
         resBookInfo = (JSON.parse(res) as object) as I_BookInfo
         resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
+        resBookInfo.readUrl = readUrl
         addLog('getBookInfo', `获取成功`)
       }catch (e)
       {
@@ -259,13 +262,10 @@ export class zlib {
     }
     console.log(`Liquid${JSON.stringify(resBookInfo)}`)
     return resBookInfo;
-
-
   }
 
   async getBookCommit(bookID:string, page:number) :Promise<boolean>
   {
-    this.bookCommentArray.clearData()
     addLog('getBookCommit', `尝试获取书籍评论：${bookID},Page=${page}`)
     let req = http.createHttp()
     return await req.request(`${this.baseApi_url}/comments/book/${bookID}/${page}`, {

@@ -19,10 +19,6 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 package ohos_app_cangjie_entry.tools
 
-import encoding.json.*
-import html4cj.*
-import ohos.base.AppLog
-import std.collection.*
 
 public func getUserName(runtime: JSContext, callInfo: JSCallInfo): JSValue
 {

@@ -17,14 +17,26 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-export interface CJLib {
-  testCJ(src: string): string
-  getBookInfo(src: string): string
-  getSearchBookArray(src: string): string
-  getBookFirstDownloadUrl(src: string): string
-  getBookFirstDownloadInfo(src: string): string
-  getUserDownloadLimitAndDonation(src: string): string
-  getUserAvatar(src: string): string
-  getUserName(src: string): string
-  getReadUrl(src: string): string
+package ohos_app_cangjie_entry.tools
+
+public func getReadUrl(runtime: JSContext, callInfo: JSCallInfo): JSValue {
+ let htmlString:String = callInfo[0].toString(runtime)
+    var doc: Document = Html4cj.parse(htmlString)
+    var ascriptAll: Elements = doc.select('a')
+    var res:String = ''
+    var index:Int64 = 0
+    for (i in ascriptAll)
+    {
+        if (i.attr('class')==#"\"btn"#)
+        {
+            if (i.attr('href').toString().contains('reader'))
+            {
+                res = i.attr('href').toString()
+                break
+            }
+
+        }
+    }
+
+     runtime.string(res.replace("\\\"", "")).toJSValue()
 }

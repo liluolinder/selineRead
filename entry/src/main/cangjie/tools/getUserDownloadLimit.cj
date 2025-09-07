@@ -19,11 +19,6 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 package ohos_app_cangjie_entry.tools
 
-import html4cj.*
-import encoding.json.*
-import ohos.base.AppLog
-import std.console.Console
-
 public func getUserDownloadLimitAndDonation(runtime: JSContext, callInfo: JSCallInfo): JSValue {
     let htmlString:String = callInfo[0].toString(runtime)
     var doc: Document = Html4cj.parse(htmlString)
