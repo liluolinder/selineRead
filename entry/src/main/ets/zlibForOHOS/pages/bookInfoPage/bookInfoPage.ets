@@ -32,6 +32,8 @@ import { request } from "@kit.BasicServicesKit"
 import { fileUri } from "@kit.CoreFileKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
 import { I_BookComment } from "../../datas/interfaces/I_BookComment"
+import { DecorBar } from "../others/DecorBar"
+import { webview } from "@kit.ArkWeb"
 
 @Builder
 export function bookInfoPageBuilder() {
@@ -49,6 +51,8 @@ export struct bookInfoPage {
   @Local isViewingBigImage: boolean = false
   @Local pageOpacity: number = 0
   @Local showComment: boolean = false
+  @Local showOnlineRead:boolean = false
+  controller: webview.WebviewController = new webview.WebviewController();
   commitPage: number = 1
 
   @Builder
@@ -106,6 +110,17 @@ export struct bookInfoPage {
           })
       })
     }
+  }
+
+
+  @Builder
+  viewBookOnline() {
+    Column() {
+      Web({ src: this.bookInfo?.readUrl, controller: this.controller })
+        .javaScriptAccess(true)
+        .multiWindowAccess(true)
+    }.size({width:'100%', height:'100%'})
+    .backgroundColor($r('sys.color.comp_background_gray'))
   }
 
   build() {
@@ -268,6 +283,30 @@ export struct bookInfoPage {
 
           ListItem() {
             Button({ type: ButtonType.Normal, stateEffect: true }) {
+              Text('在线阅读')
+            }
+            .height(55)
+            .borderRadius(20)
+            .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+            $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+            .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+              undefined)
+            .useEffect(true)
+            .width('100%')
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+            .bindSheet($$this.showOnlineRead, this.viewBookOnline(), {
+              preferType:SheetType.BOTTOM,
+              height:SheetSize.LARGE,
+              title:{title:'在线阅读'}
+            })
+            .onClick(async () => {
+             this.showOnlineRead = true
+            })
+          }
+          .transition(XAnimation.getAnimation('bottom', 250))
+
+          ListItem() {
+            Button({ type: ButtonType.Normal, stateEffect: true }) {
               Text(this.bookInfo?.firstDownloadInfo?.format + '   ' + this.bookInfo?.firstDownloadInfo?.size)
             }
             .height(55)
@@ -343,6 +382,7 @@ export struct bookInfoPage {
         value: '评论',
         symbolIcon: new SymbolGlyphModifier($r('sys.symbol.ellipsis_bubble')),
         action: ()=>{
+          promptAction.showToast({ message: `尝试获取`, duration: 2000 })
           zlibClient.bookCommentArray.clearData()
           this.commitPage = 1
             zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage).then((get)=>{
