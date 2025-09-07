@@ -924,7 +924,7 @@ export struct zlibHome {
                 NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory', JSON.stringify(zlibClient.searchHistoryArray))
               })
             }
-          }.padding({bottom: 10, top: 10})
+          }.padding({bottom: 10})
         }
         .scrollBar(BarState.Off)
         .edgeEffect(EdgeEffect.Spring)
