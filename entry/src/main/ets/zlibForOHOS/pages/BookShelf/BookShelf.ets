@@ -181,7 +181,11 @@ export struct BookShelf {
                 .padding(8)
                 .onClick(() => {
                   if (fileIo.accessSync(item.BookFilePath)) {
-                    __UI__.HomePageStack.pushPath({ name: 'readerPage', param: item.BookFilePath }, true)
+                    if(item.BookFilePath.split('.')[item.BookFilePath.split('.').length - 1]?.toLowerCase() == 'pdf'){
+                      __UI__.HomePageStack.pushPath({ name: 'pdfViewerPage', param: item.BookFilePath }, true)
+                    }else{
+                      __UI__.HomePageStack.pushPath({ name: 'readerPage', param: item.BookFilePath }, true)
+                    }
                   } else {
                     promptAction.showToast({
                       message: '源文件不存在',

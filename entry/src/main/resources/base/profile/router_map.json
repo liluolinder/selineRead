@@ -12,8 +12,13 @@
     },
     {
       "name": "readerPage",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/Reader.ets",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/reader/BookReader.ets",
       "buildFunction": "readerBuilder"
+    },
+    {
+      "name": "pdfViewerPage",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/reader/PDFViewer.ets",
+      "buildFunction": "pdfViewerBuilder"
     },
     {
       "name": "downloadPage",

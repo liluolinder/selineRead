@@ -4,11 +4,11 @@ import { readerCore, ReadPageComponent } from '@hms.core.readerservice.readerCom
 import { bookParser } from '@kit.ReaderKit';
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import NeoPreferencesUtil from '../datas/classes/XPreferencesUtil';
-import { UIShareData, __System__, __UI__ } from '../datas/classes/ShareDatas';
-import { XAnimation } from '../datas/classes/XAnimation';
+import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
+import { UIShareData, __System__, __UI__ } from '../../datas/classes/ShareDatas';
+import { XAnimation } from '../../datas/classes/XAnimation';
 import { fileUri } from '@kit.CoreFileKit';
-import { globlContext } from '../../entryability/EntryAbility';
+import { globlContext } from '../../../entryability/EntryAbility';
 
 interface Catalogue{
   title: string
