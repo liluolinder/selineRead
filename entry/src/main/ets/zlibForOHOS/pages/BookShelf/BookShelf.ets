@@ -31,6 +31,7 @@ import { bookParser } from "@kit.ReaderKit"
 import { globlContext } from "../../../entryability/EntryAbility"
 import { BusinessError, zlib } from "@kit.BasicServicesKit"
 import { common, Want, wantConstant } from "@kit.AbilityKit"
+import { XContext } from "../../datas/classes/XContext"
 
 @ComponentV2
 export struct BookShelf {
@@ -261,6 +262,56 @@ export struct BookShelf {
   }
 
   @Builder
+  ExportMenu(item: I_ZlibHaveDownloadTable)
+  {
+    Menu() {
+      MenuItem({ content: '格物阅读' })
+        .onClick(async () => {
+          let want: Want = {
+            bundleName: 'com.hm.ultimate.reader',
+            action: 'ohos.want.action.viewData',
+            uri: fileUri.getUriFromPath(item.BookFilePath),
+            flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
+          };
+          (globlContext as common.UIAbilityContext).startAbility(want)
+        })
+        .enabled(fileIo.accessSync(item.BookFilePath))
+
+      MenuItem({ content: '华为阅读' })
+        .onClick(async () => {
+          let want: Want = {
+            bundleName: 'com.huawei.hmsapp.books',
+            action: 'ohos.want.action.viewData',
+            uri: fileUri.getUriFromPath(item.BookFilePath),
+            flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
+          };
+          (globlContext as common.UIAbilityContext).startAbility(want)
+        })
+        .enabled(fileIo.accessSync(item.BookFilePath))
+
+      MenuItem({ content: '自定义' })
+        .onClick(async () => {
+          let want: Want = {
+            action: 'ohos.want.action.viewData',
+            uri: fileUri.getUriFromPath(item.BookFilePath),
+            flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
+          };
+          (globlContext as common.UIAbilityContext).startAbility(want)
+            .then(() => {
+              console.info('Succeed to invoke startAbility.');
+            })
+            .catch((err: BusinessError) => {
+              console.error(`Failed to invoke startAbility, code: ${err.code}, message: ${err.message}`);
+            });
+        })
+        .enabled(fileIo.accessSync(item.BookFilePath))
+
+    }
+
+  }
+
+
+  @Builder
   BookMenu(item: I_ZlibHaveDownloadTable) {
     Menu() {
       MenuItem({ content: '分享' })
@@ -303,17 +354,10 @@ export struct BookShelf {
           }
         })
 
-      MenuItem({ content: '导出至格物阅读' })
-        .onClick(async () => {
-          let want: Want = {
-            bundleName: 'com.hm.ultimate.reader',
-            action: 'ohos.want.action.viewData',
-            uri: fileUri.getUriFromPath(item.BookFilePath),
-            flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
-          };
-          (globlContext as common.UIAbilityContext).startAbility(want)
-        })
+
+      MenuItem({ content: '导出至...',builder: ():void=>this.ExportMenu(item) })
         .enabled(fileIo.accessSync(item.BookFilePath))
+
     }
   }
 }
