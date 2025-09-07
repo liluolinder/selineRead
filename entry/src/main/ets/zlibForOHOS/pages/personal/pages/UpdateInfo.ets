@@ -32,6 +32,13 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: 'beta 0.6.0',
+      date: '2025/9/7',
+      addNewFunArray:['查看书籍评论','在线预览书籍','搜索历史记录','导出至华为阅读','自定义导出','键盘导读监听'],
+      optimizeArray:['优化滚动效果','禁用Tab栏滚动','优化双栏显示效果'],
+      fixBugsArray:['PC系统单机标题栏全屏','解决版本好过低bug']
+    },
+    {
       version: 'beta 0.5.0',
       date: '2025/9/6',
       addNewFunArray:['一键回到列表顶部','搜索筛选','滚动时自动隐藏侧边按钮和搜索栏'],
