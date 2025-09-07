@@ -19,8 +19,8 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { zlibClient } from '../../datas/classes/zlib'
 import { I_RecommendBook } from '../../datas/interfaces/I_RecommendBook'
-import { curves, promptAction } from '@kit.ArkUI'
-import { __System__, minWidth, __UI__, __CustomBackgroundData__ } from '../../datas/classes/ShareDatas'
+import { curves } from '@kit.ArkUI'
+import { __CustomBackgroundData__, __System__, __UI__, minWidth } from '../../datas/classes/ShareDatas'
 import { XAnimation } from '../../datas/classes/XAnimation'
 import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod'
@@ -29,16 +29,13 @@ import { addLog, setContinueState } from '../../utils/ToolsUtil'
 import { scanBarcode, scanCore } from '@kit.ScanKit'
 import { globlContext } from '../../../entryability/EntryAbility'
 import { BusinessError } from '@kit.BasicServicesKit'
-import json from '@ohos.util.json'
 import { JSON } from '@kit.ArkTS'
 import { ListItemWithText } from '../others/ListItem'
-import { XContext } from '../../datas/classes/XContext'
 import { formatArray, languageArray, timeArray } from '../../datas/commons/zlibSearchOption'
 import { I_KV } from '../../datas/interfaces/I_KV'
 
 @ComponentV2
 export struct zlibHome {
-
   @Local recommendIndex: number = 1
   @Local searchIndex: number = 1
   @Local showSearchPage: boolean = false
@@ -47,11 +44,11 @@ export struct zlibHome {
   @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
   @Local isFlashing: boolean = false
-  @Local isInScroller:boolean =false
-  @Local isHaveGoToTop:boolean = false
-  @Local searchBarOffsetY:number = 0
-  @Local SideButtonOffsetX:number = 16
-
+  @Local isInScroller: boolean = false
+  @Local isHaveGoToTop: boolean = false
+  @Local isUseMouseScroll: boolean = false
+  @Local searchBarOffsetY: number = 0
+  @Local SideButtonOffsetX: number = 16
   @Local scrollerOffset: number = 0
   @Local showSearchOption: boolean = false
   @Local scrollerController: Scroller = new Scroller()
@@ -65,24 +62,32 @@ export struct zlibHome {
   @Local chooseFormatArray: string[] = []
 
   @Monitor('isInScroller')
-  changeOffset()
-  {
-      XAnimation.runWithAnimation(()=>{
-        this.searchBarOffsetY = this.isInScroller? -100 : 0
-        this.SideButtonOffsetX = this.isInScroller? -60 : 16
+  changeOffset() {
+    if (!this.isUseMouseScroll) {
+      XAnimation.runWithAnimation(() => {
+        this.searchBarOffsetY = this.isInScroller ? -100 : 0
+        this.SideButtonOffsetX = this.isInScroller ? -60 : 16
+        this.isUseMouseScroll = false
       })
+    }else {
+      XAnimation.runWithAnimation(() => {
+        this.searchBarOffsetY =  0
+        this.SideButtonOffsetX = 16
+      })
+    }
+
     if (this.isInScroller) {
       if (this.isHaveGoToTop) {
         this.searchBarOffsetY = 0
         this.isInScroller = false
       }
-    }else {
+    } else {
       this.isHaveGoToTop = false
     }
+    this.isUseMouseScroll = false
   }
 
-  generateUrl():string
-  {
+  generateUrl(): string {
     let res: string = ''
     let tempRes: string = ''
     if ((this.startTime == undefined || this.startTime == '任何' ? -1 : Number(this.startTime)) >=
@@ -128,7 +133,7 @@ export struct zlibHome {
       }
     }
     tempRes = ''
-   return res
+    return res
   }
 
   @Builder
@@ -305,7 +310,7 @@ export struct zlibHome {
           .backdropBlur(100)
           .useEffect(true)
           .onClick(() => {
-            const specialUrl =  this.generateUrl()
+            const specialUrl = this.generateUrl()
             this.searchIndex = 1
             zlibClient.searchBooks(this.searchBookName, 1, true, specialUrl)
             XAnimation.runWithAnimation(() => {
@@ -315,7 +320,7 @@ export struct zlibHome {
           })
 
         }.width('100%')
-        .margin({top:10})
+        .margin({ top: 10 })
         .justifyContent(FlexAlign.SpaceBetween)
 
       }.size({ width: '100%' })
@@ -594,7 +599,7 @@ export struct zlibHome {
           try {
             scanBarcode.startScanForResult(globlContext, options).then((result: scanBarcode.ScanResult) => {
               addLog('ScanCode', `扫码成功,书籍ISBN为${result.originalValue}`)
-              const specialUrl =  this.generateUrl()
+              const specialUrl = this.generateUrl()
               this.scrollerOffset = 0
               this.searchIndex = 1
               this.searchBookName = result.originalValue
@@ -652,7 +657,7 @@ export struct zlibHome {
               this.scrollerOffset = 0
               this.searchIndex = 1
               this.searchBookName = value
-              const specialUrl =  this.generateUrl()
+              const specialUrl = this.generateUrl()
               zlibClient.searchBooks(value, 1, true, specialUrl)
               XAnimation.runWithAnimation(() => {
                 __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
@@ -676,7 +681,7 @@ export struct zlibHome {
       }.zIndex(1).padding({ left: 16, right: 16, top: __System__.topRectHeight })
       .transition(XAnimation.getAnimation('up'))
       .offset({
-        y:this.searchBarOffsetY
+        y: this.searchBarOffsetY
       })
 
 
@@ -728,11 +733,20 @@ export struct zlibHome {
               this.scrollerOffset += scrollOffset
               this.isInScroller = true
             })
-            .onScrollStop(()=>{
-              this.isInScroller = false
+            .onScrollStop(() => {
+              setTimeout(() => {
+                XAnimation.runWithAnimation(() => {
+                  this.isInScroller = false
+                })
+              }, 500)
             })
             .onReachStart(() => {
               this.scrollerOffset = 0;
+            })
+            .onAxisEvent((event?: AxisEvent) => {
+              if (event) {
+                this.isUseMouseScroll = true
+              }
             })
             .onReachEnd(async () => {
               this.isFlashing = true
@@ -756,12 +770,21 @@ export struct zlibHome {
             }
             .scrollBar(BarState.Off)
             .size({ width: '100%', height: '100%' })
+            .onAxisEvent((event?: AxisEvent) => {
+              if (event) {
+                this.isUseMouseScroll = true
+              }
+            })
             .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
               this.scrollerOffset += scrollOffset
               this.isInScroller = true
             })
-            .onScrollStop(()=>{
-              this.isInScroller = false
+            .onScrollStop(() => {
+              setTimeout(() => {
+                XAnimation.runWithAnimation(() => {
+                  this.isInScroller = false
+                })
+              }, 500)
             })
             .onReachStart(() => {
               this.scrollerOffset = 0;
@@ -839,7 +862,6 @@ export struct zlibHome {
         }
 
       }.position({ bottom: 120, right: this.SideButtonOffsetX })
-
 
 
       if (this.isFlashing) {

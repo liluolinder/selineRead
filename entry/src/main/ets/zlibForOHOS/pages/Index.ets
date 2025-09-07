@@ -176,6 +176,7 @@ struct Index {
           }.padding({left: __System__.windowWidth > minWidth? 65 + __System__.leftRectHeight: 0})
           .indicator(false)
           .loop(false)
+          .disableSwipe(true)
           .onChange((index)=>{
             this.currentPage = index
           })
@@ -211,7 +212,7 @@ struct Index {
       .size({ width: '100%', height: '100%' })
       .backgroundColor(__CustomBackgroundData__.customBackground? Color.Transparent: $r('sys.color.comp_background_gray'))
       .navBarWidthRange([550, 1200])
-      .navBarWidth(800)
+      .navBarWidth('1100')
       .mode(__UI__.isInReader ? NavigationMode.Stack : NavigationMode.Auto)
       .onNavigationModeChange((mode) => {
         if (__UI__.isInReader) {
