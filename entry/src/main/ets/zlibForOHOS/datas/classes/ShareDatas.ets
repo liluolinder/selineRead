@@ -39,6 +39,7 @@ export class SysShareData {
   @Trace topRectHeight: number = 0
   @Trace windowWidth: number = 0
   @Trace windowHeight: number = 0
+  @Trace keyboardHeight: number = 0
   @Trace windowState: window.WindowStatusType = window.WindowStatusType.UNDEFINED
   @Trace pcMode: boolean = false
 }

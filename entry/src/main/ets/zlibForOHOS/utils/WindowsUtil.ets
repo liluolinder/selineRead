@@ -28,6 +28,9 @@ class Windows {
     this.windowClass.on('avoidAreaChange', () => {
       this.updateAvoidArea(this.windowClass!)
     })
+    this.windowClass.on('keyboardHeightChange', (height) => {
+      __System__.keyboardHeight = globlUIContext.px2vp(height)
+    })
   }
   isPC(): boolean {
     return deviceInfo.deviceType.toUpperCase() == 'PC' || deviceInfo.deviceType.toUpperCase() == '2IN1'
