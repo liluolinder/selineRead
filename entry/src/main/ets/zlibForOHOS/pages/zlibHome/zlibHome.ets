@@ -51,6 +51,7 @@ export struct zlibHome {
   @Local isUseMouseScroll: boolean = false
   @Local searchBarOffsetY: number = 0
   @Local SideButtonOffsetX: number = 16
+  @Local lastOffset: number = 0
   @Local scrollerOffset: number = 0
   @Local showSearchOption: boolean = false
   @Local scrollerController: Scroller = new Scroller()
@@ -63,30 +64,20 @@ export struct zlibHome {
   @Local showFormatPopup: boolean = false
   @Local chooseFormatArray: string[] = []
 
-  @Monitor('isInScroller')
+  @Monitor('lastOffset')
   changeOffset() {
-    if (!this.isUseMouseScroll) {
+    if (this.lastOffset > 0) {
       XAnimation.runWithAnimation(() => {
-        this.searchBarOffsetY = this.isInScroller ? -100 : 0
-        this.SideButtonOffsetX = this.isInScroller ? -60 : 16
-        this.isUseMouseScroll = false
+        this.searchBarOffsetY = -100
+        this.SideButtonOffsetX = -60
       })
-    }else {
+    } else if (this.lastOffset < 0) {
       XAnimation.runWithAnimation(() => {
-        this.searchBarOffsetY =  0
+        this.searchBarOffsetY = 0
         this.SideButtonOffsetX = 16
       })
     }
 
-    if (this.isInScroller) {
-      if (this.isHaveGoToTop) {
-        this.searchBarOffsetY = 0
-        this.isInScroller = false
-      }
-    } else {
-      this.isHaveGoToTop = false
-    }
-    this.isUseMouseScroll = false
   }
 
   generateUrl(): string {
@@ -664,9 +655,11 @@ export struct zlibHome {
               XAnimation.runWithAnimation(() => {
                 __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
               })
-              zlibClient.searchHistoryArray = zlibClient.searchHistoryArray.filter((item:I_SearchHistory)=>item.value!=value)
-              zlibClient.searchHistoryArray.unshift({value:value,time:Date.parse(new Date().toString())})
-              NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory', JSON.stringify(zlibClient.searchHistoryArray))
+              zlibClient.searchHistoryArray =
+                zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != value)
+              zlibClient.searchHistoryArray.unshift({ value: value, time: Date.parse(new Date().toString()) })
+              NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
+                JSON.stringify(zlibClient.searchHistoryArray))
             }
           })
           .onChange((value: string) => {
@@ -682,13 +675,14 @@ export struct zlibHome {
             })
           })
           .width(__zlibHomeData__.isInSearchMode ? '100%' : '50%')
-      }.zIndex(1).padding({ left: 16, right: 16, top: __System__.topRectHeight })
+      }
+      .zIndex(1)
+      .padding({ left: 16, right: 16, top: __System__.topRectHeight })
       .transition(XAnimation.getAnimation('up'))
       .offset({
         y: this.searchBarOffsetY
       })
       .zIndex(114514)
-
 
 
       if ((__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Recommend &&
@@ -737,22 +731,16 @@ export struct zlibHome {
             .rowsGap(10)
             .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
               this.scrollerOffset += scrollOffset
+              console.log(`Liquid${scrollOffset}}`)
+              this.lastOffset = scrollOffset
               this.isInScroller = true
             })
             .onScrollStop(() => {
-              setTimeout(() => {
-                XAnimation.runWithAnimation(() => {
-                  this.isInScroller = false
-                })
-              }, 500)
+              this.isInScroller = false
             })
             .onReachStart(() => {
+              this.lastOffset = -1;
               this.scrollerOffset = 0;
-            })
-            .onAxisEvent((event?: AxisEvent) => {
-              if (event) {
-                this.isUseMouseScroll = true
-              }
             })
             .onReachEnd(async () => {
               this.isFlashing = true
@@ -776,23 +764,16 @@ export struct zlibHome {
             }
             .scrollBar(BarState.Off)
             .size({ width: '100%', height: '100%' })
-            .onAxisEvent((event?: AxisEvent) => {
-              if (event) {
-                this.isUseMouseScroll = true
-              }
-            })
             .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
               this.scrollerOffset += scrollOffset
+              this.lastOffset = scrollOffset
               this.isInScroller = true
             })
             .onScrollStop(() => {
-              setTimeout(() => {
-                XAnimation.runWithAnimation(() => {
-                  this.isInScroller = false
-                })
-              }, 500)
+              this.isInScroller = false
             })
             .onReachStart(() => {
+              this.lastOffset = -1;
               this.scrollerOffset = 0;
             })
             .onReachEnd(async () => {
@@ -804,7 +785,7 @@ export struct zlibHome {
               }
               this.isFlashing = false
             })
-            .edgeEffect(EdgeEffect.Spring)
+
 
           }
 
@@ -820,7 +801,6 @@ export struct zlibHome {
 
         }.padding({ left: 20, right: 20 }).blur(__zlibHomeData__.isInSearchMode ? 50 : 0)
       }
-
 
 
       Column({ space: 15 }) {
@@ -863,7 +843,8 @@ export struct zlibHome {
           .onClick(() => {
             this.showSearchOption = true
           })
-          .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search?Visibility.Visible:Visibility.Hidden)
+          .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search ? Visibility.Visible :
+          Visibility.Hidden)
           .bindSheet($$this.showSearchOption, this.searchOptionBuilder(), {
             preferType: SheetType.CENTER,
             height: SheetSize.MEDIUM,
@@ -880,24 +861,31 @@ export struct zlibHome {
 
       if (__zlibHomeData__.isInSearchMode) {
         Scroll() {
-          Flex({ wrap: FlexWrap.Wrap ,space:{main:LengthMetrics.vp(10),cross:LengthMetrics.vp(10)}}){
-            ForEach(zlibClient.searchHistoryArray,(item:I_SearchHistory)=>{
-              Button(){
-                Row({space: 10}){
-                  Text(item.value.slice(0, 8) + (item.value.length > 8? '...': '')).maxLines(1).fontSize(14)
-                  Button(){
+          Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(10), cross: LengthMetrics.vp(10) } }) {
+            ForEach(zlibClient.searchHistoryArray, (item: I_SearchHistory) => {
+              Button() {
+                Row({ space: 10 }) {
+                  Text(item.value.slice(0, 8) + (item.value.length > 8 ? '...' : '')).maxLines(1).fontSize(14)
+                  Button() {
                     SymbolGlyph($r('sys.symbol.xmark')).fontColor([$r('sys.color.font')]).fontSize(15)
                   }.padding(5)
                   .backgroundColor(Color.Transparent)
-                  .onClick(()=>{
-                    XAnimation.runWithAnimation(()=> zlibClient.searchHistoryArray = zlibClient.searchHistoryArray.filter((itemA:I_SearchHistory)=>itemA.value!=item.value))
-                    NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory', JSON.stringify(zlibClient.searchHistoryArray))
+                  .onClick(() => {
+                    XAnimation.runWithAnimation(() => zlibClient.searchHistoryArray =
+                      zlibClient.searchHistoryArray.filter((itemA: I_SearchHistory) => itemA.value != item.value))
+                    NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
+                      JSON.stringify(zlibClient.searchHistoryArray))
                   })
                 }
               }
-              .padding({left: 10, right: 10, top: 5, bottom: 5})
+              .padding({
+                left: 10,
+                right: 10,
+                top: 5,
+                bottom: 5
+              })
               .backgroundColor($r('app.color.start_window_background_blur'))
-              .onClick(()=>{
+              .onClick(() => {
                 this.scrollerOffset = 0
                 this.searchIndex = 1
                 this.searchBookName = item.value
@@ -907,29 +895,37 @@ export struct zlibHome {
                   __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
                   __zlibHomeData__.isInSearchMode = false
                 })
-                zlibClient.searchHistoryArray = zlibClient.searchHistoryArray.filter((itemA:I_SearchHistory)=>itemA.value!=item.value)
-                zlibClient.searchHistoryArray.unshift({value:item.value,time:Date.parse(new Date().toString())})
-                NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory', JSON.stringify(zlibClient.searchHistoryArray))
+                zlibClient.searchHistoryArray =
+                  zlibClient.searchHistoryArray.filter((itemA: I_SearchHistory) => itemA.value != item.value)
+                zlibClient.searchHistoryArray.unshift({ value: item.value, time: Date.parse(new Date().toString()) })
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
+                  JSON.stringify(zlibClient.searchHistoryArray))
               })
             })
 
-            if(zlibClient.searchHistoryArray.length > 0){
-              Button(){
+            if (zlibClient.searchHistoryArray.length > 0) {
+              Button() {
                 SymbolGlyph($r('sys.symbol.trash')).fontColor([$r('sys.color.font')]).fontSize(15)
               }
               .padding(9)
               .backgroundColor($r('app.color.start_window_background_blur'))
-              .onClick(()=>{
+              .onClick(() => {
                 XAnimation.runWithAnimation(() => zlibClient.searchHistoryArray = [])
-                NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory', JSON.stringify(zlibClient.searchHistoryArray))
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
+                  JSON.stringify(zlibClient.searchHistoryArray))
               })
             }
-          }.padding({bottom: 10})
+          }.padding({ bottom: 10 })
         }
         .scrollBar(BarState.Off)
         .edgeEffect(EdgeEffect.Spring)
         .transition(XAnimation.getAnimation('bottom'))
-        .margin({top:__System__.topRectHeight + 60,left:16,right:16, bottom: Math.max(__System__.keyboardHeight, __System__.bottomRectHeight)})
+        .margin({
+          top: __System__.topRectHeight + 60,
+          left: 16,
+          right: 16,
+          bottom: Math.max(__System__.keyboardHeight, __System__.bottomRectHeight)
+        })
         .zIndex(114513)
       }
 

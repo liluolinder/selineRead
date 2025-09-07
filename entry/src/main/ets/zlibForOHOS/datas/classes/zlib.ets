@@ -121,6 +121,9 @@ export class zlib {
         this.userInfo = JSON.parse(res) as I_UserInfo
         this.userInfo.avatar = avatar
         this.userInfo.userName = userName
+        addLog("getUserInfo",`userName=${userName}`)
+        addLog("getUserInfo",`avatar=${avatar}`)
+        addLog("getUserInfo",`downloadLimit=${this.userInfo.downloadLimit}`)
       } else {
         addLog('getUserInfo', `获取用户信息失败,疑似仓颉错误`, true)
       }

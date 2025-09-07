@@ -23,7 +23,7 @@ import { zlibClient } from "../../datas/classes/zlib"
 import { I_DownloadInfo } from "../../datas/interfaces/I_DownloadInfo"
 import common from "@ohos.app.ability.common"
 import { DividerTmp } from "../../datas/classes/DividerTmp"
-import { minWidth, __CustomBackgroundData__, __System__, __UI__ } from "../../datas/classes/ShareDatas"
+import { minWidth, __CustomBackgroundData__, __System__, __UI__, __User__ } from "../../datas/classes/ShareDatas"
 import { globlContext, globlUIContext } from "../../../entryability/EntryAbility"
 import { curves, LengthUnit, promptAction, PromptAction, SymbolGlyphModifier } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
@@ -295,8 +295,12 @@ export struct bookInfoPage {
             .width('100%')
             .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
             .onClick(async () => {
-              this.pageInfos.pop(true)
-              __UI__.HomePageStack.pushPathByName('onlineReaderPage', this.bookInfo?.readUrl, true)
+             /* this.pageInfos.pop(true)*/
+              if (__User__.isLoginZlib && (zlibClient.cookie!='' || zlibClient.cookie!= undefined )) {
+                __UI__.HomePageStack.pushPathByName('onlineReaderPage', this.bookInfo?.readUrl, true)
+              }else {
+                promptAction.showToast({ message: `请先登录`, duration: 2000 })
+              }
             })
           }
           .transition(XAnimation.getAnimation('bottom', 200))

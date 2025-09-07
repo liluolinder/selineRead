@@ -88,8 +88,9 @@ struct Index {
       __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
       __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
       zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
+      zlibClient.loginIn(__User__.zlibAccount,__User__.zlibPassword)
     }
-
+    addLog("读取首选项",`Cookie${zlibClient.cookie}`)
     this.proccessContinueData()
 
   }
