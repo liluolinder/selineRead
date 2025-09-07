@@ -226,6 +226,7 @@ export struct BookShelf {
             .lanes(this.lanes, 10)
             .scrollBar(BarState.Off)
             .edgeEffect(EdgeEffect.Spring)
+            .chainAnimation(true)
             .contentEndOffset(Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70)))
             .onAreaChange((_, newValue) => {
               XAnimation.runWithAnimation(() => {
