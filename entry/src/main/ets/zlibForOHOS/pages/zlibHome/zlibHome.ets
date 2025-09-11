@@ -636,11 +636,6 @@ export struct zlibHome {
           .useEffect(true)
           .focusable(__zlibHomeData__.isInSearchMode)
           .enableKeyboardOnFocus(__zlibHomeData__.isInSearchMode)
-          .onEditChange((isInFocus) => {
-            XAnimation.runWithAnimation(() => {
-              __zlibHomeData__.isInSearchMode = isInFocus
-            })
-          })
           .onSubmit((value: string) => {
             if (value == '' || value == undefined) {
               XAnimation.runWithAnimation(() => {
