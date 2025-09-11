@@ -673,32 +673,17 @@ export struct zlibHome {
           .constraintSize({maxWidth: __zlibHomeData__.isInSearchMode ? '100%' : '50%'})
 
 
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph( $r('sys.symbol.list_bullet'))
-            .fontSize(24)
-            .fontColor([$r('sys.color.font_secondary')])
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor($r('app.color.start_window_background_blur'))
-        .backdropBlur(100)
-        .useEffect(true)
-        .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
-        .bindMenu([
-          {
-            value: '常规搜索',
-            action: ()=>{
-
-            }
-          },
-          {
-          value: '关键词搜索',
-          action: ()=>{
-
-          }
-        },
-
-        ])
+        Select([{value: '常规搜索'}, {value: '关键词搜索'}])
+          .selected(0) //默认选中项
+          .onSelect((index)=>{
+            //选中回调
+          })
+          .height(40)
+          .backgroundColor($r('app.color.start_window_background_blur'))
+          .backdropBlur(100)
+          .useEffect(true)
+          .value('常规搜索') //默认文本
+          .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
       }
       .zIndex(1)
       .padding({ left: 16, right: 16, top: __System__.topRectHeight })
