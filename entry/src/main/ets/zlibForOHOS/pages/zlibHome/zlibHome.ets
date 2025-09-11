@@ -674,7 +674,36 @@ export struct zlibHome {
               __zlibHomeData__.isInSearchMode = true
             })
           })
-          .width(__zlibHomeData__.isInSearchMode ? '100%' : '50%')
+          .layoutWeight(1)
+          .constraintSize({maxWidth: __zlibHomeData__.isInSearchMode ? '100%' : '50%'})
+
+
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph( $r('sys.symbol.list_bullet'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .backdropBlur(100)
+        .useEffect(true)
+        .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
+        .bindMenu([
+          {
+            value: '常规搜索',
+            action: ()=>{
+
+            }
+          },
+          {
+          value: '关键词搜索',
+          action: ()=>{
+
+          }
+        },
+
+        ])
       }
       .zIndex(1)
       .padding({ left: 16, right: 16, top: __System__.topRectHeight })
