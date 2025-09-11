@@ -63,6 +63,7 @@ export struct zlibHome {
   @Local chooseLanguageArray: string[] = []
   @Local showFormatPopup: boolean = false
   @Local chooseFormatArray: string[] = []
+  @Local searchType: number = 0
 
   @Monitor('lastOffset')
   changeOffset() {
@@ -674,15 +675,16 @@ export struct zlibHome {
 
 
         Select([{value: '常规搜索'}, {value: '关键词搜索'}])
-          .selected(0) //默认选中项
+          .selected(this.searchType) //默认选中项
           .onSelect((index)=>{
+            this.searchType = index
             //选中回调
           })
           .height(40)
           .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
           .useEffect(true)
-          .value('常规搜索') //默认文本
+          .value(['常规搜索', '关键词搜索'][this.searchType]) //默认文本
           .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
       }
       .zIndex(1)
