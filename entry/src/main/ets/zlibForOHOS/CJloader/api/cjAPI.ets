@@ -27,4 +27,5 @@ export interface CJLib {
   getUserAvatar(src: string): string
   getUserName(src: string): string
   getReadUrl(src: string): string
+  getTerms(src: string): string
 }

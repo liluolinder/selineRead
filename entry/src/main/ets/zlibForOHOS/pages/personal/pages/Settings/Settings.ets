@@ -110,9 +110,13 @@ struct SettingsPage {
                 .size({ width: 40, height: 40 })
                 .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                 .onClick(() => {
-                  zlibClient.base_url = this.apiAddress
-                  zlibClient.baseApi_url = zlibClient.base_url + '/papi'
-                  NeoPreferencesUtil.putPreferencesValue("selineRead", 'zlibUrl', this.apiAddress)
+                  let res = this.apiAddress
+                  if (this.apiAddress == 'book.liluolinder.top') {
+                    res = 'https://zh.laoshihao.ru'
+                  }
+                  zlibClient.base_url = res
+                  zlibClient.baseApi_url = res + '/papi'
+                  NeoPreferencesUtil.putPreferencesValue("selineRead", 'zlibUrl', res)
                   zlibClient.recommendBooksArray.clearData()
                   zlibClient.bookshelfArray.clearData()
                   zlibClient.refreshUrl().then(async () => {

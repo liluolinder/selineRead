@@ -45,5 +45,5 @@ let EXPORT_MODULE = JSModule.registerModule {
         exports["getUserAvatar"] = runtime.function(getUserAvatar).toJSValue()
         exports["getUserName"] = runtime.function(getUserName).toJSValue()
         exports["getReadUrl"] = runtime.function(getReadUrl).toJSValue()
-
+        exports["getTerms"] = runtime.function(getTerms).toJSValue()
 }

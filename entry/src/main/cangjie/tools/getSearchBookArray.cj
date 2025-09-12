@@ -51,7 +51,7 @@ public func getSearchBookArray(runtime: JSContext, callInfo: JSCallInfo): JSValu
                 ascriptAll1 = doc.select('div')
                 jsonMap.put('title',JsonString(ascriptAll1[0].html()))
                 jsonMap.put('writer',JsonString(ascriptAll1[1].html()))
-                jsonList.append(jsonMap)
+                jsonMap |> jsonList.append
             }
         }
 

@@ -40,29 +40,37 @@ import NeoPreferencesUtil from '../../datas/classes//XPreferencesUtil'
 export struct zlibHome {
   @Local recommendIndex: number = 1
   @Local searchIndex: number = 1
+
   @Local showSearchPage: boolean = false
+
   @Local listOrWaterFlow: zlibIndexShowMod = zlibIndexShowMod.WaterFlow
+
   @Local searchBookName: string = ''
   @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
+
   @Local isFlashing: boolean = false
+
   @Local isInScroller: boolean = false
   @Local isHaveGoToTop: boolean = false
-  @Local isUseMouseScroll: boolean = false
+
   @Local searchBarOffsetY: number = 0
   @Local SideButtonOffsetX: number = 16
   @Local lastOffset: number = 0
   @Local scrollerOffset: number = 0
   @Local showSearchOption: boolean = false
   @Local scrollerController: Scroller = new Scroller()
+
   @Local startTime: string | undefined
   @Local startTImeIndex: number | number[] = 0;
   @Local endTIme: string | undefined
   @Local endTImeIndex: number | number[] | undefined;
+
   @Local showLanguagePopup: boolean = false
   @Local chooseLanguageArray: string[] = []
   @Local showFormatPopup: boolean = false
   @Local chooseFormatArray: string[] = []
+
   @Local searchType: number = 0
 
   @Monitor('lastOffset')
@@ -638,6 +646,7 @@ export struct zlibHome {
           .focusable(__zlibHomeData__.isInSearchMode)
           .enableKeyboardOnFocus(__zlibHomeData__.isInSearchMode)
           .onSubmit((value: string) => {
+            __zlibHomeData__.isInSearchMode = false
             if (value == '' || value == undefined) {
               XAnimation.runWithAnimation(() => {
                 __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Recommend

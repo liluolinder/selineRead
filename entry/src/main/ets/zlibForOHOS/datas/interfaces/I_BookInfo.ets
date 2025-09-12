@@ -16,6 +16,7 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
+import { I_Terms } from "./I_Terms"
 
 
 export interface I_BookInfo{
@@ -32,6 +33,7 @@ export interface I_BookInfo{
   bookID?:number
   firstDownloadUrl?:string
   firstDownloadInfo?:firstDownloadInfo
+  terms?:I_Terms[]
   href?:string
   readUrl?:string
 }

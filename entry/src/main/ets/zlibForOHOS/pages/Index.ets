@@ -49,7 +49,7 @@ import { I_SearchHistory } from '../datas/interfaces/I_SearchHistory';
 struct Index {
   private tabsArrayOnline: [string, Resource, Resource][] = [
     ['书库', $r('sys.symbol.book'), $r('sys.symbol.book_open_fill')],
-    ['书单', $r('sys.symbol.list_bullet'), $r('sys.symbol.list_bullet')],
+    //['书单', $r('sys.symbol.list_bullet'), $r('sys.symbol.list_bullet')],
     ['书架', $r('sys.symbol.book_closed_right_left'), $r('sys.symbol.books_vertical_fill')],
     ['我的', $r('sys.symbol.person'), $r('sys.symbol.person_fill')]
   ]
@@ -178,7 +178,7 @@ struct Index {
           Swiper(this.swiperController){
             if(__UI__.onlineMode){
               zlibHome()
-              BookList()
+             // BookList()
             }
             BookShelf()
             personal()

@@ -22,8 +22,8 @@ import { I_Bookshelf, I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../i
 import { I_BookComment } from '../interfaces/I_BookComment';
 import { I_SearchHistory } from '../interfaces/I_SearchHistory';
 import { __zlibHomeData__ } from '../../pages/zlibHome/zlibHome';
-import { XAnimation } from './XAnimation';
-import { zlibIndexShowMod } from '../enums/zlibIndexShowMod';
+import { I_Terms } from '../interfaces/I_Terms';
+
 
 @ObservedV2
 export class zlib {
@@ -225,6 +225,7 @@ export class zlib {
       numberOfPages: 0,
       datePublished: 0,
       inLanguage: { name: '' },
+      terms:[],
       review: { reviewBody: '', datePublished: '', reviewRating: { ratingValue: '' } }
     }
     console.log(`Liquid${bookHref}`)
@@ -256,6 +257,8 @@ export class zlib {
         console.log(`Liquid!!${firstDownloadInfo}`)
         let readUrl: string = CJLoader.getReadUrl(res)
         console.log(`Liquid!!${readUrl}`)
+        let terms:I_Terms[] =   JSON.parse(CJLoader.getTerms(res)) as I_Terms[]
+        console.log(`Liquid!!${JSON.stringify(terms)}`)
         res = CJLoader.getBookInfo(res)
           .replaceAll("\\n", "")
           .replaceAll("\\\"", "\"")
@@ -265,6 +268,7 @@ export class zlib {
         resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
         resBookInfo.readUrl = readUrl
+        resBookInfo.terms = terms
         addLog('getBookInfo', `获取成功`)
       } catch (e) {
         promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
@@ -364,6 +368,7 @@ export class zlib {
       let result = JSON.parse((obj as object)?.['result'])
 
       let tempArray: I_Bookshelf_extraBooks[] = (result as object)?.['books']
+
 
       tempArray.forEach((item: I_Bookshelf_extraBooks) => {
         this.bookshelfBooks.pushData(item)
