@@ -36,7 +36,10 @@ export class zlib {
   @Trace bookCommentArray: BasicDataSource<I_BookComment> = new BasicDataSource<I_BookComment>()
   @Trace searchHistoryArray: I_SearchHistory[] = []
   @Trace userInfo: I_UserInfo | undefined
-  @Trace private isSort: boolean = false
+
+  @Trace bookIDsRelated:number[]=[]
+  @Trace recommendBooksArrayRelated:BasicDataSource<I_RecommendBook> = new BasicDataSource<I_RecommendBook>()
+
   //官方:https://zh.z-library.sk
   base_url: string = ''
   baseApi_url: string = ''
@@ -265,16 +268,48 @@ export class zlib {
             promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
             resolve(false)
           })
-
       }
-
-
     })
+  }
 
+  async getRecommendBooksRelated(page:number,needClear:boolean=false){
+    addLog('getRecommendBooksRelated', `尝试获取page=${page}`)
+    if (needClear) {
+      this.recommendBooksArrayRelated.clearData()
+    }
+    let req = http.createHttp()
+    let extraData: object = new Object({ bookIds: this.bookIDsRelated })
+    req.request(`${this.baseApi_url}/book/recommended/mosaic/21/${page}`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      },
+      extraData: JSON.stringify(extraData)
+    }).then((data: http.HttpResponse) => {
+      try {
+        let obj = JSON.parse(JSON.stringify(data))
+        let result = JSON.parse((obj as object)?.['result'])
+        let tempArray: I_RecommendBook[] = (result as object)?.['books']
+        tempArray.forEach((item) => {
+          console.log(`Liquid:${item}`)
+        })
+        addLog('getRecommendBooksRelated', `获取page=${page}成功`)
+      } catch (e) {
+      }
+      req.destroy();
+    })
+      .catch((err: BusinessError) => {
+        addLog('getRecommendBooksRelated', `error! ${err.name} ${err.message}`, true)
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      })
   }
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
     addLog('getBookInfo', `尝试获取书籍信息：${bookHref}`)
+    this.bookIDsRelated = []
     let req = http.createHttp()
     let res: string = ''
     let resBookInfo: I_BookInfo = {
@@ -304,15 +339,16 @@ export class zlib {
       addLog('getBookInfo', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
-
     req.destroy()
-
     if (res != 'error') {
       try {
         let firstDownloadUrl: string = CJLoader.getBookFirstDownloadUrl(res)
         let firstDownloadInfo: string = CJLoader.getBookFirstDownloadInfo(res)
         let readUrl: string = CJLoader.getReadUrl(res)
         let terms: I_Terms[] = JSON.parse(CJLoader.getTerms(res)) as I_Terms[]
+        const regex = /bookIds:\s*\[([\d,]+)\]/;
+        const match = res.match(regex);
+        this.bookIDsRelated = match?.[1].split(',').map(Number) ?? []
         res = CJLoader.getBookInfo(res)
           .replaceAll("\\n", "")
           .replaceAll("\\\"", "\"")
@@ -322,6 +358,7 @@ export class zlib {
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
         resBookInfo.readUrl = readUrl
         resBookInfo.terms = terms
+        this.getRecommendBooksRelated(1,true)
         addLog('getBookInfo', `获取成功`)
       } catch (e) {
         promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
@@ -462,8 +499,7 @@ export class zlib {
     return res
   }
 
-  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false,
-    speaclNeed: string = ''): Promise<boolean> {
+  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false, speaclNeed: string = ''): Promise<boolean> {
     addLog('searchBooks', `尝试获取${this.base_url}/s/${encodeURI(bookName)}?${speaclNeed == '' ? '' :
       `${encodeURI(speaclNeed)}&`}page=${page}`)
     return new Promise<boolean>(async (resolve) => {
@@ -631,6 +667,7 @@ export class zlib {
       zlibClient.getLocalDownloadHistory()
     }, 100)
   }
+
 }
 
 export let zlibClient: zlib = new zlib()
