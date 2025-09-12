@@ -553,12 +553,9 @@ export class zlib {
         'Cookie': this.cookie,
       }
     }).then((data: http.HttpResponse) => {
-      let obj = JSON.parse(JSON.stringify(data))
-      let result = JSON.parse((obj as object)?.['result'])
-      res = (result as object)?.['books']
-      addLog('getBookDownloadsInfo', `获取${bookID}下载信息成功`)
+
     }).catch((err: Error) => {
-      addLog('getBookDownloadsInfo', `error! ${err.name} ${err.message}`, true)
+      addLog('searchTerms', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
     });
     req.destroy()
