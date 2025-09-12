@@ -869,7 +869,6 @@ export struct zlibHome {
 
       }.position({ bottom: 120, right: this.SideButtonOffsetX })
 
-
       if (this.isFlashing) {
         loadingNewDialog()
       }

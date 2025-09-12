@@ -542,6 +542,28 @@ export class zlib {
     })
   }
 
+  async searchTerms(term:string) {
+    addLog('searchTerms', `尝试搜索关键词${term}`)
+    let req = http.createHttp()
+    await req.request(`${this.base_url}/terms/${encodeURI(term)}`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      }
+    }).then((data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      res = (result as object)?.['books']
+      addLog('getBookDownloadsInfo', `获取${bookID}下载信息成功`)
+    }).catch((err: Error) => {
+      addLog('getBookDownloadsInfo', `error! ${err.name} ${err.message}`, true)
+      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+    });
+    req.destroy()
+  }
+
   async getTrueDownloadBookUrl(context: Context, bookUrl: string, bookInfo: I_BookInfo) {
     addLog('getTrueDownloadBookUrl', `正在尝试下载`)
     //todo:API18后换成openToast
