@@ -48,11 +48,10 @@ export class zlib {
       `siteLanguage=zh; selectedSiteMode=books; remix_userkey=${remix_userkey}; remix_userid=${remix_userid}; redirects_count=%7B%22auth%22%3A1%2C%22hide-auth-params%22%3A1%7D`
   }
 
-
-  async loginIn(email: string, password: string) {
+  async loginIn(email: string, password: string): Promise<boolean> {
     let req = http.createHttp()
     addLog('login', `正在尝试登录`)
-    await req.request(`${this.base_url}/rpc.php`, {
+    return await req.request(`${this.base_url}/rpc.php`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
@@ -72,35 +71,49 @@ export class zlib {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
       let tempCookies: I_CookieInfo = (result as object)?.['response']
-      if (tempCookies.message == undefined) {
-        promptAction.showToast({ message: `欢迎`, duration: 1000 })
-        addLog('login', `登录成功`)
-        this.setCookies(tempCookies.user_key, tempCookies.user_id.toString())
-        NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", true)
-        NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", email)
-        NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibPassword", password)
-        NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibCookie", this.cookie)
-        __User__.zlibAccount = email
-        __User__.zlibPassword = password
-        __User__.isLoginZlib = true
-        this.getUserInfo()
-      } else {
-        //todo:API18后换成openToast
-        promptAction.showToast({ message: `登录失败,账号密码错误`, duration: 1000 })
-        addLog('login', `登录失败,账号密码错误`, true)
-        NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", false)
-        NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibCookies", '')
-        NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", '')
-        NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibPassword", '')
-        __User__.zlibAccount = ''
-        __User__.zlibPassword = ''
-        __User__.isLoginZlib = false
+      if ((result as object)?.['response']!=null || (result as object)?.['response']!=undefined )
+      {
+        if (tempCookies.message == undefined) {
+          promptAction.showToast({ message: `欢迎`, duration: 1000 })
+          addLog('login', `登录成功`)
+          this.setCookies(tempCookies.user_key, tempCookies.user_id.toString())
+          NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", true)
+          NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", email)
+          NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibPassword", password)
+          NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibCookie", this.cookie)
+          __User__.zlibAccount = email
+          __User__.zlibPassword = password
+          __User__.isLoginZlib = true
+
+          /*  __zlibHomeData__.recommendIndex = 1
+            this.getUserInfo()*/
+          return true
+        } else {
+          //todo:API18后换成openToast
+          promptAction.showToast({ message: `登录失败,账号密码错误`, duration: 1000 })
+          addLog('login', `登录失败,账号密码错误`, true)
+          NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", false)
+          NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibCookies", '')
+          NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibAccount", '')
+          NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibPassword", '')
+          __User__.zlibAccount = ''
+          __User__.zlibPassword = ''
+          __User__.isLoginZlib = false
+          return false
+        }
+      }else {
+        addLog('login', `${data.result}`,true)
+        promptAction.showToast({ message: JSON.stringify(data.result), duration: 1000 })
+        return false
       }
     }).catch((err: Error) => {
       addLog('login', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-    });
-    req.destroy()
+      return false
+    }).finally(() => {
+      req.destroy()
+    })
+
   }
 
   async getUserInfo() {
@@ -121,9 +134,9 @@ export class zlib {
         this.userInfo = JSON.parse(res) as I_UserInfo
         this.userInfo.avatar = avatar
         this.userInfo.userName = userName
-        addLog("getUserInfo",`userName=${userName}`)
-        addLog("getUserInfo",`avatar=${avatar}`)
-        addLog("getUserInfo",`downloadLimit=${this.userInfo.downloadLimit}`)
+        addLog("getUserInfo", `userName=${userName}`)
+        addLog("getUserInfo", `avatar=${avatar}`)
+        addLog("getUserInfo", `downloadLimit=${this.userInfo.downloadLimit}`)
       } else {
         addLog('getUserInfo', `获取用户信息失败,疑似仓颉错误`, true)
       }
@@ -177,18 +190,62 @@ export class zlib {
 
   async getRecommendBooks(page: number): Promise<boolean> {
     addLog('getRecommendBooks', `正在获取推荐书籍page=${page}`)
-    return new Promise<boolean>((resolve) => {
+    return new Promise<boolean>(async (resolve) => {
       let req = http.createHttp()
-      req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
-        method: http.RequestMethod.GET,
-        header: {
-          'sec-ch-ua-platform': '"Windows"',
-          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
-          'Cookie': this.cookie,
-        }
-      }, (err: Error, data: http.HttpResponse) => {
-        req.destroy();
-        if (!err) {
+      if (__User__.isLoginZlib) {
+        await req.request(`${this.base_url}/?ts`, {
+          method: http.RequestMethod.GET,
+          header: {
+            'sec-ch-ua-platform': '"Windows"',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+            'Cookie': this.cookie,
+          }
+        }).then((data: http.HttpResponse) => {
+          let res: string = data.result.toString()
+          const regex = /bookIds:\s*\[([\d,]+)\]/;
+          const match = res.match(regex);
+          let bookIds: number[] = match?.[1].split(',').map(Number) ?? []
+
+          let extraData: object = new Object({ bookIds: bookIds })
+          req.request(`${this.baseApi_url}/book/recommended/mosaic/20/${page}`, {
+            method: http.RequestMethod.POST,
+            header: {
+              'sec-ch-ua-platform': '"Windows"',
+              'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+              'Cookie': this.cookie,
+            },
+            extraData: JSON.stringify(extraData)
+          }).then((data: http.HttpResponse) => {
+            try {
+              let obj = JSON.parse(JSON.stringify(data))
+              let result = JSON.parse((obj as object)?.['result'])
+              let tempArray: I_RecommendBook[] = (result as object)?.['books']
+              tempArray.forEach((item) => {
+                this.recommendBooksArray.pushData(item)
+              })
+              addLog('getRecommendBooks', `获取page=${page}成功`)
+              resolve(true)
+            } catch (e) {
+              resolve(false)
+            }
+            req.destroy();
+          })
+            .catch((err: BusinessError) => {
+              addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
+              console.log(`Liquid:${JSON.stringify(err)}`)
+              promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+              resolve(false)
+            })
+
+        })
+      } else {
+        req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
+          method: http.RequestMethod.GET,
+          header: {
+            'sec-ch-ua-platform': '"Windows"',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+          }
+        }).then((data: http.HttpResponse) => {
           try {
             let obj = JSON.parse(JSON.stringify(data))
             let result = JSON.parse((obj as object)?.['result'])
@@ -201,12 +258,17 @@ export class zlib {
           } catch (e) {
             resolve(false)
           }
-        } else {
-          addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
-          promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-          resolve(false)
-        }
-      });
+          req.destroy();
+        })
+          .catch((err: BusinessError) => {
+            addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
+            promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+            resolve(false)
+          })
+
+      }
+
+
     })
 
   }
@@ -225,10 +287,9 @@ export class zlib {
       numberOfPages: 0,
       datePublished: 0,
       inLanguage: { name: '' },
-      terms:[],
+      terms: [],
       review: { reviewBody: '', datePublished: '', reviewRating: { ratingValue: '' } }
     }
-    console.log(`Liquid${bookHref}`)
     await req.request(`${this.base_url}${bookHref}`, {
       method: http.RequestMethod.GET,
       header: {
@@ -238,8 +299,6 @@ export class zlib {
       }
     }).then((data: http.HttpResponse) => {
       res = JSON.stringify(data.result)
-      console.log(`Liquid${res}`)
-
     }).catch((err: Error) => {
       res = 'error'
       addLog('getBookInfo', `error! ${err.name} ${err.message}`, true)
@@ -249,21 +308,15 @@ export class zlib {
     req.destroy()
 
     if (res != 'error') {
-      console.log(`Liquid123124`)
       try {
         let firstDownloadUrl: string = CJLoader.getBookFirstDownloadUrl(res)
-        console.log(`Liquid!${firstDownloadUrl}`)
         let firstDownloadInfo: string = CJLoader.getBookFirstDownloadInfo(res)
-        console.log(`Liquid!!${firstDownloadInfo}`)
         let readUrl: string = CJLoader.getReadUrl(res)
-        console.log(`Liquid!!${readUrl}`)
-        let terms:I_Terms[] =   JSON.parse(CJLoader.getTerms(res)) as I_Terms[]
-        console.log(`Liquid!!${JSON.stringify(terms)}`)
+        let terms: I_Terms[] = JSON.parse(CJLoader.getTerms(res)) as I_Terms[]
         res = CJLoader.getBookInfo(res)
           .replaceAll("\\n", "")
           .replaceAll("\\\"", "\"")
           .replaceAll("\"datePublished\": ,", "")
-        console.log(`Liquid!!!${res}`)
         resBookInfo = (JSON.parse(res) as object) as I_BookInfo
         resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
@@ -277,7 +330,6 @@ export class zlib {
     } else {
       addLog('getBookInfo', `获取失败`, true)
     }
-    console.log(`Liquid${JSON.stringify(resBookInfo)}`)
     return resBookInfo;
   }
 
@@ -316,7 +368,6 @@ export class zlib {
   async getBookShelf(page: number) {
     addLog('getBookShelf', `尝试获取书单page=${page}`)
     let req = http.createHttp()
-    console.log(`Liquid${`${this.baseApi_url}/booklist/get-page/${page}`}`)
     await req.request(`${this.baseApi_url}/booklist/get-page/${page}`, {
       method: http.RequestMethod.POST,
       header: {
@@ -345,8 +396,10 @@ export class zlib {
     }).catch((err: Error) => {
       addLog('getBookShelf', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-    });
-    req.destroy()
+    }).finally(()=>{
+      req.destroy()
+    })
+
   }
 
   async getBookShelfMoreInfo(shelfID: number, page: number) {
@@ -451,7 +504,6 @@ export class zlib {
       });
 
     })
-
   }
 
   async getTrueDownloadBookUrl(context: Context, bookUrl: string, bookInfo: I_BookInfo) {

@@ -69,15 +69,20 @@ export struct personal {
           value: '确定',
           buttonStyle: ButtonStyleMode.TEXTUAL,
           action: () => {
-            zlibClient.loginIn(this.userAccount, this.userPassword)
+            zlibClient.loginIn(this.userAccount, this.userPassword).then((isLogin:boolean)=>{
+              if (isLogin) {
+                zlibClient.recommendBooksArray.clearData()
+                zlibClient.getRecommendBooks(1)
+              }
+            })
             this.userAccount = ''
             this.userPassword = ''
           }
         }
       ],
-
     }),
   });
+
 
   @Builder
   loginPageBuilder() {
@@ -222,6 +227,8 @@ export struct personal {
                     __User__.zlibAccount = ''
                     __User__.zlibPassword = ''
                     __User__.isLoginZlib = false
+                    zlibClient.recommendBooksArray.clearData()
+                    zlibClient.getRecommendBooks(1)
                   })
                 }
               }.layoutWeight(1).alignItems(HorizontalAlign.Start)
@@ -309,7 +316,6 @@ export struct personal {
               })
               .onClick(() => {
                 this.showDonationTips = true;
-                console.log(`Liquid${this.showDonationTips}`)
               })
 
             }
@@ -414,6 +420,7 @@ export struct personal {
                                  })*/
                   }
                 }
+
               }
             }).onClick(() => {
               if (index == 0) {
@@ -508,15 +515,6 @@ export struct personal {
         })
 
     }
-    .onAppear(() => {
-      if (__User__.isLoginZlib && __UI__.onlineMode) {
-        zlibClient.refreshUrl().then(async () => {
-          zlibClient.getUserInfo()
-        })
-
-      }
-
-    })
     .size({ height: '100%', width: '100%' })
     .padding({ left: 16, right: 16 })
     .onAreaChange((_, newValue) => {

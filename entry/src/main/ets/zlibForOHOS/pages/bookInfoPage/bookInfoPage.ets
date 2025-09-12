@@ -32,6 +32,7 @@ import { request } from "@kit.BasicServicesKit"
 import { fileUri } from "@kit.CoreFileKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
 import { I_BookComment } from "../../datas/interfaces/I_BookComment"
+import { I_Terms } from "../../datas/interfaces/I_Terms"
 
 
 @Builder
@@ -169,6 +170,7 @@ export struct bookInfoPage {
                 .fontSize(18)
                 .opacity(0.6)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
+
               }.alignItems(HorizontalAlign.Start).layoutWeight(1)
 
             }.padding(16).justifyContent(FlexAlign.SpaceBetween).width('100%')

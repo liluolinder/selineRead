@@ -30,7 +30,6 @@ public func getUserAvatar(runtime: JSContext, callInfo: JSCallInfo): JSValue
         if (i.hasAttr('avatar'))
         {
              res = i.attr('avatar').toString().replace("\\n","").replace("\\\"","")
-             AppLog.info('Liquid${i.attr('avatar').toString().replace("\\n","").replace("\\\"","")}')
             break
         }
     }

@@ -38,8 +38,7 @@ import NeoPreferencesUtil from '../../datas/classes//XPreferencesUtil'
 
 @ComponentV2
 export struct zlibHome {
-  @Local recommendIndex: number = 1
-  @Local searchIndex: number = 1
+
 
   @Local showSearchPage: boolean = false
 
@@ -152,11 +151,9 @@ export struct zlibHome {
                 .onChange((value: boolean) => {
                   if (value) {
                     this.chooseLanguageArray.push(item.value.toString())
-                    console.log(`Liquid:${JSON.stringify(this.chooseLanguageArray)}`)
                   } else {
                     this.chooseLanguageArray =
                       this.chooseLanguageArray.filter((value: string) => value != item.value.toString())
-                    console.log(`Liquid:${JSON.stringify(this.chooseLanguageArray)}`)
                   }
                 })
               Text(item.key.toString())
@@ -190,11 +187,9 @@ export struct zlibHome {
                 .onChange((value: boolean) => {
                   if (value) {
                     this.chooseFormatArray.push(item.value.toString())
-                    console.log(`Liquid:${JSON.stringify(this.chooseFormatArray)}`)
                   } else {
                     this.chooseFormatArray =
                       this.chooseFormatArray.filter((value: string) => value != item.value.toString())
-                    console.log(`Liquid:${JSON.stringify(this.chooseFormatArray)}`)
                   }
                 })
               Text(item.key.toString())
@@ -313,7 +308,7 @@ export struct zlibHome {
           .useEffect(true)
           .onClick(() => {
             const specialUrl = this.generateUrl()
-            this.searchIndex = 1
+            __zlibHomeData__.searchIndex = 1
             zlibClient.searchBooks(this.searchBookName, 1, true, specialUrl)
             XAnimation.runWithAnimation(() => {
               __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
@@ -603,7 +598,7 @@ export struct zlibHome {
               addLog('ScanCode', `扫码成功,书籍ISBN为${result.originalValue}`)
               const specialUrl = this.generateUrl()
               this.scrollerOffset = 0
-              this.searchIndex = 1
+              __zlibHomeData__.searchIndex = 1
               this.searchBookName = result.originalValue
               zlibClient.searchBooks(result.originalValue, 1, true, specialUrl)
               XAnimation.runWithAnimation(() => {
@@ -653,7 +648,7 @@ export struct zlibHome {
               })
             } else {
               this.scrollerOffset = 0
-              this.searchIndex = 1
+              __zlibHomeData__.searchIndex = 1
               this.searchBookName = value
               const specialUrl = this.generateUrl()
               zlibClient.searchBooks(value, 1, true, specialUrl)
@@ -765,9 +760,9 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                await zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
+                await zlibClient.searchBooks(this.searchBookName, ++ __zlibHomeData__.searchIndex, false)
               } else {
-                await zlibClient.getRecommendBooks(++this.recommendIndex)
+                await zlibClient.getRecommendBooks(++__zlibHomeData__.recommendIndex)
               }
               this.isFlashing = false
             })
@@ -799,9 +794,9 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                await zlibClient.searchBooks(this.searchBookName, ++this.searchIndex, false)
+                await zlibClient.searchBooks(this.searchBookName, ++ __zlibHomeData__.searchIndex, false)
               } else {
-                await zlibClient.getRecommendBooks(++this.recommendIndex)
+                await zlibClient.getRecommendBooks(++__zlibHomeData__.recommendIndex)
               }
               this.isFlashing = false
             })
@@ -907,7 +902,7 @@ export struct zlibHome {
               .backgroundColor($r('app.color.start_window_background_blur'))
               .onClick(() => {
                 this.scrollerOffset = 0
-                this.searchIndex = 1
+                __zlibHomeData__.searchIndex = 1
                 this.searchBookName = item.value
                 const specialUrl = this.generateUrl()
                 zlibClient.searchBooks(item.value, 1, true, specialUrl)
@@ -948,13 +943,7 @@ export struct zlibHome {
         })
         .zIndex(114513)
       }
-
     }
-    .onAppear(async () => {
-      await zlibClient.refreshUrl().then(async () => {
-        zlibClient.getRecommendBooks(1)
-      })
-    })
     .size({ height: '100%', width: '100%' })
   }
 }
@@ -964,6 +953,8 @@ class zlibHomeData {
   @Trace isInSearchMode: boolean = false
   @Trace searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend
   @Trace isOpening: boolean = false
+  @Trace recommendIndex: number = 1
+  @Trace searchIndex: number = 1
 }
 
 export const __zlibHomeData__ = new zlibHomeData()

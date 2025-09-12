@@ -83,9 +83,10 @@ export struct BookListList {
                       ListItem() {
                         Image(itemB.coverUrl)
                           .width(75)
+                          .height(112)
                           .draggable(false)
                       }
-                    })
+                    },(itemB: I_BookInfo_Bookshelf)=>itemB.cover)
                   }
                   .listDirection(Axis.Horizontal)
                   .scrollBar(BarState.Off)
@@ -155,11 +156,7 @@ export struct BookListList {
         })
       }
     }
-    .onAppear(async () => {
-      await zlibClient.refreshUrl().then(async () => {
-        zlibClient.getBookShelf(1)
-      })
-    })
+
     .backgroundColor(Color.Transparent)
     .transition(this.transitionEffect)
     .hideTitleBar(true)

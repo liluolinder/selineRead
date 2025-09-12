@@ -49,7 +49,7 @@ import { I_SearchHistory } from '../datas/interfaces/I_SearchHistory';
 struct Index {
   private tabsArrayOnline: [string, Resource, Resource][] = [
     ['书库', $r('sys.symbol.book'), $r('sys.symbol.book_open_fill')],
-    //['书单', $r('sys.symbol.list_bullet'), $r('sys.symbol.list_bullet')],
+    ['书单', $r('sys.symbol.list_bullet'), $r('sys.symbol.list_bullet')],
     ['书架', $r('sys.symbol.book_closed_right_left'), $r('sys.symbol.books_vertical_fill')],
     ['我的', $r('sys.symbol.person'), $r('sys.symbol.person_fill')]
   ]
@@ -85,15 +85,19 @@ struct Index {
       zlibClient.searchHistoryArray = JSON.parse(searchHistoryStr) as I_SearchHistory[]
     }
 
-    console.log(`Liquid${JSON.stringify(zlibClient.searchHistoryArray)}`)
-
     if (__User__.isLoginZlib) {
       __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
       __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
       zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
-      zlibClient.loginIn(__User__.zlibAccount,__User__.zlibPassword)
     }
     addLog("读取首选项",`Cookie${zlibClient.cookie}`)
+    await zlibClient.refreshUrl().then(async () => {
+      zlibClient.getRecommendBooks(1)
+
+      if (__User__.isLoginZlib && __UI__.onlineMode) {
+        zlibClient.getUserInfo()
+      }
+    })
     this.proccessContinueData()
 
   }
@@ -178,7 +182,7 @@ struct Index {
           Swiper(this.swiperController){
             if(__UI__.onlineMode){
               zlibHome()
-             // BookList()
+              BookList()
             }
             BookShelf()
             personal()
@@ -188,6 +192,10 @@ struct Index {
           .disableSwipe(true)
           .onChange((index)=>{
             this.currentPage = index
+            if (index==1) {
+              zlibClient.getBookShelf(1)
+              zlibClient.getBookShelf(2)
+            }
           })
           Flex({justifyContent: FlexAlign.SpaceAround, alignItems: ItemAlign.Center, direction: __System__.windowWidth > minWidth? FlexDirection.Column: FlexDirection.Row}){
             ForEach(__UI__.onlineMode? this.tabsArrayOnline: this.tabsArray, (item: [string, Resource, Resource], index: number) =>{

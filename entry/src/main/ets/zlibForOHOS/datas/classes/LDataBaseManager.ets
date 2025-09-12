@@ -149,7 +149,6 @@ export class LDataBaseManager {
           console.error(`Liquid:Failed to delete data. Code:${err.code}, message:${err.message}`);
           return;
         }
-        console.info(`Liquid:Delete rows: ${rows}`);
       })
     }
   }
