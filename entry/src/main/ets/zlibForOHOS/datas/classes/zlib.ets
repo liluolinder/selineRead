@@ -553,7 +553,7 @@ export class zlib {
         'Cookie': this.cookie,
       }
     }).then((data: http.HttpResponse) => {
-
+      console.log(`Liquid:${JSON.stringify(data.result)}`)
     }).catch((err: Error) => {
       addLog('searchTerms', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })

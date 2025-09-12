@@ -20,7 +20,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 import { zlibClient } from '../../datas/classes/zlib'
 import { I_RecommendBook } from '../../datas/interfaces/I_RecommendBook'
 import { Chip, ChipSize, curves, LengthMetrics } from '@kit.ArkUI'
-import { __CustomBackgroundData__, __System__, __UI__, minWidth } from '../../datas/classes/ShareDatas'
+import { __CustomBackgroundData__, __System__, __UI__, minWidth, __User__ } from '../../datas/classes/ShareDatas'
 import { XAnimation } from '../../datas/classes/XAnimation'
 import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod'
@@ -38,38 +38,28 @@ import NeoPreferencesUtil from '../../datas/classes//XPreferencesUtil'
 
 @ComponentV2
 export struct zlibHome {
-
-
   @Local showSearchPage: boolean = false
-
   @Local listOrWaterFlow: zlibIndexShowMod = zlibIndexShowMod.WaterFlow
-
   @Local searchBookName: string = ''
   @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
-
   @Local isFlashing: boolean = false
-
   @Local isInScroller: boolean = false
   @Local isHaveGoToTop: boolean = false
-
   @Local searchBarOffsetY: number = 0
   @Local SideButtonOffsetX: number = 16
   @Local lastOffset: number = 0
   @Local scrollerOffset: number = 0
   @Local showSearchOption: boolean = false
   @Local scrollerController: Scroller = new Scroller()
-
   @Local startTime: string | undefined
   @Local startTImeIndex: number | number[] = 0;
   @Local endTIme: string | undefined
   @Local endTImeIndex: number | number[] | undefined;
-
   @Local showLanguagePopup: boolean = false
   @Local chooseLanguageArray: string[] = []
   @Local showFormatPopup: boolean = false
   @Local chooseFormatArray: string[] = []
-
   @Local searchType: number = 0
 
   @Monitor('lastOffset')
@@ -650,8 +640,14 @@ export struct zlibHome {
               this.scrollerOffset = 0
               __zlibHomeData__.searchIndex = 1
               this.searchBookName = value
-              const specialUrl = this.generateUrl()
-              zlibClient.searchBooks(value, 1, true, specialUrl)
+
+              if (this.searchType == 0) {
+                const specialUrl = this.generateUrl()
+                zlibClient.searchBooks(value, 1, true, specialUrl)
+              }else {
+                zlibClient.searchTerms(value)
+              }
+
               XAnimation.runWithAnimation(() => {
                 __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
               })
@@ -675,20 +671,19 @@ export struct zlibHome {
             })
           })
           .layoutWeight(1)
-          .constraintSize({maxWidth: __zlibHomeData__.isInSearchMode ? '100%' : '50%'})
+          .constraintSize({ maxWidth: __zlibHomeData__.isInSearchMode ? '100%' : '50%' })
 
 
-        Select([{value: '常规搜索'}, {value: '关键词搜索'}])
-          .selected(this.searchType) //默认选中项
-          .onSelect((index)=>{
+        Select([{ value: '常规搜索' }, { value: '关键词搜索' }])
+          .selected($$this.searchType)//默认选中项
+          .onSelect((index) => {
             this.searchType = index
-            //选中回调
           })
           .height(40)
           .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
           .useEffect(true)
-          .value(['常规搜索', '关键词搜索'][this.searchType]) //默认文本
+          .value(['常规搜索', '关键词搜索'][this.searchType])//默认文本
           .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
       }
       .zIndex(1)
@@ -746,7 +741,6 @@ export struct zlibHome {
             .rowsGap(10)
             .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
               this.scrollerOffset += scrollOffset
-              console.log(`Liquid${scrollOffset}}`)
               this.lastOffset = scrollOffset
               this.isInScroller = true
             })
@@ -760,7 +754,7 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                await zlibClient.searchBooks(this.searchBookName, ++ __zlibHomeData__.searchIndex, false)
+                await zlibClient.searchBooks(this.searchBookName, ++__zlibHomeData__.searchIndex, false)
               } else {
                 await zlibClient.getRecommendBooks(++__zlibHomeData__.recommendIndex)
               }
@@ -794,13 +788,12 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                await zlibClient.searchBooks(this.searchBookName, ++ __zlibHomeData__.searchIndex, false)
+                await zlibClient.searchBooks(this.searchBookName, ++__zlibHomeData__.searchIndex, false)
               } else {
                 await zlibClient.getRecommendBooks(++__zlibHomeData__.recommendIndex)
               }
               this.isFlashing = false
             })
-
 
           }
 
