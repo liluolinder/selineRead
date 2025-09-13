@@ -383,7 +383,7 @@ export struct bookInfoPage {
               .chainAnimation(true)
               .nestedScroll({
                 scrollForward: NestedScrollMode.SELF_FIRST,
-                scrollBackward: NestedScrollMode.SELF_FIRST
+                scrollBackward: NestedScrollMode.PARENT_FIRST
               })
 
 
@@ -456,6 +456,11 @@ export struct bookInfoPage {
               .borderRadius({topLeft: 15, topRight: 15})
               .clip(true)
               .margin({left: 16, right: 16})
+              .onReachEnd(async () => { //Todo: 无效
+                this.isFlashing = true
+                await zlibClient.getRecommendBooksRelated(++this.recommendPage, false)
+                this.isFlashing = false
+              })
               .nestedScroll({
                 scrollForward: NestedScrollMode.PARENT_FIRST,
                 scrollBackward: NestedScrollMode.SELF_FIRST
