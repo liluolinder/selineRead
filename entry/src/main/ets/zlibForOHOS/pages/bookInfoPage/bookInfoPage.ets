@@ -460,7 +460,7 @@ export struct bookInfoPage {
                 this.isFlashing = true
                 await zlibClient.getRecommendBooksRelated(++this.recommendPage, this.bookInfo?.bookIDsRelated!).then((res:I_RecommendBook[])=>{
                   res.forEach((item)=>{
-                    this.bookInfo?.recommendBooksArrayRelated?.pushUnshiftData(item)
+                    this.bookInfo?.recommendBooksArrayRelated?.pushData(item)
                   })
                 })
                 this.isFlashing = false

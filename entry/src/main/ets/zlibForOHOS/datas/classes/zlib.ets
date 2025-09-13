@@ -361,7 +361,7 @@ export class zlib {
         resBookInfo.bookIDsRelated = match?.[1].split(',').map(Number) ?? []
         await this.getRecommendBooksRelated(1,resBookInfo.bookIDsRelated).then((res:I_RecommendBook[])=>{
           res.forEach((item)=>{
-            resBookInfo.recommendBooksArrayRelated?.pushUnshiftData(item)
+            resBookInfo.recommendBooksArrayRelated?.pushData(item)
           })
         })
         addLog('getBookInfo', `获取成功`)
