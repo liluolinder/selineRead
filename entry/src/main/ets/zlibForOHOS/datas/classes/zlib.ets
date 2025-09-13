@@ -297,7 +297,7 @@ export class zlib {
         let tempArray: I_RecommendBook[] = (result as object)?.['books']
         tempArray.forEach((item) => {
           console.log(`Liquid:${JSON.stringify(item)}`)
-          this.recommendBooksArrayRelated.pushUnshiftData(item)
+          this.recommendBooksArrayRelated.pushData(item)
         })
         addLog('getRecommendBooksRelated', `获取page=${page}成功`)
       } catch (e) {
