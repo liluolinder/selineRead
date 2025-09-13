@@ -393,7 +393,7 @@ export struct bookInfoPage {
 
               WaterFlow() {
 
-                LazyForEach(zlibClient.recommendBooksArray, (item: I_RecommendBook, index: number) => {
+                LazyForEach(zlibClient.recommendBooksArrayRelated, (item: I_RecommendBook, index: number) => {
                   FlowItem() {
                     Column({ space: 20 }) {
                       Image(item.cover)

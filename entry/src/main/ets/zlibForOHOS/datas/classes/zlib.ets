@@ -293,7 +293,7 @@ export class zlib {
         let result = JSON.parse((obj as object)?.['result'])
         let tempArray: I_RecommendBook[] = (result as object)?.['books']
         tempArray.forEach((item) => {
-          console.log(`Liquid:${item}`)
+          this.recommendBooksArrayRelated.pushUnshiftData(item)
         })
         addLog('getRecommendBooksRelated', `获取page=${page}成功`)
       } catch (e) {
