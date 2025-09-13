@@ -393,7 +393,7 @@ export struct bookInfoPage {
 
               WaterFlow() {
 
-                LazyForEach(zlibClient.recommendBooksArrayRelated, (item: I_RecommendBook, index: number) => {
+                LazyForEach(this.bookInfo?.recommendBooksArrayRelated, (item: I_RecommendBook, index: number) => {
                   FlowItem() {
                     Column({ space: 20 }) {
                       Image(item.cover)
@@ -458,7 +458,11 @@ export struct bookInfoPage {
               .margin({left: 16, right: 16})
               .onReachEnd(async () => {
                 this.isFlashing = true
-                await zlibClient.getRecommendBooksRelated(++this.recommendPage, false)
+                await zlibClient.getRecommendBooksRelated(++this.recommendPage, this.bookInfo?.bookIDsRelated!).then((res:I_RecommendBook[])=>{
+                  res.forEach((item)=>{
+                    this.bookInfo?.recommendBooksArrayRelated?.pushUnshiftData(item)
+                  })
+                })
                 this.isFlashing = false
               })
               .nestedScroll({

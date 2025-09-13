@@ -16,6 +16,8 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
+import { BasicDataSource } from "../classes/BasicDataSource"
+import { I_RecommendBook } from "./I_RecommendBook"
 import { I_Terms } from "./I_Terms"
 
 
@@ -36,6 +38,8 @@ export interface I_BookInfo{
   terms?:I_Terms[]
   href?:string
   readUrl?:string
+  bookIDsRelated?:number[]
+  recommendBooksArrayRelated?:BasicDataSource<I_RecommendBook>
 }
 
 export function getEmptyBookInfo(): I_BookInfo{

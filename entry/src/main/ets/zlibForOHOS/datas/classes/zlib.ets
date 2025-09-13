@@ -37,8 +37,6 @@ export class zlib {
   @Trace searchHistoryArray: I_SearchHistory[] = []
   @Trace userInfo: I_UserInfo | undefined
 
-  @Trace bookIDsRelated:number[]=[]
-  @Trace recommendBooksArrayRelated:BasicDataSource<I_RecommendBook> = new BasicDataSource<I_RecommendBook>()
 
   //官方:https://zh.z-library.sk
   base_url: string = ''
@@ -272,52 +270,46 @@ export class zlib {
     })
   }
 
-  async getRecommendBooksRelated(page:number,needClear:boolean=false): Promise<boolean>{
-    return new Promise<boolean>((resolve)=>{
-      addLog('getRecommendBooksRelated', `尝试获取page=${page}`)
-      if (needClear) {
-        this.recommendBooksArrayRelated.clearData()
+  async getRecommendBooksRelated(page:number,bookIDsRelated:number[]): Promise<I_RecommendBook[]>{
+    addLog('getRecommendBooksRelated', `尝试获取page=${page}`)
+    let req = http.createHttp()
+    let extraData: object = new Object({ bookIds: bookIDsRelated })
+    console.log(`Liquid:${JSON.stringify(extraData)}`)
+
+    return await req.request(`${this.baseApi_url}/book/recommended/mosaic/21/${page}`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      },
+      extraData: JSON.stringify(extraData)
+    }).then((data: http.HttpResponse) => {
+      console.log(`Liquid:${JSON.stringify(data.result)}`)
+      try {
+        let obj = JSON.parse(JSON.stringify(data))
+        let result = JSON.parse((obj as object)?.['result'])
+        let tempArray: I_RecommendBook[] = (result as object)?.['books']
+        addLog('getRecommendBooksRelated', `获取page=${page}成功`)
+        return tempArray
+      } catch (e) {
+        return []
       }
-      let req = http.createHttp()
-      let extraData: object = new Object({ bookIds: this.bookIDsRelated })
-      console.log(`Liquid:${JSON.stringify(extraData)}`)
-      req.request(`${this.baseApi_url}/book/recommended/mosaic/21/${page}`, {
-        method: http.RequestMethod.POST,
-        header: {
-          'sec-ch-ua-platform': '"Windows"',
-          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
-          'Cookie': this.cookie,
-        },
-        extraData: JSON.stringify(extraData)
-      }).then((data: http.HttpResponse) => {
-        console.log(`Liquid:${JSON.stringify(data.result)}`)
-        try {
-          let obj = JSON.parse(JSON.stringify(data))
-          let result = JSON.parse((obj as object)?.['result'])
-          let tempArray: I_RecommendBook[] = (result as object)?.['books']
-          tempArray.forEach((item) => {
-            console.log(`Liquid:${JSON.stringify(item)}`)
-            this.recommendBooksArrayRelated.pushData(item)
-          })
-          addLog('getRecommendBooksRelated', `获取page=${page}成功`)
-        } catch (e) {
-        }
-        req.destroy();
-        resolve(true)
-      })
-        .catch((err: BusinessError) => {
-          addLog('getRecommendBooksRelated', `error! ${err.name} ${err.message}`, true)
-          console.log(`Liquid:${JSON.stringify(err)}`)
-          promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-          resolve(false)
-        })
     })
+      .catch((err: BusinessError) => {
+        addLog('getRecommendBooksRelated', `error! ${err.name} ${err.message}`, true)
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+        return []
+      }).finally(()=>{
+        req.destroy();
+        return []
+      });
 
   }
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
     addLog('getBookInfo', `尝试获取书籍信息：${bookHref}`)
-    this.bookIDsRelated = []
     let req = http.createHttp()
     let res: string = ''
     let resBookInfo: I_BookInfo = {
@@ -356,7 +348,6 @@ export class zlib {
         let terms: I_Terms[] = JSON.parse(CJLoader.getTerms(res)) as I_Terms[]
         const regex = /bookIds:\s*\[([\d,]+)\]/;
         const match = res.match(regex);
-        this.bookIDsRelated = match?.[1].split(',').map(Number) ?? []
         res = CJLoader.getBookInfo(res)
           .replaceAll("\\n", "")
           .replaceAll("\\\"", "\"")
@@ -366,7 +357,13 @@ export class zlib {
         resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
         resBookInfo.readUrl = readUrl
         resBookInfo.terms = terms
-        this.getRecommendBooksRelated(1,true)
+        resBookInfo.recommendBooksArrayRelated = new BasicDataSource<I_RecommendBook>()
+        resBookInfo.bookIDsRelated = match?.[1].split(',').map(Number) ?? []
+        await this.getRecommendBooksRelated(1,resBookInfo.bookIDsRelated).then((res:I_RecommendBook[])=>{
+          res.forEach((item)=>{
+            resBookInfo.recommendBooksArrayRelated?.pushUnshiftData(item)
+          })
+        })
         addLog('getBookInfo', `获取成功`)
       } catch (e) {
         promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
