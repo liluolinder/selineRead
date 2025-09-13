@@ -585,7 +585,7 @@ export class zlib {
       let regex = new RegExp(pattern);
       let matches = urlParams.match(regex);
       let encodedFilename: string = matches ? matches[1] : '';
-      let decodedFilename = decodeURI(encodedFilename);
+      let decodedFilename = decodeURI(encodedFilename).replaceAll("Z-Library",`${bookInfo.bookID}`);
       this.downloadBook(context, temp.location, decodedFilename, bookInfo)
     }).catch((err: Error) => {
       //todo:API18后换成openToast

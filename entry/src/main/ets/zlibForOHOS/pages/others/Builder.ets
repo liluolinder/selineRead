@@ -29,6 +29,7 @@ export function loadingNewDialog() {
   .size({ width: '100%', height: '100%' })
   .padding({ bottom: Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 100)) })
   .enabled(false)
+  .zIndex(114514)
   .transition(XAnimation.getAnimation('bottom'))
 }
 
