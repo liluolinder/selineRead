@@ -608,22 +608,24 @@ export struct zlibHome {
           .onSelect((index) => {
             this.searchType = index
 
-            this.scrollerOffset = 0
-            __zlibHomeData__.searchIndex = 1
-            if (this.searchType == 0) {
-              const specialUrl = this.generateUrl()
-              zlibClient.searchBooks(this.searchBookName, 1, true, specialUrl)
-            }else {
-              zlibClient.searchTerms(this.searchBookName)
+            if (this.searchBookName!='' && this.searchBookName) {
+              this.scrollerOffset = 0
+              __zlibHomeData__.searchIndex = 1
+              if (this.searchType == 0) {
+                const specialUrl = this.generateUrl()
+                zlibClient.searchBooks(this.searchBookName, 1, true, specialUrl)
+              }else {
+                zlibClient.searchTerms(this.searchBookName)
+              }
+              XAnimation.runWithAnimation(() => {
+                __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
+              })
+              zlibClient.searchHistoryArray =
+                zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != this.searchBookName)
+              zlibClient.searchHistoryArray.unshift({ value: this.searchBookName, time: Date.parse(new Date().toString()) })
+              NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
+                JSON.stringify(zlibClient.searchHistoryArray))
             }
-            XAnimation.runWithAnimation(() => {
-              __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
-            })
-            zlibClient.searchHistoryArray =
-              zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != this.searchBookName)
-            zlibClient.searchHistoryArray.unshift({ value: this.searchBookName, time: Date.parse(new Date().toString()) })
-            NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
-              JSON.stringify(zlibClient.searchHistoryArray))
 
           })
           .height(40)
