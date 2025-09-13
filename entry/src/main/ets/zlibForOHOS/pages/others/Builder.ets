@@ -31,6 +31,7 @@ export function loadingNewDialog() {
   .enabled(false)
   .zIndex(114514)
   .transition(XAnimation.getAnimation('bottom'))
+  .zIndex(114514)
 }
 
 @Builder

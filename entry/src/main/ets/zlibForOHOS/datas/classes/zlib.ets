@@ -273,42 +273,47 @@ export class zlib {
     })
   }
 
-  async getRecommendBooksRelated(page:number,needClear:boolean=false){
-    addLog('getRecommendBooksRelated', `尝试获取page=${page}`)
-    if (needClear) {
-      this.recommendBooksArrayRelated.clearData()
-    }
-    let req = http.createHttp()
-    let extraData: object = new Object({ bookIds: this.bookIDsRelated })
-    console.log(`Liquid:${JSON.stringify(extraData)}`)
-    req.request(`${this.baseApi_url}/book/recommended/mosaic/21/${page}`, {
-      method: http.RequestMethod.POST,
-      header: {
-        'sec-ch-ua-platform': '"Windows"',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
-        'Cookie': this.cookie,
-      },
-      extraData: JSON.stringify(extraData)
-    }).then((data: http.HttpResponse) => {
-      console.log(`Liquid:${JSON.stringify(data.result)}`)
-      try {
-        let obj = JSON.parse(JSON.stringify(data))
-        let result = JSON.parse((obj as object)?.['result'])
-        let tempArray: I_RecommendBook[] = (result as object)?.['books']
-        tempArray.forEach((item) => {
-          console.log(`Liquid:${JSON.stringify(item)}`)
-          this.recommendBooksArrayRelated.pushData(item)
-        })
-        addLog('getRecommendBooksRelated', `获取page=${page}成功`)
-      } catch (e) {
+  async getRecommendBooksRelated(page:number,needClear:boolean=false): Promise<boolean>{
+    return new Promise<boolean>((resolve)=>{
+      addLog('getRecommendBooksRelated', `尝试获取page=${page}`)
+      if (needClear) {
+        this.recommendBooksArrayRelated.clearData()
       }
-      req.destroy();
-    })
-      .catch((err: BusinessError) => {
-        addLog('getRecommendBooksRelated', `error! ${err.name} ${err.message}`, true)
-        console.log(`Liquid:${JSON.stringify(err)}`)
-        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      let req = http.createHttp()
+      let extraData: object = new Object({ bookIds: this.bookIDsRelated })
+      console.log(`Liquid:${JSON.stringify(extraData)}`)
+      req.request(`${this.baseApi_url}/book/recommended/mosaic/21/${page}`, {
+        method: http.RequestMethod.POST,
+        header: {
+          'sec-ch-ua-platform': '"Windows"',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+          'Cookie': this.cookie,
+        },
+        extraData: JSON.stringify(extraData)
+      }).then((data: http.HttpResponse) => {
+        console.log(`Liquid:${JSON.stringify(data.result)}`)
+        try {
+          let obj = JSON.parse(JSON.stringify(data))
+          let result = JSON.parse((obj as object)?.['result'])
+          let tempArray: I_RecommendBook[] = (result as object)?.['books']
+          tempArray.forEach((item) => {
+            console.log(`Liquid:${JSON.stringify(item)}`)
+            this.recommendBooksArrayRelated.pushData(item)
+          })
+          addLog('getRecommendBooksRelated', `获取page=${page}成功`)
+        } catch (e) {
+        }
+        req.destroy();
+        resolve(true)
       })
+        .catch((err: BusinessError) => {
+          addLog('getRecommendBooksRelated', `error! ${err.name} ${err.message}`, true)
+          console.log(`Liquid:${JSON.stringify(err)}`)
+          promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+          resolve(false)
+        })
+    })
+
   }
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
