@@ -23,6 +23,7 @@ import { I_BookComment } from '../interfaces/I_BookComment';
 import { I_SearchHistory } from '../interfaces/I_SearchHistory';
 import { __zlibHomeData__ } from '../../pages/zlibHome/zlibHome';
 import { I_Terms } from '../interfaces/I_Terms';
+import { it } from '@ohos/hypium';
 
 
 @ObservedV2
@@ -279,6 +280,7 @@ export class zlib {
     }
     let req = http.createHttp()
     let extraData: object = new Object({ bookIds: this.bookIDsRelated })
+    console.log(`Liquid:${JSON.stringify(extraData)}`)
     req.request(`${this.baseApi_url}/book/recommended/mosaic/21/${page}`, {
       method: http.RequestMethod.POST,
       header: {
@@ -288,11 +290,13 @@ export class zlib {
       },
       extraData: JSON.stringify(extraData)
     }).then((data: http.HttpResponse) => {
+      console.log(`Liquid:${JSON.stringify(data.result)}`)
       try {
         let obj = JSON.parse(JSON.stringify(data))
         let result = JSON.parse((obj as object)?.['result'])
         let tempArray: I_RecommendBook[] = (result as object)?.['books']
         tempArray.forEach((item) => {
+          console.log(`Liquid:${JSON.stringify(item)}`)
           this.recommendBooksArrayRelated.pushUnshiftData(item)
         })
         addLog('getRecommendBooksRelated', `获取page=${page}成功`)
