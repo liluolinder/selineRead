@@ -559,7 +559,7 @@ export struct zlibHome {
   }
 
   build() {
-    Stack({ alignContent: Alignment.TopEnd }) {
+    Stack({ alignContent: Alignment.Top }) {
       if (__zlibHomeData__.isOpening) {
         loadingDialog()
       }
@@ -603,31 +603,23 @@ export struct zlibHome {
         })
         .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
-          $r('sys.symbol.satellite_map'))
-            .fontSize(24)
-            .fontColor([$r('sys.color.font_secondary')])
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor($r('app.color.start_window_background_blur'))
-        .backdropBlur(100)
-        .useEffect(true)
-        .onClick(() => {
-          addLog('changeListOrWaterFlow', `切换列表/瀑布流`)
-          XAnimation.runWithAnimation(() => {
-            this.scrollerOffset = 0
-            this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
-            zlibIndexShowMod.WaterFlow
+        Select([{ value: '常规搜索' }, { value: '关键词搜索' }])
+          .selected($$this.searchType)//默认选中项
+          .onSelect((index) => {
+            this.searchType = index
           })
-        })
-        .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
+          .height(40)
+          .backgroundColor($r('app.color.start_window_background_blur'))
+          .backdropBlur(100)
+          .useEffect(true)
+          .value(['常规搜索', '关键词搜索'][this.searchType])//默认文本
+          .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
 
         Search({ value: $$this.searchBookName })
           .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
           .useEffect(true)
+          .layoutWeight(1)
           .focusable(__zlibHomeData__.isInSearchMode)
           .enableKeyboardOnFocus(__zlibHomeData__.isInSearchMode)
           .onSubmit((value: string) => {
@@ -670,21 +662,29 @@ export struct zlibHome {
               __zlibHomeData__.isInSearchMode = true
             })
           })
-          .layoutWeight(1)
           .constraintSize({ maxWidth: __zlibHomeData__.isInSearchMode ? '100%' : '50%' })
 
-
-        Select([{ value: '常规搜索' }, { value: '关键词搜索' }])
-          .selected($$this.searchType)//默认选中项
-          .onSelect((index) => {
-            this.searchType = index
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
+          $r('sys.symbol.satellite_map'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .backdropBlur(100)
+        .useEffect(true)
+        .onClick(() => {
+          addLog('changeListOrWaterFlow', `切换列表/瀑布流`)
+          XAnimation.runWithAnimation(() => {
+            this.scrollerOffset = 0
+            this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
+            zlibIndexShowMod.WaterFlow
           })
-          .height(40)
-          .backgroundColor($r('app.color.start_window_background_blur'))
-          .backdropBlur(100)
-          .useEffect(true)
-          .value(['常规搜索', '关键词搜索'][this.searchType])//默认文本
-          .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
+        })
+        .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
+
       }
       .zIndex(1)
       .padding({ left: 16, right: 16, top: __System__.topRectHeight })
