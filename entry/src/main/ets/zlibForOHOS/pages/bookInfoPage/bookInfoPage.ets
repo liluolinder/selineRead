@@ -36,6 +36,14 @@ import { I_Terms } from "../../datas/interfaces/I_Terms"
 import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
 import { loadingDialog, loadingNewDialog } from "../others/Builder"
 
+//todo:看下面
+/*
+  展示 this.bookInfo.terms  类型为  I_Terms
+  点击可以跳转搜索页
+  同时设置搜索页面的searchType=1 必须要设置
+  调用搜索函数 zlibClient.searchTerms(xxx)
+  xxx为关键字
+ */
 
 @Builder
 export function bookInfoPageBuilder() {
