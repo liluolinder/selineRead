@@ -33,6 +33,8 @@ import { fileUri } from "@kit.CoreFileKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
 import { I_BookComment } from "../../datas/interfaces/I_BookComment"
 import { I_Terms } from "../../datas/interfaces/I_Terms"
+import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
+import { loadingDialog, loadingNewDialog } from "../others/Builder"
 
 
 @Builder
@@ -53,6 +55,10 @@ export struct bookInfoPage {
   @Local showComment: boolean = false
   @Local showOnlineRead: boolean = false
   commitPage: number = 1
+  @Local waterFlowColumnNumber: number = -1
+  @Local isOpening: boolean = false
+  @Local isFlashing: boolean = false
+  recommendPage: number = 1
 
   @Builder
   commentPageBuilder() {
@@ -131,250 +137,353 @@ export struct bookInfoPage {
           image: this.bookInfo?.image
         })
           .zIndex(114514)
-
-
       } else {
-        List({ space: 10 }) {
+        Stack(){
+          Scroll(){
+            Column(){
+              List({ space: 10 }) {
 
-          ListItem() {
-            Row({ space: 20 }) {
-              Image(this.bookInfo?.image)
-                .zIndex(114513)
-                .transition(TransitionEffect.OPACITY)
-                .geometryTransition('image')
-                .size({ height: 160, width: 116 })
-                .shadow({
-                  radius: 25,
-                  color: Color.Gray,
-                  offsetX: 0,
-                  offsetY: 10
-                })
-                .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-                .onClick(() => {
-                  XAnimation.runWithAnimation(() => this.isViewingBigImage = true, true, 0.4, 0.85)
-                })
+                ListItem() {
+                  Row({ space: 20 }) {
+                    Image(this.bookInfo?.image)
+                      .zIndex(114513)
+                      .transition(TransitionEffect.OPACITY)
+                      .geometryTransition('image')
+                      .size({ height: 160, width: 116 })
+                      .shadow({
+                        radius: 25,
+                        color: Color.Gray,
+                        offsetX: 0,
+                        offsetY: 10
+                      })
+                      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                      .onClick(() => {
+                        XAnimation.runWithAnimation(() => this.isViewingBigImage = true, true, 0.4, 0.85)
+                      })
 
-              Column({ space: 5 }) {
-                Text(this.bookInfo?.name)
-                  .fontWeight(FontWeight.Bold)
-                  .fontSize(24)
-                  .maxLines(3)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                Text() {
-                  ForEach(this.bookInfo?.author, (item: authorInfo) => {
-                    Span(item.name)
-                    Span(' ')
+                    Column({ space: 5 }) {
+                      Text(this.bookInfo?.name)
+                        .fontWeight(FontWeight.Bold)
+                        .fontSize(24)
+                        .maxLines(3)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      Text() {
+                        ForEach(this.bookInfo?.author, (item: authorInfo) => {
+                          Span(item.name)
+                          Span(' ')
+                        })
+                      }
+                      .maxLines(3)
+                      .fontSize(18)
+                      .opacity(0.6)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+                    }.alignItems(HorizontalAlign.Start).layoutWeight(1)
+
+                  }.padding(16).justifyContent(FlexAlign.SpaceBetween).width('100%')
+
+                }
+                .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                  undefined)
+                .useEffect(true)
+                .size({ width: '100%', height: 200 })
+                .borderRadius(20)
+                .transition(XAnimation.getAnimation('bottom', 50))
+
+                ListItem() {
+                  Stack({ alignContent: Alignment.Top }) {
+                    Scroll() {
+                      Row() {
+                        Text(this.bookInfo?.description == '' ? '暂无简介' :
+                        this.bookInfo?.description
+                          .replaceAll("&lt;br&gt;", "")
+                          .replaceAll("&lt;p&gt;", "")
+                          .replaceAll("&lt;/p&gt;", "")
+                        )
+                          .fontWeight(FontWeight.Normal)
+                          .fontSize(16)
+                          .size({ width: '100%' })
+                      }.size({ width: '100%' })
+
+                    }
+                    .edgeEffect(EdgeEffect.Spring)
+                    .scrollBar(BarState.Off)
+                    .fadingEdge(true)
+                  }.constraintSize({ maxHeight: 200, minHeight: this.pageWidth > minWidth ? 200 : 0 }).padding(16)
+                }
+                .borderRadius(20)
+                .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                  undefined)
+                .useEffect(true)
+                .width('100%')
+                .transition(XAnimation.getAnimation('bottom', 100))
+
+                ListItemGroup() {
+
+                  ComposeListItem({
+                    contentItem: {
+                      primaryText: '评分'
+                    },
+                    operateItem: {
+                      text: this.bookInfo?.review.reviewRating.ratingValue
+                    }
+                  })
+
+                  ComposeListItem({
+                    contentItem: {
+                      primaryText: '语言'
+                    },
+                    operateItem: {
+                      text: this.bookInfo?.inLanguage.name
+                    }
+                  })
+
+                  ComposeListItem({
+                    contentItem: {
+                      primaryText: 'ISBN'
+                    },
+                    operateItem: {
+                      text: this.bookInfo?.isbn == '' ? '暂无' : this.bookInfo?.isbn
+                    }
+                  })
+
+                  ComposeListItem({
+                    contentItem: {
+                      primaryText: '出版社'
+                    },
+                    operateItem: {
+                      text: this.bookInfo?.publisher.name == '' ? '暂无' : this.bookInfo?.publisher.name
+                    }
+                  })
+
+                  ComposeListItem({
+                    contentItem: {
+                      primaryText: '出版年份'
+                    },
+                    operateItem: {
+                      text: this.bookInfo?.datePublished?.toString() ?? '暂无数据'
+                    }
+                  })
+
+                  ComposeListItem({
+                    contentItem: {
+                      primaryText: '总页数'
+                    },
+                    operateItem: {
+                      text: this.bookInfo?.numberOfPages! <= 0 ? '暂无数据' : this.bookInfo?.numberOfPages.toString()
+                    }
+                  })
+
+                }
+                .transition(XAnimation.getAnimation('bottom', 150))
+                .borderRadius(20)
+                .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                  undefined)
+                .useEffect(true)
+                .size({ height: '48', width: '100%' })
+                .divider(this.egDivider)
+
+
+                ListItem() {
+                  Button({ type: ButtonType.Normal, stateEffect: true }) {
+                    Text('在线阅读')
+                  }
+                  .height(55)
+                  .borderRadius(20)
+                  .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                    undefined)
+                  .useEffect(true)
+                  .width('100%')
+                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                  .onClick(async () => {
+                    /* this.pageInfos.pop(true)*/
+                    if (__User__.isLoginZlib && (zlibClient.cookie!='' || zlibClient.cookie!= undefined )) {
+                      __UI__.HomePageStack.pushPathByName('onlineReaderPage', this.bookInfo?.readUrl, true)
+                    }else {
+                      promptAction.showToast({ message: `请先登录`, duration: 2000 })
+                    }
                   })
                 }
-                .maxLines(3)
-                .fontSize(18)
-                .opacity(0.6)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .transition(XAnimation.getAnimation('bottom', 200))
 
-              }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-
-            }.padding(16).justifyContent(FlexAlign.SpaceBetween).width('100%')
-
-          }
-          .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
-          $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-          .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
-            undefined)
-          .useEffect(true)
-          .size({ width: '100%', height: 200 })
-          .borderRadius(20)
-          .transition(XAnimation.getAnimation('bottom', 50))
-
-          ListItem() {
-            Stack({ alignContent: Alignment.Top }) {
-              Scroll() {
-                Row() {
-                  Text(this.bookInfo?.description == '' ? '暂无简介' :
-                  this.bookInfo?.description
-                    .replaceAll("&lt;br&gt;", "")
-                    .replaceAll("&lt;p&gt;", "")
-                    .replaceAll("&lt;/p&gt;", "")
-                  )
-                    .fontWeight(FontWeight.Normal)
-                    .fontSize(16)
-                    .size({ width: '100%' })
-                }.size({ width: '100%' })
-
-              }
-              .edgeEffect(EdgeEffect.Spring)
-              .scrollBar(BarState.Off)
-              .fadingEdge(true)
-            }.constraintSize({ maxHeight: 200, minHeight: this.pageWidth > minWidth ? 200 : 0 }).padding(16)
-          }
-          .borderRadius(20)
-          .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
-          $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-          .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
-            undefined)
-          .useEffect(true)
-          .width('100%')
-          .transition(XAnimation.getAnimation('bottom', 100))
-
-          ListItemGroup() {
-
-            ComposeListItem({
-              contentItem: {
-                primaryText: '评分'
-              },
-              operateItem: {
-                text: this.bookInfo?.review.reviewRating.ratingValue
-              }
-            })
-
-            ComposeListItem({
-              contentItem: {
-                primaryText: '语言'
-              },
-              operateItem: {
-                text: this.bookInfo?.inLanguage.name
-              }
-            })
-
-            ComposeListItem({
-              contentItem: {
-                primaryText: 'ISBN'
-              },
-              operateItem: {
-                text: this.bookInfo?.isbn == '' ? '暂无' : this.bookInfo?.isbn
-              }
-            })
-
-            ComposeListItem({
-              contentItem: {
-                primaryText: '出版社'
-              },
-              operateItem: {
-                text: this.bookInfo?.publisher.name == '' ? '暂无' : this.bookInfo?.publisher.name
-              }
-            })
-
-            ComposeListItem({
-              contentItem: {
-                primaryText: '出版年份'
-              },
-              operateItem: {
-                text: this.bookInfo?.datePublished?.toString() ?? '暂无数据'
-              }
-            })
-
-            ComposeListItem({
-              contentItem: {
-                primaryText: '总页数'
-              },
-              operateItem: {
-                text: this.bookInfo?.numberOfPages! <= 0 ? '暂无数据' : this.bookInfo?.numberOfPages.toString()
-              }
-            })
-
-          }
-          .transition(XAnimation.getAnimation('bottom', 150))
-          .borderRadius(20)
-          .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
-          $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-          .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
-            undefined)
-          .useEffect(true)
-          .size({ height: '48', width: '100%' })
-          .divider(this.egDivider)
-
-
-          ListItem() {
-            Button({ type: ButtonType.Normal, stateEffect: true }) {
-              Text('在线阅读')
-            }
-            .height(55)
-            .borderRadius(20)
-            .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
-            $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-            .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
-              undefined)
-            .useEffect(true)
-            .width('100%')
-            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-            .onClick(async () => {
-             /* this.pageInfos.pop(true)*/
-              if (__User__.isLoginZlib && (zlibClient.cookie!='' || zlibClient.cookie!= undefined )) {
-                __UI__.HomePageStack.pushPathByName('onlineReaderPage', this.bookInfo?.readUrl, true)
-              }else {
-                promptAction.showToast({ message: `请先登录`, duration: 2000 })
-              }
-            })
-          }
-          .transition(XAnimation.getAnimation('bottom', 200))
-
-          ListItem() {
-            Button({ type: ButtonType.Normal, stateEffect: true }) {
-              Text(this.bookInfo?.firstDownloadInfo?.format + '   ' + this.bookInfo?.firstDownloadInfo?.size)
-            }
-            .height(55)
-            .borderRadius(20)
-            .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
-            $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-            .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
-              undefined)
-            .useEffect(true)
-            .width('100%')
-            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-            .onClick(() => {
-              zlibClient.getTrueDownloadBookUrl(this.getUIContext().getHostContext() as common.UIAbilityContext,
-                this.bookInfo?.firstDownloadUrl!, this.bookInfo!)
-            })
-          }
-          .transition(XAnimation.getAnimation('bottom', 250))
-
-          ListItem() {
-            Button({ type: ButtonType.Normal, stateEffect: true }) {
-              Text('更多下载选项')
-            }
-            .height(55)
-            .borderRadius(20)
-            .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
-            $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-            .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
-              undefined)
-            .useEffect(true)
-            .width('100%')
-            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-            .bindMenu(this.isShowDownloadMenu, this.DownloadMenu, {
-              onDisappear: () => {
-                this.isShowDownloadMenu = false
-              }
-            })
-            .onClick(async () => {
-              await zlibClient.getBookDownloadsInfo(this.bookInfo?.bookID!).then((res) => {
-                if (res == undefined || res.length == 0) {
-                  this.downloadInfoArray = [
-                    {
-                      id: 0,
-                      extension: "暂无其他下载方式",
-                      filesizeString: "",
-                      href: ""
-                    }
-                  ]
-                } else {
-                  this.downloadInfoArray = res
+                ListItem() {
+                  Button({ type: ButtonType.Normal, stateEffect: true }) {
+                    Text(this.bookInfo?.firstDownloadInfo?.format + '   ' + this.bookInfo?.firstDownloadInfo?.size)
+                  }
+                  .height(55)
+                  .borderRadius(20)
+                  .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                    undefined)
+                  .useEffect(true)
+                  .width('100%')
+                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                  .onClick(() => {
+                    zlibClient.getTrueDownloadBookUrl(this.getUIContext().getHostContext() as common.UIAbilityContext,
+                      this.bookInfo?.firstDownloadUrl!, this.bookInfo!)
+                  })
                 }
-                this.isShowDownloadMenu = true
-              })
-            })
-          }
-          .transition(XAnimation.getAnimation('bottom', 300))
+                .transition(XAnimation.getAnimation('bottom', 250))
 
+                ListItem() {
+                  Button({ type: ButtonType.Normal, stateEffect: true }) {
+                    Text('更多下载选项')
+                  }
+                  .height(55)
+                  .borderRadius(20)
+                  .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                    undefined)
+                  .useEffect(true)
+                  .width('100%')
+                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                  .bindMenu(this.isShowDownloadMenu, this.DownloadMenu, {
+                    onDisappear: () => {
+                      this.isShowDownloadMenu = false
+                    }
+                  })
+                  .onClick(async () => {
+                    await zlibClient.getBookDownloadsInfo(this.bookInfo?.bookID!).then((res) => {
+                      if (res == undefined || res.length == 0) {
+                        this.downloadInfoArray = [
+                          {
+                            id: 0,
+                            extension: "暂无其他下载方式",
+                            filesizeString: "",
+                            href: ""
+                          }
+                        ]
+                      } else {
+                        this.downloadInfoArray = res
+                      }
+                      this.isShowDownloadMenu = true
+                    })
+                  })
+                }
+                .transition(XAnimation.getAnimation('bottom', 300))
+
+              }
+              .height('100%')
+              .scrollBar(BarState.Off)
+              .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
+              .lanes(this.pageWidth > minWidth ? 2 : 1, 10)
+              .borderRadius({topLeft: 20, topRight: 20})
+              .clip(true)
+              .margin({ left: Math.max(16, __System__.leftRectHeight), right: Math.max(16, __System__.rightRectHeight) })
+              .chainAnimation(true)
+              .nestedScroll({
+                scrollForward: NestedScrollMode.SELF_FIRST,
+                scrollBackward: NestedScrollMode.SELF_FIRST
+              })
+
+
+              Stack({alignContent: Alignment.Start}){
+                Text('相关推荐').fontSize(20).fontWeight(FontWeight.Medium)
+              }.padding({top: 15, left: 16, right: 16, bottom: 10}).width('100%')
+
+              WaterFlow() {
+
+                LazyForEach(zlibClient.recommendBooksArray, (item: I_RecommendBook, index: number) => {
+                  FlowItem() {
+                    Column({ space: 20 }) {
+                      Image(item.cover)
+                        .draggable(false)
+                        .size({ width: '100%' })
+                        .shadow({
+                          radius: 25,
+                          color: Color.Gray,
+                          offsetX: 0,
+                          offsetY: 10
+                        })
+
+                      Column({ space: 2 }) {
+                        Text(item.title)
+                          .fontSize(16)
+                          .maxLines(1)
+                          .textOverflow({ overflow: TextOverflow.MARQUEE }).fontWeight(FontWeight.Medium)
+                        Text(item.author)
+                          .fontSize(12)
+                          .maxLines(1)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
+                      }.alignItems(HorizontalAlign.Start)
+
+                    }.alignItems(HorizontalAlign.Start)
+                  }
+                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+                  .padding(15)
+                  .width('100%')
+                  .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                    undefined)
+                  .useEffect(true)
+                  .borderRadius(15)
+                  .transition(TransitionEffect.OPACITY
+                    .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+                    .animation({ curve: curves.springMotion(0.5, 0.7) }))
+                  .onClick(async () => {
+                    this.isOpening = true
+                    await zlibClient.getBookInfo(item.url).then((res) => {
+                      if (res.name != '' && res.name != undefined) {
+                        res.bookID = item.id
+                        res.image = item.cover
+                        res.href = item.url
+                        setContinueState(true, 'book', JSON.stringify(item), '')
+                        __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
+                      }
+                      this.isOpening = false
+                    })
+                  })
+                }, (item: string) => item)
+              }
+              .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
+              .alignSelf(ItemAlign.Center)
+              .align(Alignment.Center)
+              .edgeEffect(EdgeEffect.Spring)
+              .height('100%')
+              .columnsGap(10)
+              .rowsGap(10)
+              .borderRadius({topLeft: 15, topRight: 15})
+              .clip(true)
+              .margin({left: 16, right: 16})
+              .onReachEnd(async () => { //Todo: 无效
+                this.isFlashing = true
+                await zlibClient.getRecommendBooksRelated(++this.recommendPage, false)
+                this.isFlashing = false
+              })
+              .nestedScroll({
+                scrollForward: NestedScrollMode.PARENT_FIRST,
+                scrollBackward: NestedScrollMode.SELF_FIRST
+              })
+            }
+
+          }.height('100%')
+          .scrollBar(BarState.Off)
+          if(this.isOpening){
+            loadingDialog()
+          }
+          if(this.isFlashing){
+            loadingNewDialog()
+          }
         }
-        .layoutWeight(1)
-        .height('100%')
-        .scrollBar(BarState.Off)
-        .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
-        .lanes(this.pageWidth > minWidth ? 2 : 1, 10)
-        .borderRadius({ topLeft: 20, topRight: 20 })
-        .clip(true)
-        .margin({ left: Math.max(16, __System__.leftRectHeight), right: Math.max(16, __System__.rightRectHeight) })
-        .chainAnimation(true)
+        .onAreaChange((_, newValue) => {
+          XAnimation.runWithAnimation(() => {
+            this.waterFlowColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
+            this.pageWidth = new Number(newValue.width).valueOf()
+          }, this.pageWidth > 0)
+
+        })
+
       }
 
 
@@ -423,11 +532,6 @@ export struct bookInfoPage {
       })
     })
     .padding({ top: __System__.topRectHeight })
-    .onAreaChange((_, newValue) => {
-      XAnimation.runWithAnimation(() => {
-        this.pageWidth = new Number(newValue.width).valueOf()
-      }, this.pageWidth > 0)
-    })
     .onBackPressed(() => {
       if (this.isViewingBigImage) {
         XAnimation.runWithAnimation(() => this.isViewingBigImage = false, true, 0.4, 0.85)
