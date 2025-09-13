@@ -193,8 +193,10 @@ struct Index {
           .onChange((index)=>{
             this.currentPage = index
             if (index==1) {
-              zlibClient.getBookShelf(1)
-              zlibClient.getBookShelf(2)
+              if (zlibClient.bookshelfArray.dataArray.length==0) {
+                zlibClient.getBookShelf(1)
+                zlibClient.getBookShelf(2)
+              }
             }
           })
           Flex({justifyContent: FlexAlign.SpaceAround, alignItems: ItemAlign.Center, direction: __System__.windowWidth > minWidth? FlexDirection.Column: FlexDirection.Row}){
