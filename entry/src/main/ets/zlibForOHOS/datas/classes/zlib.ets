@@ -87,7 +87,7 @@ export class zlib {
           return true
         } else {
           //todo:API18后换成openToast
-          promptAction.showToast({ message: `登录失败,账号密码错误`, duration: 1000 })
+          promptAction.showToast({ message: `登录失败,账号密码错误`, duration: 3000 })
           addLog('login', `登录失败,账号密码错误`, true)
           NeoPreferencesUtil.putPreferencesValue('selineRead', "isLoginZlib", false)
           NeoPreferencesUtil.putPreferencesValue('selineRead', "zlibCookies", '')
@@ -100,12 +100,12 @@ export class zlib {
         }
       } else {
         addLog('login', `${data.result}`, true)
-        promptAction.showToast({ message: JSON.stringify(data.result), duration: 1000 })
+        promptAction.showToast({ message: JSON.stringify(data.result), duration: 3000 })
         return false
       }
     }).catch((err: Error) => {
       addLog('login', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
       return false
     }).finally(() => {
       req.destroy()
@@ -139,7 +139,7 @@ export class zlib {
       }
     }).catch((err: Error) => {
       addLog('getUserInfo', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
     });
     req.destroy()
   }
@@ -179,7 +179,7 @@ export class zlib {
 
     }).catch((err: Error) => {
       addLog('refreshUrl', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
     });
     req.destroy()
 
@@ -230,7 +230,7 @@ export class zlib {
             .catch((err: BusinessError) => {
               addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
               console.log(`Liquid:${JSON.stringify(err)}`)
-              promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+              promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
               resolve(false)
             })
 
@@ -259,7 +259,7 @@ export class zlib {
         })
           .catch((err: BusinessError) => {
             addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
-            promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+            promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
             resolve(false)
           })
       }
@@ -295,7 +295,7 @@ export class zlib {
       .catch((err: BusinessError) => {
         addLog('getRecommendBooksRelated', `error! ${err.name} ${err.message}`, true)
         console.log(`Liquid:${JSON.stringify(err)}`)
-        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+        promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
         return []
       }).finally(() => {
         req.destroy();
@@ -333,7 +333,7 @@ export class zlib {
     }).catch((err: Error) => {
       res = 'error'
       addLog('getBookInfo', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
     });
     req.destroy()
     if (res != 'error') {
@@ -362,7 +362,7 @@ export class zlib {
         })
         addLog('getBookInfo', `获取成功`)
       } catch (e) {
-        promptAction.showToast({ message: JSON.stringify(e), duration: 1000 })
+        promptAction.showToast({ message: JSON.stringify(e), duration: 3000 })
         addLog('getBookInfo', `error! ${e.name} ${e.message}`, true)
       }
     } else {
@@ -397,7 +397,7 @@ export class zlib {
       }
     }).catch((err: Error) => {
       addLog('getBookCommit', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
       return false
     });
 
@@ -433,7 +433,7 @@ export class zlib {
       addLog('getBookShelf', `获取书单page=${page}成功`)
     }).catch((err: Error) => {
       addLog('getBookShelf', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
     }).finally(() => {
       req.destroy()
     })
@@ -468,7 +468,7 @@ export class zlib {
       addLog('getBookShelfMoreInfo', `书单${shelfID},page=${page}成功`)
     }).catch((err: Error) => {
       addLog('getBookShelfMoreInfo', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
     });
     req.destroy()
   }
@@ -493,15 +493,14 @@ export class zlib {
       addLog('getBookDownloadsInfo', `获取${bookID}下载信息成功`)
     }).catch((err: Error) => {
       addLog('getBookDownloadsInfo', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
     });
     req.destroy()
 
     return res
   }
 
-  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false,
-    speaclNeed: string = ''): Promise<boolean> {
+  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false, speaclNeed: string = ''): Promise<boolean> {
     addLog('searchBooks', `尝试获取${this.base_url}/s/${encodeURI(bookName)}?${speaclNeed == '' ? '' :
       `${encodeURI(speaclNeed)}&`}page=${page}`)
     return new Promise<boolean>(async (resolve) => {
@@ -525,7 +524,7 @@ export class zlib {
 
         if (jsonArray.length == 0 || jsonArray == undefined) {
           //todo:API18后换成openToast
-          promptAction.showToast({ message: `无更多结果`, duration: 2000 })
+          promptAction.showToast({ message: `无更多结果`, duration: 3000 })
           addLog('searchBooks', `无更多结果`)
         }
 
@@ -536,7 +535,7 @@ export class zlib {
         resolve(true)
 
       }).catch((err: Error) => {
-        promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+        promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
         addLog('searchBooks', `error! ${err.name} ${err.message}`, true)
         resolve(false)
       });
@@ -546,6 +545,7 @@ export class zlib {
 
   async searchTerms(term: string) {
     addLog('searchTerms', `尝试搜索关键词${term}`)
+    this.searchBooksArray.clearData()
     let req = http.createHttp()
     await req.request(`${this.base_url}/terms/${encodeURI(term)}`, {
       method: http.RequestMethod.GET,
@@ -555,10 +555,24 @@ export class zlib {
         'Cookie': this.cookie,
       }
     }).then((data: http.HttpResponse) => {
-      console.log(`Liquid:${JSON.stringify(data.result)}`)
+      let jsonStr:string = CJLoader.getSearchTermsArray(data.result.toString())
+
+      let temp:I_searchBook[]= JSON.parse(jsonStr) as I_searchBook[]
+
+      if (temp.length!=0)
+      {
+        temp.forEach((item)=>{
+          this.searchBooksArray.pushData(item)
+        })
+        addLog('searchTerms', `搜索关键词${term}成功`)
+      }else {
+        addLog('searchTerms', `搜索关键词${term}结果为0`,true)
+        promptAction.showToast({ message: `无更多结果`, duration: 3000 })
+      }
+
     }).catch((err: Error) => {
       addLog('searchTerms', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
     });
     req.destroy()
   }
@@ -587,7 +601,7 @@ export class zlib {
       this.downloadBook(context, temp.location, decodedFilename, bookInfo)
     }).catch((err: Error) => {
       //todo:API18后换成openToast
-      promptAction.showToast({ message: `下载失败，请检查是否登录，是否超出下载限制`, duration: 800 })
+      promptAction.showToast({ message: `下载失败，请检查是否登录，是否超出下载限制`, duration: 3000 })
       addLog('getTrueDownloadBookUrl', `error! ${err.name} ${err.message}`, true)
     });
 
@@ -616,13 +630,13 @@ export class zlib {
         enableMetered: true,
         background: true
       }).then((downloadTask: request.DownloadTask) => {
-        promptAction.showToast({ message: `正在下载,查看通知栏下载进度`, duration: 800 })
+        promptAction.showToast({ message: `正在下载,查看通知栏下载进度`, duration: 2000 })
         //开启下载完成回调
         downloadTask.on('complete', async () => {
           const taskInfo = await downloadTask.getTaskInfo();
           console.log('Liquid:downloadTask complete,status: %s', taskInfo.status);
           //todo:API18后换成openToast
-          promptAction.showToast({ message: `下载完成`, duration: 800 })
+          promptAction.showToast({ message: `下载完成`, duration: 3000 })
           addLog('downloadBook', `下载完成`)
           try {
             let file0 = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE)
@@ -667,7 +681,7 @@ export class zlib {
           message: err.message
         });
         //todo:API18后换成openToast
-        promptAction.showToast({ message: `下载失败`, duration: 800 })
+        promptAction.showToast({ message: `下载失败`, duration: 3000 })
         addLog('downloadBook', `下载失败${JSON.stringify(err)}`, true)
         linderNotificationManager.pushNotification(notificationID, '下载失败', fileName)
         // 下载请求失败回调，可以弹窗提示失败

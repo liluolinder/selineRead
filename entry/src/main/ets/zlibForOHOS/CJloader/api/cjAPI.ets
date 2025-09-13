@@ -28,4 +28,5 @@ export interface CJLib {
   getUserName(src: string): string
   getReadUrl(src: string): string
   getTerms(src: string): string
+  getSearchTermsArray(src: string): string
 }

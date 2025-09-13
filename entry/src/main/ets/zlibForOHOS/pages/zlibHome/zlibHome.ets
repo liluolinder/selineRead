@@ -603,10 +603,28 @@ export struct zlibHome {
         })
         .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
-        Select([{ value: '常规搜索' }, { value: '关键词搜索' }])
+        Select([{ value: '常规搜索' }, { value: '关键字(单个字)搜索' }])
           .selected($$this.searchType)//默认选中项
           .onSelect((index) => {
             this.searchType = index
+
+            this.scrollerOffset = 0
+            __zlibHomeData__.searchIndex = 1
+            if (this.searchType == 0) {
+              const specialUrl = this.generateUrl()
+              zlibClient.searchBooks(this.searchBookName, 1, true, specialUrl)
+            }else {
+              zlibClient.searchTerms(this.searchBookName)
+            }
+            XAnimation.runWithAnimation(() => {
+              __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
+            })
+            zlibClient.searchHistoryArray =
+              zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != this.searchBookName)
+            zlibClient.searchHistoryArray.unshift({ value: this.searchBookName, time: Date.parse(new Date().toString()) })
+            NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
+              JSON.stringify(zlibClient.searchHistoryArray))
+
           })
           .height(40)
           .backgroundColor($r('app.color.start_window_background_blur'))
@@ -754,7 +772,10 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                await zlibClient.searchBooks(this.searchBookName, ++__zlibHomeData__.searchIndex, false)
+                if (this.searchType==0)
+                {
+                  await zlibClient.searchBooks(this.searchBookName, ++__zlibHomeData__.searchIndex, false)
+                }
               } else {
                 await zlibClient.getRecommendBooks(++__zlibHomeData__.recommendIndex)
               }
@@ -788,7 +809,10 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                await zlibClient.searchBooks(this.searchBookName, ++__zlibHomeData__.searchIndex, false)
+                if (this.searchType==0)
+                {
+                  await zlibClient.searchBooks(this.searchBookName, ++__zlibHomeData__.searchIndex, false)
+                }
               } else {
                 await zlibClient.getRecommendBooks(++__zlibHomeData__.recommendIndex)
               }
@@ -896,8 +920,13 @@ export struct zlibHome {
                 this.scrollerOffset = 0
                 __zlibHomeData__.searchIndex = 1
                 this.searchBookName = item.value
-                const specialUrl = this.generateUrl()
-                zlibClient.searchBooks(item.value, 1, true, specialUrl)
+               if (this.searchType==0)
+               {
+                 const specialUrl = this.generateUrl()
+                 zlibClient.searchBooks(item.value, 1, true, specialUrl)
+               }else {
+                 zlibClient.searchTerms(item.value)
+               }
                 XAnimation.runWithAnimation(() => {
                   __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
                   __zlibHomeData__.isInSearchMode = false
@@ -907,6 +936,7 @@ export struct zlibHome {
                 zlibClient.searchHistoryArray.unshift({ value: item.value, time: Date.parse(new Date().toString()) })
                 NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
                   JSON.stringify(zlibClient.searchHistoryArray))
+
               })
             })
 
