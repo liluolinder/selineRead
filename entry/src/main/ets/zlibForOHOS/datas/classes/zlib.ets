@@ -27,17 +27,14 @@ import { I_Terms } from '../interfaces/I_Terms';
 
 @ObservedV2
 export class zlib {
-  @Trace recommendBooksArray: BasicDataSource<I_RecommendBook> = new BasicDataSource<I_RecommendBook>()
-  @Trace searchBooksArray: BasicDataSource<I_searchBook> = new BasicDataSource<I_searchBook>()
-  @Trace localDownloadHistoryArray: BasicDataSource<I_ZlibHaveDownloadTable> =
-    new BasicDataSource<I_ZlibHaveDownloadTable>()
-  @Trace bookshelfArray: BasicDataSource<I_ReadLists_Bookshelf> = new BasicDataSource<I_ReadLists_Bookshelf>()
-  @Trace bookshelfBooks: BasicDataSource<I_Bookshelf_extraBooks> = new BasicDataSource<I_Bookshelf_extraBooks>()
-  @Trace bookCommentArray: BasicDataSource<I_BookComment> = new BasicDataSource<I_BookComment>()
+  recommendBooksArray: BasicDataSource<I_RecommendBook> = new BasicDataSource<I_RecommendBook>()
+  searchBooksArray: BasicDataSource<I_searchBook> = new BasicDataSource<I_searchBook>()
+  localDownloadHistoryArray: BasicDataSource<I_ZlibHaveDownloadTable> = new BasicDataSource<I_ZlibHaveDownloadTable>()
+  bookshelfArray: BasicDataSource<I_ReadLists_Bookshelf> = new BasicDataSource<I_ReadLists_Bookshelf>()
+  bookshelfBooks: BasicDataSource<I_Bookshelf_extraBooks> = new BasicDataSource<I_Bookshelf_extraBooks>()
+  bookCommentArray: BasicDataSource<I_BookComment> = new BasicDataSource<I_BookComment>()
   @Trace searchHistoryArray: I_SearchHistory[] = []
   @Trace userInfo: I_UserInfo | undefined
-
-
   //官方:https://zh.z-library.sk
   base_url: string = ''
   baseApi_url: string = ''
@@ -72,8 +69,7 @@ export class zlib {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
       let tempCookies: I_CookieInfo = (result as object)?.['response']
-      if ((result as object)?.['response']!=null || (result as object)?.['response']!=undefined )
-      {
+      if ((result as object)?.['response'] != null || (result as object)?.['response'] != undefined) {
         if (tempCookies.message == undefined) {
           promptAction.showToast({ message: `欢迎`, duration: 1000 })
           addLog('login', `登录成功`)
@@ -102,8 +98,8 @@ export class zlib {
           __User__.isLoginZlib = false
           return false
         }
-      }else {
-        addLog('login', `${data.result}`,true)
+      } else {
+        addLog('login', `${data.result}`, true)
         promptAction.showToast({ message: JSON.stringify(data.result), duration: 1000 })
         return false
       }
@@ -270,7 +266,7 @@ export class zlib {
     })
   }
 
-  async getRecommendBooksRelated(page:number,bookIDsRelated:number[]): Promise<I_RecommendBook[]>{
+  async getRecommendBooksRelated(page: number, bookIDsRelated: number[]): Promise<I_RecommendBook[]> {
     addLog('getRecommendBooksRelated', `尝试获取page=${page}`)
     let req = http.createHttp()
     let extraData: object = new Object({ bookIds: bookIDsRelated })
@@ -301,7 +297,7 @@ export class zlib {
         console.log(`Liquid:${JSON.stringify(err)}`)
         promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
         return []
-      }).finally(()=>{
+      }).finally(() => {
         req.destroy();
         return []
       });
@@ -359,8 +355,8 @@ export class zlib {
         resBookInfo.terms = terms
         resBookInfo.recommendBooksArrayRelated = new BasicDataSource<I_RecommendBook>()
         resBookInfo.bookIDsRelated = match?.[1].split(',').map(Number) ?? []
-        await this.getRecommendBooksRelated(1,resBookInfo.bookIDsRelated).then((res:I_RecommendBook[])=>{
-          res.forEach((item)=>{
+        await this.getRecommendBooksRelated(1, resBookInfo.bookIDsRelated).then((res: I_RecommendBook[]) => {
+          res.forEach((item) => {
             resBookInfo.recommendBooksArrayRelated?.pushData(item)
           })
         })
@@ -438,7 +434,7 @@ export class zlib {
     }).catch((err: Error) => {
       addLog('getBookShelf', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 1000 })
-    }).finally(()=>{
+    }).finally(() => {
       req.destroy()
     })
 
@@ -504,7 +500,8 @@ export class zlib {
     return res
   }
 
-  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false, speaclNeed: string = ''): Promise<boolean> {
+  async searchBooks(bookName: string, page: number = 1, needClear: boolean = false,
+    speaclNeed: string = ''): Promise<boolean> {
     addLog('searchBooks', `尝试获取${this.base_url}/s/${encodeURI(bookName)}?${speaclNeed == '' ? '' :
       `${encodeURI(speaclNeed)}&`}page=${page}`)
     return new Promise<boolean>(async (resolve) => {
@@ -547,7 +544,7 @@ export class zlib {
     })
   }
 
-  async searchTerms(term:string) {
+  async searchTerms(term: string) {
     addLog('searchTerms', `尝试搜索关键词${term}`)
     let req = http.createHttp()
     await req.request(`${this.base_url}/terms/${encodeURI(term)}`, {
@@ -586,7 +583,7 @@ export class zlib {
       let regex = new RegExp(pattern);
       let matches = urlParams.match(regex);
       let encodedFilename: string = matches ? matches[1] : '';
-      let decodedFilename = decodeURI(encodedFilename).replaceAll("Z-Library",`${bookInfo.bookID}`);
+      let decodedFilename = decodeURI(encodedFilename).replaceAll("Z-Library", `${bookInfo.bookID}`);
       this.downloadBook(context, temp.location, decodedFilename, bookInfo)
     }).catch((err: Error) => {
       //todo:API18后换成openToast
@@ -691,7 +688,6 @@ export class zlib {
       zlibClient.getLocalDownloadHistory()
     }, 100)
   }
-
 }
 
 export let zlibClient: zlib = new zlib()
