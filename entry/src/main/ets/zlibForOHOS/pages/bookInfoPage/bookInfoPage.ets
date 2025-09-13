@@ -41,6 +41,8 @@ import { loadingDialog, loadingNewDialog } from "../others/Builder"
   展示 this.bookInfo.terms  类型为  I_Terms
   点击可以跳转搜索页
   同时设置搜索页面的searchType=1 必须要设置
+  需要判断__User__.isLoginZlib,没登陆不给跳转，弹弹窗要求登录
+  搜索页面手动切换到关键词模式时，也检测__User__.isLoginZlib,没登陆切换回常规搜索(searchType=0就行,我绑定了)，弹弹窗要求登录
   调用搜索函数 zlibClient.searchTerms(xxx)
   xxx为关键字
  */

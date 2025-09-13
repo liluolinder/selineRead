@@ -29,19 +29,39 @@ export class XContext {
     return XContext.getAbilityContext().resourceManager.getStringSync(resource.id)
   }
 
+  public static mergeResourceStrings(...rest: ResourceStr[]): string {
+    let result = '';
+    rest.forEach((item) => {
+      if (typeof item === 'string') {
+        result = result.concat(item);
+      } else {
+        result = result.concat(XContext.getAbilityContext().resourceManager.getStringSync(item.id));
+      }
+    })
+    return result;
+  }
+
   public static getColorFromResource(resource: Resource) {
     return XContext.getAbilityContext().resourceManager.getColorSync(resource.id)
   }
 
-  public static getFilesDir(){
+  public static getFilesDir() {
     return XContext.UIAbilityContext.filesDir;
   }
 
-  public static getCacheDir(){
+  public static getCacheDir() {
     return XContext.UIAbilityContext.cacheDir;
   }
 
-  public static getPromptAction(){
+  public static getPromptAction() {
     return XContext.UIContext.getPromptAction();
+  }
+
+  public static toast(msg: ResourceStr, duration:number=1500) {
+    try {
+      XContext.UIContext.getPromptAction().showToast({ message: msg, duration:duration });
+    } catch (error) {
+
+    }
   }
 }
