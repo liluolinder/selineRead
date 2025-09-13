@@ -46,6 +46,11 @@ import { loadingDialog, loadingNewDialog } from "../others/Builder"
   调用搜索函数 zlibClient.searchTerms(xxx)
   xxx为关键字
  */
+/*
+   修复书单异常bug
+   搜索栏宽度
+ */
+
 
 @Builder
 export function bookInfoPageBuilder() {
