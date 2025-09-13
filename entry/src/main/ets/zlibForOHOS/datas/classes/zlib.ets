@@ -23,7 +23,6 @@ import { I_BookComment } from '../interfaces/I_BookComment';
 import { I_SearchHistory } from '../interfaces/I_SearchHistory';
 import { __zlibHomeData__ } from '../../pages/zlibHome/zlibHome';
 import { I_Terms } from '../interfaces/I_Terms';
-import { it } from '@ohos/hypium';
 
 
 @ObservedV2
