@@ -35,21 +35,8 @@ import { I_BookComment } from "../../datas/interfaces/I_BookComment"
 import { I_Terms } from "../../datas/interfaces/I_Terms"
 import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
 import { loadingDialog, loadingNewDialog } from "../others/Builder"
-
-//todo:看下面
-/*
-  展示 this.bookInfo.terms  类型为  I_Terms
-  点击可以跳转搜索页
-  同时设置搜索页面的searchType=1 必须要设置
-  需要判断__User__.isLoginZlib,没登陆不给跳转，弹弹窗要求登录
-  搜索页面手动切换到关键词模式时，也检测__User__.isLoginZlib,没登陆切换回常规搜索(searchType=0就行,我绑定了)，弹弹窗要求登录
-  调用搜索函数 zlibClient.searchTerms(xxx)
-  xxx为关键字
- */
-/*
-   修复书单异常bug
-   搜索栏宽度
- */
+import { zlibIndexShowMod } from "../../datas/enums/zlibIndexShowMod"
+import { __zlibHomeData__ } from "../zlibHome/zlibHome"
 
 
 @Builder
@@ -388,7 +375,6 @@ export struct bookInfoPage {
                 .transition(XAnimation.getAnimation('bottom', 300))
 
               }
-              .height('100%')
               .scrollBar(BarState.Off)
               .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
               .lanes(this.pageWidth > minWidth ? 2 : 1, 10)
@@ -401,11 +387,49 @@ export struct bookInfoPage {
                 scrollBackward: NestedScrollMode.PARENT_FIRST
               })
 
+              if((this.bookInfo?.terms?.length ?? 0) > 0){
+                Column({space: 10}){
+                  Stack({alignContent: Alignment.Start}){
+                    Text('关键字搜索').fontSize(20).fontWeight(FontWeight.Medium)
+                  }.padding({top: 15, left: 16, right: 16}).width('100%')
+
+                  List({space: 10}){
+                    ForEach(this.bookInfo?.terms, (item: I_Terms)=>{
+                      ListItem(){
+                        Button({type: ButtonType.Normal}){
+                          Text(item.term).fontSize(20).fontWeight(FontWeight.Medium)
+                        }.backgroundColor(Color.Transparent)
+                        .padding({left: 15, right: 15, top: 10, bottom: 10})
+                        .borderRadius(20)
+                        .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                        $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                        .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                          undefined)
+                        .useEffect(true)
+                        .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+                        .onClick(()=>{
+                          zlibClient.searchTerms(item.term)
+                          XAnimation.runWithAnimation(() => __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search)
+                          __zlibHomeData__.searchType = 1
+                          __zlibHomeData__.searchWords = item.term
+                        })
+                      }
+                    })
+                  }.listDirection(Axis.Horizontal)
+                  .scrollBar(BarState.Off)
+                  .padding({left: 16, right: 16})
+                  .borderRadius(20)
+                  .clip(true)
+                }
+
+
+              }
+
 
               if((this.bookInfo?.recommendBooksArrayRelated?.totalCount() ?? 0) > 0){
                 Stack({alignContent: Alignment.Start}){
                   Text('相关推荐').fontSize(20).fontWeight(FontWeight.Medium)
-                }.padding({top: 15, left: 16, right: 16, bottom: 10}).width('100%')
+                }.padding({top: 20, left: 16, right: 16, bottom: 10}).width('100%')
 
                 WaterFlow() {
 
@@ -491,6 +515,8 @@ export struct bookInfoPage {
 
           }.height('100%')
           .scrollBar(BarState.Off)
+          .borderRadius({topLeft: 20, topRight: 20})
+          .clip(true)
           if(this.isOpening){
             loadingDialog()
           }

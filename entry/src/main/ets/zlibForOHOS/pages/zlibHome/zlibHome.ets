@@ -60,7 +60,6 @@ export struct zlibHome {
   @Local chooseLanguageArray: string[] = []
   @Local showFormatPopup: boolean = false
   @Local chooseFormatArray: string[] = []
-  @Local searchType: number = 0
 
   @Monitor('lastOffset')
   changeOffset() {
@@ -299,7 +298,7 @@ export struct zlibHome {
           .onClick(() => {
             const specialUrl = this.generateUrl()
             __zlibHomeData__.searchIndex = 1
-            zlibClient.searchBooks(this.searchBookName, 1, true, specialUrl)
+            zlibClient.searchBooks(__zlibHomeData__.searchWords, 1, true, specialUrl)
             XAnimation.runWithAnimation(() => {
               __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
             })
@@ -589,7 +588,7 @@ export struct zlibHome {
               const specialUrl = this.generateUrl()
               this.scrollerOffset = 0
               __zlibHomeData__.searchIndex = 1
-              this.searchBookName = result.originalValue
+              __zlibHomeData__.searchWords = result.originalValue
               zlibClient.searchBooks(result.originalValue, 1, true, specialUrl)
               XAnimation.runWithAnimation(() => {
                 __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
@@ -604,25 +603,25 @@ export struct zlibHome {
         .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
         Select([{ value: '常规搜索' }, { value: '关键字(单个字)搜索' }])
-          .selected($$this.searchType)//默认选中项
+          .selected(__zlibHomeData__.searchType)//默认选中项
           .onSelect((index) => {
-            this.searchType = index
+            __zlibHomeData__.searchType = index
 
-            if (this.searchBookName!='' && this.searchBookName) {
+            if (__zlibHomeData__.searchWords!='' && __zlibHomeData__.searchWords) {
               this.scrollerOffset = 0
               __zlibHomeData__.searchIndex = 1
-              if (this.searchType == 0) {
+              if (__zlibHomeData__.searchType == 0) {
                 const specialUrl = this.generateUrl()
-                zlibClient.searchBooks(this.searchBookName, 1, true, specialUrl)
+                zlibClient.searchBooks(__zlibHomeData__.searchWords, 1, true, specialUrl)
               }else {
-                zlibClient.searchTerms(this.searchBookName)
+                zlibClient.searchTerms(__zlibHomeData__.searchWords)
               }
               XAnimation.runWithAnimation(() => {
                 __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
               })
               zlibClient.searchHistoryArray =
-                zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != this.searchBookName)
-              zlibClient.searchHistoryArray.unshift({ value: this.searchBookName, time: Date.parse(new Date().toString()) })
+                zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != __zlibHomeData__.searchWords)
+              zlibClient.searchHistoryArray.unshift({ value: __zlibHomeData__.searchWords, time: Date.parse(new Date().toString()) })
               NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
                 JSON.stringify(zlibClient.searchHistoryArray))
             }
@@ -632,10 +631,13 @@ export struct zlibHome {
           .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
           .useEffect(true)
-          .value(['常规搜索', '关键字(单个字)搜索'][this.searchType])//默认文本
+          .value(['常规搜索', '关键字(单个字)搜索'][__zlibHomeData__.searchType])//默认文本
           .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
 
-        Search({ value: $$this.searchBookName })
+        Search({ value: __zlibHomeData__.searchWords })
+          .onChange((text)=>{
+            __zlibHomeData__.searchWords = text
+          })
           .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
           .useEffect(true)
@@ -651,9 +653,9 @@ export struct zlibHome {
             } else {
               this.scrollerOffset = 0
               __zlibHomeData__.searchIndex = 1
-              this.searchBookName = value
+              __zlibHomeData__.searchWords = value
 
-              if (this.searchType == 0) {
+              if (__zlibHomeData__.searchType == 0) {
                 const specialUrl = this.generateUrl()
                 zlibClient.searchBooks(value, 1, true, specialUrl)
               }else {
@@ -773,9 +775,9 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                if (this.searchType==0)
+                if (__zlibHomeData__.searchType==0)
                 {
-                  await zlibClient.searchBooks(this.searchBookName, ++__zlibHomeData__.searchIndex, false)
+                  await zlibClient.searchBooks(__zlibHomeData__.searchWords, ++__zlibHomeData__.searchIndex, false)
                 }
               } else {
                 await zlibClient.getRecommendBooks(++__zlibHomeData__.recommendIndex)
@@ -810,9 +812,9 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                if (this.searchType==0)
+                if (__zlibHomeData__.searchType==0)
                 {
-                  await zlibClient.searchBooks(this.searchBookName, ++__zlibHomeData__.searchIndex, false)
+                  await zlibClient.searchBooks(__zlibHomeData__.searchWords, ++__zlibHomeData__.searchIndex, false)
                 }
               } else {
                 await zlibClient.getRecommendBooks(++__zlibHomeData__.recommendIndex)
@@ -920,8 +922,8 @@ export struct zlibHome {
               .onClick(() => {
                 this.scrollerOffset = 0
                 __zlibHomeData__.searchIndex = 1
-                this.searchBookName = item.value
-               if (this.searchType==0)
+                __zlibHomeData__.searchWords = item.value
+               if (__zlibHomeData__.searchType==0)
                {
                  const specialUrl = this.generateUrl()
                  zlibClient.searchBooks(item.value, 1, true, specialUrl)
@@ -978,6 +980,8 @@ class zlibHomeData {
   @Trace isOpening: boolean = false
   @Trace recommendIndex: number = 1
   @Trace searchIndex: number = 1
+  @Trace searchType: number = 0
+  @Trace searchWords: string = ''
 }
 
 export const __zlibHomeData__ = new zlibHomeData()
