@@ -706,6 +706,22 @@ export struct zlibHome {
         })
         .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph($r('sys.symbol.xmark'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .backdropBlur(100)
+        .useEffect(true)
+        .onClick(() => {
+          XAnimation.runWithAnimation(() => __zlibHomeData__.isInSearchMode = false)
+          __zlibHomeData__.searchWords = ''
+        })
+        .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search && __System__.pcMode ? Visibility.Visible : Visibility.None)
+
       }
       .zIndex(1)
       .padding({ left: 16, right: 16, top: __System__.topRectHeight })
