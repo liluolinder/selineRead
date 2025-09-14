@@ -519,6 +519,7 @@ export struct bookInfoPage {
 
           }.height('100%')
           .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
           .borderRadius({topLeft: 20, topRight: 20})
           .clip(true)
           if(this.isOpening){
