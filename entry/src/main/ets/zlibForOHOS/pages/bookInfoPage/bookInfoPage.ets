@@ -412,6 +412,7 @@ export struct bookInfoPage {
                           XAnimation.runWithAnimation(() => __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search)
                           __zlibHomeData__.searchType = 1
                           __zlibHomeData__.searchWords = item.term
+                          if(__System__.windowWidth < minWidth) this.pageInfos.pop()
                         })
                       }
                     })
