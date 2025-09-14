@@ -632,7 +632,7 @@ export struct zlibHome {
           .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
           .useEffect(true)
-          .value(['常规搜索', '关键词搜索'][this.searchType])//默认文本
+          .value(['常规搜索', '关键字(单个字)搜索'][this.searchType])//默认文本
           .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
 
         Search({ value: $$this.searchBookName })
@@ -682,7 +682,6 @@ export struct zlibHome {
               __zlibHomeData__.isInSearchMode = true
             })
           })
-          .constraintSize({ maxWidth: __zlibHomeData__.isInSearchMode ? '100%' : '50%' })
 
         Button({ type: ButtonType.Circle }) {
           SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
