@@ -33,7 +33,7 @@ export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
       version: 'beta 0.7.0',
-      date: '2025/9/13',
+      date: '2025/9/14',
       addNewFunArray:['新增搜索模式切换','新增关键词搜索','新增书籍详细页面书籍推荐','新增书籍详细页面关键词','新增首页个性化推荐','返回Button(仅PC/自由多窗)'],
       optimizeArray:['优化首页搜索栏UI','优化搜索历史','优化状态栏图标','优化动画','优化手机横屏布局'],
       fixBugsArray:['书单异常显示','解决版本号过低bug']
