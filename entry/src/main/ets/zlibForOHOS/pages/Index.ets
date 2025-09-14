@@ -230,9 +230,9 @@ struct Index {
       .hideToolBar(true)
       .size({ width: '100%', height: '100%' })
       .backgroundColor(__CustomBackgroundData__.customBackground? Color.Transparent: $r('sys.color.comp_background_gray'))
-      .navBarWidthRange([550, 1200])
+      .navBarWidthRange([400, 1200])
       .navBarWidth('1100')
-      .mode(__UI__.isInReader ? NavigationMode.Stack : NavigationMode.Auto)
+      .mode(__UI__.isInReader ? NavigationMode.Stack : __System__.windowWidth > minWidth? NavigationMode.Split: NavigationMode.Stack)
       .onNavigationModeChange((mode) => {
         if (__UI__.isInReader) {
           return

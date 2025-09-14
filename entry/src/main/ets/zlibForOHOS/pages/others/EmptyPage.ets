@@ -7,7 +7,7 @@ export struct EmptyPage {
   build() {
     NavDestination() {
       Stack() {
-        Image($r('app.media.zlib')).size({ width: 250, height: 250 }).draggable(false).opacity(0.5)
+        Image($r('app.media.zlib')).constraintSize({maxWidth: '40%', maxHeight: '40%'}).draggable(false).opacity(0.5).aspectRatio(1)
       }.size({ width: '100%', height: '100%' })
     }
     .backgroundColor(__CustomBackgroundData__.customBackground ? Color.Transparent :
