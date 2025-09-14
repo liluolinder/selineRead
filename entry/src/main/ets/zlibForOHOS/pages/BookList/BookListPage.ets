@@ -144,7 +144,7 @@ export default struct BookListPage {
           .layoutWeight(1)
         }.alignItems(HorizontalAlign.Start).width('100%')
         .padding({ left: 16, right: 16, top: Math.max(16, __System__.topRectHeight) })
-        .geometryTransition(this.data?.id.toString())
+        .geometryTransition(this.data?.id.toString(), {follow: true})
 
         if (this.isOpening) {
           loadingDialog()

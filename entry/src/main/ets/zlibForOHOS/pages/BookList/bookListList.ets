@@ -95,7 +95,7 @@ export struct BookListList {
                   .fadingEdge(true)
                 }.alignItems(HorizontalAlign.Start)
               }
-              .geometryTransition(item.id.toString(), { follow: true })
+              .geometryTransition(item.id.toString())
               .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
