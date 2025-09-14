@@ -397,7 +397,7 @@ export struct bookInfoPage {
                     ForEach(this.bookInfo?.terms, (item: I_Terms)=>{
                       ListItem(){
                         Button({type: ButtonType.Normal}){
-                          Text(item.term).fontSize(20).fontWeight(FontWeight.Medium)
+                          Text(item.term.charAt(0)).fontSize(20).fontWeight(FontWeight.Medium)
                         }.backgroundColor(Color.Transparent)
                         .padding({left: 15, right: 15, top: 10, bottom: 10})
                         .borderRadius(20)
