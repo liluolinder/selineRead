@@ -402,89 +402,92 @@ export struct bookInfoPage {
               })
 
 
-              Stack({alignContent: Alignment.Start}){
-                Text('相关推荐').fontSize(20).fontWeight(FontWeight.Medium)
-              }.padding({top: 15, left: 16, right: 16, bottom: 10}).width('100%')
+              if((this.bookInfo?.recommendBooksArrayRelated?.totalCount() ?? 0) > 0){
+                Stack({alignContent: Alignment.Start}){
+                  Text('相关推荐').fontSize(20).fontWeight(FontWeight.Medium)
+                }.padding({top: 15, left: 16, right: 16, bottom: 10}).width('100%')
 
-              WaterFlow() {
+                WaterFlow() {
 
-                LazyForEach(this.bookInfo?.recommendBooksArrayRelated, (item: I_RecommendBook, index: number) => {
-                  FlowItem() {
-                    Column({ space: 20 }) {
-                      Image(item.cover)
-                        .draggable(false)
-                        .size({ width: '100%' })
-                        .shadow({
-                          radius: 25,
-                          color: Color.Gray,
-                          offsetX: 0,
-                          offsetY: 10
-                        })
+                  LazyForEach(this.bookInfo?.recommendBooksArrayRelated, (item: I_RecommendBook, index: number) => {
+                    FlowItem() {
+                      Column({ space: 20 }) {
+                        Image(item.cover)
+                          .draggable(false)
+                          .size({ width: '100%' })
+                          .shadow({
+                            radius: 25,
+                            color: Color.Gray,
+                            offsetX: 0,
+                            offsetY: 10
+                          })
 
-                      Column({ space: 2 }) {
-                        Text(item.title)
-                          .fontSize(16)
-                          .maxLines(1)
-                          .textOverflow({ overflow: TextOverflow.MARQUEE }).fontWeight(FontWeight.Medium)
-                        Text(item.author)
-                          .fontSize(12)
-                          .maxLines(1)
-                          .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
+                        Column({ space: 2 }) {
+                          Text(item.title)
+                            .fontSize(16)
+                            .maxLines(1)
+                            .textOverflow({ overflow: TextOverflow.MARQUEE }).fontWeight(FontWeight.Medium)
+                          Text(item.author)
+                            .fontSize(12)
+                            .maxLines(1)
+                            .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
+                        }.alignItems(HorizontalAlign.Start)
+
                       }.alignItems(HorizontalAlign.Start)
-
-                    }.alignItems(HorizontalAlign.Start)
-                  }
-                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-                  .padding(15)
-                  .width('100%')
-                  .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
-                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-                  .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
-                    undefined)
-                  .useEffect(true)
-                  .borderRadius(15)
-                  .transition(TransitionEffect.OPACITY
-                    .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
-                    .animation({ curve: curves.springMotion(0.5, 0.7) }))
-                  .onClick(async () => {
-                    this.isOpening = true
-                    await zlibClient.getBookInfo(item.url).then((res) => {
-                      if (res.name != '' && res.name != undefined) {
-                        res.bookID = item.id
-                        res.image = item.cover
-                        res.href = item.url
-                        setContinueState(true, 'book', JSON.stringify(item), '')
-                        __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
-                      }
-                      this.isOpening = false
+                    }
+                    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+                    .padding(15)
+                    .width('100%')
+                    .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ?
+                    $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                    .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > minWidth ? 100 :
+                      undefined)
+                    .useEffect(true)
+                    .borderRadius(15)
+                    .transition(TransitionEffect.OPACITY
+                      .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+                      .animation({ curve: curves.springMotion(0.5, 0.7) }))
+                    .onClick(async () => {
+                      this.isOpening = true
+                      await zlibClient.getBookInfo(item.url).then((res) => {
+                        if (res.name != '' && res.name != undefined) {
+                          res.bookID = item.id
+                          res.image = item.cover
+                          res.href = item.url
+                          setContinueState(true, 'book', JSON.stringify(item), '')
+                          __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
+                        }
+                        this.isOpening = false
+                      })
+                    })
+                  }, (item: string) => item)
+                }
+                .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
+                .alignSelf(ItemAlign.Center)
+                .align(Alignment.Center)
+                .edgeEffect(EdgeEffect.Spring)
+                .height('100%')
+                .columnsGap(10)
+                .rowsGap(10)
+                .borderRadius({topLeft: 15, topRight: 15})
+                .clip(true)
+                .margin({left: 16, right: 16})
+                .onReachEnd(async () => {
+                  this.isFlashing = true
+                  await zlibClient.getRecommendBooksRelated(++this.recommendPage, this.bookInfo?.bookIDsRelated!).then((res:I_RecommendBook[])=>{
+                    res.forEach((item)=>{
+                      this.bookInfo?.recommendBooksArrayRelated?.pushData(item)
                     })
                   })
-                }, (item: string) => item)
-              }
-              .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
-              .alignSelf(ItemAlign.Center)
-              .align(Alignment.Center)
-              .edgeEffect(EdgeEffect.Spring)
-              .height('100%')
-              .columnsGap(10)
-              .rowsGap(10)
-              .borderRadius({topLeft: 15, topRight: 15})
-              .clip(true)
-              .margin({left: 16, right: 16})
-              .onReachEnd(async () => {
-                this.isFlashing = true
-                await zlibClient.getRecommendBooksRelated(++this.recommendPage, this.bookInfo?.bookIDsRelated!).then((res:I_RecommendBook[])=>{
-                  res.forEach((item)=>{
-                    this.bookInfo?.recommendBooksArrayRelated?.pushData(item)
-                  })
+                  this.isFlashing = false
                 })
-                this.isFlashing = false
-              })
-              .nestedScroll({
-                scrollForward: NestedScrollMode.PARENT_FIRST,
-                scrollBackward: NestedScrollMode.SELF_FIRST
-              })
-            }
+                .nestedScroll({
+                  scrollForward: NestedScrollMode.PARENT_FIRST,
+                  scrollBackward: NestedScrollMode.SELF_FIRST
+                })
+              }
+              }
+
 
           }.height('100%')
           .scrollBar(BarState.Off)
