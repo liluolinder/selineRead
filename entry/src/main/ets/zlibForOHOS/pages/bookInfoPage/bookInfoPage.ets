@@ -390,7 +390,7 @@ export struct bookInfoPage {
               if((this.bookInfo?.terms?.length ?? 0) > 0){
                 Column({space: 10}){
                   Stack({alignContent: Alignment.Start}){
-                    Text('关键字搜索').fontSize(20).fontWeight(FontWeight.Medium)
+                    Text('关键字').fontSize(20).fontWeight(FontWeight.Medium)
                   }.padding({top: 15, left: 16, right: 16}).width('100%')
 
                   List({space: 10}){
