@@ -421,6 +421,7 @@ export struct bookInfoPage {
                   .borderRadius(20)
                   .clip(true)
                 }
+                .transition(XAnimation.getAnimation('bottom', 400))
 
 
               }
@@ -430,6 +431,7 @@ export struct bookInfoPage {
                 Stack({alignContent: Alignment.Start}){
                   Text('相关推荐').fontSize(20).fontWeight(FontWeight.Medium)
                 }.padding({top: 20, left: 16, right: 16, bottom: 10}).width('100%')
+                .transition(XAnimation.getAnimation('bottom', 500))
 
                 WaterFlow() {
 
@@ -486,6 +488,7 @@ export struct bookInfoPage {
                     })
                   }, (item: string) => item)
                 }
+                .transition(XAnimation.getAnimation('bottom', 500))
                 .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
                 .alignSelf(ItemAlign.Center)
                 .align(Alignment.Center)
