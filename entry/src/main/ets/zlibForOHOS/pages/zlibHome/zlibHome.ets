@@ -24,7 +24,7 @@ import { __CustomBackgroundData__, __System__, __UI__, minWidth, __User__ } from
 import { XAnimation } from '../../datas/classes/XAnimation'
 import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod'
-import { loadingDialog, loadingNewDialog } from '../others/Builder'
+import { BookCover, loadingDialog, loadingNewDialog } from '../others/Builder'
 import { addLog, setContinueState } from '../../utils/ToolsUtil'
 import { scanBarcode, scanCore } from '@kit.ScanKit'
 import { globlContext } from '../../../entryability/EntryAbility'
@@ -324,15 +324,7 @@ export struct zlibHome {
     LazyForEach(zlibClient.recommendBooksArray, (item: I_RecommendBook, index: number) => {
       FlowItem() {
         Column({ space: 20 }) {
-          Image(item.cover)
-            .draggable(false)
-            .size({ width: '100%' })
-            .shadow({
-              radius: 25,
-              color: Color.Gray,
-              offsetX: 0,
-              offsetY: 10
-            })
+          BookCover({data: item.cover})
 
           Column({ space: 2 }) {
             Text(item.title)
@@ -369,15 +361,8 @@ export struct zlibHome {
     LazyForEach(zlibClient.recommendBooksArray, (item: I_RecommendBook, index: number) => {
       ListItem() {
         Row({ space: 10 }) {
-          Image(item.cover)
-            .draggable(false)
+          BookCover({data: item.cover})
             .size({ height: '100%', width: '62' })
-            .shadow({
-              radius: 25,
-              color: Color.Gray,
-              offsetX: 0,
-              offsetY: 10
-            })
 
           Column({ space: 2 }) {
             Text(item.title)
@@ -415,15 +400,7 @@ export struct zlibHome {
       FlowItem() {
         Column({ space: 20 }) {
           Stack({ alignContent: Alignment.BottomEnd }) {
-            Image(item.image)
-              .draggable(false)
-              .size({ width: '100%' })
-              .shadow({
-                radius: 25,
-                color: Color.Gray,
-                offsetX: 0,
-                offsetY: 10
-              })
+            BookCover({data: item.image})
 
             Text(item.extension)
               .fontSize(12)
@@ -473,15 +450,8 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Stack({ alignContent: Alignment.BottomEnd }) {
-            Image(item.image)
-              .draggable(false)
+            BookCover({data: item.image})
               .size({ height: '100%', width: '62' })
-              .shadow({
-                radius: 25,
-                color: Color.Gray,
-                offsetX: 0,
-                offsetY: 10
-              })
 
             Text(item.extension)
               .fontSize(10)

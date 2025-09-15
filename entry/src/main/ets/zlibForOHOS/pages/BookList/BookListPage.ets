@@ -24,7 +24,7 @@ import { zlib, zlibClient } from '../../datas/classes/zlib';
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod';
 import { I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../../datas/interfaces/I_BookShelf';
 import { setContinueState } from '../../utils/ToolsUtil';
-import { loadingDialog, loadingNewDialog } from '../others/Builder';
+import { BookCover, loadingDialog, loadingNewDialog } from '../others/Builder';
 
 
 @ComponentV2
@@ -63,15 +63,7 @@ export default struct BookListPage {
             LazyForEach(zlibClient.bookshelfBooks, (item: I_Bookshelf_extraBooks) => {
               FlowItem() {
                 Column({ space: 20 }) {
-                  Image(item.book.cover)
-                    .draggable(false)
-                    .size({ width: '100%' })
-                    .shadow({
-                      radius: 25,
-                      color: Color.Gray,
-                      offsetX: 0,
-                      offsetY: 10
-                    })
+                  BookCover({data: item.book.cover})
 
                   Column({ space: 2 }) {
                     Text(item.book.title)

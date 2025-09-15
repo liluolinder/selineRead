@@ -34,7 +34,7 @@ import { photoAccessHelper } from "@kit.MediaLibraryKit"
 import { I_BookComment } from "../../datas/interfaces/I_BookComment"
 import { I_Terms } from "../../datas/interfaces/I_Terms"
 import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
-import { loadingDialog, loadingNewDialog } from "../others/Builder"
+import { BookCover, loadingDialog, loadingNewDialog } from "../others/Builder"
 import { zlibIndexShowMod } from "../../datas/enums/zlibIndexShowMod"
 import { __zlibHomeData__ } from "../zlibHome/zlibHome"
 
@@ -147,17 +147,10 @@ export struct bookInfoPage {
 
                 ListItem() {
                   Row({ space: 20 }) {
-                    Image(this.bookInfo?.image)
-                      .zIndex(114513)
+                    BookCover({data: this.bookInfo?.image})
                       .transition(TransitionEffect.OPACITY)
                       .geometryTransition('image')
                       .size({ height: 160, width: 116 })
-                      .shadow({
-                        radius: 25,
-                        color: Color.Gray,
-                        offsetX: 0,
-                        offsetY: 10
-                      })
                       .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                       .onClick(() => {
                         XAnimation.runWithAnimation(() => this.isViewingBigImage = true, true, 0.4, 0.85)
@@ -439,15 +432,7 @@ export struct bookInfoPage {
                   LazyForEach(this.bookInfo?.recommendBooksArrayRelated, (item: I_RecommendBook, index: number) => {
                     FlowItem() {
                       Column({ space: 20 }) {
-                        Image(item.cover)
-                          .draggable(false)
-                          .size({ width: '100%' })
-                          .shadow({
-                            radius: 25,
-                            color: Color.Gray,
-                            offsetX: 0,
-                            offsetY: 10
-                          })
+                        BookCover({data: item.cover})
 
                         Column({ space: 2 }) {
                           Text(item.title)
@@ -623,10 +608,9 @@ export struct BigImage {
 
   build() {
     Stack({ alignContent: Alignment.BottomEnd }) {
-      Image(this.image)
-        .draggable(false)
-        .geometryTransition('image')
-        .objectFit(ImageFit.Contain)
+      BookCover({data: this.image, haveShadow: false})
+        .size({width: '100%', height: '100%'})
+        .geometryTransition('image', {follow: true})
         .rotate({ z: 1, angle: this.angle })
         .offset({ x: this.offsetX, y: this.offsetY })
         .scale({ x: this.zoom, y: this.zoom })

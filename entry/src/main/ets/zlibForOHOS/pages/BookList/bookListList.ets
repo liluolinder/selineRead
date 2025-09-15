@@ -23,7 +23,7 @@ import { __System__, minWidth, __UI__, __CustomBackgroundData__ } from '../../da
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { zlibClient } from '../../datas/classes/zlib';
 import { I_ReadLists_Bookshelf, I_BookInfo_Bookshelf } from '../../datas/interfaces/I_BookShelf';
-import { loadingDialog, loadingNewDialog } from '../others/Builder';
+import { BookCover, loadingDialog, loadingNewDialog } from '../others/Builder';
 import BookListPage from './BookListPage';
 import { common } from '@kit.AbilityKit';
 import { setContinueState } from '../../utils/ToolsUtil';
@@ -81,10 +81,8 @@ export struct BookListList {
                   List({ space: 10 }) {
                     ForEach(item.booksGrouped?.slice(0, 7), (itemB: I_BookInfo_Bookshelf) => {
                       ListItem() {
-                        Image(itemB.coverUrl)
+                        BookCover({data: itemB.coverUrl, haveShadow: false})
                           .width(75)
-                          .height(112)
-                          .draggable(false)
                       }
                     },(itemB: I_BookInfo_Bookshelf)=>itemB.cover)
                   }

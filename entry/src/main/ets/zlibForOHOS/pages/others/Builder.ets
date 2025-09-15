@@ -54,3 +54,28 @@ export function customBackground() {
     .animation({ duration: 300, curve: Curve.Ease })
   }
 }
+
+@ComponentV2
+export struct BookCover{
+  @Param @Require data: ResourceStr|undefined
+  @Param haveShadow: boolean = true
+  @Local private  isFinish: boolean = false
+
+  build() {
+    Stack(){
+      Image($r('app.media.default_cover')).aspectRatio(0.71).visibility(this.isFinish? Visibility.None: Visibility.Visible).animation({duration: 100}).draggable(false).objectFit(ImageFit.Cover)
+      Image(this.data ?? $r('app.media.default_cover')).width('100%').visibility(this.isFinish? Visibility.Visible: Visibility.Hidden).animation({duration: 100}).draggable(false).objectFit(ImageFit.Contain)
+        .onComplete(()=>{
+          this.isFinish = true
+        })
+    }
+    .reuseId(this.data?.toString())
+    .shadow({
+      radius: this.haveShadow? 25: 0,
+      color: Color.Gray,
+      offsetX: 0,
+      offsetY: 10
+    })
+  }
+}
+
