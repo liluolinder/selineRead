@@ -8,7 +8,8 @@
       "phone",
       "tablet",
       "2in1",
-      "wearable"
+      "wearable",
+      "tv"
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
