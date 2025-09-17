@@ -465,7 +465,7 @@ export struct personal {
             contentItem: { primaryText: '反馈QQ群' },
             operateItem: { text: '228546422' }
           }).onClick(() => {
-            let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, '718559395');
+            let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, '228546422');
             pasteboard.getSystemPasteboard().setData(pasteData) //写入剪切板
             promptAction.showToast({
               message: '复制成功',

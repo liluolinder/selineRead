@@ -187,56 +187,44 @@ export class zlib {
 
   async getRecommendBooks(page: number): Promise<boolean> {
     addLog('getRecommendBooks', `正在获取推荐书籍page=${page}`)
+    let needNormalRecommend:boolean = false;
+    let extraData: object
     return new Promise<boolean>(async (resolve) => {
       let req = http.createHttp()
       if (__User__.isLoginZlib) {
-        await req.request(`${this.base_url}/?ts`, {
-          method: http.RequestMethod.GET,
-          header: {
-            'sec-ch-ua-platform': '"Windows"',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
-            'Cookie': this.cookie,
-          }
-        }).then((data: http.HttpResponse) => {
-          let res: string = data.result.toString()
-          const regex = /bookIds:\s*\[([\d,]+)\]/;
-          const match = res.match(regex);
-          let bookIds: number[] = match?.[1].split(',').map(Number) ?? []
-
-          let extraData: object = new Object({ bookIds: bookIds })
-          req.request(`${this.baseApi_url}/book/recommended/mosaic/20/${page}`, {
-            method: http.RequestMethod.POST,
+        if (this.cookie=='')
+        {
+          needNormalRecommend = true
+        }else {
+          needNormalRecommend = false
+          await req.request(`${this.base_url}/?ts`, {
+            method: http.RequestMethod.GET,
             header: {
               'sec-ch-ua-platform': '"Windows"',
               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
               'Cookie': this.cookie,
-            },
-            extraData: JSON.stringify(extraData)
-          }).then((data: http.HttpResponse) => {
-            try {
-              let obj = JSON.parse(JSON.stringify(data))
-              let result = JSON.parse((obj as object)?.['result'])
-              let tempArray: I_RecommendBook[] = (result as object)?.['books']
-              tempArray.forEach((item) => {
-                this.recommendBooksArray.pushData(item)
-              })
-              addLog('getRecommendBooks', `获取page=${page}成功`)
-              resolve(true)
-            } catch (e) {
-              resolve(false)
             }
-            req.destroy();
+          }).then((data: http.HttpResponse) => {
+            let res: string = data.result.toString()
+            const regex = /bookIds:\s*\[([\d,]+)\]/;
+            const match = res.match(regex);
+            let bookIds: number[] = match?.[1].split(',').map(Number) ?? []
+            extraData = new Object({ bookIds: bookIds })
+            addLog('getRecommendBooks', `个性化参数为:${JSON.stringify(bookIds)}`)
+            if (bookIds.length!=0 && bookIds!=undefined) {
+              needNormalRecommend = false
+            }else {
+              needNormalRecommend = true
+            }
           })
-            .catch((err: BusinessError) => {
-              addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
-              console.log(`Liquid:${JSON.stringify(err)}`)
-              promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
-              resolve(false)
-            })
-
-        })
+        }
       } else {
-        req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
+        needNormalRecommend = true
+      }
+      if (needNormalRecommend) {
+
+        needNormalRecommend = true
+        await req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
           method: http.RequestMethod.GET,
           header: {
             'sec-ch-ua-platform': '"Windows"',
@@ -262,7 +250,38 @@ export class zlib {
             promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
             resolve(false)
           })
+      }else {
+        await req.request(`${this.baseApi_url}/book/recommended/mosaic/20/${page}`, {
+          method: http.RequestMethod.POST,
+          header: {
+            'sec-ch-ua-platform': '"Windows"',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+            'Cookie': this.cookie,
+          },
+          extraData: JSON.stringify(extraData)
+        }).then((data: http.HttpResponse) => {
+          try {
+            let obj = JSON.parse(JSON.stringify(data))
+            let result = JSON.parse((obj as object)?.['result'])
+            let tempArray: I_RecommendBook[] = (result as object)?.['books']
+            tempArray.forEach((item) => {
+              this.recommendBooksArray.pushData(item)
+            })
+            addLog('getRecommendBooks', `获取page=${page}成功`)
+            resolve(true)
+          } catch (e) {
+            resolve(false)
+          }
+          req.destroy();
+        })
+          .catch((err: BusinessError) => {
+            addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
+            console.log(`Liquid:${JSON.stringify(err)}`)
+            promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
+            resolve(false)
+          })
       }
+
     })
   }
 
@@ -270,6 +289,7 @@ export class zlib {
     addLog('getRecommendBooksRelated', `尝试获取page=${page}`)
     let req = http.createHttp()
     let extraData: object = new Object({ bookIds: bookIDsRelated })
+    addLog('getRecommendBooksRelated', `个性化参数为=${JSON.stringify(bookIDsRelated)}`)
     console.log(`Liquid:${JSON.stringify(extraData)}`)
 
     return await req.request(`${this.baseApi_url}/book/recommended/mosaic/21/${page}`, {

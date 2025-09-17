@@ -91,14 +91,17 @@ struct Index {
       zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
     }
     addLog("读取首选项",`Cookie${zlibClient.cookie}`)
-    await zlibClient.refreshUrl().then(async () => {
-      zlibClient.getRecommendBooks(1)
 
-      if (__User__.isLoginZlib && __UI__.onlineMode) {
-        zlibClient.getUserInfo()
-      }
-    })
-    this.proccessContinueData()
+    if (__UI__.onlineMode) {
+      await zlibClient.refreshUrl().then(async () => {
+        zlibClient.getRecommendBooks(1)
+
+        if (__User__.isLoginZlib && __UI__.onlineMode) {
+          zlibClient.getUserInfo()
+        }
+      })
+      this.proccessContinueData()
+    }
 
   }
 

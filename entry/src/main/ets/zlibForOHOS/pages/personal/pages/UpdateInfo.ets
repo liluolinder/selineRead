@@ -32,6 +32,12 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: 'beta 0.7.1',
+      date: '2025/9/17',
+      optimizeArray:['优化无封面书籍展示效果','优化逻辑'],
+      fixBugsArray:['修复未打开局域网书库就进行获取','修复打开局域网书库按钮，不获取书籍bug']
+    },
+    {
       version: 'beta 0.7.0',
       date: '2025/9/14',
       addNewFunArray:['新增搜索模式切换','新增关键词搜索','新增书籍详细页面书籍推荐','新增书籍详细页面关键词','新增首页个性化推荐','返回Button(仅PC/自由多窗)'],

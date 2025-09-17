@@ -82,14 +82,22 @@ struct SettingsPage {
             symbol1: $r('sys.symbol.link'),
             message: '使用局域网书库',
             checked: __UI__.onlineMode,
-            onChange: (checked: boolean) => {
+            onChange: async (checked: boolean) => {
               XAnimation.runWithAnimation(() => __UI__.onlineMode = checked)
               NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', checked)
-              if (checked) {
-                zlibClient.getUserInfo()
-              }
               zlibClient.recommendBooksArray.clearData()
               zlibClient.bookshelfArray.clearData()
+              if (checked) {
+                zlibClient.getUserInfo()
+                await zlibClient.refreshUrl().then(async () => {
+                  zlibClient.getRecommendBooks(1)
+                  zlibClient.getBookShelf(1)
+                  if (__User__.isLoginZlib && __UI__.onlineMode) {
+                    zlibClient.getUserInfo()
+                  }
+                })
+              }
+
             }
           })
         }
