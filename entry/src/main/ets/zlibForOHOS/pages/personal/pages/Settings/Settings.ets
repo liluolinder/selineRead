@@ -2,11 +2,15 @@ import { __CustomBackgroundData__, __System__, __UI__, __User__ } from "../../..
 import { XAnimation } from "../../../../datas/classes/XAnimation"
 import NeoPreferencesUtil from '../../../../datas/classes/XPreferencesUtil'
 import { zlib, zlibClient } from "../../../../datas/classes/zlib"
-import { promptAction } from "@kit.ArkUI"
+import { CustomContentDialog, promptAction } from "@kit.ArkUI"
 import { selectImage } from "../../../../utils/ToolsUtil"
 import { fileIo } from "@kit.CoreFileKit"
 import { globlContext } from "../../../../../entryability/EntryAbility"
 import { SettingsClickItem } from "../../../others/ListItem"
+import { linderPush } from "../../../../datas/classes/LPushKit"
+import { copyStrToPasteBoard } from "../../../../datas/classes/XAbility"
+import { XContext } from "../../../../datas/classes/XContext"
+import { common } from "@kit.AbilityKit"
 
 @Builder
 export function settingsBuilder() {
@@ -39,6 +43,48 @@ struct Settings {
 struct SettingsPage {
   @Consumer('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
   @Local apiAddress: string = zlibClient.base_url
+  @Local pushToken:string = ''
+
+  @Builder
+  DialogBuilder(){
+     Column(){
+      Text(this.pushToken)
+     }.backgroundColor($r('sys.color.comp_background_list_card'))
+     .borderRadius(20)
+    .padding(8)
+  }
+
+  DialogController: CustomDialogController = new CustomDialogController({
+    builder: CustomContentDialog({
+      primaryTitle: '您的pushToken如下,请发送给开发者',
+      contentBuilder: () => {
+        this.DialogBuilder()
+      },
+
+      buttons: [
+        {
+          value: '手动发送',
+          buttonStyle: ButtonStyleMode.TEXTUAL,
+          role: ButtonRole.ERROR,
+          action: () => {
+            copyStrToPasteBoard(this.pushToken)
+          }
+        },
+        {
+          value: '跳转邮箱',
+          buttonStyle: ButtonStyleMode.TEXTUAL,
+          action: () => {
+            copyStrToPasteBoard(this.pushToken);
+
+            (globlContext as common.UIAbilityContext).startAbility({
+              action: 'ohos.want.action.sendToData',
+              uri:`mailto:liquidstudio@163.com?subject=【SelineRead PushToken】&body=${this.pushToken}`
+            })
+          }
+        }
+      ],
+    }),
+  });
 
   build() {
     NavDestination() {
@@ -156,6 +202,25 @@ struct SettingsPage {
               }
             })
           }
+        }
+
+        ListItem() {
+          SettingsToggleItem({
+            symbol: $r('sys.symbol.share'),
+            message: '接受可用API推送',
+            checked: __UI__.getNewAPI,
+            onChange: async (checked: boolean) => {
+              __UI__.getNewAPI = checked
+              if (checked) {
+                 await linderPush.getPushToken().then((token:string)=>{
+                   this.pushToken = token
+                   this.DialogController.open()
+                })
+
+              }
+              NeoPreferencesUtil.putPreferencesValue("selineRead", 'getNewAPI', checked)
+            }
+          })
         }
 
         ListItem() {

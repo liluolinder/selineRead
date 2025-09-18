@@ -13,6 +13,7 @@ import WindowsUtil from '../zlibForOHOS/utils/WindowsUtil';
 import { zlibClient } from '../zlibForOHOS/datas/classes/zlib';
 import { JSON } from '@kit.ArkTS';
 import { addLog } from '../zlibForOHOS/utils/ToolsUtil';
+import { XAnimation } from '../zlibForOHOS/datas/classes/XAnimation';
 
 const DOMAIN = 0x0000;
 
@@ -21,13 +22,29 @@ export let globlUIContext:UIContext
 
 export default class EntryAbility extends UIAbility {
 
-  private windowObj?: window.Window
-  private curBp: string = ''
-
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
+    const newAPI = want.parameters?.["newAPI"];
+    if (newAPI &&  newAPI!='') {
+      if (!__UI__.onlineMode) {
+        XAnimation.runWithAnimation(() => __UI__.onlineMode = true)
+        NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', true)
+      }
+      let temp = newAPI.toString()
+      addLog('setAPIFromNotification',`获取通知API${newAPI}`)
+      zlibClient.base_url = temp
+      zlibClient.baseApi_url = temp + '/papi'
+      NeoPreferencesUtil.putPreferencesValue("selineRead", 'zlibUrl', temp )
+      zlibClient.recommendBooksArray.clearData()
+      zlibClient.bookshelfArray.clearData()
+      zlibClient.refreshUrl().then(async () => {
+        zlibClient.getRecommendBooks(1)
+        zlibClient.getBookShelf(1)
+      })
+    }
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     NeoPreferencesUtil.localPreferences(this.context, 'selineRead');
     __UI__.onlineMode = NeoPreferencesUtil.getPreferencesValue("selineRead", 'onlineMode', false) as boolean
+    __UI__.getNewAPI = NeoPreferencesUtil.getPreferencesValue("selineRead", 'getNewAPI', false) as boolean
     __CustomBackgroundData__.customBackground = NeoPreferencesUtil.getPreferencesValue("selineRead", 'customBackground', false) as boolean
     zlibClient.base_url =
       NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', '') as string
@@ -40,6 +57,25 @@ export default class EntryAbility extends UIAbility {
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    const newAPI = want.parameters?.["newAPI"];
+    if (newAPI &&  newAPI!='') {
+      if (!__UI__.onlineMode) {
+        XAnimation.runWithAnimation(() => __UI__.onlineMode = true)
+        NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', true)
+      }
+      let temp = newAPI.toString()
+      addLog('setAPIFromNotification',`获取通知API${newAPI}`)
+      zlibClient.base_url = temp
+      zlibClient.baseApi_url = temp + '/papi'
+      NeoPreferencesUtil.putPreferencesValue("selineRead", 'zlibUrl', temp )
+      zlibClient.recommendBooksArray.clearData()
+      zlibClient.bookshelfArray.clearData()
+      zlibClient.refreshUrl().then(async () => {
+        zlibClient.getRecommendBooks(1)
+        zlibClient.getBookShelf(1)
+      })
+    }
+
     this.proccessContinueData(want, launchParam)
     const context = this.context as common.UIAbilityContext
     context.setMissionContinueState(1)

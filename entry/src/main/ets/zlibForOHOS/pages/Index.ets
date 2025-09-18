@@ -42,6 +42,8 @@ import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
 import { customBackground } from './others/Builder';
 import { JSON } from '@kit.ArkTS';
 import { I_SearchHistory } from '../datas/interfaces/I_SearchHistory';
+import { linderPush } from '../datas/classes/LPushKit';
+import { linderCloudDataBase } from '../datas/classes/LCloudDataBaseKit';
 
 
 @Entry
@@ -64,6 +66,7 @@ struct Index {
   private swiperController = new SwiperController()
 
   async aboutToAppear(): Promise<void> {
+    linderCloudDataBase.queryAllPushToken()
     __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
       dataBaseName: 'selineRead',
     })

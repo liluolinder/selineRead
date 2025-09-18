@@ -48,6 +48,7 @@ export struct personal {
   buttonsArray2: string[] = [
     '鸣谢',
   ]
+
   zlibLoginDialogController: CustomDialogController = new CustomDialogController({
     builder: CustomContentDialog({
       primaryTitle: 'zlib登录',
@@ -69,7 +70,7 @@ export struct personal {
           value: '确定',
           buttonStyle: ButtonStyleMode.TEXTUAL,
           action: () => {
-            zlibClient.loginIn(this.userAccount, this.userPassword).then((isLogin:boolean)=>{
+            zlibClient.loginIn(this.userAccount, this.userPassword).then((isLogin: boolean) => {
               if (isLogin) {
                 zlibClient.recommendBooksArray.clearData()
                 zlibClient.getRecommendBooks(1)
@@ -82,7 +83,6 @@ export struct personal {
       ],
     }),
   });
-
 
   @Builder
   loginPageBuilder() {
@@ -176,14 +176,13 @@ export struct personal {
   }
 
   @Builder
-  zzPageBuilder()
-  {
-    Column({space:10}){
+  zzPageBuilder() {
+    Column({ space: 10 }) {
       Text('注意:该赞助是对开发者的赞助，不是zlib的赞助，不会增加你的下载额度，不会在个人页面显示您的赞助额度（仅赞助zlib的额度）')
       Image($r('app.media.zfm'))
         .width(250)
-    }.size({width:'100%', height:'100%'})
-    .padding({left:16, right:16})
+    }.size({ width: '100%', height: '100%' })
+    .padding({ left: 16, right: 16 })
   }
 
   build() {
@@ -387,37 +386,6 @@ export struct personal {
                       this.showTanks = true;
                       return
                     }
-                    /*             let url: string = ''
-                                 if (index == 1) {
-                                   url = 'https://atomgit.com/liluolinder/selineRead'
-                                 } else if (index == 2) {
-                                   url = 'https://atomgit.com/liluolinder/selineRead/issues'
-                                 }
-
-                                 AlertDialog.show({
-                                   title: '提醒',
-                                   message: '即将打开网站',
-                                   autoCancel: true,
-                                   primaryButton: {
-                                     value: '取消',
-                                     action: () => {
-                                     }
-                                   },
-                                   secondaryButton: {
-                                     enabled: true,
-                                     defaultFocus: true,
-                                     style: DialogButtonStyle.HIGHLIGHT,
-                                     value: '确定',
-                                     action: () => {
-                                       let want: Want = {
-                                         action: 'ohos.want.action.viewData',
-                                         entities: ['entity.system.browsable'],
-                                         uri: url,
-                                       };
-                                       (globlContext as common.UIAbilityContext).startAbility(want)
-                                     }
-                                   }
-                                 })*/
                   }
                 }
 
@@ -427,37 +395,6 @@ export struct personal {
                 this.showTanks = true;
                 return
               }
-              let url: string = ''
-              /*              if (index == 1) {
-                              url = 'https://atomgit.com/liluolinder/selineRead'
-                            } else if (index == 2) {
-                              url = 'https://atomgit.com/liluolinder/selineRead/issues'
-                            }
-
-                            AlertDialog.show({
-                              title: '提醒',
-                              message: '即将打开网站',
-                              autoCancel: true,
-                              primaryButton: {
-                                value: '取消',
-                                action: () => {
-                                }
-                              },
-                              secondaryButton: {
-                                enabled: true,
-                                defaultFocus: true,
-                                style: DialogButtonStyle.HIGHLIGHT,
-                                value: '确定',
-                                action: () => {
-                                  let want: Want = {
-                                    action: 'ohos.want.action.viewData',
-                                    entities: ['entity.system.browsable'],
-                                    uri: url,
-                                  };
-                                  (globlContext as common.UIAbilityContext).startAbility(want)
-                                }
-                              }
-                            })*/
             })
           })
 
@@ -510,7 +447,7 @@ export struct personal {
       Blank()
         .bindSheet($$this.showZZ, this.zzPageBuilder(), {
           preferType: SheetType.CENTER,
-          title: { title: '赞助开发者',subtitle:'您的赞助，我们的动力(^~^)' },
+          title: { title: '赞助开发者', subtitle: '您的赞助，我们的动力(^~^)' },
           height: SheetSize.MEDIUM,
         })
 

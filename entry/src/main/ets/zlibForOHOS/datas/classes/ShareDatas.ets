@@ -78,11 +78,13 @@ export class UIShareData {
   HomePageStack: NavPathStack = new NavPathStack()
   bookListPageStack: NavPathStack = new NavPathStack()
   @Trace onlineMode: boolean = false
+  @Trace getNewAPI: boolean = false
   @Trace showSettings: boolean = false
   @Trace showLogger: boolean = false
   currentBookData: string = ''
   currentBookListData: string = ''
   currentViewingType: 'book'|'bookList'|'home' = 'home'
+
 }
 
 export let __UI__: UIShareData = new UIShareData()

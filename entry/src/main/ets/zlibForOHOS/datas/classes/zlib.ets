@@ -100,12 +100,12 @@ export class zlib {
         }
       } else {
         addLog('login', `${data.result}`, true)
-        promptAction.showToast({ message: JSON.stringify(data.result), duration: 3000 })
+        promptAction.showToast({ message: '登录失败', duration: 3000 })
         return false
       }
     }).catch((err: Error) => {
       addLog('login', `error! ${err.name} ${err.message}`, true)
-      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
+      promptAction.showToast({ message: '登录失败', duration: 3000 })
       return false
     }).finally(() => {
       req.destroy()
@@ -222,8 +222,6 @@ export class zlib {
         needNormalRecommend = true
       }
       if (needNormalRecommend) {
-
-        needNormalRecommend = true
         await req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
           method: http.RequestMethod.GET,
           header: {
