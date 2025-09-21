@@ -1,46 +1,45 @@
 import { cloudDatabase } from "@kit.CloudFoundationKit";
-import { preferences } from "@kit.ArkData";
+import { preferences, ValueType } from "@kit.ArkData";
+import { CloudDataBaseType } from "../enums/CloudDataBaseType";
+import { addLog } from "../../utils/ToolsUtil";
 
 export class pushToken extends cloudDatabase.DatabaseObject{
   public naturalbase_ClassName(): string {
     return "pushToken";
   }
 
-  public id: number | undefined;
   public pushToken: string | undefined;
-
+  public needGetNewAPI: boolean | undefined;
 }
 
+export class LCloudDataBaseKit<T extends cloudDatabase.DatabaseObject>{
+  databaseZone?:cloudDatabase.DatabaseZone
+  type?:CloudDataBaseType
 
-export class LCloudDataBaseKit{
+  constructor(databaseZone:string) {
+    this.databaseZone = cloudDatabase.zone(databaseZone);
+  }
 
-  databaseZone = cloudDatabase.zone('pushToken');
-
-  async queryAllPushToken() {
-    let condition:cloudDatabase.DatabaseQuery<pushToken> = new cloudDatabase.DatabaseQuery(pushToken);
+  async query(condition:cloudDatabase.DatabaseQuery<T>) :Promise<T[]>
+  {
     try {
-      let resultArray = await this.databaseZone.query(condition);
-      resultArray.forEach((item:pushToken)=>{
-        console.log(`Liquid:${item.pushToken}`)
-      })
+      let resultArray:T[] = await this.databaseZone?.query(condition) as T[];
+      addLog('云数据库',`成功查询，结果为: ${JSON.stringify(resultArray)}`)
+      return resultArray
     } catch (err) {
-      console.log(`Liquid:${JSON.stringify(err)}`)
+      addLog('云数据库',`查询错误code: ${err.code}, message: ${err.message}`,true)
+      return []
     }
   }
 
-  async upsertPushToken(_pushToken:string) {
+  async upsert(record:T | T[]) {
     try {
-      let pushTokenItem:pushToken = new pushToken()
-
-      pushTokenItem.pushToken = _pushToken
-
-      let record = await this.databaseZone.upsert(pushTokenItem);
-      console.log(`Liquid:Succeeded in upserting a book, result: ${JSON.stringify(record)}`);
+      let recordInfo = await this.databaseZone?.upsert(record);
+      addLog('云数据库',`成功插入/更新数据: ${JSON.stringify(recordInfo)}`)
     } catch (err) {
-      console.log(`Liquid:Failed to upsert a book, code: ${err.code}, message: ${err.message}`);
+      addLog('云数据库',`插入/更新数据失败: ${err.code}, message: ${err.message}`,true)
     }
   }
-
 }
 
-export let linderCloudDataBase:LCloudDataBaseKit = new LCloudDataBaseKit()
+export let pushTokenDataBase:LCloudDataBaseKit<pushToken> = new LCloudDataBaseKit<pushToken>('pushToken')

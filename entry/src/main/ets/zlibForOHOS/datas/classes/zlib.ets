@@ -11,7 +11,6 @@ import { I_CookieInfo } from '../interfaces/I_CookieInfo';
 import http from '@ohos.net.http';
 import { __DataBase__, __Notification__, __UI__, __User__ } from './ShareDatas';
 import NeoPreferencesUtil from './XPreferencesUtil';
-import { linderNotificationManager } from './LNotificationManager';
 import { linderDataBaseManger } from './LDataBaseManager';
 import { relationalStore } from '@kit.ArkData';
 import { zlibHaveDownloadTable } from '../commons/zlibHaveDownloadTable';
@@ -81,9 +80,8 @@ export class zlib {
           __User__.zlibAccount = email
           __User__.zlibPassword = password
           __User__.isLoginZlib = true
-
-          /*  __zlibHomeData__.recommendIndex = 1
-            this.getUserInfo()*/
+            __zlibHomeData__.recommendIndex = 1
+            this.getUserInfo()
           return true
         } else {
           //todo:API18后换成openToast
@@ -701,8 +699,6 @@ export class zlib {
         //todo:API18后换成openToast
         promptAction.showToast({ message: `下载失败`, duration: 3000 })
         addLog('downloadBook', `下载失败${JSON.stringify(err)}`, true)
-        linderNotificationManager.pushNotification(notificationID, '下载失败', fileName)
-        // 下载请求失败回调，可以弹窗提示失败
         console.log(`Liquid:Invoke downloadTask failed-----, message is: ${err.message}`);
       });
 

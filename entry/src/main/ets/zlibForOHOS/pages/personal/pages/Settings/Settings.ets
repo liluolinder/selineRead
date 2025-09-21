@@ -11,6 +11,8 @@ import { linderPush } from "../../../../datas/classes/LPushKit"
 import { copyStrToPasteBoard } from "../../../../datas/classes/XAbility"
 import { XContext } from "../../../../datas/classes/XContext"
 import { common } from "@kit.AbilityKit"
+import { pushToken, pushTokenDataBase } from "../../../../datas/classes/LCloudDataBaseKit"
+import { cloudDatabase } from "@kit.CloudFoundationKit"
 
 @Builder
 export function settingsBuilder() {
@@ -43,48 +45,6 @@ struct Settings {
 struct SettingsPage {
   @Consumer('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
   @Local apiAddress: string = zlibClient.base_url
-  @Local pushToken:string = ''
-
-  @Builder
-  DialogBuilder(){
-     Column(){
-      Text(this.pushToken)
-     }.backgroundColor($r('sys.color.comp_background_list_card'))
-     .borderRadius(20)
-    .padding(8)
-  }
-
-  DialogController: CustomDialogController = new CustomDialogController({
-    builder: CustomContentDialog({
-      primaryTitle: '您的pushToken如下,请发送给开发者',
-      contentBuilder: () => {
-        this.DialogBuilder()
-      },
-
-      buttons: [
-        {
-          value: '手动发送',
-          buttonStyle: ButtonStyleMode.TEXTUAL,
-          role: ButtonRole.ERROR,
-          action: () => {
-            copyStrToPasteBoard(this.pushToken)
-          }
-        },
-        {
-          value: '跳转邮箱',
-          buttonStyle: ButtonStyleMode.TEXTUAL,
-          action: () => {
-            copyStrToPasteBoard(this.pushToken);
-
-            (globlContext as common.UIAbilityContext).startAbility({
-              action: 'ohos.want.action.sendToData',
-              uri:`mailto:liquidstudio@163.com?subject=【SelineRead PushToken】&body=${this.pushToken}`
-            })
-          }
-        }
-      ],
-    }),
-  });
 
   build() {
     NavDestination() {
@@ -206,19 +166,46 @@ struct SettingsPage {
 
         ListItem() {
           SettingsToggleItem({
-            symbol: $r('sys.symbol.share'),
+            symbol: $r('sys.symbol.paperplane'),
             message: '接受可用API推送',
-            checked: __UI__.getNewAPI,
+            checked: __UI__.needGetNewAPI,
             onChange: async (checked: boolean) => {
-              __UI__.getNewAPI = checked
+              __UI__.needGetNewAPI = checked
               if (checked) {
                  await linderPush.getPushToken().then((token:string)=>{
-                   this.pushToken = token
-                   this.DialogController.open()
-                })
+                   let condition = new cloudDatabase.DatabaseQuery(pushToken)
+                   condition.equalTo('pushToken', token);
 
+                   pushTokenDataBase.query(condition).then((res)=>{
+                     if (res == undefined || res.length==0) {
+                       console.log(`Liquid:不存在`)
+                       let record = new pushToken()
+                       record.pushToken = token
+                       record.needGetNewAPI= true
+                       pushTokenDataBase.upsert(record)
+                     }else {
+                       let record = res[0]
+                       record.needGetNewAPI = true
+                       pushTokenDataBase.upsert(record)
+                     }
+                   })
+                })
+              }else {
+                await linderPush.getPushToken().then((token:string)=>{
+                  let condition = new cloudDatabase.DatabaseQuery(pushToken)
+                  condition.equalTo('pushToken', token);
+
+                  pushTokenDataBase.query(condition).then((res)=>{
+                    if (res == undefined || res.length==0) {}
+                    else {
+                      let record = res[0]
+                      record.needGetNewAPI = false
+                      pushTokenDataBase.upsert(record)
+                    }
+                  })
+                })
               }
-              NeoPreferencesUtil.putPreferencesValue("selineRead", 'getNewAPI', checked)
+              NeoPreferencesUtil.putPreferencesValue("selineRead", 'needGetNewAPI', checked)
             }
           })
         }

@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "seline.book.read",
     "vendor": "linder",
-    "versionCode": 1000702,
-    "versionName": "0.7.1",
+    "versionCode": 1000703,
+    "versionName": "0.7.2",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
   }

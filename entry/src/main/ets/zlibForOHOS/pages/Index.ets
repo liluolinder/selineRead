@@ -41,9 +41,10 @@ import { curves } from '@kit.ArkUI';
 import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
 import { customBackground } from './others/Builder';
 import { JSON } from '@kit.ArkTS';
-import { I_SearchHistory } from '../datas/interfaces/I_SearchHistory';
-import { linderPush } from '../datas/classes/LPushKit';
-import { linderCloudDataBase } from '../datas/classes/LCloudDataBaseKit';
+import { pushToken, pushTokenDataBase } from '../datas/classes/LCloudDataBaseKit';
+import { cloudDatabase } from '@kit.CloudFoundationKit';
+import { notificationManager } from '@kit.NotificationKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 
 @Entry
@@ -66,11 +67,16 @@ struct Index {
   private swiperController = new SwiperController()
 
   async aboutToAppear(): Promise<void> {
-    linderCloudDataBase.queryAllPushToken()
+
+    notificationManager.setBadgeNumber(0).then(() => {
+      addLog('清除通知角标','成功')
+    }).catch((err: BusinessError) => {
+      addLog('清除通知角标',`失败Code is ${err.code}, message is ${err.message}`,true)
+    });
+
     __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
       dataBaseName: 'selineRead',
     })
-
     linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
       zlibHaveDownloadTable,5)
 
@@ -81,24 +87,9 @@ struct Index {
     __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
     __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
 
-    const  searchHistoryStr = NeoPreferencesUtil.getPreferencesValue("selineRead", 'searchHistory', '') as string
-
-    if (searchHistoryStr!='')
-    {
-      zlibClient.searchHistoryArray = JSON.parse(searchHistoryStr) as I_SearchHistory[]
-    }
-
-    if (__User__.isLoginZlib) {
-      __User__.zlibAccount = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibAccount', '') as string
-      __User__.zlibPassword = NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibPassword', '') as string
-      zlibClient.cookie = NeoPreferencesUtil.getPreferencesValue('selineRead', "zlibCookie", '') as string
-    }
-    addLog("读取首选项",`Cookie${zlibClient.cookie}`)
-
     if (__UI__.onlineMode) {
       await zlibClient.refreshUrl().then(async () => {
         zlibClient.getRecommendBooks(1)
-
         if (__User__.isLoginZlib && __UI__.onlineMode) {
           zlibClient.getUserInfo()
         }
@@ -199,9 +190,11 @@ struct Index {
           .onChange((index)=>{
             this.currentPage = index
             if (index==1) {
-              if (zlibClient.bookshelfArray.dataArray.length==0) {
-                zlibClient.getBookShelf(1)
-                zlibClient.getBookShelf(2)
+              if (__UI__.onlineMode) {
+                if (zlibClient.bookshelfArray.dataArray.length==0) {
+                  zlibClient.getBookShelf(1)
+                  zlibClient.getBookShelf(2)
+                }
               }
             }
           })
