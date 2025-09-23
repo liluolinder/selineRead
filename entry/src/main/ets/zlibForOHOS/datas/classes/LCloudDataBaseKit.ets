@@ -32,12 +32,14 @@ export class LCloudDataBaseKit<T extends cloudDatabase.DatabaseObject>{
     }
   }
 
-  async upsert(record:T | T[]) {
+  async upsert(record:T | T[]): Promise<boolean> {
     try {
       let recordInfo = await this.databaseZone?.upsert(record);
       addLog('云数据库',`成功插入/更新数据: ${JSON.stringify(recordInfo)}`)
+      return true
     } catch (err) {
       addLog('云数据库',`插入/更新数据失败: ${err.code}, message: ${err.message}`,true)
+      return false
     }
   }
 }
