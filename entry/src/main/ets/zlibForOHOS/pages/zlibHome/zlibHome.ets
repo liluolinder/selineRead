@@ -424,6 +424,16 @@ export struct zlibHome {
               .fontSize(12)
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
+            Row({space: 10}){
+              Text(item.year)
+                .fontSize(12)
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+              Text(item.extension)
+                .fontSize(12)
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+            }.opacity(0.6)
           }.alignItems(HorizontalAlign.Start)
 
         }.alignItems(HorizontalAlign.Start)
