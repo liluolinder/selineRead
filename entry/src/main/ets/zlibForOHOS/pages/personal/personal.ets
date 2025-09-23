@@ -22,7 +22,7 @@ import { __System__, __User__, minWidth, __UI__, __CustomBackgroundData__ } from
 import { CircleShape, ComposeListItem, CustomContentDialog, promptAction } from '@kit.ArkUI';
 import { zlibClient } from '../../datas/classes/zlib';
 import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
-import { globlContext } from '../../../entryability/EntryAbility';
+import { globalUIAbilityContext, globlContext } from '../../../entryability/EntryAbility';
 import { common, Want } from '@kit.AbilityKit';
 import { UpdateInfoBuilder } from './pages/UpdateInfo';
 import { TanksForBuilder } from './pages/ThanksFor';
@@ -408,6 +408,23 @@ export struct personal {
               message: '复制成功',
               duration: 2000
             });
+          })
+
+          ComposeListItem({
+            contentItem: { primaryText: 'MeoW频道' },
+            operateItem: {
+              icon: {
+                value: $r('sys.media.ohos_ic_public_arrow_right'), action: () => {
+                  globalUIAbilityContext.startAbility({
+                    uri: 'https://www.chuckfang.com/MeoW/appLinking?channelId=c2ba80556f0c469faa03b98c7a44f933'
+                  })
+                }
+              }
+            }
+          }).onClick(() => {
+            globalUIAbilityContext.startAbility({
+              uri: 'https://www.chuckfang.com/MeoW/appLinking?channelId=c2ba80556f0c469faa03b98c7a44f933'
+            })
           })
 
         }

@@ -108,6 +108,13 @@ struct SettingsPage {
           })
         }
 
+        ListItem(){
+          Button()
+            .onClick(async ()=>{
+              console.log('testTAG', await linderPush.getPushToken())
+            })
+        }
+
         if (__UI__.onlineMode) {
           ListItem() {
             Column({ space: 10 }) {

@@ -33,8 +33,11 @@ export let globlContext: Context
 
 export let globlUIContext: UIContext
 
+export let globalUIAbilityContext: common.UIAbilityContext
+
 export default class EntryAbility extends UIAbility {
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
+    globalUIAbilityContext = this.context as common.UIAbilityContext
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     NeoPreferencesUtil.localPreferences(this.context, 'selineRead');
     __UI__.onlineMode = NeoPreferencesUtil.getPreferencesValue("selineRead", 'onlineMode', false) as boolean
