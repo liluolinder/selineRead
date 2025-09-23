@@ -1,16 +1,13 @@
 import { __CustomBackgroundData__, __System__, __UI__, __User__ } from "../../../../datas/classes/ShareDatas"
 import { XAnimation } from "../../../../datas/classes/XAnimation"
 import NeoPreferencesUtil from '../../../../datas/classes/XPreferencesUtil'
-import { zlib, zlibClient } from "../../../../datas/classes/zlib"
-import { CustomContentDialog, promptAction } from "@kit.ArkUI"
+import { zlibClient } from "../../../../datas/classes/zlib"
+import { promptAction } from "@kit.ArkUI"
 import { selectImage } from "../../../../utils/ToolsUtil"
 import { fileIo } from "@kit.CoreFileKit"
 import { globlContext } from "../../../../../entryability/EntryAbility"
 import { SettingsClickItem } from "../../../others/ListItem"
 import { linderPush } from "../../../../datas/classes/LPushKit"
-import { copyStrToPasteBoard } from "../../../../datas/classes/XAbility"
-import { XContext } from "../../../../datas/classes/XContext"
-import { common } from "@kit.AbilityKit"
 import { pushToken, pushTokenDataBase } from "../../../../datas/classes/LCloudDataBaseKit"
 import { cloudDatabase } from "@kit.CloudFoundationKit"
 
@@ -149,6 +146,7 @@ struct SettingsPage {
             .backgroundColor($r('sys.color.comp_background_list_card'))
             .padding(15)
             .alignItems(HorizontalAlign.Start)
+
           }
 
           ListItem() {
@@ -162,52 +160,52 @@ struct SettingsPage {
               }
             })
           }
-        }
 
-        ListItem() {
-          SettingsToggleItem({
-            symbol: $r('sys.symbol.paperplane'),
-            message: '接受可用API推送',
-            checked: __UI__.needGetNewAPI,
-            onChange: async (checked: boolean) => {
-              __UI__.needGetNewAPI = checked
-              if (checked) {
-                 await linderPush.getPushToken().then((token:string)=>{
-                   let condition = new cloudDatabase.DatabaseQuery(pushToken)
-                   condition.equalTo('pushToken', token);
+          ListItem() {
+            SettingsToggleItem({
+              symbol: $r('sys.symbol.paperplane'),
+              message: '接受可用API推送',
+              checked: __UI__.needGetNewAPI,
+              onChange: async (checked: boolean) => {
+                __UI__.needGetNewAPI = checked
+                if (checked) {
+                  await linderPush.getPushToken().then((token:string)=>{
+                    let condition = new cloudDatabase.DatabaseQuery(pushToken)
+                    condition.equalTo('pushToken', token);
 
-                   pushTokenDataBase.query(condition).then((res)=>{
-                     if (res == undefined || res.length==0) {
-                       console.log(`Liquid:不存在`)
-                       let record = new pushToken()
-                       record.pushToken = token
-                       record.needGetNewAPI= true
-                       pushTokenDataBase.upsert(record)
-                     }else {
-                       let record = res[0]
-                       record.needGetNewAPI = true
-                       pushTokenDataBase.upsert(record)
-                     }
-                   })
-                })
-              }else {
-                await linderPush.getPushToken().then((token:string)=>{
-                  let condition = new cloudDatabase.DatabaseQuery(pushToken)
-                  condition.equalTo('pushToken', token);
-
-                  pushTokenDataBase.query(condition).then((res)=>{
-                    if (res == undefined || res.length==0) {}
-                    else {
-                      let record = res[0]
-                      record.needGetNewAPI = false
-                      pushTokenDataBase.upsert(record)
-                    }
+                    pushTokenDataBase.query(condition).then((res)=>{
+                      if (res == undefined || res.length==0) {
+                        console.log(`Liquid:不存在`)
+                        let record = new pushToken()
+                        record.pushToken = token
+                        record.needGetNewAPI= true
+                        pushTokenDataBase.upsert(record)
+                      }else {
+                        let record = res[0]
+                        record.needGetNewAPI = true
+                        pushTokenDataBase.upsert(record)
+                      }
+                    })
                   })
-                })
+                }else {
+                  await linderPush.getPushToken().then((token:string)=>{
+                    let condition = new cloudDatabase.DatabaseQuery(pushToken)
+                    condition.equalTo('pushToken', token);
+
+                    pushTokenDataBase.query(condition).then((res)=>{
+                      if (res == undefined || res.length==0) {}
+                      else {
+                        let record = res[0]
+                        record.needGetNewAPI = false
+                        pushTokenDataBase.upsert(record)
+                      }
+                    })
+                  })
+                }
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'needGetNewAPI', checked)
               }
-              NeoPreferencesUtil.putPreferencesValue("selineRead", 'needGetNewAPI', checked)
-            }
-          })
+            })
+          }
         }
 
         ListItem() {

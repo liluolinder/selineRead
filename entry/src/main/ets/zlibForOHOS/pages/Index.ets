@@ -43,6 +43,8 @@ import { customBackground } from './others/Builder';
 import { JSON } from '@kit.ArkTS';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { pushToken, pushTokenDataBase } from '../datas/classes/LCloudDataBaseKit';
+import { linderPush } from '../datas/classes/LPushKit';
 
 
 @Entry
@@ -93,6 +95,13 @@ struct Index {
         }
       })
       this.proccessContinueData()
+    }
+
+    if(NeoPreferencesUtil.getPreferencesValue('selineRead', 'isUploadPushToken', false)){
+      let record = new pushToken()
+      record.pushToken = await linderPush.getPushToken()
+      record.needGetNewAPI= false
+      if (await pushTokenDataBase.upsert(record)) NeoPreferencesUtil.putPreferencesValue('selineRead', 'isUploadPushToken', true)
     }
 
   }
