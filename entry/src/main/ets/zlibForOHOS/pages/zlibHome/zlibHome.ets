@@ -39,7 +39,7 @@ import NeoPreferencesUtil from '../../datas/classes//XPreferencesUtil'
 @ComponentV2
 export struct zlibHome {
   @Local showSearchPage: boolean = false
-  @Local listOrWaterFlow: zlibIndexShowMod = zlibIndexShowMod.WaterFlow
+  @Local listOrWaterFlow: zlibIndexShowMod = NeoPreferencesUtil.getPreferencesValue("selineRead", 'listOrWaterFlow', zlibIndexShowMod.WaterFlow) as zlibIndexShowMod
   @Local searchBookName: string = ''
   @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
@@ -683,6 +683,7 @@ export struct zlibHome {
             this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
             zlibIndexShowMod.WaterFlow
           })
+          NeoPreferencesUtil.putPreferencesValue("selineRead", 'listOrWaterFlow', this.listOrWaterFlow)
         })
         .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
