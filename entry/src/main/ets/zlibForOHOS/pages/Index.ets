@@ -100,7 +100,7 @@ struct Index {
     if(NeoPreferencesUtil.getPreferencesValue('selineRead', 'isUploadPushToken', false)){
       let record = new pushToken()
       record.pushToken = await linderPush.getPushToken()
-      record.needGetNewAPI= false
+      record.needGetNewAPI= __UI__.needGetNewAPI
       if (await pushTokenDataBase.upsert(record)) NeoPreferencesUtil.putPreferencesValue('selineRead', 'isUploadPushToken', true)
     }
 
