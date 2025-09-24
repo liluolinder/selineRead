@@ -134,4 +134,113 @@ export function base64Decoding(str:string):string{
   return textDecoder.decodeToString(array, { stream: false });
 }
 
+class EmojiEncoder {
+  // 字符到小黄脸表情的映射表
+  private charToYellowFaceMap: Record<string, string>;
+  // 小黄脸表情到字符的反向映射表
+  private yellowFaceToCharMap: Record<string, string>;
 
+  constructor() {
+    // 初始化映射表
+    this.charToYellowFaceMap = this.initCharMap();
+    this.yellowFaceToCharMap = this.createReverseMap();
+  }
+
+  // 初始化字符到小黄脸的映射
+  private initCharMap(): Record<string, string> {
+    return {
+      // 数字
+      '0': '😀', '1': '😁', '2': '😂', '3': '🤣', '4': '😃',
+      '5': '😄', '6': '😅', '7': '😆', '8': '😉', '9': '😊',
+
+      // 大写字母
+      'A': '🙂', 'B': '🙃', 'C': '😋', 'D': '😎', 'E': '😍',
+      'F': '😘', 'G': '🥰', 'H': '😗', 'I': '😙', 'J': '😚',
+      'K': '☺️', 'L': '🙂', 'M': '🤗', 'N': '🤩', 'O': '🤔',
+      'P': '🤨', 'Q': '😐', 'R': '😑', 'S': '😶', 'T': '😏',
+      'U': '😒', 'V': '🙄', 'W': '😬', 'X': '🤥', 'Y': '😌', 'Z': '😔',
+
+      // 小写字母
+      'a': '😪', 'b': '😴', 'c': '😷', 'd': '🤒', 'e': '🤕',
+      'f': '🤢', 'g': '🤮', 'h': '🤧', 'i': '🥵', 'j': '🥶',
+      'k': '🥴', 'l': '🥺', 'm': '🤯', 'n': '🤠', 'o': '🤡',
+      'p': '🤖', 'q': '👹', 'r': '👺', 's': '👻', 't': '👽',
+      'u': '👾', 'v': '🤲', 'w': '🙏', 'x': '💪', 'y': '🦾', 'z': '🦿',
+
+      // 网址特殊符号
+      '.': '🦶', '/': '👣', ':': '👂', '?': '👃', '=': '👅',
+      '&': '👄', '#': '👀', '%': '👁️', '+': '👤', '-': '👥',
+      '_': '👶', '~': '👦', '!': '👧', '@': '👨', '$': '👩',
+      '*': '👨‍🦰', '(': '👨‍🦱', ')': '👨‍🦳', '[': '👨‍🦲', ']': '👩‍🦰',
+      '{': '👩‍🦱', '}': '👩‍🦳', '|': '👩‍🦲', '\\': '🧔', '<': '🧔‍♀️',
+      '>': '👱', '`': '👱‍♀️', '\'': '👴', '"': '👵'
+    };
+  }
+
+  // 创建反向映射表（不使用解构赋值）
+  private createReverseMap(): Record<string, string> {
+    const reverseMap: Record<string, string> = {};
+    const entries = Object.keys(this.charToYellowFaceMap);
+
+    for (let i = 0; i < entries.length; i++) {
+      const char = entries[i];
+      const emoji = this.charToYellowFaceMap[char];
+      reverseMap[emoji] = char;
+    }
+
+    return reverseMap;
+  }
+
+  /**
+   * 将字符串编码为小黄脸表情
+   * @param str 要编码的字符串
+   * @returns 编码后的小黄脸表情字符串
+   */
+  encode(str: string): string {
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charAt(i);
+      // 使用小黄脸表情替换字符，未找到对应表情则使用默认表情
+      result += this.charToYellowFaceMap[char] || '😐';
+    }
+    return result;
+  }
+
+  /**
+   * 将小黄脸表情字符串解码为原始字符串
+   * @param emojiStr 要解码的小黄脸表情字符串
+   * @returns 解码后的原始字符串
+   */
+  decode(emojiStr: string): string {
+    let result = '';
+    let i = 0;
+
+    while (i < emojiStr.length) {
+      let found = false;
+
+      // 尝试匹配小黄脸表情（考虑多码点表情）
+      for (let len = 6; len >= 1; len--) {
+        if (i + len > emojiStr.length) continue;
+
+        const emoji = emojiStr.substring(i, i + len);
+        // 不使用hasOwnProperty，直接检查是否存在
+        if (this.yellowFaceToCharMap[emoji] !== undefined) {
+          result += this.yellowFaceToCharMap[emoji];
+          i += len;
+          found = true;
+          break;
+        }
+      }
+
+      // 未找到匹配的表情则保留原字符
+      if (!found) {
+        result += emojiStr.charAt(i);
+        i++;
+      }
+    }
+
+    return result;
+  }
+}
+
+export const emojiEncoder = new EmojiEncoder()

@@ -24,10 +24,10 @@ import { I_DownloadInfo } from "../../datas/interfaces/I_DownloadInfo"
 import common from "@ohos.app.ability.common"
 import { DividerTmp } from "../../datas/classes/DividerTmp"
 import { minWidth, __CustomBackgroundData__, __System__, __UI__, __User__ } from "../../datas/classes/ShareDatas"
-import { globlContext, globlUIContext } from "../../../entryability/EntryAbility"
-import { curves, LengthUnit, promptAction, PromptAction, SymbolGlyphModifier } from "@kit.ArkUI"
+import { globlContext } from "../../../entryability/EntryAbility"
+import { curves, promptAction, SymbolGlyphModifier } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
-import { base64Encoding, setContinueState } from "../../utils/ToolsUtil"
+import { emojiEncoder, setContinueState } from "../../utils/ToolsUtil"
 import { BusinessError, request } from "@kit.BasicServicesKit"
 import { fileUri } from "@kit.CoreFileKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
@@ -532,12 +532,12 @@ export struct bookInfoPage {
     .menus([
       {
         value: '分享',
-        symbolIcon: new SymbolGlyphModifier($r('sys.symbol.rectangle_and_arrowshape_turn_up_right')),
+        symbolIcon: new SymbolGlyphModifier($r('sys.symbol.share')),
         action: () => {
 
           let shareData: systemShare.SharedData = new systemShare.SharedData({
-            utd: utd.UniformDataType.TEXT,
-            content: `向你分享一本好书,复制整条消息，打开Seline Read查看吧【${this.bookInfo?.bookID}/\\${this.bookInfo?.name}/\\${base64Encoding(this.bookInfo?.href)}】`,
+            utd: utd.UniformDataType.PLAIN_TEXT,
+            content: `向你分享一本好书,复制整条消息，打开Seline Read查看吧【${this.bookInfo?.bookID}-${this.bookInfo?.name}-${emojiEncoder.encode(this.bookInfo?.href)}】`,
             title: '分享书籍',
           });
 
