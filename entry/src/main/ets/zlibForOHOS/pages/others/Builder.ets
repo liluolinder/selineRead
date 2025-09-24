@@ -59,12 +59,13 @@ export function customBackground() {
 export struct BookCover{
   @Param @Require data: ResourceStr|undefined
   @Param haveShadow: boolean = true
-  @Local private  isFinish: boolean = false
+  @Param imageFit:ImageFit = ImageFit.Contain
+  @Local private isFinish: boolean = false
 
   build() {
     Stack(){
       Image($r('app.media.default_cover')).aspectRatio(0.71).visibility(this.isFinish? Visibility.None: Visibility.Visible).animation({duration: 100}).draggable(false).objectFit(ImageFit.Cover)
-      Image(this.data ?? $r('app.media.default_cover')).width('100%').visibility(this.isFinish? Visibility.Visible: Visibility.Hidden).animation({duration: 100}).draggable(false).objectFit(ImageFit.Contain)
+      Image(this.data ?? $r('app.media.default_cover')).visibility(this.isFinish? Visibility.Visible: Visibility.Hidden).animation({duration: 100}).draggable(false).objectFit(this.imageFit)
         .onComplete(()=>{
           this.isFinish = true
         })

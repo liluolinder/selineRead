@@ -464,8 +464,8 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Stack({ alignContent: Alignment.BottomEnd }) {
-            BookCover({ data: item.image })
-              .size({ height: '100%' })
+            BookCover({ data: item.image, imageFit: ImageFit.Cover })
+              .size({ height: '100%', width: '62' })
 
             Text(item.extension)
               .fontSize(10)
