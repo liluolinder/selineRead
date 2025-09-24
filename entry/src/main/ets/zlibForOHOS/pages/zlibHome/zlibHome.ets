@@ -25,10 +25,10 @@ import { XAnimation } from '../../datas/classes/XAnimation'
 import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod'
 import { BookCover, loadingDialog, loadingNewDialog } from '../others/Builder'
-import { addLog, setContinueState } from '../../utils/ToolsUtil'
+import { addLog, emojiEncoder, setContinueState } from '../../utils/ToolsUtil'
 import { scanBarcode, scanCore } from '@kit.ScanKit'
 import { globlContext } from '../../../entryability/EntryAbility'
-import { BusinessError } from '@kit.BasicServicesKit'
+import { BusinessError, pasteboard } from '@kit.BasicServicesKit'
 import { JSON } from '@kit.ArkTS'
 import { ListItemWithText } from '../others/ListItem'
 import { formatArray, languageArray, timeArray } from '../../datas/commons/zlibSearchOption'
@@ -663,6 +663,34 @@ export struct zlibHome {
             XAnimation.runWithAnimation(() => {
               __zlibHomeData__.isInSearchMode = true
             })
+          })
+
+        PasteButton() //Todo: 上架或剪贴板权限下来后移除此测试按钮
+          .padding({top: 12, bottom: 12, left: 24, right: 24})
+          .onClick((event: ClickEvent, result: PasteButtonOnClickResult) => {
+            if (PasteButtonOnClickResult.SUCCESS === result) {
+              pasteboard.getSystemPasteboard().getData(async (err: BusinessError, pasteData: pasteboard.PasteData) => {
+                if (err) {
+                  console.error(`Failed to get paste data. Code is ${err.code}, message is ${err.message}`);
+                  return;
+                }
+                try {
+                  let message =  pasteData.getPrimaryText()
+                  if(!message.includes('向你分享一本好书,复制整条消息，打开Seline Read查看吧')) return
+                  const data = message.substring(message.indexOf('【'), message.length - 1).split('-')
+                  __zlibHomeData__.isOpening = true
+                  zlibClient.getBookInfo(emojiEncoder.decode(data[2])).then((res) => {
+                    if (res.name != '' && res.name != undefined) {
+                      res.bookID = Number(data[0])
+                      res.href = emojiEncoder.decode(data[2])
+                      __UI__.HomePageStack.removeByName('bookInfoPage')
+                      __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
+                    }
+                    __zlibHomeData__.isOpening = false
+                  })
+                }catch{}
+              });
+            }
           })
 
         Button({ type: ButtonType.Circle }) {
