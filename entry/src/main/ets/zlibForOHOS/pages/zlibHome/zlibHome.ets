@@ -19,7 +19,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { zlibClient } from '../../datas/classes/zlib'
 import { I_RecommendBook } from '../../datas/interfaces/I_RecommendBook'
-import { Chip, ChipSize, curves, LengthMetrics } from '@kit.ArkUI'
+import { Chip, ChipSize, curves, LengthMetrics, LengthUnit } from '@kit.ArkUI'
 import { __CustomBackgroundData__, __System__, __UI__, minWidth, __User__ } from '../../datas/classes/ShareDatas'
 import { XAnimation } from '../../datas/classes/XAnimation'
 import { I_searchBook } from '../../datas/interfaces/I_BookInfo'
@@ -420,19 +420,18 @@ export struct zlibHome {
               .fontSize(16)
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.MARQUEE }).fontWeight(FontWeight.Medium)
-            Text(item.writer)
-              .fontSize(12)
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)
-            Row({space: 10}){
-              Text(item.year)
+            Flex({justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center, space: {main: {value: 10, unit: LengthUnit.VP}}}){
+              Text(item.writer)
                 .fontSize(12)
                 .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-              Text(item.extension)
-                .fontSize(12)
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .textOverflow({ overflow: TextOverflow.MARQUEE })
+              if(parseInt(item.year) > 0){
+                Text(item.year)
+                  .fontSize(12)
+                  .maxLines(1)
+              }else{
+                Stack()
+              }
             }.opacity(0.6)
           }.alignItems(HorizontalAlign.Start)
 
@@ -487,6 +486,11 @@ export struct zlibHome {
               .maxLines(1)
               .fontSize(14)
               .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.8)
+            if(parseInt(item.year) > 0){
+              Text(item.year)
+                .fontSize(14)
+                .maxLines(1)
+            }
           }.layoutWeight(1).alignItems(HorizontalAlign.Start)
         }.size({ width: '100%', height: '100%' })
         .padding(15)
