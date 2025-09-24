@@ -39,7 +39,8 @@ import NeoPreferencesUtil from '../../datas/classes//XPreferencesUtil'
 @ComponentV2
 export struct zlibHome {
   @Local showSearchPage: boolean = false
-  @Local listOrWaterFlow: zlibIndexShowMod = NeoPreferencesUtil.getPreferencesValue("selineRead", 'listOrWaterFlow', zlibIndexShowMod.WaterFlow) as zlibIndexShowMod
+  @Local listOrWaterFlow: zlibIndexShowMod = NeoPreferencesUtil.getPreferencesValue("selineRead", 'listOrWaterFlow',
+    zlibIndexShowMod.WaterFlow) as zlibIndexShowMod
   @Local searchBookName: string = ''
   @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
@@ -324,7 +325,7 @@ export struct zlibHome {
     LazyForEach(zlibClient.recommendBooksArray, (item: I_RecommendBook, index: number) => {
       FlowItem() {
         Column({ space: 20 }) {
-          BookCover({data: item.cover})
+          BookCover({ data: item.cover })
 
           Column({ space: 2 }) {
             Text(item.title)
@@ -361,7 +362,7 @@ export struct zlibHome {
     LazyForEach(zlibClient.recommendBooksArray, (item: I_RecommendBook, index: number) => {
       ListItem() {
         Row({ space: 10 }) {
-          BookCover({data: item.cover})
+          BookCover({ data: item.cover })
             .size({ height: '100%', width: '62' })
 
           Column({ space: 2 }) {
@@ -400,7 +401,7 @@ export struct zlibHome {
       FlowItem() {
         Column({ space: 20 }) {
           Stack({ alignContent: Alignment.BottomEnd }) {
-            BookCover({data: item.image})
+            BookCover({ data: item.image })
 
             Text(item.extension)
               .fontSize(12)
@@ -420,16 +421,20 @@ export struct zlibHome {
               .fontSize(16)
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.MARQUEE }).fontWeight(FontWeight.Medium)
-            Flex({justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center, space: {main: {value: 10, unit: LengthUnit.VP}}}){
+            Flex({
+              justifyContent: FlexAlign.SpaceBetween,
+              alignItems: ItemAlign.Center,
+              space: { main: { value: 10, unit: LengthUnit.VP } }
+            }) {
               Text(item.writer)
                 .fontSize(12)
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.MARQUEE })
-              if(parseInt(item.year) > 0){
+              if (parseInt(item.year) > 0) {
                 Text(item.year)
                   .fontSize(12)
                   .maxLines(1)
-              }else{
+              } else {
                 Stack()
               }
             }.opacity(0.6)
@@ -459,7 +464,7 @@ export struct zlibHome {
       ListItem() {
         Row({ space: 10 }) {
           Stack({ alignContent: Alignment.BottomEnd }) {
-            BookCover({data: item.image})
+            BookCover({ data: item.image })
               .size({ height: '100%', width: '62' })
 
             Text(item.extension)
@@ -486,10 +491,11 @@ export struct zlibHome {
               .maxLines(1)
               .fontSize(14)
               .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.8)
-            if(parseInt(item.year) > 0){
+            if (parseInt(item.year) > 0) {
               Text(item.year)
                 .fontSize(14)
                 .maxLines(1)
+                .opacity(0.8)
             }
           }.layoutWeight(1).alignItems(HorizontalAlign.Start)
         }.size({ width: '100%', height: '100%' })
@@ -591,21 +597,25 @@ export struct zlibHome {
           .onSelect((index) => {
             __zlibHomeData__.searchType = index
 
-            if (__zlibHomeData__.searchWords!='' && __zlibHomeData__.searchWords) {
+            if (__zlibHomeData__.searchWords != '' && __zlibHomeData__.searchWords) {
               this.scrollerOffset = 0
               __zlibHomeData__.searchIndex = 1
               if (__zlibHomeData__.searchType == 0) {
                 const specialUrl = this.generateUrl()
                 zlibClient.searchBooks(__zlibHomeData__.searchWords, 1, true, specialUrl)
-              }else {
+              } else {
                 zlibClient.searchTerms(__zlibHomeData__.searchWords)
               }
               XAnimation.runWithAnimation(() => {
                 __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
               })
               zlibClient.searchHistoryArray =
-                zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != __zlibHomeData__.searchWords)
-              zlibClient.searchHistoryArray.unshift({ value: __zlibHomeData__.searchWords, time: Date.parse(new Date().toString()) })
+                zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value !=
+                __zlibHomeData__.searchWords)
+              zlibClient.searchHistoryArray.unshift({
+                value: __zlibHomeData__.searchWords,
+                time: Date.parse(new Date().toString())
+              })
               NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
                 JSON.stringify(zlibClient.searchHistoryArray))
             }
@@ -619,7 +629,7 @@ export struct zlibHome {
           .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
 
         Search({ value: __zlibHomeData__.searchWords })
-          .onChange((text)=>{
+          .onChange((text) => {
             __zlibHomeData__.searchWords = text
           })
           .backgroundColor($r('app.color.start_window_background_blur'))
@@ -642,7 +652,7 @@ export struct zlibHome {
               if (__zlibHomeData__.searchType == 0) {
                 const specialUrl = this.generateUrl()
                 zlibClient.searchBooks(value, 1, true, specialUrl)
-              }else {
+              } else {
                 zlibClient.searchTerms(value)
               }
 
@@ -670,7 +680,12 @@ export struct zlibHome {
           })
 
         PasteButton() //Todo: 上架或剪贴板权限下来后移除此测试按钮
-          .padding({top: 12, bottom: 12, left: 24, right: 24})
+          .padding({
+            top: 12,
+            bottom: 12,
+            left: 24,
+            right: 24
+          })
           .onClick((event: ClickEvent, result: PasteButtonOnClickResult) => {
             if (PasteButtonOnClickResult.SUCCESS === result) {
               pasteboard.getSystemPasteboard().getData(async (err: BusinessError, pasteData: pasteboard.PasteData) => {
@@ -679,8 +694,10 @@ export struct zlibHome {
                   return;
                 }
                 try {
-                  let message =  pasteData.getPrimaryText()
-                  if(!message.includes('向你分享一本好书,复制整条消息，打开Seline Read查看吧')) return
+                  let message = pasteData.getPrimaryText()
+                  if (!message.includes('向你分享一本好书,复制整条消息，打开Seline Read查看吧')) {
+                    return
+                  }
                   const data = message.substring(message.indexOf('【'), message.length - 1).split('-')
                   __zlibHomeData__.isOpening = true
                   zlibClient.getBookInfo(emojiEncoder.decode(data[2])).then((res) => {
@@ -692,7 +709,8 @@ export struct zlibHome {
                     }
                     __zlibHomeData__.isOpening = false
                   })
-                }catch{}
+                } catch {
+                }
               });
             }
           })
@@ -733,7 +751,8 @@ export struct zlibHome {
           XAnimation.runWithAnimation(() => __zlibHomeData__.isInSearchMode = false)
           __zlibHomeData__.searchWords = ''
         })
-        .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search && __System__.pcMode ? Visibility.Visible : Visibility.None)
+        .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search && __System__.pcMode ?
+        Visibility.Visible : Visibility.None)
 
       }
       .zIndex(1)
@@ -804,8 +823,7 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                if (__zlibHomeData__.searchType==0)
-                {
+                if (__zlibHomeData__.searchType == 0) {
                   await zlibClient.searchBooks(__zlibHomeData__.searchWords, ++__zlibHomeData__.searchIndex, false)
                 }
               } else {
@@ -841,8 +859,7 @@ export struct zlibHome {
             .onReachEnd(async () => {
               this.isFlashing = true
               if (__zlibHomeData__.searchOrRecommend != zlibIndexShowMod.Recommend) {
-                if (__zlibHomeData__.searchType==0)
-                {
+                if (__zlibHomeData__.searchType == 0) {
                   await zlibClient.searchBooks(__zlibHomeData__.searchWords, ++__zlibHomeData__.searchIndex, false)
                 }
               } else {
@@ -952,13 +969,12 @@ export struct zlibHome {
                 this.scrollerOffset = 0
                 __zlibHomeData__.searchIndex = 1
                 __zlibHomeData__.searchWords = item.value
-               if (__zlibHomeData__.searchType==0)
-               {
-                 const specialUrl = this.generateUrl()
-                 zlibClient.searchBooks(item.value, 1, true, specialUrl)
-               }else {
-                 zlibClient.searchTerms(item.value)
-               }
+                if (__zlibHomeData__.searchType == 0) {
+                  const specialUrl = this.generateUrl()
+                  zlibClient.searchBooks(item.value, 1, true, specialUrl)
+                } else {
+                  zlibClient.searchTerms(item.value)
+                }
                 XAnimation.runWithAnimation(() => {
                   __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
                   __zlibHomeData__.isInSearchMode = false
