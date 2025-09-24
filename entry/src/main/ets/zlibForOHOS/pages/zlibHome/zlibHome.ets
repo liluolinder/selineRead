@@ -698,7 +698,7 @@ export struct zlibHome {
                   if (!message.includes('向你分享一本好书,复制整条消息，打开Seline Read查看吧')) {
                     return
                   }
-                  const data = message.substring(message.indexOf('【'), message.length - 1).split('-')
+                  const data = message.substring(message.indexOf('【'), message.length - 1).split('||')
                   __zlibHomeData__.isOpening = true
                   zlibClient.getBookInfo(emojiEncoder.decode(data[2])).then((res) => {
                     if (res.name != '' && res.name != undefined) {
