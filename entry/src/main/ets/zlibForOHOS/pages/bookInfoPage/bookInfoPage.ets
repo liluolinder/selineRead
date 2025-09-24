@@ -27,8 +27,8 @@ import { minWidth, __CustomBackgroundData__, __System__, __UI__, __User__ } from
 import { globlContext, globlUIContext } from "../../../entryability/EntryAbility"
 import { curves, LengthUnit, promptAction, PromptAction, SymbolGlyphModifier } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
-import { setContinueState } from "../../utils/ToolsUtil"
-import { request } from "@kit.BasicServicesKit"
+import { base64Encoding, setContinueState } from "../../utils/ToolsUtil"
+import { BusinessError, request } from "@kit.BasicServicesKit"
 import { fileUri } from "@kit.CoreFileKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
 import { I_BookComment } from "../../datas/interfaces/I_BookComment"
@@ -37,6 +37,9 @@ import { I_RecommendBook } from "../../datas/interfaces/I_RecommendBook"
 import { BookCover, loadingDialog, loadingNewDialog } from "../others/Builder"
 import { zlibIndexShowMod } from "../../datas/enums/zlibIndexShowMod"
 import { __zlibHomeData__ } from "../zlibHome/zlibHome"
+import { uniformTypeDescriptor as utd } from '@kit.ArkData';
+import { systemShare } from "@kit.ShareKit"
+import { XContext } from "../../datas/classes/XContext"
 
 
 @Builder
@@ -527,6 +530,29 @@ export struct bookInfoPage {
 
     }
     .menus([
+      {
+        value: '分享',
+        symbolIcon: new SymbolGlyphModifier($r('sys.symbol.rectangle_and_arrowshape_turn_up_right')),
+        action: () => {
+
+          let shareData: systemShare.SharedData = new systemShare.SharedData({
+            utd: utd.UniformDataType.TEXT,
+            content: `向你分享一本好书,复制整条消息，打开Seline Read查看吧【${this.bookInfo?.bookID}/\\${this.bookInfo?.name}/\\${base64Encoding(this.bookInfo?.href)}】`,
+            title: '分享书籍',
+          });
+
+          let controller: systemShare.ShareController = new systemShare.ShareController(shareData);
+          controller.show(XContext.getAbilityContext(), {
+            selectionMode: systemShare.SelectionMode.SINGLE,
+            previewMode: systemShare.SharePreviewMode.DETAIL,
+          }).then(() => {
+            console.info('ShareController show success.');
+          }).catch((error: BusinessError) => {
+            console.error(`ShareController show error. code: ${error.code}, message: ${error.message}`);
+          });
+
+        }
+      },
       {
         value: '评论',
         symbolIcon: new SymbolGlyphModifier($r('sys.symbol.ellipsis_bubble')),

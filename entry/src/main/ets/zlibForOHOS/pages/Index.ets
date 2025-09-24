@@ -35,7 +35,7 @@ import { DecorBar } from './others/DecorBar';
 import { BookList, __BookListData__ } from './BookList/bookListList';
 import { zlibDownloadingTable } from '../datas/commons/zlibDownloadingTable';
 import { I_searchBook } from '../datas/interfaces/I_BookInfo';
-import { addLog, setContinueState } from '../utils/ToolsUtil';
+import { addLog, base64Decoding, base64Encoding, setContinueState } from '../utils/ToolsUtil';
 import { I_RecommendBook } from '../datas/interfaces/I_RecommendBook';
 import { curves } from '@kit.ArkUI';
 import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
@@ -67,12 +67,6 @@ struct Index {
   private swiperController = new SwiperController()
 
   async aboutToAppear(): Promise<void> {
-
-    notificationManager.setBadgeNumber(0).then(() => {
-      addLog('清除通知角标','成功')
-    }).catch((err: BusinessError) => {
-      addLog('清除通知角标',`失败Code is ${err.code}, message is ${err.message}`,true)
-    });
 
     __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
       dataBaseName: 'selineRead',

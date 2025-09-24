@@ -190,6 +190,11 @@ export default class EntryAbility extends UIAbility {
   }
 
   onForeground(): void {
+    notificationManager.setBadgeNumber(0).then(() => {
+      addLog('清除通知角标','成功')
+    }).catch((err: BusinessError) => {
+      addLog('清除通知角标',`失败Code is ${err.code}, message is ${err.message}`,true)
+    });
     // Ability has brought to foreground
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
   }

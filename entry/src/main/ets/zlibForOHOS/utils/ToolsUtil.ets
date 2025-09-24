@@ -3,9 +3,10 @@ import { systemShare } from '@kit.ShareKit';
 import { common } from '@kit.AbilityKit';
 import { fileUri, picker } from '@kit.CoreFileKit';
 import { globlContext } from '../../entryability/EntryAbility';
-import { LogLine } from '../pages/personal/pages/LoggerPage';
 import { __Logger__, __UI__ } from '../datas/classes/ShareDatas';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
+import { buffer, util } from '@kit.ArkTS';
+
 
 export function dateGetTime(timestamp: number|string, time: boolean = true, date: boolean = true): string {
   try {
@@ -115,3 +116,22 @@ export function addLog(tag: string = '', text: string = '', error: boolean = fal
     console.log(`testTAG [${tag}] ${text}`)
   }
 }
+
+export function base64Encoding(str:string):string {
+  let base64Helper = new util.Base64Helper();
+  let array = new Uint8Array(buffer.from(str, 'utf-8').buffer)
+  let result:string = base64Helper.encodeToStringSync(array);
+  return result
+}
+
+export function base64Decoding(str:string):string{
+  let base64Helper = new util.Base64Helper();
+  let array = base64Helper.decodeSync(str, util.Type.MIME);
+  const textDecoder = util.TextDecoder.create('utf-8', {
+    fatal: false,      // 忽略无效字节不报错
+    ignoreBOM: true    // 忽略字节顺序标记
+  });
+  return textDecoder.decodeToString(array, { stream: false });
+}
+
+
