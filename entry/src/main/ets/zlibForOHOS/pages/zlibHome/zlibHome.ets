@@ -695,14 +695,12 @@ export struct zlibHome {
                 }
                 try {
                   let message = pasteData.getPrimaryText()
-                  if (!message.includes('向你分享一本好书,复制整条消息，打开Seline Read查看吧')) {
-                    return
-                  }
-                  const data = message.substring(message.indexOf('【'), message.length - 1).split('||')
+                  const data = /【([^|]+)\|\|([^|]+)\|\|([^|]+)】/.exec(message)
+                  if(data?.length != 4) return
                   __zlibHomeData__.isOpening = true
-                  zlibClient.getBookInfo('/book/' + emojiEncoder.decode(data[2]) + '/' + encodeURI(data[1]) + '.html').then((res) => {
+                  zlibClient.getBookInfo('/book/' + emojiEncoder.decode(data[3]) + '/' + encodeURI(data[2]) + '.html').then((res) => {
                     if (res.name != '' && res.name != undefined) {
-                      res.bookID = Number(data[0])
+                      res.bookID = Number(data[1])
                       res.href = emojiEncoder.decode(data[2])
                       __UI__.HomePageStack.removeByName('bookInfoPage')
                       __UI__.HomePageStack.pushPathByName('bookInfoPage', res)

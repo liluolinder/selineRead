@@ -48,6 +48,7 @@ export default class EntryAbility extends UIAbility {
       NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', '') as string
     zlibClient.baseApi_url = zlibClient.base_url + '/papi'
     zlibClient.autoShare = NeoPreferencesUtil.getPreferencesValue("selineRead", 'autoShare', true) as boolean
+    __UI__.shareBookText = NeoPreferencesUtil.getPreferencesValue("selineRead", 'shareBookText', '{userName}向你分享一本好书,复制整条消息，打开Seline Read查看吧{link}') as string
     const searchHistoryStr = NeoPreferencesUtil.getPreferencesValue("selineRead", 'searchHistory', '') as string
 
     if (searchHistoryStr != '') {

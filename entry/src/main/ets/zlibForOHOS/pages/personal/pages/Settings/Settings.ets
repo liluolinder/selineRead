@@ -42,6 +42,7 @@ struct Settings {
 struct SettingsPage {
   @Consumer('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
   @Local apiAddress: string = zlibClient.base_url
+  @Local shareBoolText: string = __UI__.shareBookText
 
   build() {
     NavDestination() {
@@ -206,6 +207,44 @@ struct SettingsPage {
               }
             })
           }
+
+          ListItem() {
+            Column({ space: 10 }) {
+              Column(){
+                Text('分享书本的消息格式').fontSize(15).fontWeight(FontWeight.Medium)
+                Text('{link}为分享内容，{userName}为用户名').fontSize(12).fontWeight(FontWeight.Medium).opacity(0.8)
+              }.alignItems(HorizontalAlign.Start).padding({ left: 5, right: 5 })
+
+              Row({ space: 10 }) {
+                TextInput({ text: $$this.shareBoolText })
+                  .backgroundColor($r('sys.color.comp_background_secondary'))
+                  .layoutWeight(1)
+                  .height(40)
+                Button({ stateEffect: true }) {
+                  SymbolGlyph($r('sys.symbol.checkmark')).fontSize(17).fontColor([$r('sys.color.font')])
+                }
+                .backgroundColor($r('sys.color.comp_background_secondary'))
+                .size({ width: 40, height: 40 })
+                .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                .onClick(() => {
+                  if(!this.shareBoolText.includes('{link}')){
+                    promptAction.showToast({message: '必须包含分享内容！'})
+                  } else {
+                    promptAction.showToast({message: '已保存'})
+                    __UI__.shareBookText = this.shareBoolText
+                    NeoPreferencesUtil.putPreferencesValue("selineRead", 'shareBookText', this.shareBoolText)
+                  }
+                })
+              }.width('100%')
+            }
+            .width('100%')
+            .borderRadius(20)
+            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .padding(15)
+            .alignItems(HorizontalAlign.Start)
+
+          }
+
         }
 
         ListItem() {

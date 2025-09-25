@@ -83,6 +83,7 @@ export class UIShareData {
   @Trace showLogger: boolean = false
   currentBookData: string = ''
   currentBookListData: string = ''
+  shareBookText: string = ''
   currentViewingType: 'book'|'bookList'|'home' = 'home'
 
 }

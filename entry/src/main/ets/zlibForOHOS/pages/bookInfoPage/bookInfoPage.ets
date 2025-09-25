@@ -538,7 +538,7 @@ export struct bookInfoPage {
           list?.pop()
           let shareData: systemShare.SharedData = new systemShare.SharedData({
             utd: utd.UniformDataType.PLAIN_TEXT,
-            content: `向你分享一本好书,复制整条消息，打开Seline Read查看吧【${this.bookInfo?.bookID}||${this.bookInfo?.name}||${emojiEncoder.encode(list?.join('/'))}】`,
+            content: __UI__.shareBookText.replace('{link}', `【${this.bookInfo?.bookID}||${this.bookInfo?.name}||${emojiEncoder.encode(list?.join('/'))}】`).replace('{userName}', zlibClient.userInfo?.userName?? ''),
             title: '分享书籍',
           });
 
