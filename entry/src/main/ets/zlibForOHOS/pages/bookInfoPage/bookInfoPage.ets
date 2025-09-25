@@ -534,9 +534,11 @@ export struct bookInfoPage {
         value: '分享',
         symbolIcon: new SymbolGlyphModifier($r('sys.symbol.share')),
         action: () => {
+          let list = this.bookInfo?.href?.replace('/book/', '').split('/')
+          list?.pop()
           let shareData: systemShare.SharedData = new systemShare.SharedData({
             utd: utd.UniformDataType.PLAIN_TEXT,
-            content: `向你分享一本好书,复制整条消息，打开Seline Read查看吧【${this.bookInfo?.bookID}||${this.bookInfo?.name}||${emojiEncoder.encode(this.bookInfo?.href)}】`,
+            content: `向你分享一本好书,复制整条消息，打开Seline Read查看吧【${this.bookInfo?.bookID}||${this.bookInfo?.name}||${emojiEncoder.encode(list?.join('/'))}】`,
             title: '分享书籍',
           });
 

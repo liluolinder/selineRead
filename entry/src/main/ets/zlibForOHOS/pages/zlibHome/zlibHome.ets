@@ -700,7 +700,7 @@ export struct zlibHome {
                   }
                   const data = message.substring(message.indexOf('【'), message.length - 1).split('||')
                   __zlibHomeData__.isOpening = true
-                  zlibClient.getBookInfo(emojiEncoder.decode(data[2])).then((res) => {
+                  zlibClient.getBookInfo('/book/' + emojiEncoder.decode(data[2]) + '/' + encodeURI(data[1]) + '.html').then((res) => {
                     if (res.name != '' && res.name != undefined) {
                       res.bookID = Number(data[0])
                       res.href = emojiEncoder.decode(data[2])
