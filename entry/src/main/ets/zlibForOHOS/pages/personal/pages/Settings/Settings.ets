@@ -212,7 +212,7 @@ struct SettingsPage {
             Column({ space: 10 }) {
               Column(){
                 Text('分享书本的消息格式').fontSize(15).fontWeight(FontWeight.Medium)
-                Text('{link}为分享内容，{userName}为用户名').fontSize(12).fontWeight(FontWeight.Medium).opacity(0.75)
+                Text('{link}为分享内容，{userName}为用户名').fontSize(12).opacity(0.75)
               }.alignItems(HorizontalAlign.Start).padding({ left: 5, right: 5 })
 
               Row({ space: 10 }) {
