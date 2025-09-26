@@ -363,8 +363,8 @@ export function getShareLink(){
               }
               try {
                 let message = pasteData.getPrimaryText()
-                // if(NeoPreferencesUtil.getPreferencesValue("selineRead", 'lastPasteboardLink', '') as string == message) return
-                // NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
+                if(NeoPreferencesUtil.getPreferencesValue("selineRead", 'lastPasteboardLink', '') as string == message) return
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
                 const data0 = /【([^】]+)】/.exec(message)
                 console.log('testTAG', data0)
                 if(data0?.length != 2) return
