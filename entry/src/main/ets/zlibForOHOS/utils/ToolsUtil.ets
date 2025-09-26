@@ -363,11 +363,14 @@ export function getShareLink(){
               }
               try {
                 let message = pasteData.getPrimaryText()
-                if(NeoPreferencesUtil.getPreferencesValue("selineRead", 'lastPasteboardLink', '') as string == message) return
-                NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
-                const data = /【([^|】]+)(?:\|\|([^|】]+))*】/.exec(message)
-                console.log('testTAG', data?.join(' ?? '))
-                if(data?.length == 4){
+                // if(NeoPreferencesUtil.getPreferencesValue("selineRead", 'lastPasteboardLink', '') as string == message) return
+                // NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
+                const data0 = /【([^】]+)】/.exec(message)
+                console.log('testTAG', data0)
+                if(data0?.length != 2) return
+                const data = data0[1].split('||')
+                console.log('testTAG', data)
+                if(data?.length == 3){
                   globalUIContext.getPromptAction().showDialog({
                     title: '有新的书本分享链接，是否打开？',
                     buttons: [
@@ -383,10 +386,10 @@ export function getShareLink(){
                   }).then(async (select)=> {
                     if(select.index == 1){
                       __zlibHomeData__.isOpening = true
-                      zlibClient.getBookInfo('/book/' + emojiEncoder.decode(data[3]) + '/' + encodeURI(data[2]) + '.html').then((res) => {
+                      zlibClient.getBookInfo('/book/' + emojiEncoder.decode(data[2]) + '/' + encodeURI(data[1]) + '.html').then((res) => {
                         if (res.name != '' && res.name != undefined) {
-                          res.bookID = Number(data[1])
-                          res.href = emojiEncoder.decode(data[2])
+                          res.bookID = Number(data[0])
+                          res.href = emojiEncoder.decode(data[1])
                           __UI__.HomePageStack.removeByName('bookInfoPage')
                           __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
                         }
@@ -417,9 +420,9 @@ export function getShareLink(){
                           __UI__.indexSwiperController.changeIndex(1, true)
                         }, 100)
                         zlibClient.bookshelfBooks.clearData()
-                        await zlibClient.getBookShelfMoreInfo(parseInt(emojiEncoder.decode(data[2])),1)
+                        await zlibClient.getBookShelfMoreInfo(parseInt(emojiEncoder.decode(data[1])),1)
                         animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
-                          __UI__.bookListPageStack.pushPath({ name: 'bookShelfPage', param: JSON.parse(JSON.stringify({id: parseInt(emojiEncoder.decode(data[2])), title: data[1]})) as I_ReadLists_Bookshelf }, false);
+                          __UI__.bookListPageStack.pushPath({ name: 'bookShelfPage', param: JSON.parse(JSON.stringify({id: parseInt(emojiEncoder.decode(data[1])), title: data[0]})) as I_ReadLists_Bookshelf }, false);
                         })
                         __BookListData__.isOpening = false
                       }catch{

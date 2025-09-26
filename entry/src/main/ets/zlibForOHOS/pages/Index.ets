@@ -94,8 +94,6 @@ struct Index {
       if (await pushTokenDataBase.upsert(record)) NeoPreferencesUtil.putPreferencesValue('selineRead', 'isUploadPushToken', true)
     }
 
-    getShareLink()
-
   }
 
   async proccessContinueData(){

@@ -198,7 +198,9 @@ export default class EntryAbility extends UIAbility {
     });
     // Ability has brought to foreground
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
-    getShareLink()
+    setTimeout(()=>{
+      getShareLink()
+    }, 500)
   }
 
   onBackground(): void {
