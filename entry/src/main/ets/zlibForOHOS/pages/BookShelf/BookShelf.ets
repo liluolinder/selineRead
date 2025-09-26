@@ -28,7 +28,7 @@ import { fileIo, fileUri, picker } from "@kit.CoreFileKit"
 import { linderDataBaseManger } from "../../datas/classes/LDataBaseManager"
 import { relationalStore, unifiedDataChannel } from "@kit.ArkData"
 import { bookParser } from "@kit.ReaderKit"
-import { globlContext } from "../../../entryability/EntryAbility"
+import { globalContext } from "../../../entryability/EntryAbility"
 import { BusinessError, zlib } from "@kit.BasicServicesKit"
 import { common, Want, wantConstant } from "@kit.AbilityKit"
 import { XContext } from "../../datas/classes/XContext"
@@ -82,14 +82,14 @@ export struct BookShelf {
                         valueBucket.BookName = bookInfo.bookTitle
                         valueBucket.BookAuthor = bookInfo.bookCreator || valueBucket.BookAuthor
                         if (bookInfo.bookCoverImage) {
-                          fileIo.mkdir(globlContext.cacheDir + '/tmp/')
-                          await zlib.decompressFile(file1.path, globlContext.cacheDir + '/tmp/')
-                          const file2 = fileIo.openSync(globlContext.filesDir + '/' + id.toString(),
+                          fileIo.mkdir(globalContext.cacheDir + '/tmp/')
+                          await zlib.decompressFile(file1.path, globalContext.cacheDir + '/tmp/')
+                          const file2 = fileIo.openSync(globalContext.filesDir + '/' + id.toString(),
                             fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
-                          const coverImage = fileIo.openSync(globlContext.cacheDir + '/tmp/' + bookInfo.bookCoverImage)
+                          const coverImage = fileIo.openSync(globalContext.cacheDir + '/tmp/' + bookInfo.bookCoverImage)
                           fileIo.copyFileSync(coverImage.fd, file2.fd)
                           valueBucket.BookImage = fileUri.getUriFromPath(file2.path)
-                          fileIo.rmdirSync(globlContext.cacheDir + '/tmp/')
+                          fileIo.rmdirSync(globalContext.cacheDir + '/tmp/')
                         }
                       } catch {
                       }
@@ -281,7 +281,7 @@ export struct BookShelf {
             uri: fileUri.getUriFromPath(item.BookFilePath),
             flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
           };
-          (globlContext as common.UIAbilityContext).startAbility(want)
+          (globalContext as common.UIAbilityContext).startAbility(want)
         })
         .enabled(fileIo.accessSync(item.BookFilePath))
 
@@ -293,7 +293,7 @@ export struct BookShelf {
             uri: fileUri.getUriFromPath(item.BookFilePath),
             flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
           };
-          (globlContext as common.UIAbilityContext).startAbility(want)
+          (globalContext as common.UIAbilityContext).startAbility(want)
         })
         .enabled(fileIo.accessSync(item.BookFilePath))
 
@@ -304,7 +304,7 @@ export struct BookShelf {
             uri: fileUri.getUriFromPath(item.BookFilePath),
             flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
           };
-          (globlContext as common.UIAbilityContext).startAbility(want)
+          (globalContext as common.UIAbilityContext).startAbility(want)
             .then(() => {
               console.info('Succeed to invoke startAbility.');
             })
@@ -357,7 +357,7 @@ export struct BookShelf {
             zlibClient.flashDownloadHistoryAndLocalBooksList()
           })
           try {
-            fileIo.unlinkSync(globlContext.filesDir + '/' + item.BookID)
+            fileIo.unlinkSync(globalContext.filesDir + '/' + item.BookID)
           } catch {
           }
         })

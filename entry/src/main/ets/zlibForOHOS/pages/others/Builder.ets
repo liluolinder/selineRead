@@ -1,7 +1,7 @@
 import { __System__, minWidth, __CustomBackgroundData__ } from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { fileUri } from "@kit.CoreFileKit"
-import { globlContext } from "../../../entryability/EntryAbility"
+import { globalContext } from "../../../entryability/EntryAbility"
 
 
 @Builder
@@ -38,7 +38,7 @@ export function loadingNewDialog() {
 export function customBackground() {
   if (!__CustomBackgroundData__.refresh) {
     Stack() {
-      Image(fileUri.getUriFromPath(globlContext.filesDir + '/background'))
+      Image(fileUri.getUriFromPath(globalContext.filesDir + '/background'))
         .size({ width: '100%', height: '100%' })
         .objectFit(ImageFit.Cover)
         .draggable(false)

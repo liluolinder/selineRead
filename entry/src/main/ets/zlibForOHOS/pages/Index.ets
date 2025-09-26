@@ -17,7 +17,7 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-import { globlContext, globlUIContext } from '../../entryability/EntryAbility';
+import { globalContext, globalUIContext } from '../../entryability/EntryAbility';
 import { linderPixelMap } from '../datas/classes/LPixelMap';
 import { minWidth,
   __CustomBackgroundData__,
@@ -35,14 +35,12 @@ import { DecorBar } from './others/DecorBar';
 import { BookList, __BookListData__ } from './BookList/bookListList';
 import { zlibDownloadingTable } from '../datas/commons/zlibDownloadingTable';
 import { I_searchBook } from '../datas/interfaces/I_BookInfo';
-import { addLog, base64Decoding, base64Encoding, setContinueState } from '../utils/ToolsUtil';
+import { getShareLink, setContinueState } from '../utils/ToolsUtil';
 import { I_RecommendBook } from '../datas/interfaces/I_RecommendBook';
 import { curves } from '@kit.ArkUI';
 import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
 import { customBackground } from './others/Builder';
 import { JSON } from '@kit.ArkTS';
-import { notificationManager } from '@kit.NotificationKit';
-import { BusinessError } from '@kit.BasicServicesKit';
 import { pushToken, pushTokenDataBase } from '../datas/classes/LCloudDataBaseKit';
 import { linderPush } from '../datas/classes/LPushKit';
 
@@ -64,11 +62,9 @@ struct Index {
 
   @Local currentPage: number = 0
 
-  private swiperController = new SwiperController()
-
   async aboutToAppear(): Promise<void> {
 
-    __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globlContext, {
+    __DataBase__.baseStore = await linderDataBaseManger.createRelationalStoreDataBase(globalContext, {
       dataBaseName: 'selineRead',
     })
     linderDataBaseManger.createTableForRelationDataBase(__DataBase__.baseStore, 'zlibHaveDownload',
@@ -78,7 +74,7 @@ struct Index {
       zlibDownloadingTable,5)
 
 
-    __User__.avatar = linderPixelMap.ISHaveAvatar(globlContext)
+    __User__.avatar = linderPixelMap.ISHaveAvatar(globalContext)
     __User__.isLoginZlib = NeoPreferencesUtil.getPreferencesValue("selineRead", 'isLoginZlib', false) as boolean
 
     if (__UI__.onlineMode) {
@@ -97,6 +93,8 @@ struct Index {
       record.needGetNewAPI= __UI__.needGetNewAPI
       if (await pushTokenDataBase.upsert(record)) NeoPreferencesUtil.putPreferencesValue('selineRead', 'isUploadPushToken', true)
     }
+
+    getShareLink()
 
   }
 
@@ -139,7 +137,7 @@ struct Index {
           const data = JSON.parse(__UI__.currentBookListData) as I_ReadLists_Bookshelf
           __BookListData__.isOpening = true
           setTimeout(()=>{
-            this.swiperController.changeIndex(1, true)
+            __UI__.indexSwiperController.changeIndex(1, true)
           }, 100)
           zlibClient.bookshelfBooks.clearData()
           await zlibClient.getBookShelfMoreInfo(data.id,1)
@@ -177,7 +175,7 @@ struct Index {
       Navigation(__UI__.HomePageStack) {
 
         Stack({alignContent: Alignment.BottomStart}){
-          Swiper(this.swiperController){
+          Swiper(__UI__.indexSwiperController){
             if(__UI__.onlineMode){
               zlibHome()
               BookList()
@@ -212,7 +210,7 @@ struct Index {
               .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
               .onClick(()=>{
                 this.currentPage = index
-                this.swiperController.changeIndex(index, true)
+                __UI__.indexSwiperController.changeIndex(index, true)
               })
             })
 

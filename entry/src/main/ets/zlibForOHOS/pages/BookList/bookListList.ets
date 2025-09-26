@@ -18,7 +18,7 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
 import { curves } from '@kit.ArkUI'
-import { globlContext, globlUIContext } from '../../../entryability/EntryAbility';
+import { globalContext, globalUIContext } from '../../../entryability/EntryAbility';
 import { __System__, minWidth, __UI__, __CustomBackgroundData__ } from '../../datas/classes/ShareDatas';
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { zlibClient } from '../../datas/classes/zlib';

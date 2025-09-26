@@ -72,6 +72,16 @@
         "name": "ohos.permission.WINDOW_TOPMOST"
       },
       {
+        "name": "ohos.permission.READ_PASTEBOARD",
+        "reason": "$string:reasonFor_READ_PASTEBOARD",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "always"
+        }
+      },
+      {
         "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
         "reason": "$string:reasonForKEEP_BACKGROUND_RUNNING",
         "usedScene": {

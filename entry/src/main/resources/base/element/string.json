@@ -15,6 +15,10 @@
     {
       "name": "reasonForKEEP_BACKGROUND_RUNNING",
       "value": "后台下载书籍"
+    },
+    {
+      "name": "reasonFor_READ_PASTEBOARD",
+      "value": "用于读取剪贴板中的分享口令"
     }
   ]
 }

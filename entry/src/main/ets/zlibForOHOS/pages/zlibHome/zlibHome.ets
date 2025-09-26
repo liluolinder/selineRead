@@ -27,7 +27,7 @@ import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod'
 import { BookCover, loadingDialog, loadingNewDialog } from '../others/Builder'
 import { addLog, emojiEncoder, setContinueState } from '../../utils/ToolsUtil'
 import { scanBarcode, scanCore } from '@kit.ScanKit'
-import { globlContext } from '../../../entryability/EntryAbility'
+import { globalContext } from '../../../entryability/EntryAbility'
 import { BusinessError, pasteboard } from '@kit.BasicServicesKit'
 import { JSON } from '@kit.ArkTS'
 import { ListItemWithText } from '../others/ListItem'
@@ -573,7 +573,7 @@ export struct zlibHome {
             enableAlbum: true
           };
           try {
-            scanBarcode.startScanForResult(globlContext, options).then((result: scanBarcode.ScanResult) => {
+            scanBarcode.startScanForResult(globalContext, options).then((result: scanBarcode.ScanResult) => {
               addLog('ScanCode', `扫码成功,书籍ISBN为${result.originalValue}`)
               const specialUrl = this.generateUrl()
               this.scrollerOffset = 0
@@ -677,40 +677,6 @@ export struct zlibHome {
             XAnimation.runWithAnimation(() => {
               __zlibHomeData__.isInSearchMode = true
             })
-          })
-
-        PasteButton() //Todo: 上架或剪贴板权限下来后移除此测试按钮
-          .padding({
-            top: 12,
-            bottom: 12,
-            left: 24,
-            right: 24
-          })
-          .onClick((event: ClickEvent, result: PasteButtonOnClickResult) => {
-            if (PasteButtonOnClickResult.SUCCESS === result) {
-              pasteboard.getSystemPasteboard().getData(async (err: BusinessError, pasteData: pasteboard.PasteData) => {
-                if (err) {
-                  console.error(`Failed to get paste data. Code is ${err.code}, message is ${err.message}`);
-                  return;
-                }
-                try {
-                  let message = pasteData.getPrimaryText()
-                  const data = /【([^|]+)\|\|([^|]+)\|\|([^|]+)】/.exec(message)
-                  if(data?.length != 4) return
-                  __zlibHomeData__.isOpening = true
-                  zlibClient.getBookInfo('/book/' + emojiEncoder.decode(data[3]) + '/' + encodeURI(data[2]) + '.html').then((res) => {
-                    if (res.name != '' && res.name != undefined) {
-                      res.bookID = Number(data[1])
-                      res.href = emojiEncoder.decode(data[2])
-                      __UI__.HomePageStack.removeByName('bookInfoPage')
-                      __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
-                    }
-                    __zlibHomeData__.isOpening = false
-                  })
-                } catch {
-                }
-              });
-            }
           })
 
         Button({ type: ButtonType.Circle }) {

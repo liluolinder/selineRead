@@ -22,7 +22,7 @@ import { productViewManager } from "@kit.StoreKit"
 import { common, Want } from "@kit.AbilityKit"
 import { XAnimation } from "../../../datas/classes/XAnimation"
 import { I_Acknowledgment, I_Acknowledgment_List } from "../../../datas/interfaces/I_Acknowledgment"
-import { globlContext } from "../../../../entryability/EntryAbility"
+import { globalContext } from "../../../../entryability/EntryAbility"
 import { __System__ } from "../../../datas/classes/ShareDatas"
 
 
@@ -168,7 +168,7 @@ export struct TanksFor {
                           bundleName: item.appBundle!,
                         }
                       }
-                      productViewManager.loadProduct(globlContext as common.UIAbilityContext, wantParam);
+                      productViewManager.loadProduct(globalContext as common.UIAbilityContext, wantParam);
                     })
                   }
                   if (item.githubHome != undefined) {
@@ -185,7 +185,7 @@ export struct TanksFor {
                         entities: ['entity.system.browsable'],
                         uri: 'https://github.com/' + item.githubHome,
                       };
-                      (globlContext as common.UIAbilityContext).startAbility(want)
+                      (globalContext as common.UIAbilityContext).startAbility(want)
                     })
                   }
                   if (item.atomgitHome != undefined) {
@@ -202,7 +202,7 @@ export struct TanksFor {
                         entities: ['entity.system.browsable'],
                         uri: 'https://atomgit.com/' + item.atomgitHome,
                       };
-                      (globlContext as common.UIAbilityContext).startAbility(want)
+                      (globalContext as common.UIAbilityContext).startAbility(want)
                     })
                   }
                   if (item.bilibili != undefined) {
@@ -220,7 +220,7 @@ export struct TanksFor {
                         abilityName: 'EntryAbility',
                         uri: url
                       };
-                      (globlContext as common.UIAbilityContext).startAbility(want)
+                      (globalContext as common.UIAbilityContext).startAbility(want)
                     })
                   }
                   if (item.barrier != undefined) {

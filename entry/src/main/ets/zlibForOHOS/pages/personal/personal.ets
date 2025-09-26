@@ -22,7 +22,7 @@ import { __System__, __User__, minWidth, __UI__, __CustomBackgroundData__ } from
 import { CircleShape, ComposeListItem, CustomContentDialog, promptAction } from '@kit.ArkUI';
 import { zlibClient } from '../../datas/classes/zlib';
 import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
-import { globalUIAbilityContext, globlContext } from '../../../entryability/EntryAbility';
+import { globalUIAbilityContext, globalContext } from '../../../entryability/EntryAbility';
 import { common, Want } from '@kit.AbilityKit';
 import { UpdateInfoBuilder } from './pages/UpdateInfo';
 import { TanksForBuilder } from './pages/ThanksFor';
@@ -165,7 +165,7 @@ export struct personal {
                     entities: ['entity.system.browsable'],
                     uri: zlibClient.base_url,
                   };
-                  (globlContext as common.UIAbilityContext).startAbility(want)
+                  (globalContext as common.UIAbilityContext).startAbility(want)
                 }
               }
             })

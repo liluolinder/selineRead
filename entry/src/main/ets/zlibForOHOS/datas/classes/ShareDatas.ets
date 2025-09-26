@@ -85,6 +85,7 @@ export class UIShareData {
   currentBookListData: string = ''
   shareBookText: string = ''
   currentViewingType: 'book'|'bookList'|'home' = 'home'
+  indexSwiperController = new SwiperController()
 
 }
 

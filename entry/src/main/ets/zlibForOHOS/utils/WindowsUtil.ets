@@ -2,7 +2,7 @@ import { window } from '@kit.ArkUI'
 import { common, Context } from '@kit.AbilityKit'
 import { deviceInfo, settings } from '@kit.BasicServicesKit'
 import { __System__ } from '../datas/classes/ShareDatas'
-import { globlUIContext } from '../../entryability/EntryAbility'
+import { globalUIContext } from '../../entryability/EntryAbility'
 import { XAnimation } from '../datas/classes/XAnimation'
 
 class Windows {
@@ -29,7 +29,7 @@ class Windows {
       this.updateAvoidArea(this.windowClass!)
     })
     this.windowClass.on('keyboardHeightChange', (height) => {
-      __System__.keyboardHeight = globlUIContext.px2vp(height)
+      __System__.keyboardHeight = globalUIContext.px2vp(height)
     })
   }
   isPC(): boolean {
@@ -66,10 +66,10 @@ class Windows {
     let system = windowClass.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
     let nav = windowClass.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR)
     XAnimation.runWithAnimation(()=>{
-      __System__.topRectHeight = Math.max(globlUIContext.px2vp(Math.max(cutOut.topRect.height * 1.5, system.topRect.height * 1.2)), windowClass.getWindowDecorHeight())
-      __System__.bottomRectHeight = globlUIContext.px2vp(Math.max(nav.bottomRect.height * 0.8, system.bottomRect.height, cutOut.bottomRect.height * 1.5))
-      __System__.leftRectHeight = globlUIContext.px2vp(Math.max(cutOut.leftRect.width * 1.5, system.leftRect.width))
-      __System__.rightRectHeight = globlUIContext.px2vp(Math.max(cutOut.rightRect.width * 1.5, system.rightRect.width))
+      __System__.topRectHeight = Math.max(globalUIContext.px2vp(Math.max(cutOut.topRect.height * 1.5, system.topRect.height * 1.2)), windowClass.getWindowDecorHeight())
+      __System__.bottomRectHeight = globalUIContext.px2vp(Math.max(nav.bottomRect.height * 0.8, system.bottomRect.height, cutOut.bottomRect.height * 1.5))
+      __System__.leftRectHeight = globalUIContext.px2vp(Math.max(cutOut.leftRect.width * 1.5, system.leftRect.width))
+      __System__.rightRectHeight = globalUIContext.px2vp(Math.max(cutOut.rightRect.width * 1.5, system.rightRect.width))
     })
   }
 

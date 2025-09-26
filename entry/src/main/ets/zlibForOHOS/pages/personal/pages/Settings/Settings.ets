@@ -5,7 +5,7 @@ import { zlibClient } from "../../../../datas/classes/zlib"
 import { promptAction } from "@kit.ArkUI"
 import { selectImage } from "../../../../utils/ToolsUtil"
 import { fileIo } from "@kit.CoreFileKit"
-import { globlContext } from "../../../../../entryability/EntryAbility"
+import { globalContext } from "../../../../../entryability/EntryAbility"
 import { SettingsClickItem } from "../../../others/ListItem"
 import { linderPush } from "../../../../datas/classes/LPushKit"
 import { pushToken, pushTokenDataBase } from "../../../../datas/classes/LCloudDataBaseKit"
@@ -68,7 +68,7 @@ struct SettingsPage {
               if (uri) {
                 __CustomBackgroundData__.refresh = true
                 const file0 = fileIo.openSync(uri)
-                const file1 = fileIo.openSync(globlContext.filesDir + '/background',
+                const file1 = fileIo.openSync(globalContext.filesDir + '/background',
                   fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.CREATE)
                 fileIo.copyFileSync(file0.fd, file1.fd)
                 fileIo.closeSync(file0)
@@ -211,7 +211,7 @@ struct SettingsPage {
           ListItem() {
             Column({ space: 10 }) {
               Column(){
-                Text('分享书本的消息格式').fontSize(15).fontWeight(FontWeight.Medium)
+                Text('分享的消息格式').fontSize(15).fontWeight(FontWeight.Medium)
                 Text('{link}为分享内容，{userName}为用户名').fontSize(12).opacity(0.75)
               }.alignItems(HorizontalAlign.Start).padding({ left: 5, right: 5 })
 

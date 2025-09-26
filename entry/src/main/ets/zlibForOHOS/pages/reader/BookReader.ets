@@ -8,7 +8,7 @@ import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil';
 import { UIShareData, __System__, __UI__ } from '../../datas/classes/ShareDatas';
 import { XAnimation } from '../../datas/classes/XAnimation';
 import { fileUri } from '@kit.CoreFileKit';
-import { globlContext } from '../../../entryability/EntryAbility';
+import { globalContext } from '../../../entryability/EntryAbility';
 
 interface Catalogue{
   title: string
@@ -82,7 +82,7 @@ struct Reader{
       // 注册解析能力到控制器中，用于排版引擎的调用。
       this.readerComponentController.registerBookParser(this.bookParserHandler);
       // 调用打开书籍接口，跳章至对应进度
-      NeoPreferencesUtil.localPreferences(globlContext, 'reader')
+      NeoPreferencesUtil.localPreferences(globalContext, 'reader')
       const d = NeoPreferencesUtil.getPreferencesValue('reader', this.name, []) as string[]
       this.readerComponentController.startPlay(parseInt(d[0] || '0'), d[1] || '')
       this.updateBackgroundColor()

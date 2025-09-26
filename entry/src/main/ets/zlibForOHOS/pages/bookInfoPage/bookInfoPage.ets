@@ -24,7 +24,7 @@ import { I_DownloadInfo } from "../../datas/interfaces/I_DownloadInfo"
 import common from "@ohos.app.ability.common"
 import { DividerTmp } from "../../datas/classes/DividerTmp"
 import { minWidth, __CustomBackgroundData__, __System__, __UI__, __User__ } from "../../datas/classes/ShareDatas"
-import { globlContext } from "../../../entryability/EntryAbility"
+import { globalContext } from "../../../entryability/EntryAbility"
 import { curves, promptAction, SymbolGlyphModifier } from "@kit.ArkUI"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { emojiEncoder, setContinueState } from "../../utils/ToolsUtil"
@@ -40,6 +40,7 @@ import { __zlibHomeData__ } from "../zlibHome/zlibHome"
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from "@kit.ShareKit"
 import { XContext } from "../../datas/classes/XContext"
+import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil'
 
 
 @Builder
@@ -536,9 +537,11 @@ export struct bookInfoPage {
         action: () => {
           let list = this.bookInfo?.href?.replace('/book/', '').split('/')
           list?.pop()
+          const message = __UI__.shareBookText.replace('{link}', `【${this.bookInfo?.bookID}||${this.bookInfo?.name}||${emojiEncoder.encode(list?.join('/'))}】`).replace('{userName}', zlibClient.userInfo?.userName?? '')
+          NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
           let shareData: systemShare.SharedData = new systemShare.SharedData({
             utd: utd.UniformDataType.PLAIN_TEXT,
-            content: __UI__.shareBookText.replace('{link}', `【${this.bookInfo?.bookID}||${this.bookInfo?.name}||${emojiEncoder.encode(list?.join('/'))}】`).replace('{userName}', zlibClient.userInfo?.userName?? ''),
+            content: message,
             title: '分享书籍',
           });
 
@@ -655,8 +658,8 @@ export struct BigImage {
           .onClick(async (event, result: SaveButtonOnClickResult) => {
             if (result == SaveButtonOnClickResult.SUCCESS) {
               promptAction.showToast({ message: '正在保存' })
-              const path = globlContext.cacheDir + '/SelineRead_' + new Date().getTime().toString() + '.png'
-              request.downloadFile(globlContext, {
+              const path = globalContext.cacheDir + '/SelineRead_' + new Date().getTime().toString() + '.png'
+              request.downloadFile(globalContext, {
                 //替换下载地址
                 url: this.image.toString(),
                 //文件下载后保存的沙箱路径

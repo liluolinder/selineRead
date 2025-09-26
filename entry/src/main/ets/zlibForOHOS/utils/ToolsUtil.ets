@@ -1,11 +1,18 @@
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
-import { common } from '@kit.AbilityKit';
+import { abilityAccessCtrl, common } from '@kit.AbilityKit';
 import { fileUri, picker } from '@kit.CoreFileKit';
-import { globlContext } from '../../entryability/EntryAbility';
+import { globalUIAbilityContext, globalContext, globalUIContext } from '../../entryability/EntryAbility';
 import { __Logger__, __UI__ } from '../datas/classes/ShareDatas';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { buffer, util } from '@kit.ArkTS';
+import { zlibClient } from '../datas/classes/zlib';
+import { __zlibHomeData__ } from '../pages/zlibHome/zlibHome';
+import { pasteboard, BusinessError } from '@kit.BasicServicesKit';
+import NeoPreferencesUtil from '../datas/classes/XPreferencesUtil'
+import { __BookListData__ } from '../pages/BookList/bookListList';
+import { curves } from '@kit.ArkUI';
+import { I_ReadLists_Bookshelf } from '../datas/interfaces/I_BookShelf';
 
 
 export function dateGetTime(timestamp: number|string, time: boolean = true, date: boolean = true): string {
@@ -67,7 +74,7 @@ export function shareBook(path: string){
 
   let controller: systemShare.ShareController = new systemShare.ShareController(data);
 
-  controller.show(globlContext as common.UIAbilityContext, {
+  controller.show(globalContext as common.UIAbilityContext, {
     previewMode: systemShare.SharePreviewMode.DETAIL,
     selectionMode: systemShare.SelectionMode.SINGLE
   });
@@ -79,7 +86,7 @@ export function setContinueState(allowContinue: boolean, currentViewingType: 'bo
   __UI__.currentBookData = currentBookData
   __UI__.currentBookListData = currentBookListData
   try{
-    const context = globlContext as common.UIAbilityContext
+    const context = globalContext as common.UIAbilityContext
     context.setMissionContinueState(allowContinue? 0: 1)
   }catch{}
 }
@@ -333,3 +340,108 @@ class EmojiEncoder {
 
 
 export const emojiEncoder = new EmojiEncoder()
+
+export function getShareLink(){
+  if(!__UI__.onlineMode) return
+  let atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
+  atManager.requestPermissionsFromUser(globalUIAbilityContext, ['ohos.permission.READ_PASTEBOARD']).then((data) => {
+    let grantStatus: Array<number> = data.authResults;
+    let length: number = grantStatus.length;
+    for (let i = 0; i < length; i++) {
+      if (grantStatus[i] === 0) {
+        const systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard();
+        systemPasteboard.hasData((err: BusinessError, hasData: boolean) => {
+          if (err) {
+            addLog('SystemPasteboard', `获取剪贴板状态失败：${err.code} ${err.name} ${err.message}`)
+            return;
+          }
+          if(hasData){
+            systemPasteboard.getData(async (err: BusinessError, pasteData: pasteboard.PasteData) => {
+              if (err) {
+                addLog('SystemPasteboard', `获取剪贴板数据失败：${err.code} ${err.name} ${err.message}`)
+                return;
+              }
+              try {
+                let message = pasteData.getPrimaryText()
+                if(NeoPreferencesUtil.getPreferencesValue("selineRead", 'lastPasteboardLink', '') as string == message) return
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
+                const data = /【([^|】]+)(?:\|\|([^|】]+))*】/.exec(message)
+                console.log('testTAG', data?.join(' ?? '))
+                if(data?.length == 4){
+                  globalUIContext.getPromptAction().showDialog({
+                    title: '有新的书本分享链接，是否打开？',
+                    buttons: [
+                      {
+                        text: '否',
+                        color: $r('app.color.sweet_blue')
+                      },
+                      {
+                        text: '是',
+                        color: $r('app.color.sweet_blue')
+                      }
+                    ]
+                  }).then(async (select)=> {
+                    if(select.index == 1){
+                      __zlibHomeData__.isOpening = true
+                      zlibClient.getBookInfo('/book/' + emojiEncoder.decode(data[3]) + '/' + encodeURI(data[2]) + '.html').then((res) => {
+                        if (res.name != '' && res.name != undefined) {
+                          res.bookID = Number(data[1])
+                          res.href = emojiEncoder.decode(data[2])
+                          __UI__.HomePageStack.removeByName('bookInfoPage')
+                          __UI__.HomePageStack.pushPathByName('bookInfoPage', res)
+                        }
+                        __zlibHomeData__.isOpening = false
+                      })
+                    }
+
+                  })
+
+                }else if(data?.length == 3){
+                  globalUIContext.getPromptAction().showDialog({
+                    title: '有新的书单分享链接，是否打开？',
+                    buttons: [
+                      {
+                        text: '否',
+                        color: $r('app.color.sweet_blue')
+                      },
+                      {
+                        text: '是',
+                        color: $r('app.color.sweet_blue')
+                      }
+                    ]
+                  }).then(async (select)=>{
+                    if(select.index == 1){
+                      try{
+                        __BookListData__.isOpening = true
+                        setTimeout(()=>{
+                          __UI__.indexSwiperController.changeIndex(1, true)
+                        }, 100)
+                        zlibClient.bookshelfBooks.clearData()
+                        await zlibClient.getBookShelfMoreInfo(parseInt(emojiEncoder.decode(data[2])),1)
+                        animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
+                          __UI__.bookListPageStack.pushPath({ name: 'bookShelfPage', param: JSON.parse(JSON.stringify({id: parseInt(emojiEncoder.decode(data[2])), title: data[1]})) as I_ReadLists_Bookshelf }, false);
+                        })
+                        __BookListData__.isOpening = false
+                      }catch{
+                        __BookListData__.isOpening = false
+                        globalUIContext.getPromptAction().showToast({message: '打开失败'})
+                      }
+                    }
+                  })
+                }
+
+              } catch {
+              }
+            });
+          }
+        });
+      } else {
+        addLog('PermissionManager', '用户拒绝提供ohos.permission.READ_PASTEBOARD权限', true)
+        return;
+      }
+    }
+    // 授权成功。
+  }).catch((err: BusinessError) => {
+    addLog('SystemPasteboard', `获取ohos.permission.READ_PASTEBOARD权限失败：${err.code} ${err.name} ${err.message}`)
+  })
+}

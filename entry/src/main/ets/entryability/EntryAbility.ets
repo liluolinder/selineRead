@@ -22,16 +22,16 @@ import NeoPreferencesUtil from '../zlibForOHOS/datas/classes/XPreferencesUtil'
 import WindowsUtil from '../zlibForOHOS/utils/WindowsUtil';
 import { zlibClient } from '../zlibForOHOS/datas/classes/zlib';
 import { JSON } from '@kit.ArkTS';
-import { addLog } from '../zlibForOHOS/utils/ToolsUtil';
+import { addLog, getShareLink } from '../zlibForOHOS/utils/ToolsUtil';
 import { XAnimation } from '../zlibForOHOS/datas/classes/XAnimation';
 import { I_SearchHistory } from '../zlibForOHOS/datas/interfaces/I_SearchHistory';
 import { XContext } from '../zlibForOHOS/datas/classes/XContext';
 
 const DOMAIN = 0x0000;
 
-export let globlContext: Context
+export let globalContext: Context
 
-export let globlUIContext: UIContext
+export let globalUIContext: UIContext
 
 export let globalUIAbilityContext: common.UIAbilityContext
 
@@ -138,9 +138,9 @@ export default class EntryAbility extends UIAbility {
       }
       WindowsUtil.initWindow(this.context)
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
-      globlUIContext = windowStage.getMainWindowSync().getUIContext()
-      globlContext = globlUIContext.getHostContext() as common.UIAbilityContext
-      XContext.init(globlUIContext)
+      globalUIContext = windowStage.getMainWindowSync().getUIContext()
+      globalContext = globalUIContext.getHostContext() as common.UIAbilityContext
+      XContext.init(globalUIContext)
 
 
     });
@@ -148,7 +148,7 @@ export default class EntryAbility extends UIAbility {
     notificationManager.isNotificationEnabled().then((data: boolean) => {
       console.log("isNotificationEnabled success, data: " + JSON.stringify(data));
       if (!data) {
-        notificationManager.requestEnableNotification(globlContext as common.UIAbilityContext).then(() => {
+        notificationManager.requestEnableNotification(globalContext as common.UIAbilityContext).then(() => {
           console.log(`[ANS] requestEnableNotification success`);
         }).catch((err: BusinessError) => {
           if (1600004 == err.code) {
@@ -174,8 +174,8 @@ export default class EntryAbility extends UIAbility {
       }
       WindowsUtil.initWindow(this.context)
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
-      globlUIContext = windowStage.getMainWindowSync().getUIContext()
-      globlContext = globlUIContext.getHostContext() as common.UIAbilityContext
+      globalUIContext = windowStage.getMainWindowSync().getUIContext()
+      globalContext = globalUIContext.getHostContext() as common.UIAbilityContext
 
 
     });
@@ -198,6 +198,7 @@ export default class EntryAbility extends UIAbility {
     });
     // Ability has brought to foreground
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
+    getShareLink()
   }
 
   onBackground(): void {

@@ -17,14 +17,19 @@ Mulan Permissive Software License，Version 2 (Mulan PSL v2)
 January 2020 http://license.coscl.org.cn/MulanPSL2
  */
 
-import { curves } from '@kit.ArkUI';
+import { curves, LengthUnit } from '@kit.ArkUI';
 import { __System__, __UI__, minWidth, __CustomBackgroundData__ } from '../../datas/classes/ShareDatas';
 import { XAnimation } from '../../datas/classes/XAnimation';
+import { XContext } from '../../datas/classes/XContext';
 import { zlib, zlibClient } from '../../datas/classes/zlib';
 import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod';
 import { I_Bookshelf_extraBooks, I_ReadLists_Bookshelf } from '../../datas/interfaces/I_BookShelf';
-import { setContinueState } from '../../utils/ToolsUtil';
+import { emojiEncoder, setContinueState } from '../../utils/ToolsUtil';
 import { BookCover, loadingDialog, loadingNewDialog } from '../others/Builder';
+import { systemShare } from '@kit.ShareKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { uniformTypeDescriptor } from '@kit.ArkData';
+import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil'
 
 
 @ComponentV2
@@ -40,9 +45,28 @@ export default struct BookListPage {
     NavDestination() {
       Stack({ alignContent: Alignment.Top }) {
         Column({ space: 10 }) {
-          Row({ space: 10 }) {
+          Flex({justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center, space: {main: {value: 10, unit: LengthUnit.VP}}}){
+            Row({ space: 10 }) {
+              Button({ stateEffect: true }) {
+                SymbolGlyph($r('sys.symbol.chevron_left')).fontSize(26).fontColor([$r('sys.color.font')])
+              }
+              .size({ width: 40, height: 40 })
+              .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+              $r('sys.color.comp_background_list_card'))
+              .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+              .useEffect(true)
+              .onClick(() => {
+                setContinueState(false, 'home', '', '')
+                animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
+                  __UI__.bookListPageStack.pop(false);
+                })
+              })
+
+              Text(this.data?.title).maxFontSize(22).minFontSize(12).maxLines(1).textOverflow({overflow: TextOverflow.Ellipsis}).fontWeight(FontWeight.Medium)
+            }
+
             Button({ stateEffect: true }) {
-              SymbolGlyph($r('sys.symbol.chevron_left')).fontSize(26).fontColor([$r('sys.color.font')])
+              SymbolGlyph($r('sys.symbol.share')).fontSize(26).fontColor([$r('sys.color.font')])
             }
             .size({ width: 40, height: 40 })
             .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
@@ -50,14 +74,26 @@ export default struct BookListPage {
             .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
             .useEffect(true)
             .onClick(() => {
-              setContinueState(false, 'home', '', '')
-              animateToImmediately({ curve: curves.springMotion(0.5, 0.8) }, () => {
-                __UI__.bookListPageStack.pop(false);
-              })
-            })
+              const message = __UI__.shareBookText.replace('{link}', `【${this.data?.title ?? ''}||${emojiEncoder.encode(this.data?.id.toString() ?? '')}】`).replace('{userName}', zlibClient.userInfo?.userName?? '')
+              NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
+              let shareData: systemShare.SharedData = new systemShare.SharedData({
+                utd: uniformTypeDescriptor.UniformDataType.PLAIN_TEXT,
+                content: message,
+                title: '分享书单',
+              });
 
-            Text(this.data?.title).fontSize(22).fontWeight(FontWeight.Medium)
+              let controller: systemShare.ShareController = new systemShare.ShareController(shareData);
+              controller.show(XContext.getAbilityContext(), {
+                selectionMode: systemShare.SelectionMode.SINGLE,
+                previewMode: systemShare.SharePreviewMode.DETAIL,
+              }).then(() => {
+                console.info('ShareController show success.');
+              }).catch((error: BusinessError) => {
+                console.error(`ShareController show error. code: ${error.code}, message: ${error.message}`);
+              });
+            })
           }
+
 
           WaterFlow() {
             LazyForEach(zlibClient.bookshelfBooks, (item: I_Bookshelf_extraBooks) => {
