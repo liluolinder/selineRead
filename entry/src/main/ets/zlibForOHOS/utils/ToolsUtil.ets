@@ -366,10 +366,8 @@ export function getShareLink(){
                 if(NeoPreferencesUtil.getPreferencesValue("selineRead", 'lastPasteboardLink', '') as string == message) return
                 NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
                 const data0 = /【([^】]+)】/.exec(message)
-                console.log('testTAG', data0)
                 if(data0?.length != 2) return
                 const data = data0[1].split('||')
-                console.log('testTAG', data)
                 if(data?.length == 3){
                   globalUIContext.getPromptAction().showDialog({
                     title: '有新的书本分享链接，是否打开？',
