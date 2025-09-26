@@ -255,16 +255,47 @@ export class zlib {
             'Cookie': this.cookie,
           },
           extraData: JSON.stringify(extraData)
-        }).then((data: http.HttpResponse) => {
+        }).then(async (data: http.HttpResponse) => {
           try {
             let obj = JSON.parse(JSON.stringify(data))
             let result = JSON.parse((obj as object)?.['result'])
             let tempArray: I_RecommendBook[] = (result as object)?.['books']
-            tempArray.forEach((item) => {
-              this.recommendBooksArray.pushData(item)
-            })
-            addLog('getRecommendBooks', `获取page=${page}成功`)
-            resolve(true)
+            if (tempArray!=undefined && tempArray.length!=0)
+            {
+              tempArray.forEach((item) => {
+                this.recommendBooksArray.pushData(item)
+              })
+              addLog('getRecommendBooksR', `获取page=${page}成功`)
+              resolve(true)
+            }else {
+              await req.request(`${this.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
+                method: http.RequestMethod.GET,
+                header: {
+                  'sec-ch-ua-platform': '"Windows"',
+                  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+                }
+              }).then((data: http.HttpResponse) => {
+                try {
+                  let obj = JSON.parse(JSON.stringify(data))
+                  let result = JSON.parse((obj as object)?.['result'])
+                  let tempArray: I_RecommendBook[] = (result as object)?.['books']
+                  tempArray.forEach((item) => {
+                    this.recommendBooksArray.pushData(item)
+                  })
+                  addLog('getRecommendBooks', `获取page=${page}成功`)
+                  resolve(true)
+                } catch (e) {
+                  resolve(false)
+                }
+                req.destroy();
+              })
+                .catch((err: BusinessError) => {
+                  addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
+                  promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
+                  resolve(false)
+                })
+            }
+
           } catch (e) {
             resolve(false)
           }
@@ -444,6 +475,7 @@ export class zlib {
       temp.readlists.forEach((item: I_ReadLists_Bookshelf, index: number) => {
         item.readListsOwners = temp.readlistsOwners[item.user_id]
         item.booksGrouped = temp.booksGrouped[item.id]
+        item.isLoved = temp.favoriteReadlists.includes(item.id)
         this.bookshelfArray.pushData(item)
       })
       addLog('getBookShelf', `获取书单page=${page}成功`)

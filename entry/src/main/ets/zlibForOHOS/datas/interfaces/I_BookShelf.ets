@@ -24,7 +24,7 @@ export interface I_Bookshelf
   readlists:I_ReadLists_Bookshelf[]
   readlistsOwners:object
   booksGrouped:object
-  favoriteReadlists:object[]
+  favoriteReadlists:number[]
   nextPage:number
 }
 
@@ -52,6 +52,7 @@ export interface I_ReadLists_Bookshelf{
   date_updated: I_Date_Bookshelf
   date:I_Date_Bookshelf
   link: number
+  isLoved?:boolean
 
   readListsOwners?:I_ReadListsOwners_Bookshelf
   booksGrouped?:I_BookInfo_Bookshelf[]
