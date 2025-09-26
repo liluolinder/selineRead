@@ -32,23 +32,18 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
-      version: 'beta 0.7.2',
-      date: '2025/9/21',
-      addNewFunArray:['新增订阅新url推送(目前为静默通知)'],
-      fixBugsArray:['修复登陆后卡获取个人信息']
-    },
-    {
-      version: 'beta 0.7.1',
-      date: '2025/9/17',
-      optimizeArray:['优化无封面书籍展示效果','优化逻辑'],
-      fixBugsArray:['修复未打开局域网书库就进行获取','修复打开局域网书库按钮，不获取书籍bug']
+      version: 'beta 0.8.0',
+      date: '2025/9/26',
+      addNewFunArray:['新增分享书籍','新增分享书单','新增搜索显示年份','书库列表显示模式持久化','新增Meow频道订阅'],
+      fixBugsArray:['修复登陆后卡获取个人信息'],
+      optimizeArray:['优化导入','修复封面异常显示']
     },
     {
       version: 'beta 0.7.0',
       date: '2025/9/14',
-      addNewFunArray:['新增搜索模式切换','新增关键词搜索','新增书籍详细页面书籍推荐','新增书籍详细页面关键词','新增首页个性化推荐','返回Button(仅PC/自由多窗)'],
-      optimizeArray:['优化首页搜索栏UI','优化搜索历史','优化状态栏图标','优化动画','优化手机横屏布局'],
-      fixBugsArray:['书单异常显示','解决版本号过低bug']
+      addNewFunArray:['新增搜索模式切换','新增关键词搜索','新增书籍详细页面书籍推荐','新增书籍详细页面关键词','新增首页个性化推荐','返回Button(仅PC/自由多窗)','新增订阅新url推送(目前为静默通知)'],
+      optimizeArray:['优化首页搜索栏UI','优化搜索历史','优化状态栏图标','优化动画','优化手机横屏布局','优化无封面书籍展示效果','优化逻辑'],
+      fixBugsArray:['书单异常显示','解决版本号过低bug','修复未打开局域网书库就进行获取','修复打开局域网书库按钮，不获取书籍bug']
     },
     {
       version: 'beta 0.6.0',
@@ -71,38 +66,18 @@ export struct UpdateInfo {
       fixBugsArray:['修复P80无法正常使用问题']
     },
     {
-      version: 'beta 0.3.2',
-      date: '2025/9/2',
-      addNewFunArray:['新增接续'],
-      optimizeArray: ['优化层级'],
-      fixBugsArray:['修复0.3.0搜索异常问题']
-    },
-    {
       version: 'beta 0.3.0',
       date: '2025/9/1',
-      addNewFunArray:['新增查看大图(书籍详细页点击)','扫描条形码并自动搜索ISBN','运行日志'],
-      optimizeArray: ['优化tab出现动画','优化动画曲线'],
-    },
-    {
-      version: 'beta 0.2.2',
-      date: '2025/8/28',
-      optimizeArray: ['导出至格物阅读新增校验文件是否定存在'],
-      fixBugsArray: ['后台下载异常问题','书单UI异常','首次打开APP个人信息不加载']
-    },
-    {
-      version: 'beta 0.2.1',
-      date: '2025/8/27',
-      addNewFunArray: ['书架长按书籍直接导入格物阅读','搜索书籍展示主文件格式'],
-      optimizeArray: ['新增鸣谢详细信息'],
-      fixBugsArray: ['修复部分右侧箭头无法使用','修复后台下载不更新通知(本版本仍不建议后台下载，下载完成不会移动至下载目录)']
+      addNewFunArray:['新增查看大图(书籍详细页点击)','扫描条形码并自动搜索ISBN','运行日志','新增接续'],
+      optimizeArray: ['优化tab出现动画','优化动画曲线','优化层级'],
     },
     {
       version: 'beta 0.2.0',
       date: '2025/8/26',
-      addNewFunArray: ['新增自定义API', '新增本地书导入', '新增API设置', '新增下载完自动分享设置', '新增书架拖动分享'],
+      addNewFunArray: ['新增自定义API', '新增本地书导入', '新增API设置', '新增下载完自动分享设置', '新增书架拖动分享','书架长按书籍直接导入格物阅读,搜索书籍展示主文件格式'],
       optimizeArray: ['优化动画', '更换icon(感谢群友:楠柒Zayn)', '优化部分展示效果', '优化书架展示',
-        '优化书架书籍是否存在显示', '登录确定按钮位置移动'],
-      fixBugsArray: ['修复重复加载', '内置阅读器首次打开异常']
+        '优化书架书籍是否存在显示', '登录确定按钮位置移动','导出至格物阅读新增校验文件是否定存在'],
+      fixBugsArray: ['修复重复加载', '内置阅读器首次打开异常','修复部分右侧箭头无法使用','后台下载异常问题','首次打开APP个人信息不加载']
     },
     {
       version: 'beta 0.1.0',
