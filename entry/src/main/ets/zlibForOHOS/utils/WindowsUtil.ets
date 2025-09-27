@@ -31,6 +31,9 @@ class Windows {
     this.windowClass.on('keyboardHeightChange', (height) => {
       __System__.keyboardHeight = globalUIContext.px2vp(height)
     })
+    this.windowClass.on('windowHighlightChange', (state) => {
+      __System__.windowHighlight = state
+    })
   }
   isPC(): boolean {
     return deviceInfo.deviceType.toUpperCase() == 'PC' || deviceInfo.deviceType.toUpperCase() == '2IN1'

@@ -117,6 +117,8 @@ export struct DecorBar {
       .padding({ left: 20, right: 20 })
 
     }
+    .opacity(__System__.windowHighlight? 1: 0.5)
+    .animation({duration: 300})
     .onClick(() => {
       if(this.isHover) return
       this.click()
