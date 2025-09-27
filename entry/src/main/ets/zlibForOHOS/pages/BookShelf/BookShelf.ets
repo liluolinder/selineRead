@@ -218,6 +218,11 @@ export struct BookShelf {
               }, (item: string) => item)
 
             }
+            .onScrollStart(()=>{
+              setTimeout(()=>{
+                __UI__.hideBars()
+              }, 50)
+            })
             .nestedScroll({
               scrollForward: NestedScrollMode.PARENT_FIRST,
               scrollBackward: NestedScrollMode.SELF_FIRST

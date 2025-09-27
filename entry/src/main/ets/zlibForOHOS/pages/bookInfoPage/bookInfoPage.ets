@@ -106,6 +106,11 @@ export struct bookInfoPage {
           .borderRadius(20)
         })
       }
+      .onScrollStart(()=>{
+        setTimeout(()=>{
+          __UI__.hideBars()
+        }, 50)
+      })
       .layoutWeight(1)
       .contentEndOffset(16)
       .chainAnimation(true)

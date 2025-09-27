@@ -448,6 +448,11 @@ export struct personal {
         .padding({ bottom: 6, top: 6 })
 
       }
+      .onScrollStart(()=>{
+        setTimeout(()=>{
+          __UI__.hideBars()
+        }, 50)
+      })
       .layoutWeight(1)
       .bindSheet(__UI__.showLogger, loggerBuilder(), {
         preferType: SheetType.CENTER,
