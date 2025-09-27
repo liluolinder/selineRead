@@ -97,7 +97,7 @@ export class UIShareData {
     if(autoShow){
       this.hideBarTimer = setTimeout(()=>{
         XAnimation.runWithAnimation(()=> this.displayTabs = true)
-      }, 1500)
+      }, 1000)
     }
   }
 
