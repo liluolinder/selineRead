@@ -128,6 +128,9 @@ export struct BookListList {
           .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
           .columnsGap(10)
           .rowsGap(10)
+          .onScrollStart(()=>{
+            __UI__.hideBars()
+          })
           .onReachEnd(async () => {
             this.isFlashing = true
             await zlibClient.getBookShelf(++this.bookShelfIndex)

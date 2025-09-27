@@ -45,11 +45,7 @@ export struct zlibHome {
   @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
   @Local isFlashing: boolean = false
-  @Local isInScroller: boolean = false
   @Local isHaveGoToTop: boolean = false
-  @Local searchBarOffsetY: number = 0
-  @Local SideButtonOffsetX: number = 16
-  @Local lastOffset: number = 0
   @Local scrollerOffset: number = 0
   @Local showSearchOption: boolean = false
   @Local scrollerController: Scroller = new Scroller()
@@ -62,21 +58,6 @@ export struct zlibHome {
   @Local showFormatPopup: boolean = false
   @Local chooseFormatArray: string[] = []
 
-  @Monitor('lastOffset')
-  changeOffset() {
-    if (this.lastOffset > 0) {
-      XAnimation.runWithAnimation(() => {
-        this.searchBarOffsetY = -100
-        this.SideButtonOffsetX = -60
-      })
-    } else if (this.lastOffset < 0) {
-      XAnimation.runWithAnimation(() => {
-        this.searchBarOffsetY = 0
-        this.SideButtonOffsetX = 16
-      })
-    }
-
-  }
 
   generateUrl(): string {
     let res: string = ''
@@ -553,179 +534,179 @@ export struct zlibHome {
         loadingDialog()
       }
       //顶部搜索栏
-      Row({ space: 10 }) {
+      if(__UI__.displayTabs || this.scrollerOffset == 0){
+        Row({ space: 10 }) {
 
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.circle_viewfinder'))
-            .fontSize(24)
-            .fontColor([$r('sys.color.font_secondary')])
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor($r('app.color.start_window_background_blur'))
-        .backdropBlur(100)
-        .useEffect(true)
-        .onClick(() => {
-          addLog('ScanCode', `尝试扫码`)
-          let options: scanBarcode.ScanOptions = {
-            scanTypes: [scanCore.ScanType.ONE_D_CODE],
-            enableMultiMode: true,
-            enableAlbum: true
-          };
-          try {
-            scanBarcode.startScanForResult(globalContext, options).then((result: scanBarcode.ScanResult) => {
-              addLog('ScanCode', `扫码成功,书籍ISBN为${result.originalValue}`)
-              const specialUrl = this.generateUrl()
-              this.scrollerOffset = 0
-              __zlibHomeData__.searchIndex = 1
-              __zlibHomeData__.searchWords = result.originalValue
-              zlibClient.searchBooks(result.originalValue, 1, true, specialUrl)
-              XAnimation.runWithAnimation(() => {
-                __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
-              })
-            }).catch((error: BusinessError) => {
-              addLog('ScanCode', `扫码错误,${JSON.stringify(error)}`, true)
-            });
-          } catch (error) {
-            addLog('ScanCode', `扫码错误,${JSON.stringify(error)}`, true)
+          Button({ type: ButtonType.Circle }) {
+            SymbolGlyph($r('sys.symbol.circle_viewfinder'))
+              .fontSize(24)
+              .fontColor([$r('sys.color.font_secondary')])
           }
-        })
-        .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
-
-        Select([{ value: '常规搜索' }, { value: '关键字(单个字)搜索' }])
-          .selected(__zlibHomeData__.searchType)//默认选中项
-          .onSelect((index) => {
-            __zlibHomeData__.searchType = index
-
-            if (__zlibHomeData__.searchWords != '' && __zlibHomeData__.searchWords) {
-              this.scrollerOffset = 0
-              __zlibHomeData__.searchIndex = 1
-              if (__zlibHomeData__.searchType == 0) {
-                const specialUrl = this.generateUrl()
-                zlibClient.searchBooks(__zlibHomeData__.searchWords, 1, true, specialUrl)
-              } else {
-                zlibClient.searchTerms(__zlibHomeData__.searchWords)
-              }
-              XAnimation.runWithAnimation(() => {
-                __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
-              })
-              zlibClient.searchHistoryArray =
-                zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value !=
-                __zlibHomeData__.searchWords)
-              zlibClient.searchHistoryArray.unshift({
-                value: __zlibHomeData__.searchWords,
-                time: Date.parse(new Date().toString())
-              })
-              NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
-                JSON.stringify(zlibClient.searchHistoryArray))
-            }
-
-          })
+          .width(40)
           .height(40)
           .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
           .useEffect(true)
-          .value(['常规搜索', '关键字(单个字)搜索'][__zlibHomeData__.searchType])//默认文本
-          .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
-
-        Search({ value: __zlibHomeData__.searchWords })
-          .onChange((text) => {
-            __zlibHomeData__.searchWords = text
+          .onClick(() => {
+            addLog('ScanCode', `尝试扫码`)
+            let options: scanBarcode.ScanOptions = {
+              scanTypes: [scanCore.ScanType.ONE_D_CODE],
+              enableMultiMode: true,
+              enableAlbum: true
+            };
+            try {
+              scanBarcode.startScanForResult(globalContext, options).then((result: scanBarcode.ScanResult) => {
+                addLog('ScanCode', `扫码成功,书籍ISBN为${result.originalValue}`)
+                const specialUrl = this.generateUrl()
+                this.scrollerOffset = 0
+                __zlibHomeData__.searchIndex = 1
+                __zlibHomeData__.searchWords = result.originalValue
+                zlibClient.searchBooks(result.originalValue, 1, true, specialUrl)
+                XAnimation.runWithAnimation(() => {
+                  __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
+                })
+              }).catch((error: BusinessError) => {
+                addLog('ScanCode', `扫码错误,${JSON.stringify(error)}`, true)
+              });
+            } catch (error) {
+              addLog('ScanCode', `扫码错误,${JSON.stringify(error)}`, true)
+            }
           })
+          .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
+
+          Select([{ value: '常规搜索' }, { value: '关键字(单个字)搜索' }])
+            .selected(__zlibHomeData__.searchType)//默认选中项
+            .onSelect((index) => {
+              __zlibHomeData__.searchType = index
+
+              if (__zlibHomeData__.searchWords != '' && __zlibHomeData__.searchWords) {
+                this.scrollerOffset = 0
+                __zlibHomeData__.searchIndex = 1
+                if (__zlibHomeData__.searchType == 0) {
+                  const specialUrl = this.generateUrl()
+                  zlibClient.searchBooks(__zlibHomeData__.searchWords, 1, true, specialUrl)
+                } else {
+                  zlibClient.searchTerms(__zlibHomeData__.searchWords)
+                }
+                XAnimation.runWithAnimation(() => {
+                  __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
+                })
+                zlibClient.searchHistoryArray =
+                  zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value !=
+                  __zlibHomeData__.searchWords)
+                zlibClient.searchHistoryArray.unshift({
+                  value: __zlibHomeData__.searchWords,
+                  time: Date.parse(new Date().toString())
+                })
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
+                  JSON.stringify(zlibClient.searchHistoryArray))
+              }
+
+            })
+            .height(40)
+            .backgroundColor($r('app.color.start_window_background_blur'))
+            .backdropBlur(100)
+            .useEffect(true)
+            .value(['常规搜索', '关键字(单个字)搜索'][__zlibHomeData__.searchType])//默认文本
+            .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
+
+          Search({ value: __zlibHomeData__.searchWords })
+            .onChange((text) => {
+              __zlibHomeData__.searchWords = text
+            })
+            .backgroundColor($r('app.color.start_window_background_blur'))
+            .backdropBlur(100)
+            .useEffect(true)
+            .layoutWeight(1)
+            .focusable(__zlibHomeData__.isInSearchMode)
+            .enableKeyboardOnFocus(__zlibHomeData__.isInSearchMode)
+            .onSubmit((value: string) => {
+              __zlibHomeData__.isInSearchMode = false
+              if (value == '' || value == undefined) {
+                XAnimation.runWithAnimation(() => {
+                  __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Recommend
+                })
+              } else {
+                this.scrollerOffset = 0
+                __zlibHomeData__.searchIndex = 1
+                __zlibHomeData__.searchWords = value
+
+                if (__zlibHomeData__.searchType == 0) {
+                  const specialUrl = this.generateUrl()
+                  zlibClient.searchBooks(value, 1, true, specialUrl)
+                } else {
+                  zlibClient.searchTerms(value)
+                }
+
+                XAnimation.runWithAnimation(() => {
+                  __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
+                })
+                zlibClient.searchHistoryArray =
+                  zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != value)
+                zlibClient.searchHistoryArray.unshift({ value: value, time: Date.parse(new Date().toString()) })
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
+                  JSON.stringify(zlibClient.searchHistoryArray))
+              }
+            })
+            .onChange((value: string) => {
+              if (value == '' || value == undefined) {
+                XAnimation.runWithAnimation(() => {
+                  __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Recommend
+                })
+              }
+            })
+            .onTouch(() => {
+              XAnimation.runWithAnimation(() => {
+                __zlibHomeData__.isInSearchMode = true
+              })
+            })
+
+          Button({ type: ButtonType.Circle }) {
+            SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
+            $r('sys.symbol.satellite_map'))
+              .fontSize(24)
+              .fontColor([$r('sys.color.font_secondary')])
+          }
+          .width(40)
+          .height(40)
           .backgroundColor($r('app.color.start_window_background_blur'))
           .backdropBlur(100)
           .useEffect(true)
-          .layoutWeight(1)
-          .focusable(__zlibHomeData__.isInSearchMode)
-          .enableKeyboardOnFocus(__zlibHomeData__.isInSearchMode)
-          .onSubmit((value: string) => {
-            __zlibHomeData__.isInSearchMode = false
-            if (value == '' || value == undefined) {
-              XAnimation.runWithAnimation(() => {
-                __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Recommend
-              })
-            } else {
-              this.scrollerOffset = 0
-              __zlibHomeData__.searchIndex = 1
-              __zlibHomeData__.searchWords = value
-
-              if (__zlibHomeData__.searchType == 0) {
-                const specialUrl = this.generateUrl()
-                zlibClient.searchBooks(value, 1, true, specialUrl)
-              } else {
-                zlibClient.searchTerms(value)
-              }
-
-              XAnimation.runWithAnimation(() => {
-                __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Search
-              })
-              zlibClient.searchHistoryArray =
-                zlibClient.searchHistoryArray.filter((item: I_SearchHistory) => item.value != value)
-              zlibClient.searchHistoryArray.unshift({ value: value, time: Date.parse(new Date().toString()) })
-              NeoPreferencesUtil.putPreferencesValue("selineRead", 'searchHistory',
-                JSON.stringify(zlibClient.searchHistoryArray))
-            }
-          })
-          .onChange((value: string) => {
-            if (value == '' || value == undefined) {
-              XAnimation.runWithAnimation(() => {
-                __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Recommend
-              })
-            }
-          })
-          .onTouch(() => {
+          .onClick(() => {
+            addLog('changeListOrWaterFlow', `切换列表/瀑布流`)
             XAnimation.runWithAnimation(() => {
-              __zlibHomeData__.isInSearchMode = true
+              this.scrollerOffset = 0
+              this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
+              zlibIndexShowMod.WaterFlow
             })
+            NeoPreferencesUtil.putPreferencesValue("selineRead", 'listOrWaterFlow', this.listOrWaterFlow)
           })
+          .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
 
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph(this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? $r('sys.symbol.list_bullet') :
-          $r('sys.symbol.satellite_map'))
-            .fontSize(24)
-            .fontColor([$r('sys.color.font_secondary')])
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor($r('app.color.start_window_background_blur'))
-        .backdropBlur(100)
-        .useEffect(true)
-        .onClick(() => {
-          addLog('changeListOrWaterFlow', `切换列表/瀑布流`)
-          XAnimation.runWithAnimation(() => {
-            this.scrollerOffset = 0
-            this.listOrWaterFlow = this.listOrWaterFlow == zlibIndexShowMod.WaterFlow ? zlibIndexShowMod.List :
-            zlibIndexShowMod.WaterFlow
+          Button({ type: ButtonType.Circle }) {
+            SymbolGlyph($r('sys.symbol.xmark'))
+              .fontSize(24)
+              .fontColor([$r('sys.color.font_secondary')])
+          }
+          .width(40)
+          .height(40)
+          .backgroundColor($r('app.color.start_window_background_blur'))
+          .backdropBlur(100)
+          .useEffect(true)
+          .onClick(() => {
+            XAnimation.runWithAnimation(() => __zlibHomeData__.isInSearchMode = false)
+            __zlibHomeData__.searchWords = ''
           })
-          NeoPreferencesUtil.putPreferencesValue("selineRead", 'listOrWaterFlow', this.listOrWaterFlow)
-        })
-        .visibility(__zlibHomeData__.isInSearchMode ? Visibility.None : Visibility.Visible)
+          .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search && __System__.pcMode ?
+          Visibility.Visible : Visibility.None)
 
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.xmark'))
-            .fontSize(24)
-            .fontColor([$r('sys.color.font_secondary')])
         }
-        .width(40)
-        .height(40)
-        .backgroundColor($r('app.color.start_window_background_blur'))
-        .backdropBlur(100)
-        .useEffect(true)
-        .onClick(() => {
-          XAnimation.runWithAnimation(() => __zlibHomeData__.isInSearchMode = false)
-          __zlibHomeData__.searchWords = ''
-        })
-        .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search && __System__.pcMode ?
-        Visibility.Visible : Visibility.None)
-
+        .zIndex(1)
+        .padding({ left: 16, right: 16, top: __System__.topRectHeight })
+        .transition(XAnimation.getAnimation('up'))
+        .zIndex(114514)
       }
-      .zIndex(1)
-      .padding({ left: 16, right: 16, top: __System__.topRectHeight })
-      .transition(XAnimation.getAnimation('up'))
-      .offset({
-        y: this.searchBarOffsetY
-      })
-      .zIndex(114514)
+
 
 
       if ((__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Recommend &&
@@ -774,14 +755,10 @@ export struct zlibHome {
             .rowsGap(10)
             .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
               this.scrollerOffset += scrollOffset
-              this.lastOffset = scrollOffset
-              this.isInScroller = true
-            })
-            .onScrollStop(() => {
-              this.isInScroller = false
+              __UI__.hideBars()
             })
             .onReachStart(() => {
-              this.lastOffset = -1;
+              __UI__.showBars()
               this.scrollerOffset = 0;
             })
             .onReachEnd(async () => {
@@ -810,14 +787,11 @@ export struct zlibHome {
             .size({ width: '100%', height: '100%' })
             .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
               this.scrollerOffset += scrollOffset
-              this.lastOffset = scrollOffset
-              this.isInScroller = true
-            })
-            .onScrollStop(() => {
-              this.isInScroller = false
+              __UI__.hideBars()
+
             })
             .onReachStart(() => {
-              this.lastOffset = -1;
+              __UI__.showBars()
               this.scrollerOffset = 0;
             })
             .onReachEnd(async () => {
@@ -848,17 +822,14 @@ export struct zlibHome {
       }
 
 
-      Column({ space: 15 }) {
+      Column({ space: 10 }) {
         //返回顶部
-        if (this.scrollerOffset >= 700) {
+        if (this.scrollerOffset >= 700 && __UI__.displayTabs) {
           Button({ type: ButtonType.Circle }) {
             SymbolGlyph($r('sys.symbol.arrow_up_to_line'))
               .fontSize(30)
               .fontColor([$r('sys.color.font_secondary')])
           }
-          .transition(TransitionEffect.OPACITY
-            .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
-            .animation({ curve: curves.springMotion(0.5, 0.7) }))
           .width(50)
           .height(50)
           .backgroundColor($r('app.color.start_window_background_blur'))
@@ -871,15 +842,12 @@ export struct zlibHome {
         }
 
         //筛选
-        if (__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search) {
+        if (__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search && __UI__.displayTabs) {
           Button({ type: ButtonType.Circle }) {
             SymbolGlyph($r('sys.symbol.square_and_pencil'))
               .fontSize(30)
               .fontColor([$r('sys.color.font_secondary')])
           }
-          .transition(TransitionEffect.OPACITY
-            .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
-            .animation({ curve: curves.springMotion(0.5, 0.7) }))
           .width(50)
           .height(50)
           .backgroundColor($r('app.color.start_window_background_blur'))
@@ -888,16 +856,16 @@ export struct zlibHome {
           .onClick(() => {
             this.showSearchOption = true
           })
-          .visibility(__zlibHomeData__.searchOrRecommend == zlibIndexShowMod.Search ? Visibility.Visible :
-          Visibility.Hidden)
           .bindSheet($$this.showSearchOption, this.searchOptionBuilder(), {
             preferType: SheetType.CENTER,
             height: SheetSize.MEDIUM,
             title: { title: '搜索设置' }
           })
+
         }
 
-      }.position({ bottom: 120, right: this.SideButtonOffsetX })
+      }.position({ bottom: 30 + (__System__.windowWidth > minWidth? 0: 60), left: 30 })
+      .animation(XAnimation.getAnimation("left"))
 
       if (this.isFlashing) {
         loadingNewDialog()

@@ -19,7 +19,9 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 import { globalContext, globalUIContext } from '../../entryability/EntryAbility';
 import { linderPixelMap } from '../datas/classes/LPixelMap';
-import { minWidth,
+import {
+  minHeight,
+  minWidth,
   __CustomBackgroundData__,
   __DataBase__, __System__, __UI__, __User__ } from '../datas/classes/ShareDatas';
 import { zlibClient } from '../datas/classes/zlib';
@@ -43,6 +45,7 @@ import { customBackground } from './others/Builder';
 import { JSON } from '@kit.ArkTS';
 import { pushToken, pushTokenDataBase } from '../datas/classes/LCloudDataBaseKit';
 import { linderPush } from '../datas/classes/LPushKit';
+import WindowsUtil from '../utils/WindowsUtil';
 
 
 @Entry
@@ -195,29 +198,32 @@ struct Index {
               }
             }
           })
-          Flex({justifyContent: FlexAlign.SpaceAround, alignItems: ItemAlign.Center, direction: __System__.windowWidth > minWidth? FlexDirection.Column: FlexDirection.Row}){
-            ForEach(__UI__.onlineMode? this.tabsArrayOnline: this.tabsArray, (item: [string, Resource, Resource], index: number) =>{
-              Button({stateEffect: true, type: ButtonType.Normal}){
-                Column({space: 2}){
-                  SymbolGlyph(this.currentPage == index? item[2]: item[1]).fontSize(22).fontColor([this.currentPage == index? $r('app.color.sweet_blue'): $r('sys.color.font')])
-                  Text(item[0]).fontSize(22).fontColor(this.currentPage == index? $r('app.color.sweet_blue'): $r('sys.color.font')).maxFontSize(11).minFontSize(10).maxLines(1)
-                }
-              }.backgroundColor(Color.Transparent).opacity(0.9)
-              .size({width: '100%', height: '100%'})
-              .borderRadius(10)
-              .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
-              .onClick(()=>{
-                this.currentPage = index
-                __UI__.indexSwiperController.changeIndex(index, true)
+          if(__System__.windowWidth > minWidth || __System__.windowHeight > minHeight || __UI__.displayTabs){
+            Flex({justifyContent: FlexAlign.SpaceAround, alignItems: ItemAlign.Center, direction: __System__.windowWidth > minWidth? FlexDirection.Column: FlexDirection.Row}){
+              ForEach(__UI__.onlineMode? this.tabsArrayOnline: this.tabsArray, (item: [string, Resource, Resource], index: number) =>{
+                Button({stateEffect: true, type: ButtonType.Normal}){
+                  Column({space: 2}){
+                    SymbolGlyph(this.currentPage == index? item[2]: item[1]).fontSize(22).fontColor([this.currentPage == index? $r('app.color.sweet_blue'): $r('sys.color.font')])
+                    Text(item[0]).fontSize(22).fontColor(this.currentPage == index? $r('app.color.sweet_blue'): $r('sys.color.font')).maxFontSize(11).minFontSize(10).maxLines(1)
+                  }
+                }.backgroundColor(Color.Transparent).opacity(0.9)
+                .size({width: '100%', height: '100%'})
+                .borderRadius(10)
+                .clickEffect({level: ClickEffectLevel.LIGHT, scale: 0.9})
+                .onClick(()=>{
+                  this.currentPage = index
+                  __UI__.indexSwiperController.changeIndex(index, true)
+                  __UI__.showBars()
+                })
               })
-            })
 
+            }
+            .backgroundColor(__System__.windowWidth > minWidth && !__CustomBackgroundData__.customBackground? Color.Transparent: $r('app.color.start_window_background_blur')).backdropBlur(__System__.windowWidth > minWidth? 65 + __System__.bottomRectHeight: 100)
+            .width(__System__.windowWidth > minWidth ? 65 + __System__.leftRectHeight : '100%')
+            .height(__System__.windowWidth > minWidth ? '100%' : 65 + __System__.bottomRectHeight * 0.8)
+            .padding({bottom: Math.max(__System__.bottomRectHeight * 0.8, 5), top: __System__.windowWidth > minWidth? __System__.topRectHeight: 0, left: __System__.windowWidth > minWidth? __System__.leftRectHeight: 5})
+            .transition(XAnimation.getAnimation(__System__.windowWidth > minWidth? 'left': 'bottom'))
           }
-          .backgroundColor(__System__.windowWidth > minWidth && !__CustomBackgroundData__.customBackground? Color.Transparent: $r('app.color.start_window_background_blur')).backdropBlur(__System__.windowWidth > minWidth? 65 + __System__.bottomRectHeight: 100)
-          .width(__System__.windowWidth > minWidth ? 65 + __System__.leftRectHeight : '100%')
-          .height(__System__.windowWidth > minWidth ? '100%' : 65 + __System__.bottomRectHeight * 0.8)
-          .padding({bottom: Math.max(__System__.bottomRectHeight * 0.8, 5), top: __System__.windowWidth > minWidth? __System__.topRectHeight: 0, left: __System__.windowWidth > minWidth? __System__.leftRectHeight: 5})
-          .transition(XAnimation.getAnimation(__System__.windowWidth > minWidth? 'left': 'bottom'))
         }
 
 

@@ -22,6 +22,7 @@ import { relationalStore } from '@kit.ArkData'
 import { zlibIndexShowMod } from '../enums/zlibIndexShowMod'
 import { window } from '@kit.ArkUI'
 import { LogLine } from '../../pages/personal/pages/LoggerPage'
+import { XAnimation } from './XAnimation'
 
 @ObservedV2
 export class Notification {
@@ -86,7 +87,25 @@ export class UIShareData {
   shareBookText: string = ''
   currentViewingType: 'book'|'bookList'|'home' = 'home'
   indexSwiperController = new SwiperController()
+  private hideBarTimer: number = 0
+  @Trace displayTabs: boolean = true
 
+  hideBars(autoShow: boolean = true){
+    if(!this.displayTabs) return
+    XAnimation.runWithAnimation(()=> this.displayTabs = false)
+    clearTimeout(this.hideBarTimer)
+    if(autoShow){
+      this.hideBarTimer = setTimeout(()=>{
+        XAnimation.runWithAnimation(()=> this.displayTabs = true)
+      }, 1500)
+    }
+  }
+
+  showBars(){
+    clearTimeout(this.hideBarTimer)
+    console.log('testTAG showBars')
+    XAnimation.runWithAnimation(()=> this.displayTabs = true)
+  }
 }
 
 export let __UI__: UIShareData = new UIShareData()
