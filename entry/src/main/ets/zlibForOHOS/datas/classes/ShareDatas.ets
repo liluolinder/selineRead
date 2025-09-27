@@ -91,14 +91,14 @@ export class UIShareData {
   @Trace displayTabs: boolean = true
 
   hideBars(autoShow: boolean = true){
-    if(!this.displayTabs) return
     XAnimation.runWithAnimation(()=> this.displayTabs = false)
     clearTimeout(this.hideBarTimer)
     if(autoShow){
       this.hideBarTimer = setTimeout(()=>{
         XAnimation.runWithAnimation(()=> this.displayTabs = true)
-      }, 1000)
+      }, 1500)
     }
+
   }
 
   showBars(){

@@ -755,7 +755,11 @@ export struct zlibHome {
             .rowsGap(10)
             .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
               this.scrollerOffset += scrollOffset
-              __UI__.hideBars()
+            })
+            .onScrollStart(()=>{
+              setTimeout(()=>{
+                __UI__.hideBars()
+              }, 50)
             })
             .onReachStart(() => {
               __UI__.showBars()
@@ -787,8 +791,11 @@ export struct zlibHome {
             .size({ width: '100%', height: '100%' })
             .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
               this.scrollerOffset += scrollOffset
-              __UI__.hideBars()
-
+            })
+            .onScrollStart(()=>{
+              setTimeout(()=>{
+                __UI__.hideBars()
+              }, 50)
             })
             .onReachStart(() => {
               __UI__.showBars()
