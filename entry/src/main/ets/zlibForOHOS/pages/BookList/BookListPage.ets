@@ -145,6 +145,11 @@ export default struct BookListPage {
                 .height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70), 16))
             })
           }
+          .onScrollStart(()=>{
+            setTimeout(()=>{
+              __UI__.hideBars()
+            }, 50)
+          })
           .borderRadius({ topLeft: 15, topRight: 15 })
           .clip(true)
           .rowsGap(10)
