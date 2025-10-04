@@ -20,23 +20,20 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 package ohos_app_cangjie_entry.tools
 
 public func getBookShelfIsLoved(runtime: JSContext, callInfo: JSCallInfo): JSValue {
-    let htmlString:String = callInfo[0].toString(runtime)
+    let htmlString: String = callInfo[0].toString(runtime)
     var doc: Document = Html4cj.parse(htmlString)
     var ascriptAll: Elements = doc.select("div")
     var index = 0
-    var res:String = ''
-    for(i in ascriptAll ){
-       'Liquid:${i.attr('class')}' |>   AppLog.info
-
+    var res: Bool = false
+    for (i in ascriptAll) {
+        if (i.attributes().toString() == #" class="\&quot;favorite-booklist" active\"#) {
+            res = true
+            break
+        } else if (i.attributes().toString() == #" class="\&quot;favorite-booklist" \"#) {
+            res = false
+            break
+        }
     }
-
-     runtime.boolean(false).toJSValue()
+    runtime.boolean(res).toJSValue()
 }
 
-
-/**
- if (i.attr('class') == #"\"favorite-booklist"#){
-            'Liquid:${124}' |>   AppLog.info
-        }else if (i.attr('class') == #"\"favorite-booklist active"#){
-            'Liquid:${224}' |>   AppLog.info
-        }*/

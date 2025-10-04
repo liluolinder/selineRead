@@ -108,7 +108,7 @@ export struct BookListList {
               .onClick(async () => {
                 XAnimation.runWithAnimation(() => __BookListData__.isOpening = true)
                 zlibClient.bookshelfBooks.clearData()
-                await zlibClient.getBookShelfIsLoved(item)
+                item.isLoved =  await zlibClient.getBookShelfIsLoved(item)
 
                 await zlibClient.getBookShelfMoreInfo(item.id, 1)
                 XAnimation.runWithAnimation(() => __BookListData__.isOpening = false)

@@ -487,10 +487,10 @@ export class zlib {
     })
   }
 
-  async getBookShelfIsLoved(bookShelf:I_ReadLists_Bookshelf){
+  async getBookShelfIsLoved(bookShelf:I_ReadLists_Bookshelf):Promise<boolean>{
     addLog('getBookShelfIsLoved', `尝试获取书单${bookShelf.id}是否收藏`)
     let req = http.createHttp()
-    await req.request(`${this.base_url}${bookShelf.link}`, {
+    return await req.request(`${this.base_url}${bookShelf.link}`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
@@ -498,12 +498,16 @@ export class zlib {
         'Cookie': this.cookie,
       }
     }).then((data: http.HttpResponse) => {
-      CJLoader.getBookShelfIsLoved(JSON.stringify(data.result))
+      const res:boolean = CJLoader.getBookShelfIsLoved(JSON.stringify(data.result))
+      addLog('getBookShelfIsLoved', `书单${bookShelf.id}收藏:${res}`)
+      return res
     }).catch((err: Error) => {
-      addLog('getBookShelfMoreInfo', `error! ${err.name} ${err.message}`, true)
+      addLog('getBookShelfIsLoved', `error! ${err.name} ${err.message}`, true)
       promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
-    });
-    req.destroy()
+      return false
+    }).finally(()=>{
+      req.destroy()
+    })
   }
 
   async getBookShelfMoreInfo(shelfID: number, page: number) {
@@ -529,7 +533,6 @@ export class zlib {
 
       tempArray.forEach((item: I_Bookshelf_extraBooks) => {
         this.bookshelfBooks.pushData(item)
-        console.log(`Liquid${JSON.stringify(item)}`);
       })
       addLog('getBookShelfMoreInfo', `书单${shelfID},page=${page}成功`)
     }).catch((err: Error) => {
