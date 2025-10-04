@@ -208,7 +208,7 @@ export class zlib {
             const match = res.match(regex);
             let bookIds: number[] = match?.[1].split(',').map(Number) ?? []
             extraData = new Object({ bookIds: bookIds })
-            addLog('getRecommendBooks', `个性化参数为:${JSON.stringify(bookIds)}`)
+            addLog('getRecommendBooksR', `个性化参数为:${JSON.stringify(bookIds)}`)
             if (bookIds.length!=0 && bookIds!=undefined) {
               needNormalRecommend = false
             }else {
@@ -234,7 +234,7 @@ export class zlib {
             tempArray.forEach((item) => {
               this.recommendBooksArray.pushData(item)
             })
-            addLog('getRecommendBooks', `获取page=${page}成功`)
+            addLog('getRecommendBooksN', `获取page=${page}成功`)
             resolve(true)
           } catch (e) {
             resolve(false)
@@ -242,7 +242,7 @@ export class zlib {
           req.destroy();
         })
           .catch((err: BusinessError) => {
-            addLog('getRecommendBooks', `error! ${err.name} ${err.message}`, true)
+            addLog('getRecommendBooksN', `error! ${err.name} ${err.message}`, true)
             promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
             resolve(false)
           })
@@ -282,7 +282,7 @@ export class zlib {
                   tempArray.forEach((item) => {
                     this.recommendBooksArray.pushData(item)
                   })
-                  addLog('getRecommendBooks', `获取page=${page}成功`)
+                  addLog('getRecommendBooksN', `获取page=${page}成功`)
                   resolve(true)
                 } catch (e) {
                   resolve(false)
