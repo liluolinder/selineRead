@@ -485,7 +485,25 @@ export class zlib {
     }).finally(() => {
       req.destroy()
     })
+  }
 
+  async getBookShelfIsLoved(bookShelf:I_ReadLists_Bookshelf){
+    addLog('getBookShelfIsLoved', `尝试获取书单${bookShelf.id}是否收藏`)
+    let req = http.createHttp()
+    await req.request(`${this.base_url}${bookShelf.link}`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      }
+    }).then((data: http.HttpResponse) => {
+      CJLoader.getBookShelfIsLoved(JSON.stringify(data.result))
+    }).catch((err: Error) => {
+      addLog('getBookShelfMoreInfo', `error! ${err.name} ${err.message}`, true)
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
+    });
+    req.destroy()
   }
 
   async getBookShelfMoreInfo(shelfID: number, page: number) {
@@ -519,6 +537,68 @@ export class zlib {
       promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
     });
     req.destroy()
+  }
+
+
+  async addLove2BookShelf(shelfID:number):Promise<boolean> {
+    addLog('addLove2BookShelf', `尝试收藏书单${shelfID}`)
+    let req = http.createHttp()
+    return await req.request(`${this.baseApi_url}/booklist/${shelfID}/favorite/add`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      },
+    }).then((data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res:string = JSON.stringify((result as object)?.['success'])
+      if (res === '1') {
+        addLog('addLove2BookShelf', `收藏书单${shelfID}成功`)
+        return true
+      }else {
+        addLog('addLove2BookShelf', `收藏书单${shelfID}失败,${JSON.stringify(result)}`,true)
+        return false
+      }
+    }).catch((err: Error) => {
+      addLog('addLove2BookShelf', `收藏书单${shelfID}失败,${JSON.stringify(err)}`,true)
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
+      return false
+    }).finally(()=>{
+      req.destroy()
+    })
+  }
+
+  async removeLove2BookShelf(shelfID:number):Promise<boolean>
+  {
+    addLog('removeLove2BookShelf', `尝试取消收藏书单${shelfID}`)
+    let req = http.createHttp()
+    return await req.request(`${this.baseApi_url}/booklist/${shelfID}/favorite/remove`, {
+      method: http.RequestMethod.DELETE,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0',
+        'Cookie': this.cookie,
+      },
+    }).then((data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res:string = JSON.stringify((result as object)?.['success'])
+      if (res === '1') {
+        addLog('removeLove2BookShelf', `取消收藏书单${shelfID}成功`)
+        return true
+      }else {
+        addLog('removeLove2BookShelf', `取消收藏书单${shelfID}失败,${JSON.stringify(result)}`,true)
+        return false
+      }
+    }).catch((err: Error) => {
+      addLog('removeLove2BookShelf', `取消收藏书单${shelfID}失败,${JSON.stringify(err)}`,true)
+      promptAction.showToast({ message: JSON.stringify(err), duration: 3000 })
+      return false
+    }).finally(()=>{
+      req.destroy()
+    })
   }
 
   async getBookDownloadsInfo(bookID: number): Promise<I_DownloadInfo[]> {

@@ -27,6 +27,7 @@ import { BookCover, loadingDialog, loadingNewDialog } from '../others/Builder';
 import BookListPage from './BookListPage';
 import { common } from '@kit.AbilityKit';
 import { setContinueState } from '../../utils/ToolsUtil';
+import { CJLoader } from '../../CJloader/CJLoader';
 
 @ComponentV2
 export struct BookList {
@@ -107,6 +108,8 @@ export struct BookListList {
               .onClick(async () => {
                 XAnimation.runWithAnimation(() => __BookListData__.isOpening = true)
                 zlibClient.bookshelfBooks.clearData()
+                await zlibClient.getBookShelfIsLoved(item)
+
                 await zlibClient.getBookShelfMoreInfo(item.id, 1)
                 XAnimation.runWithAnimation(() => __BookListData__.isOpening = false)
                 this.transitionEffect = TransitionEffect.OPACITY

@@ -46,4 +46,6 @@ let EXPORT_MODULE = JSModule.registerModule {
     exports["getReadUrl"] = runtime.function(getReadUrl).toJSValue()
     exports["getTerms"] = runtime.function(getTerms).toJSValue()
     exports["getSearchTermsArray"] = runtime.function(getSearchTermsArray).toJSValue()
+    exports["getBookShelfIsLoved"] = runtime.function(getBookShelfIsLoved).toJSValue()
+
 }

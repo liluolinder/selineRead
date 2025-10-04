@@ -29,4 +29,5 @@ export interface CJLib {
   getReadUrl(src: string): string
   getTerms(src: string): string
   getSearchTermsArray(src: string): string
+  getBookShelfIsLoved(src: string): boolean
 }

@@ -51,7 +51,7 @@ export interface I_ReadLists_Bookshelf{
   color: number
   date_updated: I_Date_Bookshelf
   date:I_Date_Bookshelf
-  link: number
+  link: string
   isLoved?:boolean
 
   readListsOwners?:I_ReadListsOwners_Bookshelf

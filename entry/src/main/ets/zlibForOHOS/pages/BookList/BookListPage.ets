@@ -39,7 +39,9 @@ export default struct BookListPage {
   @Local isOpening: boolean = false
   @Local isFlashing: boolean = false
   @Local bookShelfIndex: number = 1
+  @Local loved:boolean = false
   private data: I_ReadLists_Bookshelf | undefined
+
 
   build() {
     NavDestination() {
@@ -65,33 +67,64 @@ export default struct BookListPage {
               Text(this.data?.title).maxFontSize(22).minFontSize(12).maxLines(1).textOverflow({overflow: TextOverflow.Ellipsis}).fontWeight(FontWeight.Medium)
             }
 
-            Button({ stateEffect: true }) {
-              SymbolGlyph($r('sys.symbol.share')).fontSize(26).fontColor([$r('sys.color.font')])
-            }
-            .size({ width: 40, height: 40 })
-            .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
-            $r('sys.color.comp_background_list_card'))
-            .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
-            .useEffect(true)
-            .onClick(() => {
-              const message = __UI__.shareBookText.replace('{link}', `【${this.data?.title ?? ''}||${emojiEncoder.encode(this.data?.id.toString() ?? '')}】`).replace('{userName}', zlibClient.userInfo?.userName?? '')
-              NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
-              let shareData: systemShare.SharedData = new systemShare.SharedData({
-                utd: uniformTypeDescriptor.UniformDataType.PLAIN_TEXT,
-                content: message,
-                title: '分享书单',
-              });
+            Row({space:15}){
+              Button({ stateEffect: true }) {
+                SymbolGlyph(this.loved?$r('sys.symbol.heart_fill'):$r('sys.symbol.heart')).fontSize(26).fontColor([$r('sys.color.font')])
+              }
+              .size({ width: 40, height: 40 })
+              .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+              $r('sys.color.comp_background_list_card'))
+              .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+              .useEffect(true)
+              .onClick(()=>{
+                if (!this.loved) {
+                  zlibClient.addLove2BookShelf(this.data?.id!).then((res:boolean)=>{
+                    if (res) {
+                      XAnimation.runWithAnimation(()=>{
+                        this.loved = true
+                      })
+                    }
+                  })
+                }else {
+                  zlibClient.removeLove2BookShelf(this.data?.id!).then((res:boolean)=>{
+                    if (res) {
+                      XAnimation.runWithAnimation(()=>{
+                        this.loved = false
+                      })
+                    }
+                  })
+                }
+              })
 
-              let controller: systemShare.ShareController = new systemShare.ShareController(shareData);
-              controller.show(XContext.getAbilityContext(), {
-                selectionMode: systemShare.SelectionMode.SINGLE,
-                previewMode: systemShare.SharePreviewMode.DETAIL,
-              }).then(() => {
-                console.info('ShareController show success.');
-              }).catch((error: BusinessError) => {
-                console.error(`ShareController show error. code: ${error.code}, message: ${error.message}`);
-              });
-            })
+              Button({ stateEffect: true }) {
+                SymbolGlyph($r('sys.symbol.share')).fontSize(26).fontColor([$r('sys.color.font')])
+              }
+              .size({ width: 40, height: 40 })
+              .backgroundColor(__CustomBackgroundData__.customBackground ? $r('app.color.start_window_background_blur') :
+              $r('sys.color.comp_background_list_card'))
+              .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
+              .useEffect(true)
+              .onClick(() => {
+                const message = __UI__.shareBookText.replace('{link}', `【${this.data?.title ?? ''}||${emojiEncoder.encode(this.data?.id.toString() ?? '')}】`).replace('{userName}', zlibClient.userInfo?.userName?? '')
+                NeoPreferencesUtil.putPreferencesValue("selineRead", 'lastPasteboardLink', message)
+                let shareData: systemShare.SharedData = new systemShare.SharedData({
+                  utd: uniformTypeDescriptor.UniformDataType.PLAIN_TEXT,
+                  content: message,
+                  title: '分享书单',
+                });
+
+                let controller: systemShare.ShareController = new systemShare.ShareController(shareData);
+                controller.show(XContext.getAbilityContext(), {
+                  selectionMode: systemShare.SelectionMode.SINGLE,
+                  previewMode: systemShare.SharePreviewMode.DETAIL,
+                }).then(() => {
+                  console.info('ShareController show success.');
+                }).catch((error: BusinessError) => {
+                  console.error(`ShareController show error. code: ${error.code}, message: ${error.message}`);
+                });
+              })
+            }
+
           }
 
 
@@ -192,6 +225,7 @@ export default struct BookListPage {
     .backgroundColor(Color.Transparent)
     .onReady((context: NavDestinationContext) => {
       this.data = context.pathInfo.param as I_ReadLists_Bookshelf
+      this.loved = this.data.isLoved??false
     })
     .onBackPressed(() => {
       setContinueState(false, 'home', '', '')
