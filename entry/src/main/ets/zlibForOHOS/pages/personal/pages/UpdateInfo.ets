@@ -32,6 +32,12 @@ export function UpdateInfoBuilder() {
 export struct UpdateInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: '1.0.0',
+      date: '2025/10/4',
+      addNewFunArray:['书单收藏','书单筛选'],
+      optimizeArray:['优化隐藏搜索框逻辑']
+    },
+    {
       version: 'beta 0.8.0',
       date: '2025/9/26',
       addNewFunArray:['新增分享书籍','新增分享书单','新增搜索显示年份','书库列表显示模式持久化','新增Meow频道订阅'],
