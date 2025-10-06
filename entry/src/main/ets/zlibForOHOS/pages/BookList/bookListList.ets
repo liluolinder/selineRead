@@ -26,8 +26,11 @@ import { I_ReadLists_Bookshelf, I_BookInfo_Bookshelf } from '../../datas/interfa
 import { BookCover, loadingDialog, loadingNewDialog } from '../others/Builder';
 import BookListPage from './BookListPage';
 import { common } from '@kit.AbilityKit';
-import { setContinueState } from '../../utils/ToolsUtil';
+import { addLog, setContinueState } from '../../utils/ToolsUtil';
 import { CJLoader } from '../../CJloader/CJLoader';
+import { zlibIndexShowMod } from '../../datas/enums/zlibIndexShowMod';
+import { I_SearchHistory } from '../../datas/interfaces/I_SearchHistory';
+import { scanBarcode, scanCore } from '@kit.ScanKit';
 
 @ComponentV2
 export struct BookList {
@@ -57,6 +60,7 @@ export struct BookListList {
   @Local isFlashing: boolean = false
   @Local waterFlowColumnNumber: number = -1
   @Local waterFlowEmptyItem: number[] = []
+  @Local scrollerOffset: number = 0
 
   build() {
     NavDestination() {
@@ -66,7 +70,7 @@ export struct BookListList {
             .size({ width: 150, height: 150 })
         }.size({ width: '100%', height: '100%' })
       } else {
-        Stack() {
+        Stack({alignContent: Alignment.Top}) {
           WaterFlow() {
             ForEach(this.waterFlowEmptyItem, () => {
               FlowItem().height(Math.max(16, __System__.topRectHeight))
@@ -82,10 +86,10 @@ export struct BookListList {
                   List({ space: 10 }) {
                     ForEach(item.booksGrouped?.slice(0, 7), (itemB: I_BookInfo_Bookshelf) => {
                       ListItem() {
-                        BookCover({data: itemB.coverUrl, haveShadow: false})
+                        BookCover({ data: itemB.coverUrl, haveShadow: false })
                           .width(75)
                       }
-                    },(itemB: I_BookInfo_Bookshelf)=>itemB.cover)
+                    }, (itemB: I_BookInfo_Bookshelf) => itemB.cover)
                   }
                   .listDirection(Axis.Horizontal)
                   .scrollBar(BarState.Off)
@@ -100,7 +104,7 @@ export struct BookListList {
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
               .backgroundColor(__CustomBackgroundData__.customBackground ?
-              $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
               .backdropBlur(__CustomBackgroundData__.customBackground ? 100 : undefined)
               .useEffect(true)
               .padding(15)
@@ -108,7 +112,7 @@ export struct BookListList {
               .onClick(async () => {
                 XAnimation.runWithAnimation(() => __BookListData__.isOpening = true)
                 zlibClient.bookshelfBooks.clearData()
-                item.isLoved =  await zlibClient.getBookShelfIsLoved(item)
+                item.isLoved = await zlibClient.getBookShelfIsLoved(item)
 
                 await zlibClient.getBookShelfMoreInfo(item.id, 1)
                 XAnimation.runWithAnimation(() => __BookListData__.isOpening = false)
@@ -126,12 +130,15 @@ export struct BookListList {
                 .height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70), 16))
             })
           }
+          .onDidScroll((scrollOffset: number, scrollState: ScrollState) => {
+            this.scrollerOffset += scrollOffset
+          })
           .margin({ left: 16, right: 16 })
           .scrollBar(BarState.Off)
           .columnsTemplate(`repeat(${this.waterFlowColumnNumber},1fr)`)
           .columnsGap(10)
           .rowsGap(10)
-          .onScrollStart(()=>{
+          .onScrollStart(() => {
             __UI__.hideBars()
           })
           .onReachEnd(async () => {
@@ -147,6 +154,66 @@ export struct BookListList {
           if (__BookListData__.isOpening) {
             loadingDialog()
           }
+          if (__UI__.displayTabs || this.scrollerOffset == 0) {
+            Row({ space: 10 }) {
+
+              Button({ type: ButtonType.Circle }) {
+                SymbolGlyph($r('sys.symbol.circle_viewfinder'))
+                  .fontSize(24)
+                  .fontColor([$r('sys.color.font_secondary')])
+              }
+              .width(40)
+              .height(40)
+              .backgroundColor($r('app.color.start_window_background_blur'))
+              .backdropBlur(100)
+              .useEffect(true)
+              .onClick(() => {
+                //Todo: 左边按钮
+              })
+              .visibility(__BookListData__.isInSearchMode ? Visibility.None : Visibility.Visible)
+
+              Search({ value: __BookListData__.searchWords })
+                .onChange((text) => {
+                  __BookListData__.searchWords = text
+                })
+                .backgroundColor($r('app.color.start_window_background_blur'))
+                .backdropBlur(100)
+                .useEffect(true)
+                .layoutWeight(1)
+                .focusable(__BookListData__.isInSearchMode)
+                .enableKeyboardOnFocus(__BookListData__.isInSearchMode)
+                .onSubmit((value: string) => {
+                  //Todo: 提交搜索
+                })
+                .onChange((value: string) => {
+                  if (value == '' || value == undefined) {
+                    XAnimation.runWithAnimation(() => {
+                      __BookListData__.searchOrRecommend = zlibIndexShowMod.Recommend
+                    })
+                  }
+                })
+                .onTouch(() => {
+                  XAnimation.runWithAnimation(() => {
+                    __BookListData__.isInSearchMode = true
+                  })
+                })
+
+              Button({ type: ButtonType.Circle }) {
+                SymbolGlyph($r('sys.symbol.satellite_map'))
+                  .fontSize(24)
+                  .fontColor([$r('sys.color.font_secondary')])
+              }
+              .width(40)
+              .height(40)
+              .backgroundColor($r('app.color.start_window_background_blur'))
+              .backdropBlur(100)
+              .useEffect(true)
+              .onClick(() => {
+                //Todo: 右边按钮
+              })
+              .visibility(__BookListData__.isInSearchMode ? Visibility.None : Visibility.Visible)
+            }
+          }
         }.size({ width: '100%', height: '100%' })
         .onAreaChange((_, newValue) => {
           XAnimation.runWithAnimation(() => {
@@ -160,7 +227,6 @@ export struct BookListList {
         })
       }
     }
-
     .backgroundColor(Color.Transparent)
     .transition(this.transitionEffect)
     .hideTitleBar(true)
@@ -174,6 +240,9 @@ export struct BookListList {
 @ObservedV2
 class bookList {
   @Trace isOpening: boolean = false
+  @Trace searchOrRecommend: zlibIndexShowMod = zlibIndexShowMod.Recommend //Todo: 搜索或者推荐
+  @Trace isInSearchMode: boolean = false
+  @Trace searchWords: string = ''
 }
 
 export const __BookListData__ = new bookList()
