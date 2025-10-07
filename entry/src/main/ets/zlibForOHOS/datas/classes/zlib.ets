@@ -348,7 +348,6 @@ export class zlib {
         req.destroy();
         return []
       });
-
   }
 
   async getBookInfo(bookHref: string): Promise<I_BookInfo> {
@@ -450,7 +449,7 @@ export class zlib {
 
   }
 
-  async getBookShelf(page: number) {
+  async getBookShelf(page: number, order:string='date_updated', searchQuery:string='') {
     addLog('getBookShelf', `尝试获取书单page=${page}`)
     let req = http.createHttp()
     await req.request(`${this.baseApi_url}/booklist/get-page/${page}`, {
@@ -465,8 +464,8 @@ export class zlib {
         'color': "all",
         'hide18plus': "1",
         'languages': "null",
-        'order': "date_updated",
-        'searchQuery': ""
+        'order': order,
+        'searchQuery': searchQuery
       }
     }).then((data: http.HttpResponse) => {
       let obj = JSON.parse(JSON.stringify(data))

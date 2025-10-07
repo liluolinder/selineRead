@@ -62,6 +62,8 @@ export struct BookListList {
   @Local waterFlowEmptyItem: number[] = []
   @Local scrollerOffset: number = 0
 
+  searchOptionArray:SelectOption[] =  [{ value: '最新更新' }, { value: '新品' }, { value: '最佳吻合' }, { value: '最受欢迎' }] as SelectOption[]
+
   build() {
     NavDestination() {
       if ((zlibClient.bookshelfArray.dataArray.length == 0)) {
@@ -73,7 +75,7 @@ export struct BookListList {
         Stack({alignContent: Alignment.Top}) {
           WaterFlow() {
             ForEach(this.waterFlowEmptyItem, () => {
-              FlowItem().height(Math.max(16, __System__.topRectHeight))
+              FlowItem().height(Math.max(16, __System__.topRectHeight)*2)
             })
             LazyForEach(zlibClient.bookshelfArray, (item: I_ReadLists_Bookshelf) => {
               FlowItem() {
@@ -124,7 +126,7 @@ export struct BookListList {
                   __UI__.bookListPageStack.pushPath({ name: 'bookShelfPage', param: item }, false);
                 })
               })
-            }, (item: I_ReadLists_Bookshelf) => item.id.toString() + item.title)
+            }, (item: I_ReadLists_Bookshelf) => item.id.toString() + item.title + (new Date).getUTCMilliseconds())
             ForEach(this.waterFlowEmptyItem, () => {
               FlowItem()
                 .height(Math.max(__System__.bottomRectHeight + (__System__.windowWidth > minWidth ? 0 : 70), 16))
@@ -154,23 +156,57 @@ export struct BookListList {
           if (__BookListData__.isOpening) {
             loadingDialog()
           }
+
+          if (__BookListData__.isInSearchMode) {
+            Column()
+              .size({ width: '100%', height: '100%' })
+              .blur(50)
+              .onClick(() => {
+                XAnimation.runWithAnimation(() => {
+                  __BookListData__.isInSearchMode = false
+                })
+              })
+          }
+
           if (__UI__.displayTabs || this.scrollerOffset == 0) {
             Row({ space: 10 }) {
 
-              Button({ type: ButtonType.Circle }) {
-                SymbolGlyph($r('sys.symbol.circle_viewfinder'))
-                  .fontSize(24)
-                  .fontColor([$r('sys.color.font_secondary')])
-              }
-              .width(40)
-              .height(40)
-              .backgroundColor($r('app.color.start_window_background_blur'))
-              .backdropBlur(100)
-              .useEffect(true)
-              .onClick(() => {
-                //Todo: 左边按钮
-              })
-              .visibility(__BookListData__.isInSearchMode ? Visibility.None : Visibility.Visible)
+              Select(this.searchOptionArray)
+                .selected(0)//默认选中项
+                .onSelect(async (index) => {
+                  let order:string = ''
+                  switch (index)
+                  {
+                    case 0:
+                      order = 'date_updated'
+                      break;
+                    case 1:
+                      order = 'date_created'
+                      break;
+                    case 2:
+                      order = 'bestmatch'
+                      break;
+                    case 3:
+                      order = 'popular'
+                      break;
+                  }
+                  if ( __BookListData__.searchOrRecommend = zlibIndexShowMod.Recommend) {
+                    zlibClient.bookshelfArray.clearData()
+                    this.bookShelfIndex = 1
+                    this.isFlashing = true
+                    await zlibClient.getBookShelf(0,order)
+                    await zlibClient.getBookShelf(1,order)
+                    this.isFlashing = false
+                  }
+                })
+                .height(40)
+                .width(100)
+                .backgroundColor($r('app.color.start_window_background_blur'))
+                .backdropBlur(100)
+                .useEffect(true)
+                .value(this.searchOptionArray[0].value)//默认文本
+
+
 
               Search({ value: __BookListData__.searchWords })
                 .onChange((text) => {
@@ -183,7 +219,10 @@ export struct BookListList {
                 .focusable(__BookListData__.isInSearchMode)
                 .enableKeyboardOnFocus(__BookListData__.isInSearchMode)
                 .onSubmit((value: string) => {
-                  //Todo: 提交搜索
+                  XAnimation.runWithAnimation(() => __BookListData__.isInSearchMode = false)
+                  if (value!='') {
+                    __BookListData__.searchOrRecommend = zlibIndexShowMod.Search
+                  }
                 })
                 .onChange((value: string) => {
                   if (value == '' || value == undefined) {
@@ -212,7 +251,8 @@ export struct BookListList {
                 //Todo: 右边按钮
               })
               .visibility(__BookListData__.isInSearchMode ? Visibility.None : Visibility.Visible)
-            }
+            }.padding({left:16, right:16, top: __System__.topRectHeight})
+            .transition(XAnimation.getAnimation('up'))
           }
         }.size({ width: '100%', height: '100%' })
         .onAreaChange((_, newValue) => {
