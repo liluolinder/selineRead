@@ -449,7 +449,7 @@ export class zlib {
 
   }
 
-  async getBookShelf(page: number, order:string='date_updated', searchQuery:string='') {
+  async getBookShelf(page: number, order:string='date_updated', searchQuery:string='', access:string = 'public') {
     addLog('getBookShelf', `尝试获取书单page=${page}`)
     let req = http.createHttp()
     await req.request(`${this.baseApi_url}/booklist/get-page/${page}`, {
@@ -460,7 +460,7 @@ export class zlib {
         'Cookie': this.cookie,
       },
       extraData: {
-        'access': "public",
+        'access':access,
         'color': "all",
         'hide18plus': "1",
         'languages': "null",
@@ -471,7 +471,7 @@ export class zlib {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
       let temp: I_Bookshelf = result as I_Bookshelf
-      temp.readlists.forEach((item: I_ReadLists_Bookshelf, index: number) => {
+      temp.readlists.forEach((item: I_ReadLists_Bookshelf) => {
         item.readListsOwners = temp.readlistsOwners[item.user_id]
         item.booksGrouped = temp.booksGrouped[item.id]
         item.isLoved = temp.favoriteReadlists.includes(item.id)

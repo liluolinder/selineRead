@@ -611,9 +611,6 @@ export struct zlibHome {
             .visibility(__zlibHomeData__.isInSearchMode ? Visibility.Visible : Visibility.None)
 
           Search({ value: __zlibHomeData__.searchWords })
-            .onChange((text) => {
-              __zlibHomeData__.searchWords = text
-            })
             .backgroundColor($r('app.color.start_window_background_blur'))
             .backdropBlur(100)
             .useEffect(true)
@@ -651,6 +648,7 @@ export struct zlibHome {
             .onChange((value: string) => {
               if (value == '' || value == undefined) {
                 XAnimation.runWithAnimation(() => {
+                  __zlibHomeData__.searchWords = ''
                   __zlibHomeData__.searchOrRecommend = zlibIndexShowMod.Recommend
                 })
               }

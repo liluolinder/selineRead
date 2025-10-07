@@ -3,7 +3,6 @@ import { XAnimation } from "../../datas/classes/XAnimation"
 import { fileUri } from "@kit.CoreFileKit"
 import { globalContext } from "../../../entryability/EntryAbility"
 
-
 @Builder
 export function loadingDialog() {
   Stack() {
@@ -64,6 +63,7 @@ export struct BookCover{
 
   build() {
     Stack(){
+
       Image($r('app.media.default_cover')).aspectRatio(0.71).visibility(this.isFinish? Visibility.None: Visibility.Visible).animation({duration: 100}).draggable(false).objectFit(ImageFit.Cover)
       Image(this.data ?? $r('app.media.default_cover')).visibility(this.isFinish? Visibility.Visible: Visibility.Hidden).animation({duration: 100}).draggable(false).objectFit(this.imageFit)
         .onComplete(()=>{
@@ -78,5 +78,7 @@ export struct BookCover{
       offsetY: 10
     })
   }
+
+
 }
 
