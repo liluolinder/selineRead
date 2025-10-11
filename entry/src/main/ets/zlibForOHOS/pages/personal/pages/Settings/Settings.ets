@@ -21,7 +21,7 @@ struct Settings {
     Navigation(this.settingsPagesInfo){
       SettingsPage()
     }
-    .title('设置')
+
   }
 }
 
@@ -33,173 +33,183 @@ struct SettingsPage {
 
   build() {
       List({ space: 10 }) {
+         ListItem(){
+           SettingsToggleItem({
+             symbol: $r('sys.symbol.link_slash'),
+             symbol1: $r('sys.symbol.link'),
+             message: '使用局域网书库',
+             checked: __UI__.onlineMode,
+             onChange: async (checked: boolean) => {
+               XAnimation.runWithAnimation(() => __UI__.onlineMode = checked)
+               NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', checked)
+               zlibClient.recommendBooksArray.clearData()
+               zlibClient.bookshelfArray.clearData()
+               if (checked) {
+                 zlibClient.getUserInfo()
+                 await zlibClient.refreshUrl().then(async () => {
+                   zlibClient.getRecommendBooks(1)
+                   zlibClient.getBookShelf(1)
+                   if (__User__.isLoginZlib && __UI__.onlineMode) {
+                     zlibClient.getUserInfo()
+                   }
+                 })
+               }
 
-
-          SettingsToggleItem({
-            symbol: $r('sys.symbol.link_slash'),
-            symbol1: $r('sys.symbol.link'),
-            message: '使用局域网书库',
-            checked: __UI__.onlineMode,
-            onChange: async (checked: boolean) => {
-              XAnimation.runWithAnimation(() => __UI__.onlineMode = checked)
-              NeoPreferencesUtil.putPreferencesValue("selineRead", 'onlineMode', checked)
-              zlibClient.recommendBooksArray.clearData()
-              zlibClient.bookshelfArray.clearData()
-              if (checked) {
-                zlibClient.getUserInfo()
-                await zlibClient.refreshUrl().then(async () => {
-                  zlibClient.getRecommendBooks(1)
-                  zlibClient.getBookShelf(1)
-                  if (__User__.isLoginZlib && __UI__.onlineMode) {
-                    zlibClient.getUserInfo()
-                  }
-                })
-              }
-
-            }
-          })
+             }
+           })
+         }
 
         if (__UI__.onlineMode) {
-            Column({ space: 10 }) {
-              Text('服务地址').fontSize(15).fontWeight(FontWeight.Medium).padding({ left: 5, right: 5 })
-              Row({ space: 10 }) {
-                TextInput({ text: $$this.apiAddress })
-                  .backgroundColor($r('sys.color.comp_background_secondary'))
-                  .layoutWeight(1)
-                  .height(40)
-                Button({ stateEffect: true }) {
-                  SymbolGlyph($r('sys.symbol.checkmark')).fontSize(17).fontColor([$r('sys.color.font')])
-                }
-                .backgroundColor($r('sys.color.comp_background_secondary'))
-                .size({ width: 40, height: 40 })
-                .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-                .onClick(() => {
-                  let res = this.apiAddress
-                  if (this.apiAddress == 'book.liluolinder.top') {
-                    res = 'https://zh.laoshihao.ru'
+            ListItem(){
+              Column({ space: 10 }) {
+                Text('服务地址').fontSize(15).fontWeight(FontWeight.Medium).padding({ left: 5, right: 5 })
+                Row({ space: 10 }) {
+                  TextInput({ text: $$this.apiAddress })
+                    .backgroundColor($r('sys.color.comp_background_secondary'))
+                    .layoutWeight(1)
+                    .height(40)
+                  Button({ stateEffect: true }) {
+                    SymbolGlyph($r('sys.symbol.checkmark')).fontSize(17).fontColor([$r('sys.color.font')])
                   }
-                  zlibClient.base_url = res
-                  zlibClient.baseApi_url = res + '/papi'
-                  NeoPreferencesUtil.putPreferencesValue("selineRead", 'zlibUrl', res)
-                  zlibClient.recommendBooksArray.clearData()
-                  zlibClient.bookshelfArray.clearData()
-                  zlibClient.refreshUrl().then(async () => {
-                    zlibClient.getRecommendBooks(1)
-                    zlibClient.getBookShelf(1)
-                  })
-                  promptAction.showToast({
-                    message: '已保存',
-                    duration: 2000
-                  });
-                })
-              }.width('100%')
-            }
-            .width('100%')
-            .borderRadius(20)
-            .backgroundColor($r('sys.color.comp_background_list_card'))
-            .padding(15)
-            .alignItems(HorizontalAlign.Start)
-
-
-            SettingsToggleItem({
-              symbol: $r('sys.symbol.share'),
-              message: '下载完成后自动分享',
-              checked: zlibClient.autoShare,
-              onChange: (checked: boolean) => {
-                zlibClient.autoShare = checked
-                NeoPreferencesUtil.putPreferencesValue("selineRead", 'autoShare', checked)
-              }
-            })
-
-            SettingsToggleItem({
-              symbol: $r('sys.symbol.paperplane'),
-              message: '接受可用API推送',
-              checked: __UI__.needGetNewAPI,
-              onChange: async (checked: boolean) => {
-                __UI__.needGetNewAPI = checked
-                if (checked) {
-                  await linderPush.getPushToken().then((token:string)=>{
-                    let condition = new cloudDatabase.DatabaseQuery(pushToken)
-                    condition.equalTo('pushToken', token);
-
-                    pushTokenDataBase.query(condition).then((res)=>{
-                      if (res == undefined || res.length==0) {
-                        console.log(`Liquid:不存在`)
-                        let record = new pushToken()
-                        record.pushToken = token
-                        record.needGetNewAPI= true
-                        pushTokenDataBase.upsert(record)
-                      }else {
-                        let record = res[0]
-                        record.needGetNewAPI = true
-                        pushTokenDataBase.upsert(record)
-                      }
-                    })
-                  })
-                }else {
-                  await linderPush.getPushToken().then((token:string)=>{
-                    let condition = new cloudDatabase.DatabaseQuery(pushToken)
-                    condition.equalTo('pushToken', token);
-
-                    pushTokenDataBase.query(condition).then((res)=>{
-                      if (res == undefined || res.length==0) {}
-                      else {
-                        let record = res[0]
-                        record.needGetNewAPI = false
-                        pushTokenDataBase.upsert(record)
-                      }
-                    })
-                  })
-                }
-                NeoPreferencesUtil.putPreferencesValue("selineRead", 'needGetNewAPI', checked)
-              }
-            })
-
-            Column({ space: 10 }) {
-              Column(){
-                Text('分享的消息格式').fontSize(15).fontWeight(FontWeight.Medium)
-                Text('{link}为分享内容，{userName}为用户名').fontSize(12).opacity(0.75)
-              }.alignItems(HorizontalAlign.Start).padding({ left: 5, right: 5 })
-
-              Row({ space: 10 }) {
-                TextInput({ text: $$this.shareBoolText })
                   .backgroundColor($r('sys.color.comp_background_secondary'))
-                  .layoutWeight(1)
-                  .height(40)
-                Button({ stateEffect: true }) {
-                  SymbolGlyph($r('sys.symbol.checkmark')).fontSize(17).fontColor([$r('sys.color.font')])
-                }
-                .backgroundColor($r('sys.color.comp_background_secondary'))
-                .size({ width: 40, height: 40 })
-                .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-                .onClick(() => {
-                  if(!this.shareBoolText.includes('{link}')){
-                    promptAction.showToast({message: '必须包含分享内容！'})
-                  } else {
-                    promptAction.showToast({message: '已保存'})
-                    __UI__.shareBookText = this.shareBoolText
-                    NeoPreferencesUtil.putPreferencesValue("selineRead", 'shareBookText', this.shareBoolText)
-                  }
-                })
-              }.width('100%')
+                  .size({ width: 40, height: 40 })
+                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                  .onClick(() => {
+                    let res = this.apiAddress
+                    if (this.apiAddress == 'book.liluolinder.top') {
+                      res = 'https://zh.laoshihao.ru'
+                    }
+                    zlibClient.base_url = res
+                    zlibClient.baseApi_url = res + '/papi'
+                    NeoPreferencesUtil.putPreferencesValue("selineRead", 'zlibUrl', res)
+                    zlibClient.recommendBooksArray.clearData()
+                    zlibClient.bookshelfArray.clearData()
+                    zlibClient.refreshUrl().then(async () => {
+                      zlibClient.getRecommendBooks(1)
+                      zlibClient.getBookShelf(1)
+                    })
+                    promptAction.showToast({
+                      message: '已保存',
+                      duration: 2000
+                    });
+                  })
+                }.width('100%')
+              }
+              .width('100%')
+              .borderRadius(20)
+              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .padding(15)
+              .alignItems(HorizontalAlign.Start)
             }
-            .width('100%')
-            .borderRadius(20)
-            .backgroundColor($r('sys.color.comp_background_list_card'))
-            .padding(15)
-            .alignItems(HorizontalAlign.Start)
+
+
+            ListItem(){
+              SettingsToggleItem({
+                symbol: $r('sys.symbol.share'),
+                message: '下载完成后自动分享',
+                checked: zlibClient.autoShare,
+                onChange: (checked: boolean) => {
+                  zlibClient.autoShare = checked
+                  NeoPreferencesUtil.putPreferencesValue("selineRead", 'autoShare', checked)
+                }
+              })
+            }
+
+            ListItem(){
+              SettingsToggleItem({
+                symbol: $r('sys.symbol.paperplane'),
+                message: '接受可用API推送',
+                checked: __UI__.needGetNewAPI,
+                onChange: async (checked: boolean) => {
+                  __UI__.needGetNewAPI = checked
+                  if (checked) {
+                    await linderPush.getPushToken().then((token:string)=>{
+                      let condition = new cloudDatabase.DatabaseQuery(pushToken)
+                      condition.equalTo('pushToken', token);
+
+                      pushTokenDataBase.query(condition).then((res)=>{
+                        if (res == undefined || res.length==0) {
+                          console.log(`Liquid:不存在`)
+                          let record = new pushToken()
+                          record.pushToken = token
+                          record.needGetNewAPI= true
+                          pushTokenDataBase.upsert(record)
+                        }else {
+                          let record = res[0]
+                          record.needGetNewAPI = true
+                          pushTokenDataBase.upsert(record)
+                        }
+                      })
+                    })
+                  }else {
+                    await linderPush.getPushToken().then((token:string)=>{
+                      let condition = new cloudDatabase.DatabaseQuery(pushToken)
+                      condition.equalTo('pushToken', token);
+
+                      pushTokenDataBase.query(condition).then((res)=>{
+                        if (res == undefined || res.length==0) {}
+                        else {
+                          let record = res[0]
+                          record.needGetNewAPI = false
+                          pushTokenDataBase.upsert(record)
+                        }
+                      })
+                    })
+                  }
+                  NeoPreferencesUtil.putPreferencesValue("selineRead", 'needGetNewAPI', checked)
+                }
+              })
+            }
+
+            ListItem(){
+              Column({ space: 10 }) {
+                Column(){
+                  Text('分享的消息格式').fontSize(15).fontWeight(FontWeight.Medium)
+                  Text('{link}为分享内容，{userName}为用户名').fontSize(12).opacity(0.75)
+                }.alignItems(HorizontalAlign.Start).padding({ left: 5, right: 5 })
+
+                Row({ space: 10 }) {
+                  TextInput({ text: $$this.shareBoolText })
+                    .backgroundColor($r('sys.color.comp_background_secondary'))
+                    .layoutWeight(1)
+                    .height(40)
+                  Button({ stateEffect: true }) {
+                    SymbolGlyph($r('sys.symbol.checkmark')).fontSize(17).fontColor([$r('sys.color.font')])
+                  }
+                  .backgroundColor($r('sys.color.comp_background_secondary'))
+                  .size({ width: 40, height: 40 })
+                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                  .onClick(() => {
+                    if(!this.shareBoolText.includes('{link}')){
+                      promptAction.showToast({message: '必须包含分享内容！'})
+                    } else {
+                      promptAction.showToast({message: '已保存'})
+                      __UI__.shareBookText = this.shareBoolText
+                      NeoPreferencesUtil.putPreferencesValue("selineRead", 'shareBookText', this.shareBoolText)
+                    }
+                  })
+                }.width('100%')
+              }
+              .width('100%')
+              .borderRadius(20)
+              .backgroundColor($r('sys.color.comp_background_list_card'))
+              .padding(15)
+              .alignItems(HorizontalAlign.Start)
+            }
 
 
         }
 
-          SettingsClickItem({
-            symbol: $r('sys.symbol.text_clipboard'),
-            message: '运行日志',
-            onPress: () => {
-              __UI__.showSettings = false
-              __UI__.showLogger = true
-            }
-          })
+          ListItem(){
+            SettingsClickItem({
+              symbol: $r('sys.symbol.text_clipboard'),
+              message: '运行日志',
+              onPress: () => {
+                __UI__.showSettings = false
+                __UI__.showLogger = true
+              }
+            })
+          }
       }
       .contentEndOffset(16)
       .layoutWeight(1)
