@@ -34,8 +34,9 @@ export struct UpdateInfo {
     {
       version: '1.0.0',
       date: '2025/10/4',
-      addNewFunArray:['书单收藏','书单筛选'],
-      optimizeArray:['优化隐藏搜索框逻辑']
+      addNewFunArray:['书单收藏','书单筛选','书单搜索'],
+      optimizeArray:['优化隐藏搜索框逻辑'],
+      fixBugsArray:['书库搜索框点击X未清空输入框']
     },
     {
       version: 'beta 0.8.0',
