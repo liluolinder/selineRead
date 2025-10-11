@@ -20,7 +20,7 @@ struct Settings {
   build() {
     Navigation(this.settingsPagesInfo) {
       SettingsPage()
-    }
+    }.title('设置')
 
   }
 }
