@@ -3,9 +3,6 @@ import { XAnimation } from "../../../../datas/classes/XAnimation"
 import NeoPreferencesUtil from '../../../../datas/classes/XPreferencesUtil'
 import { zlibClient } from "../../../../datas/classes/zlib"
 import { promptAction } from "@kit.ArkUI"
-import { selectImage } from "../../../../utils/ToolsUtil"
-import { fileIo } from "@kit.CoreFileKit"
-import { globalContext } from "../../../../../entryability/EntryAbility"
 import { SettingsClickItem } from "../../../others/ListItem"
 import { linderPush } from "../../../../datas/classes/LPushKit"
 import { pushToken, pushTokenDataBase } from "../../../../datas/classes/LCloudDataBaseKit"
@@ -35,7 +32,6 @@ struct SettingsPage {
   @Local shareBoolText: string = __UI__.shareBookText
 
   build() {
-    NavDestination() {
       List({ space: 10 }) {
 
 
@@ -212,15 +208,6 @@ struct SettingsPage {
       .scrollBar(BarState.Off)
       .borderRadius(20)
       .clip(true)
-    }
-    .padding({ top: 8 })
-    .backgroundColor(Color.Transparent)
-    .title('设置')
-    .hideBackButton(true)
-    .onBackPressed(() => {
-      __UI__.showSettings = false
-      return true
-    })
   }
 }
 
