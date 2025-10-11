@@ -1,7 +1,11 @@
-import { __System__, minWidth, __CustomBackgroundData__ } from "../../datas/classes/ShareDatas"
+import { __System__, minWidth, __CustomBackgroundData__, __UI__,
+  CustomBackgroundData,
+  UIShareData} from "../../datas/classes/ShareDatas"
 import { XAnimation } from "../../datas/classes/XAnimation"
 import { fileUri } from "@kit.CoreFileKit"
 import { globalContext } from "../../../entryability/EntryAbility"
+import { ConfigurationConstant } from "@kit.AbilityKit"
+import image from "@ohos.multimedia.image"
 
 
 @Builder
@@ -34,25 +38,46 @@ export function loadingNewDialog() {
   .zIndex(114514)
 }
 
+@ComponentV2
+export struct CustomBackground{
+  @Local private  customBackgroundData: CustomBackgroundData = __CustomBackgroundData__
+  @Local private uiData: UIShareData = __UI__
+  @Local private pixelMap: image.PixelMap|undefined
+  @Local private imageOpacity: number = 0
+
+  @Monitor('customBackgroundData.refresh', 'uiData.currentColorMode')
+  async updateImage(){
+    animateToImmediately({duration: 300, curve: Curve.Ease}, ()=> this.imageOpacity = 0)
+    this.pixelMap = await image.createImageSource(this.customBackgroundData.customBackgroundFollowColorMode && this.uiData.currentColorMode == ConfigurationConstant.ColorMode.COLOR_MODE_DARK ?
+      globalContext.filesDir + '/background_dark' : globalContext.filesDir + '/background')?.createPixelMap()
+  }
+
+  build() {
+      Stack() {
+        Image(this.pixelMap)
+          .size({ width: '100%', height: '100%' })
+          .objectFit(ImageFit.Cover)
+          .draggable(false)
+          .autoResize(true)
+          .opacity(this.imageOpacity)
+          .onFinish(()=>{
+            animateToImmediately({duration: 300, curve: Curve.Ease}, ()=> this.imageOpacity = 1)
+          })
+
+
+        Stack()//背景遮罩
+          .backgroundColor('#' + this.customBackgroundData.darkness.toString(16).toUpperCase() + '000000')
+          .blur(this.customBackgroundData.blur)
+          .size({ width: '100%', height: '100%' })
+          .animation({ duration: 300, curve: Curve.Ease })
+      }
+      .animation({ duration: 300, curve: Curve.Ease })
+  }
+}
+
 @Builder
 export function customBackground() {
-  if (!__CustomBackgroundData__.refresh) {
-    Stack() {
-      Image(fileUri.getUriFromPath(globalContext.filesDir + '/background'))
-        .size({ width: '100%', height: '100%' })
-        .objectFit(ImageFit.Cover)
-        .draggable(false)
-        .autoResize(true)
-        .transition(TransitionEffect.OPACITY.animation({ duration: 500, curve: Curve.Ease, delay: 400 }))
 
-      Stack()//背景遮罩
-        .backgroundColor('#' + __CustomBackgroundData__.darkness.toString(16).toUpperCase() + '000000')
-        .blur(__CustomBackgroundData__.blur)
-        .size({ width: '100%', height: '100%' })
-        .animation({ duration: 300, curve: Curve.Ease })
-    }
-    .animation({ duration: 300, curve: Curve.Ease })
-  }
 }
 
 @ComponentV2

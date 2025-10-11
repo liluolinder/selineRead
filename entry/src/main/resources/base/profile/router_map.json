@@ -29,6 +29,12 @@
       "name": "onlineReaderPage",
       "pageSourceFile": "src/main/ets/zlibForOHOS/pages/bookInfoPage/OnlineReader.ets",
       "buildFunction": "onlineReaderBuilder"
+    },
+
+    {
+      "name": "customBackgroundSettings",
+      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/personal/pages/Settings/CustomBackgroundSettings.ets",
+      "buildFunction": "customBackgroundSettingsBuilder"
     }
   ]
 }

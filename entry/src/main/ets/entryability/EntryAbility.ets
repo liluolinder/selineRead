@@ -42,8 +42,6 @@ export default class EntryAbility extends UIAbility {
     NeoPreferencesUtil.localPreferences(this.context, 'selineRead');
     __UI__.onlineMode = NeoPreferencesUtil.getPreferencesValue("selineRead", 'onlineMode', false) as boolean
     __UI__.needGetNewAPI = NeoPreferencesUtil.getPreferencesValue("selineRead", 'needGetNewAPI', false) as boolean
-    __CustomBackgroundData__.customBackground =
-      NeoPreferencesUtil.getPreferencesValue("selineRead", 'customBackground', false) as boolean
     zlibClient.base_url =
       NeoPreferencesUtil.getPreferencesValue("selineRead", 'zlibUrl', '') as string
     zlibClient.baseApi_url = zlibClient.base_url + '/papi'
@@ -187,7 +185,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   onConfigurationUpdate(newConfig: Configuration): void {
-    __UI__.currentColorMode = newConfig.colorMode || 0
+    __UI__.currentColorMode = newConfig.colorMode || ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
   }
 
   onForeground(): void {

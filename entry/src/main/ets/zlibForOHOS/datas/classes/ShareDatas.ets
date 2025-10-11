@@ -19,10 +19,11 @@ January 2020 http://license.coscl.org.cn/MulanPSL2
 
 
 import { relationalStore } from '@kit.ArkData'
-import { zlibIndexShowMod } from '../enums/zlibIndexShowMod'
+import NeoPreferencesUtil from '../../datas/classes/XPreferencesUtil'
 import { window } from '@kit.ArkUI'
 import { LogLine } from '../../pages/personal/pages/LoggerPage'
 import { XAnimation } from './XAnimation'
+import { ConfigurationConstant } from '@kit.AbilityKit'
 
 @ObservedV2
 export class Notification {
@@ -76,7 +77,7 @@ export let __Logger__: Logger = new Logger()
 @ObservedV2
 export class UIShareData {
   @Trace isInReader: boolean = false
-  @Trace currentColorMode: number = 1
+  @Trace currentColorMode: ConfigurationConstant.ColorMode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
   HomePageStack: NavPathStack = new NavPathStack()
   bookListPageStack: NavPathStack = new NavPathStack()
   @Trace onlineMode: boolean = false
@@ -113,8 +114,15 @@ export let __UI__: UIShareData = new UIShareData()
 
 @ObservedV2
 export class CustomBackgroundData {
+
+  constructor() {
+    this.customBackground = NeoPreferencesUtil.getPreferencesValue("selineRead", 'customBackground', false) as boolean
+    this.customBackgroundFollowColorMode = NeoPreferencesUtil.getPreferencesValue("selineRead", 'customBackgroundFollowColorMode', false) as boolean
+  }
+
   @Trace customBackground: boolean = false
   @Trace refresh: boolean = false
+  @Trace customBackgroundFollowColorMode: boolean = false
   @Trace blur: number = 0
   @Trace darkness: number = 0
 }

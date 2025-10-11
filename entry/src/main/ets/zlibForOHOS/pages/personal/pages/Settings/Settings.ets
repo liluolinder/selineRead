@@ -20,21 +20,11 @@ export function settingsBuilder() {
 struct Settings {
   @Provider('settingsPagesInfo') settingsPagesInfo: NavPathStack = new NavPathStack()
 
-  @Builder
-  Page(name: string) {
-    if (name == 'settings') {
+  build() {
+    Navigation(this.settingsPagesInfo){
       SettingsPage()
     }
-  }
-
-  aboutToAppear(): void {
-    this.settingsPagesInfo.pushPath({ name: 'settings' }, false)
-  }
-
-  build() {
-    Navigation(this.settingsPagesInfo)
-      .hideTitleBar(true)
-      .navDestination(this.Page)
+    .title('设置')
   }
 }
 
@@ -47,40 +37,8 @@ struct SettingsPage {
   build() {
     NavDestination() {
       List({ space: 10 }) {
-        ListItem() {
-          SettingsToggleItem({
-            symbol: $r('sys.symbol.brush'),
-            message: '主界面背景',
-            checked: __CustomBackgroundData__.customBackground,
-            onChange: (checked: boolean) => {
-              XAnimation.runWithAnimation(() => __CustomBackgroundData__.customBackground = checked)
-              NeoPreferencesUtil.putPreferencesValue("selineRead", 'customBackground', checked)
-            }
-          })
-        }
-
-        if (__CustomBackgroundData__.customBackground) {
-          SettingsClickItem({
-            symbol: $r('sys.symbol.plus'),
-            message: '选取图片',
-            onPress: async () => {
-              const uri = await selectImage()
-              if (uri) {
-                __CustomBackgroundData__.refresh = true
-                const file0 = fileIo.openSync(uri)
-                const file1 = fileIo.openSync(globalContext.filesDir + '/background',
-                  fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.CREATE)
-                fileIo.copyFileSync(file0.fd, file1.fd)
-                fileIo.closeSync(file0)
-                fileIo.closeSync(file1)
-                setTimeout(() => __CustomBackgroundData__.refresh = false, 50)
-              }
-            }
-          })
-        }
 
 
-        ListItem() {
           SettingsToggleItem({
             symbol: $r('sys.symbol.link_slash'),
             symbol1: $r('sys.symbol.link'),
@@ -104,10 +62,8 @@ struct SettingsPage {
 
             }
           })
-        }
 
         if (__UI__.onlineMode) {
-          ListItem() {
             Column({ space: 10 }) {
               Text('服务地址').fontSize(15).fontWeight(FontWeight.Medium).padding({ left: 5, right: 5 })
               Row({ space: 10 }) {
@@ -148,9 +104,7 @@ struct SettingsPage {
             .padding(15)
             .alignItems(HorizontalAlign.Start)
 
-          }
 
-          ListItem() {
             SettingsToggleItem({
               symbol: $r('sys.symbol.share'),
               message: '下载完成后自动分享',
@@ -160,9 +114,7 @@ struct SettingsPage {
                 NeoPreferencesUtil.putPreferencesValue("selineRead", 'autoShare', checked)
               }
             })
-          }
 
-          ListItem() {
             SettingsToggleItem({
               symbol: $r('sys.symbol.paperplane'),
               message: '接受可用API推送',
@@ -206,9 +158,7 @@ struct SettingsPage {
                 NeoPreferencesUtil.putPreferencesValue("selineRead", 'needGetNewAPI', checked)
               }
             })
-          }
 
-          ListItem() {
             Column({ space: 10 }) {
               Column(){
                 Text('分享的消息格式').fontSize(15).fontWeight(FontWeight.Medium)
@@ -243,11 +193,9 @@ struct SettingsPage {
             .padding(15)
             .alignItems(HorizontalAlign.Start)
 
-          }
 
         }
 
-        ListItem() {
           SettingsClickItem({
             symbol: $r('sys.symbol.text_clipboard'),
             message: '运行日志',
@@ -256,9 +204,8 @@ struct SettingsPage {
               __UI__.showLogger = true
             }
           })
-        }
       }
-      .contentEndOffset(Math.max(16, __System__.bottomRectHeight))
+      .contentEndOffset(16)
       .layoutWeight(1)
       .margin({ left: 16, right: 16 })
       .chainAnimation(true)
