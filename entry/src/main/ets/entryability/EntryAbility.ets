@@ -129,7 +129,7 @@ export default class EntryAbility extends UIAbility {
 
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
-    windowStage.loadContent('zlibForOHOS/pages/Index', (err) => {
+    windowStage.loadContent('zlibForOHOS/pagesV2/Index', (err) => {
       if (err.code) {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
         return;
@@ -165,7 +165,7 @@ export default class EntryAbility extends UIAbility {
   onWindowStageRestore(windowStage: window.WindowStage): void {
     // Main window is created, set main page for this ability
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
-    windowStage.loadContent('zlibForOHOS/pages/Index',  (err) => {
+    windowStage.loadContent('zlibForOHOS/pagesV2/Index',  (err) => {
       if (err.code) {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
         return;

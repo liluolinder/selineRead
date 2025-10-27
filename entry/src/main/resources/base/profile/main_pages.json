@@ -1,5 +1,6 @@
 {
   "src": [
-    "zlibForOHOS/pages/Index"
+    "zlibForOHOS/pages/Index",
+    "zlibForOHOS/pagesV2/Index"
   ]
 }

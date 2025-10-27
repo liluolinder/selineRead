@@ -462,7 +462,7 @@ export class zlib {
       extraData: {
         'access':access,
         'color': "all",
-        'hide18plus': "1",
+        'hide18plus': "0",
         'languages': "null",
         'order': order,
         'searchQuery': searchQuery
