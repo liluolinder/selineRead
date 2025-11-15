@@ -1,6 +1,5 @@
 {
   "src": [
-    "zlibForOHOS/pages/Index",
-    "zlibForOHOS/pagesV2/Index"
+    "selineRead/pages/Index"
   ]
 }

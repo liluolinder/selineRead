@@ -1,0 +1,24 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Seline Read"
+    },
+    {
+      "name": "Tip_GettingBookNow",
+      "value": "Getting Now, Wait Please"
+    },
+    {
+      "name": "Tip_GettingError",
+      "value": "Error "
+    }
+  ]
+}

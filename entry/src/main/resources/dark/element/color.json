@@ -3,14 +3,6 @@
     {
       "name": "start_window_background",
       "value": "#000000"
-    },
-    {
-      "name": "start_window_background_blur",
-      "value": "#90000000"
-    },
-    {
-      "name": "sweet_blue",
-      "value": "#608ff6"
     }
   ]
 }

@@ -1,9 +1,13 @@
 {
   "apiType": "stageMode",
   "buildOption": {
+    "resOptions": {
+      "copyCodeResource": {
+        "enable": false
+      }
+    },
     "cangjieOptions": {
-      "path": "./src/main/cangjie/cjpm.toml",
-      "abiFilters": ["arm64-v8a", "x86_64"]
+      "path": "./src/main/cangjie/cjpm.toml"
     },
     "nativeLib": {
       "filter": {

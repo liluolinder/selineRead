@@ -1,40 +1,9 @@
 {
-  "routerMap": [
-    {
-      "name": "bookInfoPage",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/bookInfoPage/bookInfoPage.ets",
-      "buildFunction": "bookInfoPageBuilder"
-    },
-    {
-      "name": "emptyPage",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/others/EmptyPage.ets",
-      "buildFunction": "emptyPageBuilder"
-    },
-    {
-      "name": "readerPage",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/reader/BookReader.ets",
-      "buildFunction": "readerBuilder"
-    },
-    {
-      "name": "pdfViewerPage",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/reader/PDFViewer.ets",
-      "buildFunction": "pdfViewerBuilder"
-    },
-    {
-      "name": "downloadPage",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/BookShelf/DownloadPage.ets",
-      "buildFunction": "downloadPageBuilder"
-    },
-    {
-      "name": "onlineReaderPage",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/bookInfoPage/OnlineReader.ets",
-      "buildFunction": "onlineReaderBuilder"
-    },
-
-    {
-      "name": "customBackgroundSettings",
-      "pageSourceFile": "src/main/ets/zlibForOHOS/pages/personal/pages/Settings/CustomBackgroundSettings.ets",
-      "buildFunction": "customBackgroundSettingsBuilder"
-    }
-  ]
+    "routerMap": [
+        {
+            "name": "indexPage",
+            "pageSourceFile": "src/main/ets/selineRead/pages/Index.ets",
+            "buildFunction": "indexPageBuilder"
+        }
+    ]
 }

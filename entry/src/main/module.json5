@@ -7,26 +7,20 @@
     "deviceTypes": [
       "phone",
       "tablet",
-      "2in1",
-      "wearable",
-      "tv"
+      "2in1"
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
-    "routerMap": "$profile:router_map",
+    "routerMap":"$profile:router_map",
     "abilities": [
       {
         "name": "EntryAbility",
-        "minWindowWidth": 400,
-        "minWindowHeight": 400,
-        "orientation": "auto_rotation_restricted",
         "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",
         "icon": "$media:layered_image",
         "label": "$string:EntryAbility_label",
         "startWindowIcon": "$media:zlib",
-        "continuable": true,
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "skills": [
@@ -71,26 +65,6 @@
       {
         "name": "ohos.permission.WINDOW_TOPMOST"
       },
-      {
-        "name": "ohos.permission.READ_PASTEBOARD",
-        "reason": "$string:reasonFor_READ_PASTEBOARD",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility"
-          ],
-          "when": "always"
-        }
-      },
-      {
-        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
-        "reason": "$string:reasonForKEEP_BACKGROUND_RUNNING",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility"
-          ],
-          "when": "always"
-        }
-      }
     ]
   }
 }

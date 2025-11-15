@@ -1,0 +1,92 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_New_tDxe_yPhsgQoOQ3xinz3C42N5hqIaXYyM4tEfqUc8Sc=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B1403B2F3A50DDB150166FCB20E6E656DE5AA8C8049FA4689A8A396781BA19622DC536AA883AD41",
+          "profile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_New_tDxe_yPhsgQoOQ3xinz3C42N5hqIaXYyM4tEfqUc8Sc=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_New_tDxe_yPhsgQoOQ3xinz3C42N5hqIaXYyM4tEfqUc8Sc=.p12",
+          "storePassword": "0000001BFF23A6C7ECFF1931CE774D5D41A83739C838AAC39C52DE40040B85739F7635C7C88E7BA4BC395D"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "5.0.5(17)",
+        "compatibleSdkVersion": "5.0.5(17)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "templateComponent",
+      "srcPath": "./features/templateComponent",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "color",
+      "srcPath": "./features/color",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "commonPackage",
+      "srcPath": "./features/commonPackage",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
