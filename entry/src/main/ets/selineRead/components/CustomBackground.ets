@@ -5,9 +5,13 @@ import { __System__ } from "../commons/shareDatas";
 
 @ObservedV2
 export class CustomBackgroundData{
-
-    @Trace enableCustomBackground: boolean = false
+    @Trace customBackground: boolean = false
+    @Trace refresh: boolean = false
     @Trace customBackgroundFollowColorMode: boolean = false
+    @Trace blur: number = 0
+    @Trace darkness: number = 0
+    @Trace enableCustomBackground: boolean = false
+    @Trace advanceMaterial: boolean = true
     @Trace flash: boolean = false
 }
 

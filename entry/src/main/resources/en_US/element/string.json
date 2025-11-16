@@ -19,6 +19,38 @@
     {
       "name": "Tip_GettingError",
       "value": "Error "
+    },
+    {
+      "name": "Tip_SavingNow",
+      "value": "Saving Now"
+    },
+    {
+      "name": "Tip_SaveError",
+      "value": "Error"
+    },
+    {
+      "name": "Tip_SaveSuccess",
+      "value": "Success"
+    },
+    {
+      "name": "Text_Rate",
+      "value": "Rate"
+    },
+    {
+      "name": "Text_Language",
+      "value": "Language"
+    },
+    {
+      "name": "Text_Publisher",
+      "value": "Publisher"
+    },
+    {
+      "name": "Text_PublishYear",
+      "value": "Date of publish"
+    },
+    {
+      "name": "Text_TotalPage",
+      "value": "Total Pages"
     }
   ]
 }

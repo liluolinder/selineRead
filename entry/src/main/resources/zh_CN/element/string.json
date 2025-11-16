@@ -19,6 +19,38 @@
     {
       "name": "Tip_GettingError",
       "value": "获取错误"
+    },
+    {
+      "name": "Tip_SavingNow",
+      "value": "正在保存"
+    },
+    {
+      "name": "Tip_SaveError",
+      "value": "保存成功"
+    },
+    {
+      "name": "Tip_SaveSuccess",
+      "value": "保存成功"
+    },
+    {
+      "name": "Text_Rate",
+      "value": "评分"
+    },
+    {
+      "name": "Text_Language",
+      "value": "语言"
+    },
+    {
+      "name": "Text_Publisher",
+      "value": "出版社"
+    },
+    {
+      "name": "Text_PublishYear",
+      "value": "出版日期"
+    },
+    {
+      "name": "Text_TotalPage",
+      "value": "总页数"
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { XAnimation, XPreferencesManager } from "commonpackage";
 import { min_width } from "../../commons/commonItem";
 import { __System__, __UI__ } from "../../commons/shareDatas";
-import { Home } from "../Home/Home";
+import { Home } from "../zlibrary/Home/Home";
 
 @ComponentV2
 export struct Body {
