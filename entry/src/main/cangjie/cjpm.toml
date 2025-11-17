@@ -21,6 +21,9 @@
       path-option = [ "${X86_64_DARWIN_TPC_MACRO_LIBS}" ]
 
 [dependencies]
+  [dependencies.html4cj]
+    git = "https://gitcode.com/Cangjie-TPC/html4cj.git"
+    branch = "cjc_0.53.13"
   [dependencies.cj_res_entry]
     path = "./cj_res"
     version = "1.0.0"

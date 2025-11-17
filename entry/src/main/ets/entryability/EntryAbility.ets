@@ -4,7 +4,8 @@ import { window } from '@kit.ArkUI';
 import { XContext, XPreferencesManager } from 'commonpackage';
 import { initPreferences } from '../selineRead/models/utils/initPreferences';
 import WindowsUtil from '../selineRead/models/classes/WindowsUtil';
-import { __System__ } from '../selineRead/commons/shareDatas';
+import { __System__, __User__ } from '../selineRead/commons/shareDatas';
+import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
 
 const DOMAIN = 0x0000;
 
@@ -35,6 +36,9 @@ export default class EntryAbility extends UIAbility {
       try {
         XContext.init(windowStage.getMainWindowSync().getUIContext())
         WindowsUtil.initWindow(this.context)
+        RelationStoreManager.CreateDataBase(this.context).then((store)=>{
+          __User__.dataBase = store
+        })
       } catch (error) {
         console.error(`Liquid:${JSON.stringify(error)}`)
       }

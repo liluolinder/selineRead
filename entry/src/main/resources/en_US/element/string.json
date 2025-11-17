@@ -51,6 +51,10 @@
     {
       "name": "Text_TotalPage",
       "value": "Total Pages"
+    },
+    {
+      "name": "Title_AccountManager",
+      "value": "Acount Manager"
     }
   ]
 }

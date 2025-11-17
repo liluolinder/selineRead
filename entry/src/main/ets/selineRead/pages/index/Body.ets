@@ -10,6 +10,14 @@ export struct Body {
   @Consumer('currentTabIndex') currentTabIndex: number = 0
 
 
+  @Monitor('currentTabIndex')
+  monitorTabIndexChange(){
+    if (this.currentTabIndex == 0) {
+      __UI__.indexNavigationMode = __System__.windowWidth > min_width ? NavigationMode.Auto:NavigationMode.Stack
+    }else {
+      __UI__.indexNavigationMode = NavigationMode.Stack
+    }
+  }
 
   build() {
     Stack() {

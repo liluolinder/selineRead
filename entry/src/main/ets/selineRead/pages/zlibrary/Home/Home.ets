@@ -1,8 +1,8 @@
 import { curves, UIUtils } from "@kit.ArkUI"
 import { BasicDataSource, XAnimation, XContext } from "commonpackage"
 import { min_width } from "../../../commons/commonItem"
-import { __System__ } from "../../../commons/shareDatas"
-import { I_BookInfo } from "../../../models/interfaces/I_BookInfo"
+import { __System__, __UI__ } from "../../../commons/shareDatas"
+import { I_BookDetailedInfo, I_BookInfo } from "../../../models/interfaces/I_BookInfo"
 import { http } from "@kit.NetworkKit"
 import { zlibClient } from "../../../../zlibrary/zlibClient"
 import { it } from "@ohos/hypium"
@@ -23,6 +23,7 @@ export struct Home {
   @Local recommendBookIndex: number = 1
   @Local columnNumber: number = 0
   @Local canGetMore: boolean = false
+  @Local isOpenBook:boolean = false
   @Local recommendBookArray: BasicDataSource<I_BookInfo> =
     new BasicDataSource<I_BookInfo>()
   @Local errorText:string = ''
@@ -98,8 +99,27 @@ export struct Home {
             ListItem() {
               HomeBookCover({data:item})
             }
-            .onClick(()=>{
-
+            .onClick(async ()=>{
+              if (!this.isOpenBook) {
+                XAnimation.runWithAnimation(()=>{
+                  this.isOpenBook = true
+                })
+                let req = http.createHttp()
+                await zlibClient.getBookInfo(req,item.url).then((res)=>{
+                  if (res[0]==1) {
+                    this.errorText = ''
+                    let bookInfo:I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
+                    bookInfo.bookID = item.id
+                    bookInfo.href = item.url
+                    __UI__.mainPageStack.pushPathByName("bookInfoPage",bookInfo)
+                  }else {
+                    this.errorText = res[1]
+                  }
+                })
+                XAnimation.runWithAnimation(()=>{
+                  this.isOpenBook = false
+                })
+              }
             })
             .width('100%')
             .borderRadius(20)
@@ -168,6 +188,10 @@ export struct Home {
         .zIndex(114514)
       }
 
+      if (this.isOpenBook)
+      {
+        loadingDialog()
+      }
 
       if (!this.canGetMore)
       {

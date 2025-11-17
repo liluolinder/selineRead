@@ -1,8 +1,11 @@
 import { window } from "@kit.ArkUI"
 import { ConfigurationConstant } from "@kit.AbilityKit"
-import { XAnimation } from "commonpackage"
+import { BasicDataSource, XAnimation } from "commonpackage"
 import { min_split_width, min_width } from "./commonItem"
 import { __CustomBackgroundData__ } from "../components/CustomBackground"
+import { relationalStore } from "@kit.ArkData"
+import { I_ZlibUserInfo } from "../../zlibrary/interface/I_ZlibUserInfo"
+import { ZlibUserInfo } from "../../zlibrary/classes/UserInfo"
 
 
 @ObservedV2
@@ -30,6 +33,8 @@ export class SysShareData {
       __UI__.isShowSideBar = __System__.windowWidth > min_width
       __UI__.sideBarMode =
         __System__.windowWidth > min_width ? SideBarContainerType.Embed : SideBarContainerType.Overlay
+      __UI__.indexNavigationMode =
+        __System__.windowWidth > min_width ? NavigationMode.Auto:NavigationMode.Stack
     })
   }
 
@@ -49,3 +54,12 @@ export class UIData {
 }
 
 export const __UI__: UIData = new UIData()
+
+
+@ObservedV2
+export class User{
+  dataBase?:relationalStore.RdbStore
+  zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
+}
+
+export const __User__: User = new User()

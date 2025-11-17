@@ -10,6 +10,8 @@ import { zlibClient } from "../../../../zlibrary/zlibClient"
 import { min_width } from "../../../commons/commonItem"
 import { BigImage } from "../../../components/BigImage"
 import { ListItemWithText } from "templatecomponent"
+import { http } from "@kit.NetworkKit"
+import { I_DownloadInfo } from "../../../../zlibrary/interface/I_DownloadInfo"
 
 @Builder
 export function BookInfoBuilder() {
@@ -18,20 +20,22 @@ export function BookInfoBuilder() {
 
 @ComponentV2
 export struct BookInfo {
-  @Local bookInfo: I_BookDetailedInfo | undefined = undefined
-  @Local isShowDownloadMenu: boolean = false
   pageInfos: NavPathStack = new NavPathStack()
+
+  @Local bookInfo: I_BookDetailedInfo | undefined = undefined
+  @Local downloadInfoArray: I_DownloadInfo[] = []
+  @Local isShowDownloadMenu: boolean = false
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
+
   @Local pageWidth: number = -1
   @Local isViewingBigImage: boolean = false
   @Local pageOpacity: number = 0
   @Local showComment: boolean = false
   @Local showOnlineRead: boolean = false
-  commitPage: number = 1
-  @Local waterFlowColumnNumber: number = -1
   @Local isOpening: boolean = false
   @Local isFlashing: boolean = false
   recommendPage: number = 1
+  commitPage: number = 1
 
 /*  @Builder
   commentPageBuilder() {
@@ -95,18 +99,16 @@ export struct BookInfo {
     }.size({ width: '100%', height: '100%' })
   }*/
 
-  // @Builder
-  // DownloadMenu() {
-  //   Menu() {
-  //     ForEach(this.downloadInfoArray, (item: I_DownloadInfo) => {
-  //       MenuItem({ content: item.extension, labelInfo: item.filesizeString })
-  //         .onClick(() => {
-  //           zlibClient.getTrueDownloadBookUrl(this.getUIContext().getHostContext() as common.UIAbilityContext,
-  //             item.href, this.bookInfo!)
-  //         })
-  //     })
-  //   }
-  // }
+  @Builder
+  DownloadMenu() {
+    Menu() {
+      ForEach(this.downloadInfoArray, (item: I_DownloadInfo) => {
+        MenuItem({ content: item.extension, labelInfo: item.filesizeString })
+          .onClick(() => {
+          })
+      })
+    }
+  }
 
   build() {
     NavDestination() {
@@ -274,7 +276,7 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
-
+                    console.log(this.bookInfo?.firstDownloadUrl)
                   })
                 }
                 .transition(XAnimation.getAnimation('bottom', 250))
@@ -292,26 +294,44 @@ export struct BookInfo {
                   .useEffect(true)
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                  .bindMenu(this.isShowDownloadMenu, this.DownloadMenu, {
+                    onDisappear: () => {
+                      this.isShowDownloadMenu = false
+                    }
+                  })
                   .onClick(async () => {
-                    // await zlibClient.getBookDownloadsInfo(this.bookInfo?.bookID!).then((res) => {
-                    //   if (res == undefined || res.length == 0) {
-                    //     this.downloadInfoArray = [
-                    //       {
-                    //         id: 0,
-                    //         extension: "暂无其他下载方式",
-                    //         filesizeString: "",
-                    //         href: ""
-                    //       }
-                    //     ]
-                    //   } else {
-                    //     this.downloadInfoArray = res
-                    //   }
-                    //   this.isShowDownloadMenu = true
-                    // })
+                    let req = http.createHttp()
+                    await zlibClient.getMoreDownloadWay(req,this.bookInfo?.bookID!).then((res)=>{
+                      console.log(JSON.stringify(res))
+                      if (res[0] == 1) {
+                        let downloadWayArray:I_DownloadInfo[] = JSON.parse(res[1])
+                        if (!downloadWayArray||downloadWayArray.length == 0 ) {
+                          this.downloadInfoArray = [
+                            {
+                              id: 0,
+                              extension: "暂无其他下载方式",
+                              filesizeString: "",
+                              href: ""
+                            }
+                          ]
+                        }else {
+                          this.downloadInfoArray = downloadWayArray
+                        }
+                      }else{
+                        this.downloadInfoArray = [
+                          {
+                            id: 0,
+                            extension: "暂无其他下载方式",
+                            filesizeString: "",
+                            href: ""
+                          }
+                        ]
+                      }
+                      this.isShowDownloadMenu = true
+                    })
                   })
                 }
                 .transition(XAnimation.getAnimation('bottom', 300))
-
               }
               .scrollBar(BarState.Off)
               .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
@@ -324,34 +344,15 @@ export struct BookInfo {
                 scrollForward: NestedScrollMode.SELF_FIRST,
                 scrollBackward: NestedScrollMode.PARENT_FIRST
               })
-
-
             }
-
-
           }.height('100%')
+          .align(Alignment.Top)
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
           .borderRadius({topLeft: 20, topRight: 20})
           .clip(true)
-          if(this.isOpening){
-            loadingDialog()
-          }
-          if(this.isFlashing){
-            loadingNewDialog()
-          }
         }
-        .onAreaChange((_, newValue) => {
-          XAnimation.runWithAnimation(() => {
-            this.waterFlowColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
-            this.pageWidth = new Number(newValue.width).valueOf()
-          }, this.pageWidth > 0)
-
-        })
-
       }
-
-
     }
     .menus([
       {
@@ -363,7 +364,7 @@ export struct BookInfo {
       },
       {
         value: '评论',
-        //symbolIcon: new SymbolGlyphModifier($r('sys.symbol.ellipsis_bubble')),
+        symbolIcon: new SymbolGlyphModifier($r('sys.symbol.ellipsis_bubble')),
         action: () => {
           // promptAction.showToast({ message: `尝试获取`, duration: 2000 })
           // zlibClient.bookCommentArray.clearData()

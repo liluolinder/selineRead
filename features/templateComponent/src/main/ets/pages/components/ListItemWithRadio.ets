@@ -1,12 +1,13 @@
 @ComponentV2
-export struct ListItemWithToggle {
+export struct ListItemWithRadio {
   @Param symbol: Resource | undefined = undefined
   @Param symbol1: Resource | undefined = undefined
   @Param message: ResourceStr = ''
   @Param checked: boolean = false
+  @Param index:number = -1
+  @Param group:string = ''
   @Local enable: boolean = this.checked
-  @Param ensureMessage: ResourceStr | undefined = undefined
-  @Event onChange: (checked: boolean) => void
+  @Event onChange: (checked: boolean,index:number) => void
 
   build() {
     Row() {
@@ -24,33 +25,18 @@ export struct ListItemWithToggle {
             .layoutWeight(1)
         }.layoutWeight(1)
 
-        Toggle({ type: ToggleType.Switch, isOn: this.enable })
+        Radio({ value:(this.message??'').toString(), group: this.group, })
           .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+            .checked($$this.enable)
           .onChange((checked: boolean) => {
-            if (this.ensureMessage && checked) {
-              this.getUIContext().showAlertDialog({
-                title: this.message,
-                message: this.ensureMessage,
-                alignment: DialogAlignment.Center,
-                primaryButton: {
-                  value: '知道了',
-                  fontColor: (AppStorage.get('themeColor') as string[])[AppStorage.get('currentColorMode') as number],
-                  action: () => {
-                  }
-                },
-                cornerRadius: 20,
-                backgroundBlurStyle: BlurStyle.COMPONENT_THIN,
-              })
-            }
             this.enable = checked
-            this.onChange(checked)
+            this.onChange(checked,this.index)
           })
-          .selectedColor($r('[color].color.sweet_blue'))
           .width(45)
           .height(27);
       }.align(Alignment.Center)
 
-    }.backgroundColor($r('sys.color.comp_background_list_card'))
+    }
     .height(55)
     .borderRadius(20)
     .padding({

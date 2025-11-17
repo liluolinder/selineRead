@@ -6,6 +6,7 @@ import { min_width } from "../../commons/commonItem";
 import { XAnimation } from "commonpackage";
 import { ConfigurationConstant } from "@kit.AbilityKit";
 import { backgroundBlurModifier } from "../../models/classes/backGroundEffect";
+import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
 
 
 @ComponentV2
@@ -13,6 +14,9 @@ export struct SideBar {
   @Consumer('tabController') tabController: TabsController = new TabsController();
   @Consumer('currentTabIndex') currentTabIndex: number = 0
   @Provider('showLoginOrUserInfo') showLoginOrUserInfo: boolean = false
+
+  @Local showAccountManager:boolean = false
+
   pageArray: I_PageInfo[] = [
     { name: '主页', symbol: $r('sys.symbol.house') },
     // { name: '最近点赞', symbol: $r('sys.symbol.heart') },
@@ -61,14 +65,19 @@ export struct SideBar {
 
             }
           }
+
           .borderRadius(20)
           .padding(__UI__.isLargeSidebar ? 12 : 0)
           .width('100%')
           .height(100)
           .onClick(() => {
-
+            this.showAccountManager = true
           })
-
+          .bindSheet($$this.showAccountManager, AccountManagerBuilder() , {
+            title:{title:$r('app.string.Title_AccountManager')},
+            preferType:SheetType.CENTER,
+            height:SheetSize.LARGE
+          })
 
 
           Column({ space: __UI__.isLargeSidebar ? 0 : 10 }) {

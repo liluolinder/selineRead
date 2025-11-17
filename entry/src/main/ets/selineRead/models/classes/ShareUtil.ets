@@ -1,3 +1,4 @@
+/*
 import { harmonyShare, systemShare } from '@kit.ShareKit'
 import { uniformTypeDescriptor } from '@kit.ArkData'
 import { http } from '@kit.NetworkKit'
@@ -45,4 +46,4 @@ class GestureShare{
   }
 }
 
-export const gestureShare: GestureShare = new GestureShare
+export const gestureShare: GestureShare = new GestureShare*/

@@ -51,6 +51,10 @@
     {
       "name": "Text_TotalPage",
       "value": "总页数"
+    },
+    {
+      "name": "Title_AccountManager",
+      "value": "账号管理"
     }
   ]
 }

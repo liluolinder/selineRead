@@ -9,6 +9,20 @@ export struct ListItemWithArrow {
   @Param isLarge: boolean = true
   @Param hasBackground: boolean = false
   @Param isHighlight: boolean = false
+  @Param arrowDir:'up'|'down'|'right'|'left' ='left'
+
+  changeArrowDir():ResourceStr{
+    switch (this.arrowDir){
+      case 'up':
+        return  $r('sys.symbol.chevron_up')
+      case 'down':
+        return  $r('sys.symbol.chevron_down')
+      case 'right':
+        return  $r('sys.symbol.chevron_right')
+      case 'left':
+        return  $r('sys.symbol.chevron_left')
+    }
+  }
 
   build() {
     Button({ type: ButtonType.Normal, stateEffect: true }) {
@@ -47,7 +61,7 @@ export struct ListItemWithArrow {
 
         }
         .align(Alignment.Center)
-        .backgroundColor(this.isHighlight ? $r('[color].color.list_item_background_highlight') : Color.Transparent)
+        .backgroundColor(this.isHighlight ? $r('[color].color.linder_blue') : Color.Transparent)
         .borderRadius(18)
         .animation({ duration: 150 })
         .padding({
@@ -75,7 +89,7 @@ export struct ListItemWithArrow {
         }
         .width('100%')
         .height('100%')
-        .backgroundColor(this.isHighlight ? $r('[color].color.list_item_background_highlight') : Color.Transparent)
+        .backgroundColor(this.isHighlight ? $r('[color].color.linder_blue') : Color.Transparent)
         .borderRadius(18)
         .animation({ duration: 150 })
       }
