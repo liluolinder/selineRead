@@ -7,6 +7,8 @@ import { __System__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
 import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
 import { initPreferences } from '../selineRead/models/utils/initPreferences';
 import { DownloadManager } from '@hadss/super_fast_file_trans';
+import { notificationManager } from '@kit.NotificationKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 const DOMAIN = 0x0000;
 
@@ -45,6 +47,22 @@ export default class EntryAbility extends UIAbility {
       }
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
       try {
+        notificationManager.isNotificationEnabled().then((data: boolean) => {
+          console.log("isNotificationEnabled success, data: " + JSON.stringify(data));
+          if (!data) {
+            notificationManager.requestEnableNotification(XContext.getAbilityContext()).then(() => {
+              console.log(`[ANS] requestEnableNotification success`);
+            }).catch((err: BusinessError) => {
+              if (1600004 == err.code) {
+                console.log(`[ANS] requestEnableNotification refused, code is ${err.code}, message is ${err.message}`);
+              } else {
+                console.log(`[ANS] requestEnableNotification failed, code is ${err.code}, message is ${err.message}`);
+              }
+            });
+          }
+        }).catch((err: BusinessError) => {
+          console.log(`isNotificationEnabled fail, code is ${err.code}, message is ${err.message}`);
+        });
         XContext.init(windowStage.getMainWindowSync().getUIContext())
         WindowsUtil.initWindow(this.context)
       } catch (error) {

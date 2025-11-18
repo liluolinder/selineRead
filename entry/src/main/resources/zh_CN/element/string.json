@@ -59,6 +59,26 @@
     {
       "name": "reasonDownload",
       "value": "保存下载的文件至下载目录，读取下载目录的书籍"
+    },
+    {
+      "name": "Tip_DownloadError",
+      "value": "下载错误,可能是未登录或切换了账号,请登录并重新打开书籍详细页再试"
+    },
+    {
+      "name": "Tip_StartDownload",
+      "value": "开始下载"
+    },
+    {
+      "name": "Tip_DownloadingError",
+      "value": "下载错误"
+    },
+    {
+      "name": "Tip_DownloadSuccess",
+      "value": "下载成功"
+    },
+    {
+      "name": "Tip_TryToDownload",
+      "value": "尝试下载"
     }
   ]
 }

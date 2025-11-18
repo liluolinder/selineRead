@@ -16,3 +16,5 @@ export { WriteMode } from './src/main/ets/models/enums/WriteMode'
 export { I_KV } from './src/main/ets/models/interfaces/I_KV'
 
 export { StringFormat } from './src/main/ets/models/classes/StringFormat'
+
+export { LNotificationManager } from './src/main/ets/models/classes/LNotificationManager'

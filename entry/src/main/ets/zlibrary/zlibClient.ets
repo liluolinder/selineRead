@@ -7,12 +7,15 @@ import { I_LoginRes } from "./interface/I_loginInfo";
 import { I_BasicUserInfo, I_UserDownloadLimitAndDonation, I_ZlibUserInfo } from "./interface/I_ZlibUserInfo";
 import { JSON } from "@kit.ArkTS";
 import { __ZlibUser__ } from "../selineRead/commons/shareDatas";
-import { XContext, XPreferencesManager } from "commonpackage";
+import { LNotificationManager, XContext, XPreferencesManager } from "commonpackage";
 import { I_trulyDownloadUrl } from "./interface/I_DownloadInfo";
 import { fileIo } from "@kit.CoreFileKit";
 import { promptAction } from "@kit.ArkUI";
 import { DownloadConfig, DownloadListener, DownloadProgressInfo, DownloadTask } from "@hadss/super_fast_file_trans";
 import { I_searchBook } from "./interface/I_SearchInfo";
+import { backgroundProcessManager } from "@kit.BackgroundTasksKit";
+import { BackgroundUtil } from "../selineRead/models/classes/BackgroundRunningManager";
+import { shareBook } from "../selineRead/models/utils/ShareBook";
 
 export class zlibClient {
   static async refreshUrl(): Promise<[number, string]> {
@@ -265,6 +268,7 @@ export class zlibClient {
   static async downloadBook(bookUrl: string): Promise<[number, string]> {
     let req = http.createHttp()
     let url: string = __ZlibUser__.base_url + bookUrl
+    XContext.toast($r('app.string.Tip_TryToDownload'))
     return await req.request(url,
       {
         method: http.RequestMethod.POST,
@@ -274,57 +278,59 @@ export class zlibClient {
           'Cookie': __ZlibUser__.cookie,
         }
       }).then(async (data: http.HttpResponse) => {
-      console.log(JSON.stringify(data.header))
-      let temp: I_trulyDownloadUrl = JSON.parse(JSON.stringify(data.header)) as I_trulyDownloadUrl
 
+      let temp: I_trulyDownloadUrl = JSON.parse(JSON.stringify(data.header)) as I_trulyDownloadUrl
       if (temp.location == undefined || temp.location.includes('wrongHash') || !temp.location.includes('books-files')) {
-        return [0, '下载错误,可能是未登录,请登录并重新打开书籍详细页再试'] as [number, string]
+        return [0, XContext.getStringFromResource($r('app.string.Tip_DownloadError'))] as [number, string]
       } else {
         let matches = JSON.stringify(temp.location.split('/')[7]).match(new RegExp('filename=([^&]+)'));
         let encodedFilename: string = matches ? matches[1] : '';
         let decodedFilename = decodeURI(encodedFilename)
-
         let downloadPath = await XContext.getDownloadFolderPath()
 
-
+        let id = __ZlibUser__.notificationID++
         let customDownloadListener: DownloadListener = {
           onSuccess: () => {
-            console.log("onSuccess: download success")
+            LNotificationManager.pushNotificationWithProgress(id,100,'下载完成',decodedFilename)
+            shareBook(`${downloadPath}/${decodedFilename}`)
+            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadSuccess'))+decodedFilename,3000)
+            console.log(`下载成功`)
           },
           onFail: (err: BusinessError) => {
-            console.error(`onFail: download fail, err.message:${err.message}, err.code:${err.code}`);
+            LNotificationManager.pushNotificationWithProgress(id,100,'下载失败',decodedFilename)
+            console.log(`下载失败:${JSON.stringify(err)}`)
+            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError'))+JSON.stringify(err),3000)
+            return [0, JSON.stringify(err)] as [number, string]
           },
-          // ...
           onProgressUpdate: (downloadProgress: DownloadProgressInfo) => {
+            let progress = Math.trunc( downloadProgress.transferredSize/downloadProgress.totalSize*10000) / 100
+            LNotificationManager.pushNotificationWithProgress(id,progress,`正在下载${progress}%`,decodedFilename)
             console.log(`onProgressUpdate:, download: transferred size:${downloadProgress.transferredSize}, total size:${downloadProgress.totalSize}`)
           },
         };
 
-        // 自定义下载配置
         let downloadConfig: DownloadConfig = {
           url: temp.location, // 远端下载地址（必选）
           fileName: decodedFilename, // 下载后的本地文件名（必选）
           fileDir: downloadPath,
-
+          concurrency: 1
         };
 
         if (__ZlibUser__.downloadManager) {
           try {
-            const downloadTask =
-              __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener);
+            BackgroundUtil.startContinuousTask()
+            XContext.toast($r('app.string.Tip_StartDownload'))
+            const downloadTask = __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener);
             downloadTask?.start()
           } catch (e) {
-            console.log(JSON.stringify(e))
+            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError'))+JSON.stringify(e),3000)
           }
         }
         return [1, ''] as [number, string]
       }
-
-
     })
       .catch((err: BusinessError) => {
-        console.log(JSON.stringify(err))
-        console.log('235')
+        XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError'))+JSON.stringify(err),3000)
         return [0, JSON.stringify(err)] as [number, string]
       })
       .finally(() => {

@@ -59,6 +59,26 @@
     {
       "name": "reasonDownload",
       "value": "Save Book To Download Path, Read Book From Download Path"
+    },
+    {
+      "name": "Tip_DownloadError",
+      "value": "Download Error, Maybe you are not login Or just change account,please login and reopen the book information page"
+    },
+    {
+      "name": "Tip_StartDownload",
+      "value": "Start Download"
+    },
+    {
+      "name": "Tip_DownloadingError",
+      "value": "Error"
+    },
+    {
+      "name": "Tip_DownloadSuccess",
+      "value": "Success Download"
+    },
+    {
+      "name": "Tip_TryToDownload",
+      "value": "Try to download"
     }
   ]
 }

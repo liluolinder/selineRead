@@ -65,7 +65,7 @@ export class ZlibUser{
   @Trace cookie:string = ''
   @Trace avatar:string=''
   @Trace userName:string=''
-
+  notificationID:number=0
   dataBase?:relationalStore.RdbStore
   downloadManager?:DownloadManager
 

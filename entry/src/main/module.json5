@@ -23,6 +23,9 @@
         "startWindowIcon": "$media:zlib",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
+        "backgroundModes": [
+         "dataTransfer"
+        ],
         "skills": [
           {
             "entities": [
@@ -53,6 +56,15 @@
       {
         "name": "ohos.permission.INTERNET",
         "usedScene": {
+          "when": "always"
+        }
+      },
+      {
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
           "when": "always"
         }
       },
