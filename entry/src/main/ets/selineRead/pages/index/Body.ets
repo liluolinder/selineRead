@@ -1,7 +1,10 @@
 import { XAnimation, XPreferencesManager } from "commonpackage";
+import { zlibClient } from "../../../zlibrary/zlibClient";
 import { min_width } from "../../commons/commonItem";
 import { __System__, __UI__ } from "../../commons/shareDatas";
-import { Home } from "../zlibrary/Home/Home";
+import { Home, __Home__ } from "../zlibrary/Home/Home";
+import { http } from "@kit.NetworkKit";
+import { I_BookInfo } from "../../models/interfaces/I_BookInfo";
 
 @ComponentV2
 export struct Body {
@@ -17,6 +20,24 @@ export struct Body {
     }else {
       __UI__.indexNavigationMode = NavigationMode.Stack
     }
+  }
+
+  aboutToAppear(): void {
+    zlibClient.refreshUrl().then(()=>{
+      let req = http.createHttp()
+      zlibClient.getRecommendBook(req, __Home__.recommendBookIndex).then((res)  => {
+        __Home__.canGetMore = true
+        if (res[0] == 1) {
+          (JSON.parse(res[1]) as I_BookInfo[]).forEach((item) => {
+            __Home__.recommendBookArray.pushData(item)
+          })
+          __Home__.recommendBookIndex++
+          __Home__.errorText = ''
+        }else {
+          __Home__.errorText = res[1]
+        }
+      })
+    })
   }
 
   build() {

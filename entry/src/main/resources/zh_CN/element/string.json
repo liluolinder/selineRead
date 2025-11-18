@@ -55,6 +55,10 @@
     {
       "name": "Title_AccountManager",
       "value": "账号管理"
+    },
+    {
+      "name": "reasonDownload",
+      "value": "保存下载的文件至下载目录，读取下载目录的书籍"
     }
   ]
 }

@@ -21,7 +21,7 @@ export function BookInfoBuilder() {
 @ComponentV2
 export struct BookInfo {
   pageInfos: NavPathStack = new NavPathStack()
-
+  @Local errorText:string=''
   @Local bookInfo: I_BookDetailedInfo | undefined = undefined
   @Local downloadInfoArray: I_DownloadInfo[] = []
   @Local isShowDownloadMenu: boolean = false
@@ -105,6 +105,11 @@ export struct BookInfo {
       ForEach(this.downloadInfoArray, (item: I_DownloadInfo) => {
         MenuItem({ content: item.extension, labelInfo: item.filesizeString })
           .onClick(() => {
+            zlibClient.downloadBook(item.href??'').then((res)=>{
+              if (res[0]==0) {
+                this.errorText = res[1]
+              }
+            })
           })
       })
     }
@@ -276,7 +281,11 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
-                    console.log(this.bookInfo?.firstDownloadUrl)
+                    zlibClient.downloadBook(this.bookInfo?.firstDownloadUrl??'').then((res)=>{
+                      if (res[0]==0) {
+                        this.errorText = res[1]
+                      }
+                    })
                   })
                 }
                 .transition(XAnimation.getAnimation('bottom', 250))
@@ -351,6 +360,29 @@ export struct BookInfo {
           .edgeEffect(EdgeEffect.Spring)
           .borderRadius({topLeft: 20, topRight: 20})
           .clip(true)
+
+
+          if (this.errorText != '') {
+            Stack() {
+              Column({ space: 10 }) {
+                LoadingProgress().size({ width: 100, height: 100 })
+                Text(XContext.getStringFromResource($r('app.string.Tip_GettingError'))+'\n'+this.errorText).fontSize(20).fontWeight(FontWeight.Medium).textAlign(TextAlign.Center)
+                Button('知道了')
+                  .backgroundColor($r('sys.color.button_background_color_transparent'))
+                  .fontColor($r('sys.color.font'))
+                  .padding({left:32,right:32})
+                  .onClick(()=>{
+                    this.errorText = ''
+                  })
+              }.borderRadius(20).padding(20).backgroundColor($r('app.color.start_window_background_blur')).backdropBlur(100)
+            }
+            .size({ width: '100%', height: '100%' })
+            .padding(16)
+            .backgroundColor($r('sys.color.comp_background_tertiary'))
+            .transition(TransitionEffect.OPACITY.animation({ curve: Curve.Ease, duration: 300 }))
+            .zIndex(114514)
+          }
+
         }
       }
     }

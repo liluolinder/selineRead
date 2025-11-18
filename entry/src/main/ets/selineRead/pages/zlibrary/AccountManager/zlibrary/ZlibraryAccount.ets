@@ -1,10 +1,10 @@
 import { relationalStore } from "@kit.ArkData";
-import { __User__ } from "../../../../commons/shareDatas";
+import { __ZlibUser__ } from "../../../../commons/shareDatas";
 import { I_BasicUserInfo, I_ZlibUserInfo } from "../../../../../zlibrary/interface/I_ZlibUserInfo";
 import { ListItemWithRadio, ListItemWithToggle } from "templatecomponent";
 import { SymbolGlyphModifier } from "@kit.ArkUI";
 import { __CustomBackgroundData__ } from "../../../../components/CustomBackground";
-import { XAnimation } from "commonpackage";
+import { XAnimation, XPreferencesManager } from "commonpackage";
 import { ZlibLoginSheetBuilder } from "./zlibraryLoginSheet";
 import { RelationStoreManager } from "../../../../models/classes/DataBase";
 import { zlibClient } from "../../../../../zlibrary/zlibClient";
@@ -17,23 +17,23 @@ export function ZlibraryAccountBuilder() {
 
 @ComponentV2
 export struct ZlibraryAccount {
-  @Local accountIndex: number = 1
+
   @Local showDownloadLimitTips: boolean = false
   @Local showDonationTips: boolean = false
   @Provider('showZlibLoginSheet') showLoginSheet: boolean = false
 
   async aboutToAppear(): Promise<void> {
-    await RelationStoreManager.getZlibAccount(__User__.dataBase)
-    if (__User__.zlibAccountArray.dataArray[this.accountIndex]) {
-      zlibClient.getPersonInfo(__User__.zlibAccountArray.dataArray[this.accountIndex].cookie ?? '').then((res) => {
+    await RelationStoreManager.getZlibAccount(__ZlibUser__.dataBase)
+    if (__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]) {
+      zlibClient.getPersonInfo(__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].cookie ?? '').then((res) => {
         if (res[0] == 1) {
           console.log('124124')
           let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
-          __User__.zlibAccountArray.dataArray[this.accountIndex].userName = basicInfo.userName
-          __User__.zlibAccountArray.dataArray[this.accountIndex].userDownloadLimitNumber =
+          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = basicInfo.userName
+          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
             basicInfo.userDownloadLimitNumber
-          __User__.zlibAccountArray.dataArray[this.accountIndex].userDonateNumber = basicInfo.userDonateNumber
-          __User__.zlibAccountArray.dataArray[this.accountIndex].userAvatar = basicInfo.userAvatar
+          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDonateNumber = basicInfo.userDonateNumber
+          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = basicInfo.userAvatar
         }
       })
     } else {
@@ -44,7 +44,7 @@ export struct ZlibraryAccount {
   build() {
     NavDestination() {
       Stack() {
-        if (__User__.zlibAccountArray.dataArray.length == 0) {
+        if (__ZlibUser__.zlibAccountArray.dataArray.length == 0) {
           Column() {
             Text('还没有账号欸,添加一个吧')
               .fontSize(24)
@@ -53,17 +53,22 @@ export struct ZlibraryAccount {
           .justifyContent(FlexAlign.Center)
         } else {
           List({ space: 10 }) {
-            LazyForEach(__User__.zlibAccountArray, (item: ZlibUserInfo, index: number) => {
+            LazyForEach(__ZlibUser__.zlibAccountArray, (item: ZlibUserInfo, index: number) => {
               ListItemGroup() {
                 ListItemWithRadio({
+                  image:item.userAvatar==''?$r('app.media.zlib'):item.userAvatar,
                   message: item.account,
                   group: 'zlibAccount',
-                  checked: this.accountIndex == index,
+                  checked: __ZlibUser__.accountIndex == index,
                   index: index,
                   onChange: (checked: boolean, itemIndex: number) => {
                     if (checked) {
+                      XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex",  itemIndex)
+                      XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", item.account??'')
+                      XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", item.password??'')
+                      XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", item.cookie??'')
                       XAnimation.runWithAnimation(() => {
-                        this.accountIndex = itemIndex
+                        __ZlibUser__.accountIndex = itemIndex
                       })
                       zlibClient.getPersonInfo(item.cookie ?? '').then((res) => {
                         if (res[0] == 1) {
@@ -72,12 +77,18 @@ export struct ZlibraryAccount {
                           item.userDownloadLimitNumber = basicInfo.userDownloadLimitNumber
                           item.userDonateNumber = basicInfo.userDonateNumber
                           item.userAvatar = basicInfo.userAvatar
+
+                          __ZlibUser__.account = item.account!
+                          __ZlibUser__.password = item.password!
+                          __ZlibUser__.cookie = item.cookie!
+                          __ZlibUser__.avatar = item.userAvatar!
+                          __ZlibUser__.userName = item.userName!
                         }
                       })
                     }
                   }
                 })
-                if (this.accountIndex == index) {
+                if (__ZlibUser__.accountIndex == index) {
                   ListItem() {
                     Row({ space: 10 }) {
                       Stack() {
@@ -160,7 +171,7 @@ export struct ZlibraryAccount {
 
       }
     }.size({ width: '100%', height: '100%' })
-    .backgroundColor($r('sys.color.ohos_id_color_panel_bg_transparent'))
+    .backgroundColor($r('sys.color.background_tertiary'))
     .menus([{
       symbolIcon: new SymbolGlyphModifier($r('sys.symbol.plus')),
       value: '',
@@ -170,7 +181,8 @@ export struct ZlibraryAccount {
     },])
     .bindSheet($$this.showLoginSheet, ZlibLoginSheetBuilder(), {
       preferType: SheetType.CENTER,
-      height: SheetSize.LARGE
+      height: SheetSize.LARGE,
+      showClose:false
     })
   }
 }

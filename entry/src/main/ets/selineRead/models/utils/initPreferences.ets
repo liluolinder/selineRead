@@ -1,6 +1,21 @@
 import { XPreferencesManager } from "commonpackage";
+import { __ZlibUser__ } from "../../commons/shareDatas";
+import { __Home__ } from "../../pages/zlibrary/Home/Home";
+import { I_SearchHistory } from "../interfaces/I_SearchHistory";
 
 export async function initPreferences() {
+  console.log(`开始读取首选项`)
+  __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.tur101.ru') as string
+  __ZlibUser__.baseApi_url = __ZlibUser__.base_url + '/papi'
 
+  __ZlibUser__.accountIndex = XPreferencesManager.getPreferencesValue("selineRead", "zlibAccountIndex", 0) as number
+  __ZlibUser__.account = XPreferencesManager.getPreferencesValue("selineRead", "zlibAccount", '') as string
+  __ZlibUser__.password = XPreferencesManager.getPreferencesValue("selineRead", "zlibPassword", '') as string
+  __ZlibUser__.cookie = XPreferencesManager.getPreferencesValue("selineRead", "zlibCookie", '') as string
+  const searchHistoryStr = XPreferencesManager.getPreferencesValue("selineRead", 'zlibSearchHistory', '') as string
+  if (searchHistoryStr != '') {
+    __Home__.searchHistory = JSON.parse(searchHistoryStr) as I_SearchHistory[]
+  }
 
+  console.log(`读取首选项结束`)
 }

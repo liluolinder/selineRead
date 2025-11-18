@@ -2,24 +2,35 @@ import { AbilityConstant, Configuration, ConfigurationConstant, UIAbility, Want 
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { XContext, XPreferencesManager } from 'commonpackage';
-import { initPreferences } from '../selineRead/models/utils/initPreferences';
 import WindowsUtil from '../selineRead/models/classes/WindowsUtil';
-import { __System__, __User__ } from '../selineRead/commons/shareDatas';
+import { __System__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
 import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
+import { initPreferences } from '../selineRead/models/utils/initPreferences';
+import { DownloadManager } from '@hadss/super_fast_file_trans';
 
 const DOMAIN = 0x0000;
 
 export default class EntryAbility extends UIAbility {
-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     try {
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
+      XPreferencesManager.localPreferences(this.context, 'selineRead');
+      initPreferences()
+      RelationStoreManager.CreateDataBase(this.context).then((store)=>{
+        __ZlibUser__.dataBase = store
+      })
+      __ZlibUser__.downloadManager =  DownloadManager.getInstance();
+      await  __ZlibUser__.downloadManager.init(this.context);
     } catch (err) {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
     }
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
   }
 
-  onDestroy(): void {
+  async onDestroy(): Promise<void> {
+    if (__ZlibUser__.downloadManager) {
+      await __ZlibUser__.downloadManager.cleanAll(this.context);
+    }
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onDestroy');
   }
 
@@ -36,9 +47,6 @@ export default class EntryAbility extends UIAbility {
       try {
         XContext.init(windowStage.getMainWindowSync().getUIContext())
         WindowsUtil.initWindow(this.context)
-        RelationStoreManager.CreateDataBase(this.context).then((store)=>{
-          __User__.dataBase = store
-        })
       } catch (error) {
         console.error(`Liquid:${JSON.stringify(error)}`)
       }

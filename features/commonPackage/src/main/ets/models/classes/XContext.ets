@@ -1,6 +1,7 @@
 import { bundleManager, common, Want } from "@kit.AbilityKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { WindowMode } from "@ohos.UiTest";
+import { fileUri, picker } from "@kit.CoreFileKit";
 
 export class XContext {
     private static UIAbilityContext: common.UIAbilityContext
@@ -76,4 +77,10 @@ export class XContext {
 
         }
     }
+   public static async getDownloadFolderPath(): Promise<string> {
+        const documentViewPicker = new picker.DocumentViewPicker()
+        let documentSaveResult = await documentViewPicker.save({ pickerMode: picker.DocumentPickerMode.DOWNLOAD })
+        return new fileUri.FileUri(documentSaveResult[0]).path + '/'
+    }
+
 }

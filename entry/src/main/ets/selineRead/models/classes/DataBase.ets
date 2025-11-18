@@ -3,7 +3,7 @@ import { BusinessError } from "@kit.BasicServicesKit";
 import { XContext } from "commonpackage";
 import { common } from "@kit.AbilityKit";
 import { I_ZlibUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
-import { User, __User__ } from "../../commons/shareDatas";
+import { ZlibUser, __ZlibUser__ } from "../../commons/shareDatas";
 import { ZlibUserInfo } from "../../../zlibrary/classes/UserInfo";
 
 export class RelationStoreManager{
@@ -56,7 +56,7 @@ export class RelationStoreManager{
   static async getZlibAccount(store:relationalStore.RdbStore|undefined, needClear:boolean = true){
     if (needClear)
     {
-      __User__.zlibAccountArray.clearData()
+      __ZlibUser__.zlibAccountArray.clearData()
     }
     if (store ) {
       await ((store as relationalStore.RdbStore).query(new relationalStore.RdbPredicates('ZlibraryAccount'), ['ID','Account', 'Password', 'Cookie']).then((resultSet)=>{
@@ -72,7 +72,7 @@ export class RelationStoreManager{
              userInfo.account = Account
              userInfo.password = Password
              userInfo.cookie = Cookie
-             __User__.zlibAccountArray.pushData(userInfo)
+             __ZlibUser__.zlibAccountArray.pushData(userInfo)
            }
            resultSet.close();
          }

@@ -1,6 +1,6 @@
 import { I_PageInfo } from "../../models/interfaces/I_PageInfo";
 import { ImageModifier, LengthUnit } from "@kit.ArkUI";
-import { __System__, __UI__ } from "../../commons/shareDatas";
+import { __System__, __UI__, __ZlibUser__ } from "../../commons/shareDatas";
 import { ListItemWithArrow } from "templatecomponent";
 import { min_width } from "../../commons/commonItem";
 import { XAnimation } from "commonpackage";
@@ -34,15 +34,15 @@ export struct SideBar {
         Column({ space: 10 }) {
           Row({ space: 12 }) {
             Stack() {
-              Image($r('app.media.zlib'))
+              Image(__ZlibUser__.avatar==''?$r('app.media.zlib'):__ZlibUser__.avatar)
                 .attributeModifier(__UI__.isLargeSidebar ? this.avatarModifier_Large :
                   this.avatarModifier_Small)
             }
 
             if (__UI__.isLargeSidebar) {
-              if (false) {
+              if (__ZlibUser__.account != '') {
                 Column({ space: 2 }) {
-                  Text()
+                  Text(__ZlibUser__.userName??'未命名')
                     .fontWeight(FontWeight.Bold)
                     .fontSize(20)
                     .textAlign(TextAlign.Center)
@@ -76,7 +76,8 @@ export struct SideBar {
           .bindSheet($$this.showAccountManager, AccountManagerBuilder() , {
             title:{title:$r('app.string.Title_AccountManager')},
             preferType:SheetType.CENTER,
-            height:SheetSize.LARGE
+            height:SheetSize.LARGE,
+            backgroundColor:$r('sys.color.background_tertiary')
           })
 
 

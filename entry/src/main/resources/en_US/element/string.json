@@ -55,6 +55,10 @@
     {
       "name": "Title_AccountManager",
       "value": "Acount Manager"
+    },
+    {
+      "name": "reasonDownload",
+      "value": "Save Book To Download Path, Read Book From Download Path"
     }
   ]
 }

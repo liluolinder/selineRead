@@ -6,6 +6,7 @@ import { __CustomBackgroundData__ } from "../components/CustomBackground"
 import { relationalStore } from "@kit.ArkData"
 import { I_ZlibUserInfo } from "../../zlibrary/interface/I_ZlibUserInfo"
 import { ZlibUserInfo } from "../../zlibrary/classes/UserInfo"
+import { DownloadManager } from "@hadss/super_fast_file_trans"
 
 
 @ObservedV2
@@ -57,9 +58,21 @@ export const __UI__: UIData = new UIData()
 
 
 @ObservedV2
-export class User{
+export class ZlibUser{
+  @Trace accountIndex: number = 1
+  @Trace account:string = ''
+  @Trace password:string = ''
+  @Trace cookie:string = ''
+  @Trace avatar:string=''
+  @Trace userName:string=''
+
   dataBase?:relationalStore.RdbStore
+  downloadManager?:DownloadManager
+
   zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
+  base_url: string = 'https://zh.tur101.ru'
+  baseApi_url: string = this.base_url+'/papi'
+
 }
 
-export const __User__: User = new User()
+export const __ZlibUser__: ZlibUser = new ZlibUser()

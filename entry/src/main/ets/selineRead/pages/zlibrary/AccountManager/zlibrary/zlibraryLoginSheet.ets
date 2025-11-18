@@ -1,7 +1,7 @@
-import { XAnimation } from "commonpackage"
+import { XAnimation, XPreferencesManager } from "commonpackage"
 import { I_ZlibUserInfo } from "../../../../../zlibrary/interface/I_ZlibUserInfo"
 import { zlibClient } from "../../../../../zlibrary/zlibClient"
-import { __User__ } from "../../../../commons/shareDatas"
+import { __ZlibUser__ } from "../../../../commons/shareDatas"
 import { RelationStoreManager } from "../../../../models/classes/DataBase"
 import { relationalStore } from "@kit.ArkData"
 import { ZlibUserInfo } from "../../../../../zlibrary/classes/UserInfo"
@@ -32,7 +32,7 @@ export struct zlibLoginSheet {
     Row() {
       RelativeContainer() {
         Row({ space: 10 }) {
-          Image($r('app.media.zlib'))
+          Image($r('app.media.zlibrary'))
             .size({ width: 60, height: 60 })
           Text('Z-library')
             .fontSize(24)
@@ -40,7 +40,7 @@ export struct zlibLoginSheet {
         }
         .alignRules({
           top: { anchor: "__container__", align: VerticalAlign.Top },
-          start: { anchor: "__container__", align: HorizontalAlign.Start }
+          end: { anchor: "__container__", align: HorizontalAlign.End }
         })
         .id('logoWithName')
 
@@ -58,11 +58,12 @@ export struct zlibLoginSheet {
         Column({ space: 10 }) {
           TextInput({ placeholder: '邮箱', text: $$this.email })
             .height(48)
-            .contentType(ContentType.EMAIL_ADDRESS)
+            .type(InputType.Email)
 
           TextInput({ placeholder: '密码', text: $$this.password })
             .height(48)
-            .contentType(ContentType.PASSWORD)
+            .type(InputType.Password)
+
         }
         .margin({ top: 10 })
         .alignRules({
@@ -117,7 +118,7 @@ export struct zlibLoginSheet {
                   this.localLoginState = loginState.Error
                 } else {
                   let userInfo: I_ZlibUserInfo = JSON.parse(res[1]) as I_ZlibUserInfo
-                  await RelationStoreManager.addValue(__User__.dataBase, 'ZlibraryAccount', {
+                  await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibraryAccount', {
                     Account: userInfo.account,
                     Password: userInfo.password,
                     Cookie: userInfo.cookie
@@ -130,7 +131,17 @@ export struct zlibLoginSheet {
                   userInfoClass.userDownloadLimitNumber = userInfo.userDownloadLimitNumber
                   userInfoClass.userDonateNumber = userInfo.userDonateNumber
                   userInfoClass.userAvatar = userInfo.userAvatar
-                  __User__.zlibAccountArray.pushData(userInfoClass)
+                  __ZlibUser__.zlibAccountArray.pushData(userInfoClass)
+                  __ZlibUser__.accountIndex = __ZlibUser__.zlibAccountArray.totalCount()-1
+                  __ZlibUser__.account = userInfo.account
+                  __ZlibUser__.password = userInfo.password
+                  __ZlibUser__.cookie = userInfo.cookie
+                  __ZlibUser__.userName = userInfo.userName
+                  __ZlibUser__.avatar = userInfo.userAvatar
+                  XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex",  __ZlibUser__.accountIndex)
+                  XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", userInfo.account??'')
+                  XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", userInfo.password??'')
+                  XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", userInfo.cookie??'')
 
                   this.showLoginSheet = false
                 }
