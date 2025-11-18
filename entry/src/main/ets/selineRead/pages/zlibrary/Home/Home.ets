@@ -59,7 +59,6 @@ export struct Home {
             })
             if (value != '') {
               this.recommendOrSearch = 1
-              __Home__.req.destroy()
               __Home__.req = http.createHttp()
               __Home__.searchBookArray.clearData()
               zlibClient.searchBook(__Home__.req,this.searchWord,__Home__.searchBookIndex).then((res) => {
@@ -198,7 +197,6 @@ export struct Home {
           }, this.TileColumnNumber > 0)
         })
         .onReachEnd( () => {
-          __Home__.req.destroy()
           __Home__.req = http.createHttp()
           if (__Home__.canGetMore) {
             XAnimation.runWithAnimation(()=>{
@@ -320,7 +318,6 @@ export struct Home {
               .onClick(() => {
                 __Home__.searchBookIndex = 1
                 this.searchWord = item.value
-                __Home__.req.destroy()
                 __Home__.req = http.createHttp()
                 __Home__.searchBookArray.clearData()
                 zlibClient.searchBook(__Home__.req,this.searchWord,__Home__.searchBookIndex).then((res) => {

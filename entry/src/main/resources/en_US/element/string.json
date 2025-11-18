@@ -62,7 +62,7 @@
     },
     {
       "name": "Tip_DownloadError",
-      "value": "Download Error, Maybe you are not login Or just change account,please login and reopen the book information page"
+      "value": "Download Error, Maybe you are not login or just change account or over the download limit,please login , check the download limit and reopen the book information page"
     },
     {
       "name": "Tip_StartDownload",
