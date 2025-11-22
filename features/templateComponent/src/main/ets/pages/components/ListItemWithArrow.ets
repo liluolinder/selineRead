@@ -75,7 +75,7 @@ export struct ListItemWithArrow {
           if (this.symbol) {
             SymbolGlyph(this.symbol)
               .fontSize(22)
-              .fontColor([$r('sys.color.font')]).geometryTransition(this.message+'message', {follow: true})
+              .fontColor([$r('sys.color.font')])
 
           }
           if (this.image) {
@@ -93,7 +93,6 @@ export struct ListItemWithArrow {
         .borderRadius(18)
         .animation({ duration: 150 })
       }
-
     }
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
     .height(this.isLarge ? 55 : 'auto')

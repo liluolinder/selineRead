@@ -24,20 +24,18 @@ export struct ZlibraryAccount {
 
   async aboutToAppear(): Promise<void> {
     await RelationStoreManager.getZlibAccount(__ZlibUser__.dataBase)
+    console.log(__ZlibUser__.accountIndex.toString())
     if (__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]) {
-      zlibClient.getPersonInfo(__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].cookie ?? '').then((res) => {
-        if (res[0] == 1) {
-          console.log('124124')
-          let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
-          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = basicInfo.userName
-          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
-            basicInfo.userDownloadLimitNumber
-          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDonateNumber = basicInfo.userDonateNumber
-          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = basicInfo.userAvatar
-        }
-      })
-    } else {
-      console.log('124124124124')
+      // zlibClient.getPersonInfo(__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].cookie ?? '').then((res) => {
+      //   if (res[0] == 1) {
+      //     let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
+      //     __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = basicInfo.userName
+      //     __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
+      //       basicInfo.userDownloadLimitNumber
+      //     __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDonateNumber = basicInfo.userDonateNumber
+      //     __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = basicInfo.userAvatar
+      //   }
+      // })
     }
   }
 
@@ -59,7 +57,7 @@ export struct ZlibraryAccount {
                   image:item.userAvatar==''?$r('app.media.zlib'):item.userAvatar,
                   message: item.account,
                   group: 'zlibAccount',
-                  checked: __ZlibUser__.accountIndex == index,
+                  checked: __ZlibUser__.accountIndex === index,
                   index: index,
                   onChange: (checked: boolean, itemIndex: number) => {
                     if (checked) {
@@ -156,10 +154,13 @@ export struct ZlibraryAccount {
                     }.size({ width: '100%', height: 120 })
                   }
                 }
-              }.backgroundColor($r('sys.color.comp_background_list_card'))
+              }
+              .backgroundColor($r('sys.color.comp_background_list_card'))
               .borderRadius(20)
+              .transition(XAnimation.getAnimation('bottom',index*200))
 
-            })
+
+            },(item: ZlibUserInfo, index: number)=>JSON.stringify(item))
           }
           .height('100%')
           .width('100%')

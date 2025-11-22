@@ -79,6 +79,18 @@
     {
       "name": "Tip_TryToDownload",
       "value": "Try to download"
+    },
+    {
+      "name": "Title_Home",
+      "value": "Home"
+    },
+    {
+      "name": "Title_BookShelf",
+      "value": "Book Shelf"
+    },
+    {
+      "name": "Title_Setting",
+      "value": "Setting"
     }
   ]
 }

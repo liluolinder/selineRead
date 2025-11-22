@@ -54,14 +54,14 @@ export class RelationStoreManager{
   }
 
   static async getZlibAccount(store:relationalStore.RdbStore|undefined, needClear:boolean = true){
-    if (needClear)
-    {
-      __ZlibUser__.zlibAccountArray.clearData()
-    }
     if (store ) {
       await ((store as relationalStore.RdbStore).query(new relationalStore.RdbPredicates('ZlibraryAccount'), ['ID','Account', 'Password', 'Cookie']).then((resultSet)=>{
          {
            console.info(`ResultSet column names: ${resultSet.columnNames}, column count: ${resultSet.columnCount}`);
+           if (needClear)
+           {
+             __ZlibUser__.zlibAccountArray.clearData()
+           }
            while (resultSet.goToNextRow()) {
              const Id = resultSet.getLong(resultSet.getColumnIndex('ID'));
              const Account = resultSet.getString(resultSet.getColumnIndex('Account'));

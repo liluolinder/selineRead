@@ -1,10 +1,12 @@
-import { XAnimation, XPreferencesManager } from "commonpackage";
+import { XAnimation, XContext, XPreferencesManager } from "commonpackage";
 import { zlibClient } from "../../../zlibrary/zlibClient";
 import { min_width } from "../../commons/commonItem";
 import { __System__, __UI__ } from "../../commons/shareDatas";
 import { Home, __Home__ } from "../zlibrary/Home/Home";
 import { http } from "@kit.NetworkKit";
 import { I_BookInfo } from "../../models/interfaces/I_BookInfo";
+import { BookShelf, __BookShelf__ } from "../zlibrary/BookShelf/BookShelf";
+import { fileIo } from "@kit.CoreFileKit";
 
 @ComponentV2
 export struct Body {
@@ -12,13 +14,16 @@ export struct Body {
   @Consumer('mainPageStack') pageStack: NavPathStack = new NavPathStack()
   @Consumer('currentTabIndex') currentTabIndex: number = 0
 
+  @Monitor("currentTabIndex")
+  async monitorIndexChange(){
+    switch (this.currentTabIndex){
+      case 1:
+        fileIo.listFileSync(await XContext.getDownloadFolderPath()).forEach((item)=>{
+          console.log(item)
+          __BookShelf__.bookList.push(item)
+        })
+        break;
 
-  @Monitor('currentTabIndex')
-  monitorTabIndexChange(){
-    if (this.currentTabIndex == 0) {
-      __UI__.indexNavigationMode = __System__.windowWidth > min_width ? NavigationMode.Auto:NavigationMode.Stack
-    }else {
-      __UI__.indexNavigationMode = NavigationMode.Stack
     }
   }
 
@@ -48,11 +53,12 @@ export struct Body {
         }
 
         TabContent() {
-
+          BookShelf()
         }
 
         TabContent() {
         }
+
       }
       .height('100%')
       .scrollable(false)

@@ -1,3 +1,4 @@
+import { XAnimation } from "commonpackage"
 import { ListItemWithArrow } from "templatecomponent"
 
 @Builder
@@ -19,6 +20,7 @@ export struct AccountManager{
             image:$r('app.media.zlibrary'),
             message:'Z-library',
           })
+            .transition(XAnimation.getAnimation('bottom',100))
             .onClick(()=>{
               this.pathStack.pushPathByName("ZlibraryAccount",null)
             })

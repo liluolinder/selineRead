@@ -318,7 +318,7 @@ export struct Home {
               .onClick(() => {
                 __Home__.searchBookIndex = 1
                 this.searchWord = item.value
-                __Home__.req = http.createHttp()
+               __Home__.req = http.createHttp()
                 __Home__.searchBookArray.clearData()
                 zlibClient.searchBook(__Home__.req,this.searchWord,__Home__.searchBookIndex).then((res) => {
                   if (res[0] == 1) {

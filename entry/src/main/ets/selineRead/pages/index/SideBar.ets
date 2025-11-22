@@ -7,6 +7,7 @@ import { XAnimation } from "commonpackage";
 import { ConfigurationConstant } from "@kit.AbilityKit";
 import { backgroundBlurModifier } from "../../models/classes/backGroundEffect";
 import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
+import { SettingBuilder } from "../zlibrary/Setting/Setting";
 
 
 @ComponentV2
@@ -14,15 +15,12 @@ export struct SideBar {
   @Consumer('tabController') tabController: TabsController = new TabsController();
   @Consumer('currentTabIndex') currentTabIndex: number = 0
   @Provider('showLoginOrUserInfo') showLoginOrUserInfo: boolean = false
-
+  @Provider("showSetting") showSetting:boolean = false
   @Local showAccountManager:boolean = false
 
   pageArray: I_PageInfo[] = [
-    { name: '主页', symbol: $r('sys.symbol.house') },
-    // { name: '最近点赞', symbol: $r('sys.symbol.heart') },
-    // { name: '最近播放', symbol: $r('sys.symbol.arrow_counterclockwise_clock') },
-    // { name: '我的歌单', symbol: $r('sys.symbol.music_note_list') },
-    // { name: '我的关注', symbol: $r('sys.symbol.person_filled_badge_plus') },
+    { name: $r('app.string.Title_Home'), symbol: $r('sys.symbol.house') },
+    { name: $r('app.string.Title_BookShelf'), symbol: $r('sys.symbol.book_closed_right_left') },
   ]
   avatarModifier_Large: ImageModifier = new ImageModifier().height(75).width(75).borderRadius(1000).draggable(false)
   avatarModifier_Small: ImageModifier =
@@ -147,9 +145,16 @@ export struct SideBar {
           hasBackground: true,
           showArrow: true
         })
+
           .layoutWeight(__UI__.isLargeSidebar ? 1 : 0)
           .onClick(() => {
-          //  __SettingsUIData__.settingsShow = true
+            this.showSetting = true
+          })
+          .bindSheet($$this.showSetting,SettingBuilder(),{
+            preferType:SheetType.CENTER,
+            height:SheetSize.LARGE,
+            title:{title:$r('app.string.Title_Setting')},
+            backgroundColor:$r('sys.color.background_tertiary')
           })
 
       }.height('auto')

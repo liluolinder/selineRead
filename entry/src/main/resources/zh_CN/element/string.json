@@ -79,6 +79,18 @@
     {
       "name": "Tip_TryToDownload",
       "value": "尝试下载"
+    },
+    {
+      "name": "Title_Home",
+      "value": "主页"
+    },
+    {
+      "name": "Title_BookShelf",
+      "value": "书架"
+    },
+    {
+      "name": "Title_Setting",
+      "value": "设置"
     }
   ]
 }

@@ -1,18 +1,19 @@
-import { XAnimation } from 'commonpackage';
+import { XAnimation, XContext } from 'commonpackage';
 import { zlibClient } from '../../zlibrary/zlibClient';
 import { min_width } from '../commons/commonItem';
 import { __System__, __UI__ } from '../commons/shareDatas';
 import { DecorBar } from '../components/DecorBar';
 import { Body } from './index/Body';
 import { SideBar } from './index/SideBar';
-import { http } from '@kit.NetworkKit';
 import { __Home__ } from './zlibrary/Home/Home';
-import { I_BookInfo } from '../models/interfaces/I_BookInfo';
 
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
+  @Provider('tabController') tabController: TabsController = new TabsController();
+  @Provider('currentTabIndex') currentTabIndex: number = 0
+
 
   build() {
     Stack({ alignContent: Alignment.TopStart }) {

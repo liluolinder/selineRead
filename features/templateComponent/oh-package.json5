@@ -7,6 +7,7 @@
   "license": "Apache-2.0",
   "packageType": "InterfaceHar",
   "dependencies": {
-    color:"file:../color"
+    color:"file:../color",
+    commonpackage:"file:../commonPackage"
   }
 }
