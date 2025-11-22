@@ -8,6 +8,7 @@ import { ConfigurationConstant } from "@kit.AbilityKit";
 import { backgroundBlurModifier } from "../../models/classes/backGroundEffect";
 import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
 import { SettingBuilder } from "../zlibrary/Setting/Setting";
+import { AboutUsBuilder } from "../AboutUS/AboutUS";
 
 
 @ComponentV2
@@ -16,6 +17,7 @@ export struct SideBar {
   @Consumer('currentTabIndex') currentTabIndex: number = 0
   @Provider('showLoginOrUserInfo') showLoginOrUserInfo: boolean = false
   @Provider("showSetting") showSetting:boolean = false
+  @Provider("showAboutUs") showAboutUs:boolean = false
   @Local showAccountManager:boolean = false
 
   pageArray: I_PageInfo[] = [
@@ -118,45 +120,65 @@ export struct SideBar {
       .layoutWeight(1)
       .clip(true)
 
-      Flex({
-        direction: __UI__.isLargeSidebar ? FlexDirection.Row : FlexDirection.ColumnReverse,
-        space: { main: { value: 10, unit: LengthUnit.VP } }
-      }) {
-        if (__System__.windowWidth > min_width) {
-          ListItemWithArrow({
-            symbol: __UI__.isLargeSidebar ? $r('sys.symbol.open_sidebar') : $r('sys.symbol.close_sidebar'),
-            isLarge: false,
-            hasBackground: true,
-            showArrow: false
-          })
-            .onClick(() => {
-              XAnimation.runWithAnimation(() => {
-                __UI__.isLargeSidebar = !__UI__.isLargeSidebar
-              })
-            }).height(__UI__.isLargeSidebar ? 55 : 'auto')
-            .width(__UI__.isLargeSidebar ? 55 : '100%')
+      Column({space:10}){
 
+        if (__System__.windowHeight>450) {
+          ListItemWithArrow({
+            symbol: $r('sys.symbol.info_circle'),
+            message: $r('app.string.Title_AboutUS'),
+            isLarge: __UI__.isLargeSidebar,
+            hasBackground: true,
+            showArrow: true
+          })
+            .onClick(()=>{
+              this.showAboutUs = true
+            })
+            .bindSheet($$this.showAboutUs,AboutUsBuilder(),{
+              preferType:SheetType.CENTER,
+              height:SheetSize.LARGE,
+              title:{title:$r('app.string.Title_AboutUS')},
+              backgroundColor:$r('sys.color.background_tertiary')
+            })
         }
 
-        ListItemWithArrow({
-          symbol: $r('sys.symbol.gearshape'),
-          message: '设置',
-          isLarge: __UI__.isLargeSidebar,
-          hasBackground: true,
-          showArrow: true
-        })
+        Flex({
+          direction: __UI__.isLargeSidebar ? FlexDirection.Row : FlexDirection.ColumnReverse,
+          space: { main: { value: 10, unit: LengthUnit.VP } }
+        }) {
+          if (__System__.windowWidth > min_width) {
+            ListItemWithArrow({
+              symbol: __UI__.isLargeSidebar ? $r('sys.symbol.open_sidebar') : $r('sys.symbol.close_sidebar'),
+              isLarge: false,
+              hasBackground: true,
+              showArrow: false
+            })
+              .onClick(() => {
+                XAnimation.runWithAnimation(() => {
+                  __UI__.isLargeSidebar = !__UI__.isLargeSidebar
+                })
+              }).height(__UI__.isLargeSidebar ? 55 : 'auto')
+              .width(__UI__.isLargeSidebar ? 55 : '100%')
 
-          .layoutWeight(__UI__.isLargeSidebar ? 1 : 0)
-          .onClick(() => {
-            this.showSetting = true
-          })
-          .bindSheet($$this.showSetting,SettingBuilder(),{
-            preferType:SheetType.CENTER,
-            height:SheetSize.LARGE,
-            title:{title:$r('app.string.Title_Setting')},
-            backgroundColor:$r('sys.color.background_tertiary')
-          })
+          }
 
+          ListItemWithArrow({
+            symbol: $r('sys.symbol.gearshape'),
+            message: $r('app.string.Title_Setting'),
+            isLarge: __UI__.isLargeSidebar,
+            hasBackground: true,
+            showArrow: true
+          })
+            .layoutWeight(__UI__.isLargeSidebar ? 1 : 0)
+            .onClick(() => {
+              this.showSetting = true
+            })
+            .bindSheet($$this.showSetting,SettingBuilder(),{
+              preferType:SheetType.CENTER,
+              height:SheetSize.LARGE,
+              title:{title:$r('app.string.Title_Setting')},
+              backgroundColor:$r('sys.color.background_tertiary')
+            })
+        }.height('auto')
       }.height('auto')
 
     }.size({ height: '100%', width: '100%' })

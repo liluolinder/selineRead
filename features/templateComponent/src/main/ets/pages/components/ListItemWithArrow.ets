@@ -3,15 +3,17 @@ export struct ListItemWithArrow {
   @Param symbol: Resource | undefined = undefined
   @Param image: Resource | undefined = undefined
   @Param message: ResourceStr = ''
+  @Param subMessage: ResourceStr = ''
   @Param isVip: boolean = false
   @Param showArrow: boolean = true
   @Param isEnabled: boolean = true
   @Param isLarge: boolean = true
   @Param hasBackground: boolean = false
   @Param isHighlight: boolean = false
-  @Param arrowDir:'up'|'down'|'right'|'left' ='left'
+  @Param arrowDir:'up'|'down'|'right'|'left' ='right'
+  @Param needButtonEffect:boolean = true
 
-  changeArrowDir():ResourceStr{
+  changeArrowDir():Resource{
     switch (this.arrowDir){
       case 'up':
         return  $r('sys.symbol.chevron_up')
@@ -25,7 +27,7 @@ export struct ListItemWithArrow {
   }
 
   build() {
-    Button({ type: ButtonType.Normal, stateEffect: true }) {
+    Button({ type: ButtonType.Normal, stateEffect: this.needButtonEffect }) {
       if (this.isLarge) {
         Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
           Row({ space: 10 }) {
@@ -33,7 +35,6 @@ export struct ListItemWithArrow {
               SymbolGlyph(this.symbol)
                 .fontSize(22)
                 .fontColor([$r('sys.color.font')])
-
             }
             if (this.image) {
               Image(this.image)
@@ -43,16 +44,27 @@ export struct ListItemWithArrow {
                 .objectFit(ImageFit.Cover)
 
             }
-            Text(this.message)
-              .fontSize(17)
-              .fontWeight(FontWeight.Medium)
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.MARQUEE })
-              .layoutWeight(1)
+           Column({space:5}){
+             Text(this.message)
+               .fontSize(17)
+               .fontWeight(FontWeight.Medium)
+               .maxLines(1)
+               .textOverflow({ overflow: TextOverflow.MARQUEE })
+               .width('100%')
+             if (this.subMessage!='') {
+               Text(this.subMessage)
+                 .opacity(0.6)
+                 .fontSize(13)
+                 .fontWeight(FontWeight.Medium)
+                 .maxLines(1)
+                 .textOverflow({ overflow: TextOverflow.MARQUEE })
+                 .width('100%')
+             }
+           }
           }.layoutWeight(1)
 
           if (this.showArrow) {
-            SymbolGlyph($r('sys.symbol.chevron_right'))
+            SymbolGlyph(this.changeArrowDir())
               .fontSize(22)
               .fontColor([$r('sys.color.font')])
               .margin(5)
@@ -95,7 +107,7 @@ export struct ListItemWithArrow {
       }
     }
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-    .height(this.isLarge ? 55 : 'auto')
+    .height(/*this.isLarge ? 55 :*/ 'auto')
     .width('100%')
     .aspectRatio(this.isLarge ? null : 1)
     .borderRadius(20)

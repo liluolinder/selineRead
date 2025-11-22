@@ -91,6 +91,30 @@
     {
       "name": "Title_Setting",
       "value": "Setting"
+    },
+    {
+      "name": "Title_AboutUS",
+      "value": "About us"
+    },
+    {
+      "name": "Title_VersionInfo",
+      "value": "Version Info"
+    },
+    {
+      "name": "Title_Appreciation",
+      "value": "Appreciation"
+    },
+    {
+      "name": "Title_QQ",
+      "value": "QQ"
+    },
+    {
+      "name": "Title_Meow",
+      "value": "Meow Account"
+    },
+    {
+      "name": "Title_Acknowledgments",
+      "value": "Acknowledgments"
     }
   ]
 }

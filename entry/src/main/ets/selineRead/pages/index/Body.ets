@@ -16,11 +16,17 @@ export struct Body {
 
   @Monitor("currentTabIndex")
   async monitorIndexChange(){
+    if (__System__.windowWidth < min_width) {
+      XAnimation.runWithAnimation(() => {
+        __UI__.isShowSideBar = false
+      })
+    }
     switch (this.currentTabIndex){
       case 1:
+        __BookShelf__.bookList.clearData()
         fileIo.listFileSync(await XContext.getDownloadFolderPath()).forEach((item)=>{
           console.log(item)
-          __BookShelf__.bookList.push(item)
+          __BookShelf__.bookList.pushData(item)
         })
         break;
 

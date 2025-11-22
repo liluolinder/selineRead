@@ -14,7 +14,16 @@
             "name": "ZlibraryAccount",
             "pageSourceFile": "src/main/ets/selineRead/pages/zlibrary/AccountManager/zlibrary/ZlibraryAccount.ets",
             "buildFunction": "ZlibraryAccountBuilder"
+        },
+        {
+            "name": "VersionInfo",
+            "pageSourceFile": "src/main/ets/selineRead/pages/AboutUS/VersionInfo.ets",
+            "buildFunction": "VersionInfoBuilder"
+        },
+        {
+            "name": "Acknowledgments",
+            "pageSourceFile": "src/main/ets/selineRead/pages/AboutUS/Acknowledgments.ets",
+            "buildFunction": "AcknowledgmentsBuilder"
         }
-
     ]
 }

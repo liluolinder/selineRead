@@ -91,6 +91,30 @@
     {
       "name": "Title_Setting",
       "value": "设置"
+    },
+    {
+      "name": "Title_AboutUS",
+      "value": "关于"
+    },
+    {
+      "name": "Title_VersionInfo",
+      "value": "版本信息"
+    },
+    {
+      "name": "Title_Appreciation",
+      "value": "赞赏"
+    },
+    {
+      "name": "Title_QQ",
+      "value": "QQ"
+    },
+    {
+      "name": "Title_Meow",
+      "value": "Meow频道"
+    },
+    {
+      "name": "Title_Acknowledgments",
+      "value": "鸣谢"
     }
   ]
 }

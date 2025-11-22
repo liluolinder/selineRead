@@ -26,16 +26,16 @@ export struct ZlibraryAccount {
     await RelationStoreManager.getZlibAccount(__ZlibUser__.dataBase)
     console.log(__ZlibUser__.accountIndex.toString())
     if (__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]) {
-      // zlibClient.getPersonInfo(__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].cookie ?? '').then((res) => {
-      //   if (res[0] == 1) {
-      //     let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
-      //     __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = basicInfo.userName
-      //     __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
-      //       basicInfo.userDownloadLimitNumber
-      //     __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDonateNumber = basicInfo.userDonateNumber
-      //     __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = basicInfo.userAvatar
-      //   }
-      // })
+      zlibClient.getPersonInfo(__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].cookie ?? '').then((res) => {
+        if (res[0] == 1) {
+          let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
+          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = basicInfo.userName
+          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
+            basicInfo.userDownloadLimitNumber
+          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDonateNumber = basicInfo.userDonateNumber
+          __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = basicInfo.userAvatar
+        }
+      })
     }
   }
 
