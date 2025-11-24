@@ -1,5 +1,5 @@
 import { BasicDataSource, XAnimation } from "commonpackage"
-import { __System__ } from "../../../commons/shareDatas"
+import { __System__, __UI__ } from "../../../commons/shareDatas"
 import { __CustomBackgroundData__ } from "../../../components/CustomBackground"
 import { ComposeTitleBar, SymbolGlyphModifier } from "@kit.ArkUI"
 
@@ -14,6 +14,7 @@ export let __BookShelf__:BookShelfData = new BookShelfData()
 
 @ComponentV2
 export struct BookShelf{
+
   build() {
    Column(){
      Navigation(){
@@ -44,6 +45,7 @@ export struct BookShelf{
          value: 'downloadPage',
          symbolIcon: new SymbolGlyphModifier($r('sys.symbol.download')),
          action: () => {
+           __UI__.mainPageStack.pushPathByName('DownloadPage',null)
          }
        }
      ])

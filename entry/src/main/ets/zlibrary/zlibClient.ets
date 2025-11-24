@@ -6,7 +6,7 @@ import { CJLoader } from "./CJloader/CJLoader";
 import { I_LoginRes } from "./interface/I_loginInfo";
 import { I_BasicUserInfo, I_UserDownloadLimitAndDonation, I_ZlibUserInfo } from "./interface/I_ZlibUserInfo";
 import { JSON } from "@kit.ArkTS";
-import { __ZlibUser__ } from "../selineRead/commons/shareDatas";
+import { __Download__, __ZlibUser__ } from "../selineRead/commons/shareDatas";
 import { LNotificationManager, XContext, XPreferencesManager } from "commonpackage";
 import { I_trulyDownloadUrl } from "./interface/I_DownloadInfo";
 import { fileIo } from "@kit.CoreFileKit";
@@ -16,6 +16,7 @@ import { I_searchBook } from "./interface/I_SearchInfo";
 import { backgroundProcessManager } from "@kit.BackgroundTasksKit";
 import { BackgroundUtil } from "../selineRead/models/classes/BackgroundRunningManager";
 import { shareBook } from "../selineRead/models/utils/ShareBook";
+import { DownloadInfo, DownloadStatus } from "../selineRead/models/classes/DownloadInfo";
 
 export class zlibClient {
   static async refreshUrl(): Promise<[number, string]> {
@@ -265,7 +266,7 @@ export class zlibClient {
       });
   }
 
-  static async downloadBook(bookUrl: string): Promise<[number, string]> {
+  static async downloadBook(bookUrl: string, bookInfo:I_BookDetailedInfo): Promise<[number, string]> {
     let req = http.createHttp()
     let url: string = __ZlibUser__.base_url + bookUrl
     XContext.toast($r('app.string.Tip_TryToDownload'))
@@ -287,10 +288,16 @@ export class zlibClient {
         let encodedFilename: string = matches ? matches[1] : '';
         let decodedFilename = decodeURI(encodedFilename)
         let downloadPath = await XContext.getDownloadFolderPath()
-
         let id = __ZlibUser__.notificationID++
+
+        let downloadItem:DownloadInfo = new DownloadInfo()
+        downloadItem.fileName = decodedFilename
+        downloadItem.fileImage = bookInfo.image
+        __Download__.downloadArray.pushData(downloadItem)
+
         let customDownloadListener: DownloadListener = {
           onSuccess: () => {
+            downloadItem.status = DownloadStatus.Complete
             LNotificationManager.pushNotificationWithProgress(id,100,'下载完成',decodedFilename)
             shareBook(`${downloadPath}/${decodedFilename}`)
             XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadSuccess'))+decodedFilename,3000)
@@ -300,28 +307,40 @@ export class zlibClient {
             LNotificationManager.pushNotificationWithProgress(id,100,'下载失败',decodedFilename)
             console.log(`下载失败:${JSON.stringify(err)}`)
             XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError'))+JSON.stringify(err),3000)
+            downloadItem.status = DownloadStatus.Error
             return [0, JSON.stringify(err)] as [number, string]
           },
+          onPause:()=>{
+            downloadItem.status = DownloadStatus.Pause
+          },
           onProgressUpdate: (downloadProgress: DownloadProgressInfo) => {
+            downloadItem.currentSize = downloadProgress.transferredSize
+            if ( downloadItem.totalSize != downloadProgress.totalSize) {
+              downloadItem.totalSize = downloadProgress.totalSize
+            }
+            if ( downloadItem.status != DownloadStatus.Downloading) {
+              downloadItem.status = DownloadStatus.Downloading
+            }
             let progress = Math.trunc( downloadProgress.transferredSize/downloadProgress.totalSize*10000) / 100
             LNotificationManager.pushNotificationWithProgress(id,progress,`正在下载${progress}%`,decodedFilename)
             console.log(`onProgressUpdate:, download: transferred size:${downloadProgress.transferredSize}, total size:${downloadProgress.totalSize}`)
           },
         };
 
-        let downloadConfig: DownloadConfig = {
-          url: temp.location, // 远端下载地址（必选）
-          fileName: decodedFilename, // 下载后的本地文件名（必选）
-          fileDir: downloadPath,
-          concurrency: 1
-        };
 
         if (__ZlibUser__.downloadManager) {
           try {
+            let downloadConfig: DownloadConfig = {
+              url: temp.location, // 远端下载地址（必选）
+              fileName: decodedFilename, // 下载后的本地文件名（必选）
+              fileDir: downloadPath,
+              concurrency: 1
+            };
+
             BackgroundUtil.startContinuousTask()
             XContext.toast($r('app.string.Tip_StartDownload'))
             const downloadTask = __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener);
-            downloadTask?.start()
+            downloadItem.downLoadTask = downloadTask
           } catch (e) {
             XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError'))+JSON.stringify(e),3000)
           }

@@ -115,6 +115,10 @@
     {
       "name": "Title_Acknowledgments",
       "value": "Acknowledgments"
+    },
+    {
+      "name": "Title_DownloadManager",
+      "value": "Download Manager"
     }
   ]
 }

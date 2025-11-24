@@ -115,6 +115,10 @@
     {
       "name": "Title_Acknowledgments",
       "value": "鸣谢"
+    },
+    {
+      "name": "Title_DownloadManager",
+      "value": "下载管理"
     }
   ]
 }

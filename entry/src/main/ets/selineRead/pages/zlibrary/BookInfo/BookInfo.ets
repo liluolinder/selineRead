@@ -105,7 +105,7 @@ export struct BookInfo {
       ForEach(this.downloadInfoArray, (item: I_DownloadInfo) => {
         MenuItem({ content: item.extension, labelInfo: item.filesizeString })
           .onClick(() => {
-            zlibClient.downloadBook(item.href??'').then((res)=>{
+            zlibClient.downloadBook(item.href??'',this.bookInfo!).then((res)=>{
               if (res[0]==0) {
                 this.errorText = res[1]
               }
@@ -281,7 +281,7 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
-                    zlibClient.downloadBook(this.bookInfo?.firstDownloadUrl??'').then((res)=>{
+                    zlibClient.downloadBook(this.bookInfo?.firstDownloadUrl??'',this.bookInfo!).then((res)=>{
                       if (res[0]==0) {
                         this.errorText = res[1]
                       }
@@ -420,6 +420,7 @@ export struct BookInfo {
     .size({ width: '100%', height: '100%' })
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
     Color.Transparent : $r('sys.color.comp_background_gray'))
+    .padding({ top: __System__.topRectHeight })
     .title(this.bookInfo?.name)
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
@@ -436,7 +437,7 @@ export struct BookInfo {
         this.pageOpacity = 0
       })
     })
-    .padding({ top: __System__.topRectHeight })
+
     .onBackPressed(() => {
       if (this.isViewingBigImage) {
         XAnimation.runWithAnimation(() => this.isViewingBigImage = false, true, 0.4, 0.85)

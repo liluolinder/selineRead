@@ -7,6 +7,7 @@ import { relationalStore } from "@kit.ArkData"
 import { I_ZlibUserInfo } from "../../zlibrary/interface/I_ZlibUserInfo"
 import { ZlibUserInfo } from "../../zlibrary/classes/UserInfo"
 import { DownloadManager } from "@hadss/super_fast_file_trans"
+import { DownloadInfo } from "../models/classes/DownloadInfo"
 
 
 @ObservedV2
@@ -70,9 +71,17 @@ export class ZlibUser{
   downloadManager?:DownloadManager
 
   zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
-  base_url: string = 'https://zh.tur101.ru'
+  base_url: string = 'https://zh.cn101.ru'
   baseApi_url: string = this.base_url+'/papi'
 
 }
 
 export const __ZlibUser__: ZlibUser = new ZlibUser()
+
+@ObservedV2
+export class Download{
+  @Trace downloadArray: BasicDataSource<DownloadInfo> =
+    new BasicDataSource<DownloadInfo>()
+}
+
+export const __Download__: Download = new Download()
