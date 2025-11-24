@@ -294,6 +294,7 @@ export class zlibClient {
         let downloadItem: DownloadInfo = new DownloadInfo()
         downloadItem.fileName = decodedFilename
         downloadItem.fileImage = bookInfo.image
+        downloadItem.status = DownloadStatus.Idle
 
         let customDownloadListener: DownloadListener = {
           onSuccess: () => {
@@ -304,32 +305,29 @@ export class zlibClient {
             console.log(`下载成功`)
           },
           onFail: (err: BusinessError) => {
+            downloadItem.status = DownloadStatus.Failed
             LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
             console.log(`下载失败:${JSON.stringify(err)}`)
             XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(err),
               3000)
-            downloadItem.status = DownloadStatus.Error
             return [0, JSON.stringify(err)] as [number, string]
           },
-          onPause: () => {
-            downloadItem.status = DownloadStatus.Pause
-          },
           onProgressUpdate: (downloadProgress: DownloadProgressInfo) => {
+            if (downloadItem.status != DownloadStatus.Downloading) {
+              downloadItem.status = DownloadStatus.Downloading
+            }
             let progress = Math.trunc(downloadProgress.transferredSize / downloadProgress.totalSize * 10000) / 100
-
             downloadItem.progress = progress
             LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`, decodedFilename)
-
             console.log(`onProgressUpdate:, download: transferred size:${downloadProgress.transferredSize}, total size:${downloadProgress.totalSize}`)
           },
           onStart: () => {
-            downloadItem.status = DownloadStatus.Downloading
+            downloadItem.status = DownloadStatus.Starting
+            console.log(`正在开始`)
           },
-          onCancel: () => {
-
-          },
-          onResume: () => {
-            downloadItem.status = DownloadStatus.Downloading
+          onCancel:()=>{
+            downloadItem.status = DownloadStatus.Cancel
+            console.log(`正在取消`)
           }
         };
 
@@ -349,7 +347,7 @@ export class zlibClient {
             downloadItem.downLoadTask =
               __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener)
 
-            __Download__.downloadArray.pushData(downloadItem)
+            __Download__.downloadArray.pushUnshiftData(downloadItem)
 
           } catch (e) {
             XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(e),

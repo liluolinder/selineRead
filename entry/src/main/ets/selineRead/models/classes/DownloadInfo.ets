@@ -13,5 +13,5 @@ export class DownloadInfo{
 }
 
 export enum DownloadStatus{
-  Idle, Downloading, Pause,Complete,Error
+  Idle, Starting, Downloading, Complete, Failed, Cancel
 }
