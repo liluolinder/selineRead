@@ -5,8 +5,8 @@ export class DownloadInfo{
   @Trace fileName:string = ''
   @Trace fileImage:ResourceStr = ''
 
-  @Trace totalSize:number = 0
-  @Trace currentSize:number = 0
+  @Trace progress:number = 0
+
   @Trace status:DownloadStatus = DownloadStatus.Idle
   downLoadTask?:DownloadTask
 

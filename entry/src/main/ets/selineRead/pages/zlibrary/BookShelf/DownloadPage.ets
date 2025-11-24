@@ -36,9 +36,6 @@ export struct DownloadPage{
                 Image(item.fileImage)
                   .aspectRatio(2/3)
                   .autoResize(true)
-                  .onClick(()=>{
-                    item.currentSize += 10
-                  })
                   .height('100%')
                   .shadow({
                     radius: 25,
@@ -55,16 +52,13 @@ export struct DownloadPage{
                     .fontWeight(FontWeight.Medium)
                     .maxLines(1)
 
-                  Text(`${item.totalSize}`)
-                    .width('100%')
-                    .maxLines(1)
-                    .opacity(0.6)
+
                 }
                 .layoutWeight(1)
 
                 Column(){
                   ProgressButton({
-                    progress: Math.trunc( item.currentSize/item.totalSize*10000) / 100,
+                    progress: item.progress,
                     progressButtonWidth:68,
                     content:item.status == DownloadStatus.Pause?'暂停':item.status == DownloadStatus.Complete?'已完成':'下载',
                     enable:item.status!=DownloadStatus.Complete,

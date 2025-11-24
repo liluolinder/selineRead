@@ -246,7 +246,7 @@ export class zlibClient {
       });
   }
 
-  static async searchBook(req: http.HttpRequest, bookName: string, page: number = 1){
+  static async searchBook(req: http.HttpRequest, bookName: string, page: number = 1) {
     return await req.request(`${__ZlibUser__.base_url}/s/${encodeURI(bookName)}?page=${page}`, {
       method: http.RequestMethod.GET,
       header: {
@@ -266,7 +266,7 @@ export class zlibClient {
       });
   }
 
-  static async downloadBook(bookUrl: string, bookInfo:I_BookDetailedInfo): Promise<[number, string]> {
+  static async downloadBook(bookUrl: string, bookInfo: I_BookDetailedInfo): Promise<[number, string]> {
     let req = http.createHttp()
     let url: string = __ZlibUser__.base_url + bookUrl
     XContext.toast($r('app.string.Tip_TryToDownload'))
@@ -288,43 +288,49 @@ export class zlibClient {
         let encodedFilename: string = matches ? matches[1] : '';
         let decodedFilename = decodeURI(encodedFilename)
         let downloadPath = await XContext.getDownloadFolderPath()
+
         let id = __ZlibUser__.notificationID++
 
-        let downloadItem:DownloadInfo = new DownloadInfo()
+        let downloadItem: DownloadInfo = new DownloadInfo()
         downloadItem.fileName = decodedFilename
         downloadItem.fileImage = bookInfo.image
-        __Download__.downloadArray.pushData(downloadItem)
 
         let customDownloadListener: DownloadListener = {
           onSuccess: () => {
             downloadItem.status = DownloadStatus.Complete
-            LNotificationManager.pushNotificationWithProgress(id,100,'下载完成',decodedFilename)
+            LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', decodedFilename)
             shareBook(`${downloadPath}/${decodedFilename}`)
-            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadSuccess'))+decodedFilename,3000)
+            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadSuccess')) + decodedFilename, 3000)
             console.log(`下载成功`)
           },
           onFail: (err: BusinessError) => {
-            LNotificationManager.pushNotificationWithProgress(id,100,'下载失败',decodedFilename)
+            LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
             console.log(`下载失败:${JSON.stringify(err)}`)
-            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError'))+JSON.stringify(err),3000)
+            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(err),
+              3000)
             downloadItem.status = DownloadStatus.Error
             return [0, JSON.stringify(err)] as [number, string]
           },
-          onPause:()=>{
+          onPause: () => {
             downloadItem.status = DownloadStatus.Pause
           },
           onProgressUpdate: (downloadProgress: DownloadProgressInfo) => {
-            downloadItem.currentSize = downloadProgress.transferredSize
-            if ( downloadItem.totalSize != downloadProgress.totalSize) {
-              downloadItem.totalSize = downloadProgress.totalSize
-            }
-            if ( downloadItem.status != DownloadStatus.Downloading) {
-              downloadItem.status = DownloadStatus.Downloading
-            }
-            let progress = Math.trunc( downloadProgress.transferredSize/downloadProgress.totalSize*10000) / 100
-            LNotificationManager.pushNotificationWithProgress(id,progress,`正在下载${progress}%`,decodedFilename)
+            let progress = Math.trunc(downloadProgress.transferredSize / downloadProgress.totalSize * 10000) / 100
+
+            downloadItem.progress = progress
+            LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`, decodedFilename)
+
             console.log(`onProgressUpdate:, download: transferred size:${downloadProgress.transferredSize}, total size:${downloadProgress.totalSize}`)
           },
+          onStart: () => {
+            downloadItem.status = DownloadStatus.Downloading
+          },
+          onCancel: () => {
+
+          },
+          onResume: () => {
+            downloadItem.status = DownloadStatus.Downloading
+          }
         };
 
 
@@ -336,20 +342,26 @@ export class zlibClient {
               fileDir: downloadPath,
               concurrency: 1
             };
-
             BackgroundUtil.startContinuousTask()
+
             XContext.toast($r('app.string.Tip_StartDownload'))
-            const downloadTask = __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener);
-            downloadItem.downLoadTask = downloadTask
+
+            downloadItem.downLoadTask =
+              __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener)
+
+            __Download__.downloadArray.pushData(downloadItem)
+
           } catch (e) {
-            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError'))+JSON.stringify(e),3000)
+            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(e),
+              3000)
           }
         }
         return [1, ''] as [number, string]
       }
     })
       .catch((err: BusinessError) => {
-        XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError'))+JSON.stringify(err),3000)
+        XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(err),
+          3000)
         return [0, JSON.stringify(err)] as [number, string]
       })
       .finally(() => {
