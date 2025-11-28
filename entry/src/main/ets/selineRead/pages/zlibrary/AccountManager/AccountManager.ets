@@ -24,7 +24,6 @@ export struct AccountManager{
             .onClick(()=>{
               this.pathStack.pushPathByName("ZlibraryAccount",null)
             })
-
         }.height('100%')
         .width('100%')
         .padding({left:16, right:16})

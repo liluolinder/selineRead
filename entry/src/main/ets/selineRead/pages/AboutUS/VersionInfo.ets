@@ -13,9 +13,8 @@ export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
       version: '1.1.1.0',
-      date: '2025/11/XXX',
-      addNewFunArray:['书架'],
-      optimizeArray:[]
+      date: '2025/11/25',
+      addNewFunArray:['书架(未完成)','zlib服务地址管理','下载任务查看','侧边栏中新增关于我们'],
     },
     {
       version: '1.0.0.0',

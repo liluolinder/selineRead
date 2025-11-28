@@ -8,6 +8,7 @@ export struct ListItemWithInput {
     @Param message: ResourceStr = ''
     @Param isEnabled: boolean = true
     @Param placeholder: ResourceStr = ''
+    @Param text:ResourceStr =''
     @Param animationDelayIndex: number = 0
     @Event returnFunc: (returnText: string) => void;
 
@@ -36,18 +37,16 @@ export struct ListItemWithInput {
                     .layoutWeight(1)
             }.layoutWeight(1)
 
-            TextInput({ placeholder: this.placeholder })
+            TextInput({ placeholder: this.placeholder,text:this.text })
                 .layoutWeight(1)
                 .width(140)
-                .onChange((value: string) => {
-                    this.returnFunc(value)
+                .onSubmit((enterKey: EnterKeyType, event: SubmitEvent)=> {
+                    this.returnFunc(event.text)
                 })
-                .backgroundColor('#00000000')
                 .textAlign(TextAlign.End)
 
         }
         .align(Alignment.Center)
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
         .height(55)
         .borderRadius(20)
         .padding({
@@ -58,10 +57,6 @@ export struct ListItemWithInput {
         })
         .enabled(this.isEnabled)
         .borderRadius($r('sys.float.corner_radius_level12'))
-        .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.Ease })
-            .combine(TransitionEffect.translate({ x: 0, y: 20 })
-                .combine(TransitionEffect.asymmetric(TransitionEffect.move(TransitionEdge.BOTTOM),
-                    TransitionEffect.move(TransitionEdge.BOTTOM)))
-                .animation({ curve: curves.responsiveSpringMotion(0.5, 0.85), delay: 120 * this.animationDelayIndex })))
+
     }
 }

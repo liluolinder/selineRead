@@ -6,9 +6,9 @@
         "type": "HarmonyOS",
         "material": {
           "storeFile": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/通用调试证书.p12",
-          "storePassword": "000000203B2B9D93D19F0D414E1D8377C18FA50C9707C0F73CB4954A650509C401E68089A13CE1070B28588238CB5221",
+          "storePassword": "000000201D8A282949B1E8183C1FBA8C1F503CD041F727A1BDB7DE9D22272A18C0408D13A2A4BE6C7D0B545EDA40C9A9",
           "keyAlias": "key",
-          "keyPassword": "00000020C007E9C6EE4146C25597353DE6C30EB238C425878ADD9E2F298541E6EF18A13D329E4605DCBEF42E95EA87A3",
+          "keyPassword": "000000206DDC28209A85CB1A58828AED7312E3425560F7455BE95EFCC65C5D46C69FC43974A8492D5940A43C46308CB2",
           "signAlg": "SHA256withECDSA",
           "profile": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/SelineReadDebug.p7b",
           "certpath": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/通用调试证书.cer"

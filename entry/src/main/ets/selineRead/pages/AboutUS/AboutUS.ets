@@ -14,6 +14,7 @@ export struct AboutUS {
     $r('app.string.Title_VersionInfo'),
     $r('app.string.Title_Appreciation'),
     $r('app.string.Title_Acknowledgments'),
+    $r('app.string.Title_OpenSourceReferences'),
     $r('app.string.Title_Meow'),
   ]
   @Local showZZ:boolean = false
@@ -83,6 +84,9 @@ export struct AboutUS {
                     this.pathStack.pushPathByName("Acknowledgments",null)
                     break;
                   case 3:
+                    this.pathStack.pushPathByName("OpenSource",null)
+                    break;
+                  case 4:
                     XContext.getAbilityContext().startAbility({
                       uri: 'https://www.chuckfang.com/MeoW/appLinking?channelId=c2ba80556f0c469faa03b98c7a44f933'
                     })

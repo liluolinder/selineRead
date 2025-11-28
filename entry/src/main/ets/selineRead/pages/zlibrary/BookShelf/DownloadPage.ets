@@ -24,8 +24,12 @@ export struct DownloadPage {
     NavDestination() {
       if (__Download__.downloadArray.dataArray.length == 0) {
         Column() {
-          Text('12412421')
-        }
+          Text('这里从未如此空旷')
+            .fontSize(26)
+            .fontWeight(FontWeight.Bold)
+        }.height('100%')
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
       } else {
         List({ space: 10 }) {
           LazyForEach(__Download__.downloadArray, (item: DownloadInfo) => {
@@ -59,7 +63,7 @@ export struct DownloadPage {
                     progress: item.progress,
                     progressButtonWidth: 68,
                     content: item.status == DownloadStatus.Complete ? '已完成' :
-                      item.status == DownloadStatus.Failed ? '失败' : '下载',
+                      item.status == DownloadStatus.Failed ? '失败' : item.status == DownloadStatus.Starting ? '启动中' :'下载',
                     enable: item.status != DownloadStatus.Complete,
                     clickCallback: () => {
                       if (item.downLoadTask) {

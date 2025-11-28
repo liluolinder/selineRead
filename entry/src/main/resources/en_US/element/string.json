@@ -119,6 +119,42 @@
     {
       "name": "Title_DownloadManager",
       "value": "Download Manager"
+    },
+    {
+      "name": "Title_Setting_zlib",
+      "value": "Setting for Zlibrary"
+    },
+    {
+      "name": "Title_ServerAddress",
+      "value": "Serve Address"
+    },
+    {
+      "name": "Tip_Success",
+      "value": "Success"
+    },
+    {
+      "name": "Tip_Failed",
+      "value": "Failed"
+    },
+    {
+      "name": "Tip_TapHereToType",
+      "value": "Tap here to type"
+    },
+    {
+      "name": "Title_OpenSourceReferences",
+      "value": "Open source project references"
+    },
+    {
+      "name": "Text_ProjectName",
+      "value": "Project Name"
+    },
+    {
+      "name": "Text_ProjectLicense",
+      "value": "Project License"
+    },
+    {
+      "name": "Text_GoTo",
+      "value": "Go To"
     }
   ]
 }

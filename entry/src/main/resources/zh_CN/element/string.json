@@ -119,6 +119,42 @@
     {
       "name": "Title_DownloadManager",
       "value": "下载管理"
+    },
+    {
+      "name": "Title_Setting_zlib",
+      "value": "Zlibrary设置"
+    },
+    {
+      "name": "Title_ServerAddress",
+      "value": "服务地址"
+    },
+    {
+      "name": "Tip_Success",
+      "value": "成功"
+    },
+    {
+      "name": "Tip_Failed",
+      "value": "失败"
+    },
+    {
+      "name": "Tip_TapHereToType",
+      "value": "点击输入文本"
+    },
+    {
+      "name": "Title_OpenSourceReferences",
+      "value": "开源项目引用"
+    },
+    {
+      "name": "Text_ProjectName",
+      "value": "项目名称"
+    },
+    {
+      "name": "Text_ProjectLicense",
+      "value": "项目协议"
+    },
+    {
+      "name": "Text_GoTo",
+      "value": "转跳"
     }
   ]
 }

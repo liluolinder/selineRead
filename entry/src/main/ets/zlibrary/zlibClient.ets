@@ -1,22 +1,19 @@
-import { http } from "@kit.NetworkKit";
-import { BusinessError, request } from "@kit.BasicServicesKit";
-import { firstDownloadInfo, I_BookDetailedInfo, I_BookInfo } from "../selineRead/models/interfaces/I_BookInfo";
-import { user_agent } from "../selineRead/commons/commonItem";
-import { CJLoader } from "./CJloader/CJLoader";
-import { I_LoginRes } from "./interface/I_loginInfo";
-import { I_BasicUserInfo, I_UserDownloadLimitAndDonation, I_ZlibUserInfo } from "./interface/I_ZlibUserInfo";
-import { JSON } from "@kit.ArkTS";
-import { __Download__, __ZlibUser__ } from "../selineRead/commons/shareDatas";
-import { LNotificationManager, XContext, XPreferencesManager } from "commonpackage";
-import { I_trulyDownloadUrl } from "./interface/I_DownloadInfo";
-import { fileIo } from "@kit.CoreFileKit";
-import { promptAction } from "@kit.ArkUI";
-import { DownloadConfig, DownloadListener, DownloadProgressInfo, DownloadTask } from "@hadss/super_fast_file_trans";
-import { I_searchBook } from "./interface/I_SearchInfo";
-import { backgroundProcessManager } from "@kit.BackgroundTasksKit";
-import { BackgroundUtil } from "../selineRead/models/classes/BackgroundRunningManager";
-import { shareBook } from "../selineRead/models/utils/ShareBook";
-import { DownloadInfo, DownloadStatus } from "../selineRead/models/classes/DownloadInfo";
+import { http } from '@kit.NetworkKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { firstDownloadInfo, I_BookDetailedInfo, I_BookInfo } from '../selineRead/models/interfaces/I_BookInfo';
+import { user_agent } from '../selineRead/commons/commonItem';
+import { CJLoader } from './CJloader/CJLoader';
+import { I_LoginRes } from './interface/I_loginInfo';
+import { I_BasicUserInfo, I_UserDownloadLimitAndDonation, I_ZlibUserInfo } from './interface/I_ZlibUserInfo';
+import { JSON } from '@kit.ArkTS';
+import { __Download__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
+import { LNotificationManager, XContext, XPreferencesManager } from 'commonpackage';
+import { I_trulyDownloadUrl } from './interface/I_DownloadInfo';
+import { DownloadConfig, DownloadListener, DownloadProgressInfo } from '@hadss/super_fast_file_trans';
+import { I_searchBook } from './interface/I_SearchInfo';
+import { BackgroundUtil } from '../selineRead/models/classes/BackgroundRunningManager';
+import { shareBook } from '../selineRead/models/utils/ShareBook';
+import { DownloadInfo, DownloadStatus } from '../selineRead/models/classes/DownloadInfo';
 
 export class zlibClient {
   static async refreshUrl(): Promise<[number, string]> {
@@ -36,7 +33,6 @@ export class zlibClient {
           __ZlibUser__.base_url = location
           __ZlibUser__.baseApi_url = location + '/papi'
           XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", location)
-
         }
         return [1, __ZlibUser__.base_url] as [number, string]
       } catch (err) {
@@ -163,6 +159,7 @@ export class zlibClient {
         req.destroy()
       });
   }
+
 
   /*
   @Param req http请求体
@@ -325,7 +322,7 @@ export class zlibClient {
             downloadItem.status = DownloadStatus.Starting
             console.log(`正在开始`)
           },
-          onCancel:()=>{
+          onCancel: () => {
             downloadItem.status = DownloadStatus.Cancel
             console.log(`正在取消`)
           }
@@ -346,7 +343,7 @@ export class zlibClient {
 
             downloadItem.downLoadTask =
               __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener)
-
+            downloadItem.downLoadTask?.start()
             __Download__.downloadArray.pushUnshiftData(downloadItem)
 
           } catch (e) {

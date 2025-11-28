@@ -21,6 +21,7 @@ export struct Body {
         __UI__.isShowSideBar = false
       })
     }
+
     switch (this.currentTabIndex){
       case 1:
         __BookShelf__.bookList.clearData()
@@ -28,6 +29,7 @@ export struct Body {
           console.log(item)
           __BookShelf__.bookList.pushData(item)
         })
+
         break;
 
     }
