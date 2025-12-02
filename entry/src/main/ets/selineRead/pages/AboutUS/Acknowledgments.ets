@@ -18,7 +18,7 @@ export struct Acknowledgments {
       list: [
         {
           name: '逝水秋生白',
-          info: 'LiqD创始人,技术支持',
+          info: '技术',
           avatar: 'https://cdn-img.gitcode.com/ef/ea/e8f2031e20af14b49d3af2f95fbab0ab9d3174554926d8c067e9d0d603f9adcf.png',
           bilibili: '476197206',
           appInfo: 'Lookless',
@@ -28,7 +28,7 @@ export struct Acknowledgments {
         {
           name: '鱼-salmon',
           info: '前端开发',
-          avatar: 'https://cdn-img.gitcode.com/bc/cf/0bccfbf3a76b918e950c96444d7f244c0c237da5b50d0cd9c594bae061295ace.jpg',
+          avatar: 'https://cdn-img.gitcode.com/be/ff/b7e437ff32527e7b59cab8cefeef325d65a0863cda31456df5bb77f8764e2634.png',
           bilibili: '299579466',
           appInfo: '溏心音乐',
           appBundle: 'com.salmon.sweetmusic',
@@ -37,7 +37,7 @@ export struct Acknowledgments {
         {
           name: '乂心',
           info: '全栈开发',
-          avatar: 'https://file.atomgit.com/uploads/user/1755279040850_9559.png',
+          avatar: 'https://cdn-img.gitcode.com/ed/be/e79dbe092b5f4902febb52b28a29508acbec52df640aeebfaee8ba42a80c7829.png',
           bilibili: '441929890',
           appInfo: '像素匠',
           appBundle: 'com.soulharbor.pixelartisan',
@@ -229,9 +229,9 @@ export struct Acknowledgments {
         }
         .layoutWeight(1)
         .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
-        .chainAnimation(true)
         .margin({ left: 16, right: 16 })
         .height('100%')
+        .chainAnimation(true)
         .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
         .scrollSnapAlign(ScrollSnapAlign.START)
         .scrollBar(BarState.Off)

@@ -12,9 +12,9 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
-      version: '1.1.1.0',
-      date: '2025/11/25',
-      addNewFunArray:['书架(未完成)','zlib服务地址管理','下载任务查看','侧边栏中新增关于我们'],
+      version: '1.1.1.3',
+      date: '2025/12/2',
+      addNewFunArray:['书架(未完成)','zlib服务地址管理','下载任务查看','侧边栏中新增关于我们','展示开源项目引用(关于我们)','提供跳转老版本链接(关于我们)'],
     },
     {
       version: '1.0.0.0',

@@ -25,13 +25,31 @@ export class RelationStoreManager{
           const ZlibraryAccountTable =
             'CREATE TABLE IF NOT EXISTS ZlibraryAccount (ID INTEGER PRIMARY KEY AUTOINCREMENT, Account TEXT KEY, Password TEXT, Cookie TEXT)';
           //创建表单
-          await store.execute(ZlibraryAccountTable)
-          storeVersion = 1
+          await store.execute(ZlibraryAccountTable).then((res)=>{
+            console.log(JSON.stringify(res))
+          })
+
+          storeVersion = 1 //2
         } catch (e) {
           const err = e as BusinessError;
           console.error(`Failed to execute sql. Code:${err.code}, message:${err.message}`);
         }
       }
+      if (storeVersion == 1) {
+        try {
+          const DownloadTable =
+            'CREATE TABLE IF NOT EXISTS DownloadTable (ID INTEGER PRIMARY KEY AUTOINCREMENT, Account TEXT KEY, Password TEXT, Cookie TEXT)';
+          //创建表单
+
+
+          storeVersion = 2
+        } catch (e) {
+          const err = e as BusinessError;
+          console.error(`Failed to execute sql. Code:${err.code}, message:${err.message}`);
+        }
+      }
+      
+      
       store.version = storeVersion;
       return store
     }).catch((err:BusinessError)=>{
