@@ -21,12 +21,11 @@ export function BookInfoBuilder() {
 @ComponentV2
 export struct BookInfo {
   pageInfos: NavPathStack = new NavPathStack()
-  @Local errorText:string=''
+  @Local errorText: string = ''
   @Local bookInfo: I_BookDetailedInfo | undefined = undefined
   @Local downloadInfoArray: I_DownloadInfo[] = []
   @Local isShowDownloadMenu: boolean = false
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
-
   @Local pageWidth: number = -1
   @Local isViewingBigImage: boolean = false
   @Local pageOpacity: number = 0
@@ -37,67 +36,67 @@ export struct BookInfo {
   recommendPage: number = 1
   commitPage: number = 1
 
-/*  @Builder
-  commentPageBuilder() {
-    Column() {
-      List({ space: 10 }) {
-        LazyForEach(zlibClient.bookCommentArray, (item: I_BookComment) => {
-          ListItem() {
-            Column({ space: 6 }) {
-              Row({ space: 6 }) {
-                if (item.user.avatar.length == 0) {
-                  Stack() {
-                    SymbolGlyph($r('sys.symbol.person')).fontColor([$r('sys.color.font')]).fontSize(16)
+  /*  @Builder
+    commentPageBuilder() {
+      Column() {
+        List({ space: 10 }) {
+          LazyForEach(zlibClient.bookCommentArray, (item: I_BookComment) => {
+            ListItem() {
+              Column({ space: 6 }) {
+                Row({ space: 6 }) {
+                  if (item.user.avatar.length == 0) {
+                    Stack() {
+                      SymbolGlyph($r('sys.symbol.person')).fontColor([$r('sys.color.font')]).fontSize(16)
+                    }
+                    .size({ width: 24, height: 24 })
+                    .backgroundColor($r('sys.color.comp_background_gray'))
+                    .borderRadius('50%')
+                    .opacity(0.7)
+                  } else {
+                    Image(item.user.avatar).size({ width: 24, height: 24 }).borderRadius('50%').clip(true)
                   }
-                  .size({ width: 24, height: 24 })
-                  .backgroundColor($r('sys.color.comp_background_gray'))
-                  .borderRadius('50%')
-                  .opacity(0.7)
-                } else {
-                  Image(item.user.avatar).size({ width: 24, height: 24 }).borderRadius('50%').clip(true)
+                  Text(item.user.name).fontSize(18).fontWeight(FontWeight.Medium).opacity(0.8)
                 }
-                Text(item.user.name).fontSize(18).fontWeight(FontWeight.Medium).opacity(0.8)
-              }
 
-              Text(item.text).fontSize(17)
-              Text(item.date).width('100%').textAlign(TextAlign.End).fontSize(10).opacity(0.5)
-            }.alignItems(HorizontalAlign.Start).width('100%')
-          }
-          .width('100%')
-          .padding({
-            left: 15,
-            right: 15,
-            top: 10,
-            bottom: 10
+                Text(item.text).fontSize(17)
+                Text(item.date).width('100%').textAlign(TextAlign.End).fontSize(10).opacity(0.5)
+              }.alignItems(HorizontalAlign.Start).width('100%')
+            }
+            .width('100%')
+            .padding({
+              left: 15,
+              right: 15,
+              top: 10,
+              bottom: 10
+            })
+            .transition(TransitionEffect.OPACITY
+              .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+              .animation({ curve: curves.springMotion(0.5, 0.7) }))
+            .backgroundColor($r('sys.color.comp_background_list_card'))
+            .borderRadius(20)
           })
-          .transition(TransitionEffect.OPACITY
-            .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
-            .animation({ curve: curves.springMotion(0.5, 0.7) }))
-          .backgroundColor($r('sys.color.comp_background_list_card'))
-          .borderRadius(20)
+        }
+        .onScrollStart(()=>{
+          setTimeout(()=>{
+            __UI__.hideBars()
+          }, 50)
         })
-      }
-      .onScrollStart(()=>{
-        setTimeout(()=>{
-          __UI__.hideBars()
-        }, 50)
-      })
-      .layoutWeight(1)
-      .contentEndOffset(16)
-      .chainAnimation(true)
-      .clip(true)
-      .borderRadius({ topLeft: 20, topRight: 20 })
-      .margin({ left: 16, right: 16 })
-      .scrollBar(BarState.Off)
-      .onReachEnd(() => {
-        zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage + 1).then((get) => {
-          if (get) {
-            this.commitPage++
-          }
+        .layoutWeight(1)
+        .contentEndOffset(16)
+        .chainAnimation(true)
+        .clip(true)
+        .borderRadius({ topLeft: 20, topRight: 20 })
+        .margin({ left: 16, right: 16 })
+        .scrollBar(BarState.Off)
+        .onReachEnd(() => {
+          zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage + 1).then((get) => {
+            if (get) {
+              this.commitPage++
+            }
+          })
         })
-      })
-    }.size({ width: '100%', height: '100%' })
-  }*/
+      }.size({ width: '100%', height: '100%' })
+    }*/
 
   @Builder
   DownloadMenu() {
@@ -105,8 +104,8 @@ export struct BookInfo {
       ForEach(this.downloadInfoArray, (item: I_DownloadInfo) => {
         MenuItem({ content: item.extension, labelInfo: item.filesizeString })
           .onClick(() => {
-            zlibClient.downloadBook(item.href??'',this.bookInfo!).then((res)=>{
-              if (res[0]==0) {
+            zlibClient.downloadBook(item.href ?? '', this.bookInfo!).then((res) => {
+              if (res[0] == 0) {
                 this.errorText = res[1]
               }
             })
@@ -123,13 +122,13 @@ export struct BookInfo {
         })
           .zIndex(114514)
       } else {
-        Stack(){
-          Scroll(){
-            Column(){
+        Stack() {
+          Scroll() {
+            Column() {
               List({ space: 10 }) {
                 ListItem() {
                   Row({ space: 20 }) {
-                    BookCover({data: this.bookInfo?.image})
+                    BookCover({ data: this.bookInfo?.image })
                       .transition(TransitionEffect.OPACITY)
                       .geometryTransition('image')
                       .size({ height: 160, width: 116 })
@@ -201,33 +200,33 @@ export struct BookInfo {
 
                 ListItemGroup() {
                   ListItemWithText({
-                    leftMessage:$r('app.string.Text_Rate'),
-                    rightMessage:this.bookInfo?.review.reviewRating.ratingValue
+                    leftMessage: $r('app.string.Text_Rate'),
+                    rightMessage: this.bookInfo?.review.reviewRating.ratingValue
                   })
 
                   ListItemWithText({
-                    leftMessage:$r('app.string.Text_Language'),
-                    rightMessage:this.bookInfo?.inLanguage.name
+                    leftMessage: $r('app.string.Text_Language'),
+                    rightMessage: this.bookInfo?.inLanguage.name
                   })
 
                   ListItemWithText({
-                    leftMessage:'ISBN',
-                    rightMessage:this.bookInfo?.isbn == '' ? '???' : this.bookInfo?.isbn
+                    leftMessage: 'ISBN',
+                    rightMessage: this.bookInfo?.isbn == '' ? '???' : this.bookInfo?.isbn
                   })
 
                   ListItemWithText({
-                    leftMessage:$r('app.string.Text_Publisher'),
-                    rightMessage:this.bookInfo?.publisher.name == '' ? '???' : this.bookInfo?.publisher.name
+                    leftMessage: $r('app.string.Text_Publisher'),
+                    rightMessage: this.bookInfo?.publisher.name == '' ? '???' : this.bookInfo?.publisher.name
                   })
 
                   ListItemWithText({
-                    leftMessage:$r('app.string.Text_PublishYear'),
-                    rightMessage:this.bookInfo?.datePublished?.toString() ?? '???'
+                    leftMessage: $r('app.string.Text_PublishYear'),
+                    rightMessage: this.bookInfo?.datePublished?.toString() ?? '???'
                   })
 
                   ListItemWithText({
-                    leftMessage:$r('app.string.Text_TotalPage'),
-                    rightMessage:this.bookInfo?.numberOfPages! <= 0 ? '???' : this.bookInfo?.numberOfPages.toString()
+                    leftMessage: $r('app.string.Text_TotalPage'),
+                    rightMessage: this.bookInfo?.numberOfPages! <= 0 ? '???' : this.bookInfo?.numberOfPages.toString()
                   })
 
 
@@ -281,8 +280,8 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
-                    zlibClient.downloadBook(this.bookInfo?.firstDownloadUrl??'',this.bookInfo!).then((res)=>{
-                      if (res[0]==0) {
+                    zlibClient.downloadBook(this.bookInfo?.firstDownloadUrl ?? '', this.bookInfo!).then((res) => {
+                      if (res[0] == 0) {
                         this.errorText = res[1]
                       }
                     })
@@ -310,11 +309,11 @@ export struct BookInfo {
                   })
                   .onClick(async () => {
                     let req = http.createHttp()
-                    await zlibClient.getMoreDownloadWay(req,this.bookInfo?.bookID!).then((res)=>{
+                    await zlibClient.getMoreDownloadWay(req, this.bookInfo?.bookID!).then((res) => {
                       console.log(JSON.stringify(res))
                       if (res[0] == 1) {
-                        let downloadWayArray:I_DownloadInfo[] = JSON.parse(res[1])
-                        if (!downloadWayArray||downloadWayArray.length == 0 ) {
+                        let downloadWayArray: I_DownloadInfo[] = JSON.parse(res[1])
+                        if (!downloadWayArray || downloadWayArray.length == 0) {
                           this.downloadInfoArray = [
                             {
                               id: 0,
@@ -323,10 +322,10 @@ export struct BookInfo {
                               href: ""
                             }
                           ]
-                        }else {
+                        } else {
                           this.downloadInfoArray = downloadWayArray
                         }
-                      }else{
+                      } else {
                         this.downloadInfoArray = [
                           {
                             id: 0,
@@ -345,20 +344,24 @@ export struct BookInfo {
               .scrollBar(BarState.Off)
               .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
               .lanes(this.pageWidth > min_width ? 2 : 1, 10)
-              .borderRadius({topLeft: 20, topRight: 20})
+              .borderRadius({ topLeft: 20, topRight: 20 })
               .clip(true)
-              .margin({ left: Math.max(16, __System__.leftRectHeight), right: Math.max(16, __System__.rightRectHeight) })
+              .margin({
+                left: Math.max(16, __System__.leftRectHeight),
+                right: Math.max(16, __System__.rightRectHeight)
+              })
               .chainAnimation(true)
               .nestedScroll({
                 scrollForward: NestedScrollMode.SELF_FIRST,
                 scrollBackward: NestedScrollMode.PARENT_FIRST
               })
             }
-          }.height('100%')
+          }
+          .height('100%')
           .align(Alignment.Top)
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
-          .borderRadius({topLeft: 20, topRight: 20})
+          .borderRadius({ topLeft: 20, topRight: 20 })
           .clip(true)
 
 
@@ -366,15 +369,22 @@ export struct BookInfo {
             Stack() {
               Column({ space: 10 }) {
                 LoadingProgress().size({ width: 100, height: 100 })
-                Text(XContext.getStringFromResource($r('app.string.Tip_GettingError'))+'\n'+this.errorText).fontSize(20).fontWeight(FontWeight.Medium).textAlign(TextAlign.Center)
+                Text(XContext.getStringFromResource($r('app.string.Tip_GettingError')) + '\n' + this.errorText)
+                  .fontSize(20)
+                  .fontWeight(FontWeight.Medium)
+                  .textAlign(TextAlign.Center)
                 Button('知道了')
                   .backgroundColor($r('sys.color.button_background_color_transparent'))
                   .fontColor($r('sys.color.font'))
-                  .padding({left:32,right:32})
-                  .onClick(()=>{
+                  .padding({ left: 32, right: 32 })
+                  .onClick(() => {
                     this.errorText = ''
                   })
-              }.borderRadius(20).padding(20).backgroundColor($r('app.color.start_window_background_blur')).backdropBlur(100)
+              }
+              .borderRadius(20)
+              .padding(20)
+              .backgroundColor($r('app.color.start_window_background_blur'))
+              .backdropBlur(100)
             }
             .size({ width: '100%', height: '100%' })
             .padding(16)
@@ -449,31 +459,36 @@ export struct BookInfo {
 }
 
 
-
-
 @ComponentV2
-export struct BookCover{
-  @Param @Require data: ResourceStr|undefined
+export struct BookCover {
+  @Param @Require data: ResourceStr | undefined
   @Param haveShadow: boolean = true
-  @Param imageFit:ImageFit = ImageFit.Contain
+  @Param imageFit: ImageFit = ImageFit.Contain
   @Local private isFinish: boolean = false
 
   build() {
-    Stack(){
-      Image($r('app.media.default_cover')).aspectRatio(0.71).visibility(this.isFinish? Visibility.None: Visibility.Visible).animation({duration: 100}).draggable(false).objectFit(ImageFit.Cover)
-      Image(this.data ?? $r('app.media.default_cover')).visibility(this.isFinish? Visibility.Visible: Visibility.Hidden).animation({duration: 100}).draggable(false).objectFit(this.imageFit)
-        .onComplete(()=>{
+    Stack() {
+      Image($r('app.media.default_cover'))
+        .aspectRatio(0.71)
+        .visibility(this.isFinish ? Visibility.None : Visibility.Visible)
+        .animation({ duration: 100 })
+        .draggable(false)
+        .objectFit(ImageFit.Cover)
+      Image(this.data ?? $r('app.media.default_cover'))
+        .visibility(this.isFinish ? Visibility.Visible : Visibility.Hidden)
+        .animation({ duration: 100 })
+        .draggable(false)
+        .objectFit(this.imageFit)
+        .onComplete(() => {
           this.isFinish = true
         })
     }
     .reuseId(this.data?.toString())
     .shadow({
-      radius: this.haveShadow? 25: 0,
+      radius: this.haveShadow ? 25 : 0,
       color: Color.Gray,
       offsetX: 0,
       offsetY: 10
     })
   }
-
-
 }

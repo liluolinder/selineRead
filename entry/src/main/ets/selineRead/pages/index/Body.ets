@@ -1,12 +1,13 @@
 import { XAnimation, XContext, XPreferencesManager } from "commonpackage";
 import { zlibClient } from "../../../zlibrary/zlibClient";
 import { min_width } from "../../commons/commonItem";
-import { __System__, __UI__ } from "../../commons/shareDatas";
+import { __System__, __UI__, __ZlibUser__ } from "../../commons/shareDatas";
 import { Home, __Home__ } from "../zlibrary/Home/Home";
 import { http } from "@kit.NetworkKit";
 import { I_BookInfo } from "../../models/interfaces/I_BookInfo";
 import { BookShelf, __BookShelf__ } from "../zlibrary/BookShelf/BookShelf";
 import { fileIo } from "@kit.CoreFileKit";
+import { RelationStoreManager } from "../../models/classes/DataBase";
 
 @ComponentV2
 export struct Body {
@@ -29,6 +30,8 @@ export struct Body {
           console.log(item)
           __BookShelf__.bookList.pushData(item)
         })
+
+        RelationStoreManager.getZlibDownload(__ZlibUser__.dataBase)
 
         break;
 

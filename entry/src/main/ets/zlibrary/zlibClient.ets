@@ -14,6 +14,7 @@ import { I_searchBook } from './interface/I_SearchInfo';
 import { BackgroundUtil } from '../selineRead/models/classes/BackgroundRunningManager';
 import { shareBook } from '../selineRead/models/utils/ShareBook';
 import { DownloadInfo, DownloadStatus } from '../selineRead/models/classes/DownloadInfo';
+import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
 
 export class zlibClient {
   static async refreshUrl(): Promise<[number, string]> {
@@ -340,6 +341,18 @@ export class zlibClient {
             BackgroundUtil.startContinuousTask()
 
             XContext.toast($r('app.string.Tip_StartDownload'))
+
+            await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
+              BookID: bookInfo.bookID ?? 0,
+              BookHref: bookInfo.href??'',
+              BookName: bookInfo.name,
+              BookAuthor: JSON.stringify(bookInfo.author),
+              BookPublisher: bookInfo.publisher.name,
+              BookImage: bookInfo.image,
+              BookDownLoadTime: (new Date()).toISOString(),
+              HaveDownload: 0
+            })
+
 
             downloadItem.downLoadTask =
               __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener)

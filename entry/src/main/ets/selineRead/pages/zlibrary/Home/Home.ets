@@ -1,7 +1,7 @@
 import { curves, LengthMetrics, UIUtils } from "@kit.ArkUI"
 import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from "commonpackage"
 import { min_width } from "../../../commons/commonItem"
-import { __System__, __UI__ } from "../../../commons/shareDatas"
+import { __System__, __UI__, __ZlibUser__ } from "../../../commons/shareDatas"
 import { I_BookDetailedInfo, I_BookInfo } from "../../../models/interfaces/I_BookInfo"
 import { http } from "@kit.NetworkKit"
 import { zlibClient } from "../../../../zlibrary/zlibClient"
@@ -10,6 +10,7 @@ import { loadingDialog, loadingNewDialog } from "../../../components/LoadingNewD
 import { resourceManager } from "@kit.LocalizationKit"
 import { I_searchBook } from "../../../../zlibrary/interface/I_SearchInfo"
 import { I_SearchHistory } from "../../../models/interfaces/I_SearchHistory"
+import { RelationStoreManager } from "../../../models/classes/DataBase"
 
 
 @ObservedV2
@@ -41,7 +42,7 @@ export struct Home {
   @Local isOpenBook:boolean = false
   @Local recommendOrSearch:number = 0
   @Local searchWord:string =''
-  
+
   build() {
     Stack({ alignContent: Alignment.Top }) {
       Row({ space: 10 }) {
@@ -395,6 +396,7 @@ export struct HomeBookCover {
           .objectFit(this.imageFit)
           .aspectRatio(2/3)
           .autoResize(true)
+          .draggable(false)
           .onComplete((res) => {
             if(res?.width && res?.width > 0 && res?.height && res?.height > 0) this.isFinish = true
           })
@@ -404,6 +406,7 @@ export struct HomeBookCover {
             .objectFit(this.imageFit)
             .aspectRatio(2/3)
             .autoResize(true)
+            .draggable(false)
         }
       }.aspectRatio(2/3)
       .clip(true)
