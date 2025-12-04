@@ -1,8 +1,10 @@
 import { XAnimation, XContext } from 'commonpackage';
 import { zlibClient } from '../../zlibrary/zlibClient';
 import { min_width } from '../commons/commonItem';
-import { __System__, __UI__ } from '../commons/shareDatas';
+import { __System__, __UI__, __ZlibUser__ } from '../commons/shareDatas';
 import { DecorBar } from '../components/DecorBar';
+import { RelationStoreManager } from '../models/classes/DataBase';
+import { deleteDownloadCache } from '../models/utils/ClearDownloadCache';
 import { Body } from './index/Body';
 import { SideBar } from './index/SideBar';
 import { __Home__ } from './zlibrary/Home/Home';
@@ -14,6 +16,10 @@ struct Index {
   @Provider('tabController') tabController: TabsController = new TabsController();
   @Provider('currentTabIndex') currentTabIndex: number = 0
 
+  aboutToAppear(): void {
+    deleteDownloadCache()
+
+  }
 
   build() {
     Stack({ alignContent: Alignment.TopStart }) {

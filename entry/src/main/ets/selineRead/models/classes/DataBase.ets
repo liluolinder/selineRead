@@ -157,6 +157,8 @@ export class RelationStoreManager {
         console.log(`查询失败${JSON.stringify(res)}}`)
       })
       )
+    }else {
+      console.log(`数据库错误`)
     }
   }
 }

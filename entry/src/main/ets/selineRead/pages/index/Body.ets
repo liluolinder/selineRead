@@ -75,8 +75,6 @@ export struct Body {
         }
       })
     })
-
-    RelationStoreManager.getZlibDownload(__ZlibUser__.dataBase)
   }
 
   build() {

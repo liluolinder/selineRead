@@ -19,11 +19,18 @@ export default class EntryAbility extends UIAbility {
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
       XPreferencesManager.localPreferences(this.context, 'selineRead');
       initPreferences()
-      RelationStoreManager.CreateDataBase(this.context).then((store)=>{
+      await RelationStoreManager.CreateDataBase(this.context).then((store)=>{
         __ZlibUser__.dataBase = store
       })
       __ZlibUser__.downloadManager =  DownloadManager.getInstance();
-      deleteDownloadCache()
+
+      try {
+        RelationStoreManager.getZlibDownload(__ZlibUser__.dataBase)
+      }catch (e)
+      {
+        console.log(`读取数据库失败${JSON.stringify(e)}`)
+      }
+
       await  __ZlibUser__.downloadManager.init(this.context);
     } catch (err) {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
