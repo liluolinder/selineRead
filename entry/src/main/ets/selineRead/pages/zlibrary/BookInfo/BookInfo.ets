@@ -310,7 +310,6 @@ export struct BookInfo {
                   .onClick(async () => {
                     let req = http.createHttp()
                     await zlibClient.getMoreDownloadWay(req, this.bookInfo?.bookID!).then((res) => {
-                      console.log(JSON.stringify(res))
                       if (res[0] == 1) {
                         let downloadWayArray: I_DownloadInfo[] = JSON.parse(res[1])
                         if (!downloadWayArray || downloadWayArray.length == 0) {

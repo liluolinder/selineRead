@@ -92,6 +92,11 @@ export struct SideBar {
               })
                 .onClick(() => {
                   this.tabController.changeIndex(index)
+                  if (__System__.windowWidth < min_width) {
+                    XAnimation.runWithAnimation(() => {
+                      __UI__.isShowSideBar = false
+                    })
+                  }
                   if (this.currentTabIndex != index) {
                     switch (index) {
                       case 0:

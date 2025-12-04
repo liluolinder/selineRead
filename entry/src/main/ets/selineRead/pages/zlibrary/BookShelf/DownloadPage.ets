@@ -14,17 +14,11 @@ export function DownloadPageBuilder() {
 export struct DownloadPage {
   @Local num: number = 1
 
-  aboutToAppear(): void {
-    console.log(JSON.stringify(__Download__.downloadArray))
-    console.log(JSON.stringify(__Download__.downloadArray.totalCount()))
-
-  }
-
   build() {
     NavDestination() {
       if (__Download__.downloadArray.dataArray.length == 0) {
         Column() {
-          Text('这里从未如此空旷')
+          Text($r('app.string.Tip_ThereAreNotEmptyAnyMore'))
             .fontSize(26)
             .fontWeight(FontWeight.Bold)
         }.height('100%')
@@ -53,8 +47,6 @@ export struct DownloadPage {
                     .fontSize(20)
                     .fontWeight(FontWeight.Medium)
                     .maxLines(1)
-
-
                 }
                 .layoutWeight(1)
 
@@ -64,7 +56,7 @@ export struct DownloadPage {
                     progressButtonWidth: 68,
                     content: item.status == DownloadStatus.Complete ? '已完成' :
                       item.status == DownloadStatus.Failed ? '失败' : item.status == DownloadStatus.Starting ? '启动中' :'下载',
-                    enable: item.status != DownloadStatus.Complete,
+                    enable: item.status != DownloadStatus.Complete && item.status != DownloadStatus.Failed,
                     clickCallback: () => {
                       if (item.downLoadTask) {
                         switch (item.status) {

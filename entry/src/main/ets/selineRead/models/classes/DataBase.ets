@@ -3,8 +3,9 @@ import { BusinessError } from "@kit.BasicServicesKit";
 import { XContext } from "commonpackage";
 import { common } from "@kit.AbilityKit";
 import { I_ZlibUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
-import { ZlibUser, __ZlibUser__ } from "../../commons/shareDatas";
+import { ZlibUser, __Download__, __ZlibUser__ } from "../../commons/shareDatas";
 import { ZlibUserInfo } from "../../../zlibrary/classes/UserInfo";
+import { DownloadInfo, DownloadStatus } from "./DownloadInfo";
 
 export class RelationStoreManager {
   static async CreateDataBase(context: common.Context): Promise<relationalStore.RdbStore | undefined> {
@@ -78,6 +79,18 @@ export class RelationStoreManager {
     }
   }
 
+  static async updateValue(store: relationalStore.RdbStore | undefined, predicates:relationalStore.RdbPredicates, value: relationalStore.ValuesBucket){
+    if (store !== undefined) {
+      (store as relationalStore.RdbStore).update(value, predicates, (err: BusinessError, rows: number) => {
+        if (err) {
+          console.error(`更新数据失败 Code:${err.code}, message:${err.message}`);
+          return;
+        }
+        console.info(`成功更新数据. row count: ${rows}`);
+      })
+    }
+  }
+
   static async getZlibAccount(store: relationalStore.RdbStore | undefined, needClear: boolean = true) {
     if (store) {
       await ((store as relationalStore.RdbStore).query(new relationalStore.RdbPredicates('ZlibraryAccount'),
@@ -115,7 +128,6 @@ export class RelationStoreManager {
         {
           console.info(`ResultSet column names: ${resultSet.columnNames}, column count: ${resultSet.columnCount}`);
           while (resultSet.goToNextRow()) {
-            const id = resultSet.getLong(resultSet.getColumnIndex('ID'));
             const bookId = resultSet.getLong(resultSet.getColumnIndex('BookID'));
             const bookHref = resultSet.getString(resultSet.getColumnIndex('BookHref'));
             const bookName = resultSet.getString(resultSet.getColumnIndex('BookName'));
@@ -124,7 +136,20 @@ export class RelationStoreManager {
             const bookImage = resultSet.getString(resultSet.getColumnIndex('BookImage'));
             const bookDownloadTime = resultSet.getString(resultSet.getColumnIndex('BookDownLoadTime'));
             const haveDownload = resultSet.getLong(resultSet.getColumnIndex('HaveDownload'));
-            console.log(`${id}`+`${bookId}`+`${bookHref}`+`${bookName}`+`${bookAuthor}`+`${bookPublisher}`+`${bookImage}`);
+            let item: DownloadInfo = new DownloadInfo()
+
+            item.fileName = bookName
+            item.fileImage = bookImage
+            item.bookAuthor = bookAuthor
+            item.bookHref = bookHref
+            item.bookId = bookId
+
+            item.status = (haveDownload == 1 ? DownloadStatus.Complete : DownloadStatus.Failed)
+            console.log(haveDownload.toString())
+            __Download__.downloadArray.pushUnshiftData(item)
+
+
+
           }
           resultSet.close();
         }

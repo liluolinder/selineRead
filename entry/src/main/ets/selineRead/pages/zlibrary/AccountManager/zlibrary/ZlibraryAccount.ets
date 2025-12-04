@@ -28,7 +28,6 @@ export struct ZlibraryAccount {
 
   async aboutToAppear(): Promise<void> {
     await RelationStoreManager.getZlibAccount(__ZlibUser__.dataBase)
-    console.log(__ZlibUser__.accountIndex.toString())
     if (__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]) {
       zlibClient.getPersonInfo(__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].cookie ?? '')
         .then((res) => {

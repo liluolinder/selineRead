@@ -9,6 +9,7 @@ import { initPreferences } from '../selineRead/models/utils/initPreferences';
 import { DownloadManager } from '@hadss/super_fast_file_trans';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { deleteDownloadCache } from '../selineRead/models/utils/ClearDownloadCache';
 
 const DOMAIN = 0x0000;
 
@@ -22,6 +23,7 @@ export default class EntryAbility extends UIAbility {
         __ZlibUser__.dataBase = store
       })
       __ZlibUser__.downloadManager =  DownloadManager.getInstance();
+      deleteDownloadCache()
       await  __ZlibUser__.downloadManager.init(this.context);
     } catch (err) {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));

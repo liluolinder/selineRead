@@ -20,6 +20,8 @@ export class HomeData {
   @Trace recommendBookIndex: number = 1
   @Trace searchBookIndex: number = 1
   @Trace errorText:string = ''
+  @Trace recommendOrSearch:number = 0
+  @Trace searchWord:string =''
 
   req = http.createHttp()
 
@@ -40,17 +42,15 @@ export struct Home {
   @Local TileColumnNumber: number = -1
   @Local columnNumber: number = 0
   @Local isOpenBook:boolean = false
-  @Local recommendOrSearch:number = 0
-  @Local searchWord:string =''
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
       Row({ space: 10 }) {
-        Search({ value: this.searchWord })
+        Search({ value: __Home__.searchWord })
           .width(__Home__.inSearchMode ? '100%' : "45%")
           .focusable(__Home__.inSearchMode)
           .backgroundColor($r('app.color.start_window_background_blur'))
-          .enableKeyboardOnFocus(this.recommendOrSearch==1)
+          .enableKeyboardOnFocus(__Home__.recommendOrSearch==1)
           .backdropBlur(100)
           .useEffect(true)
           .layoutWeight(1)
@@ -59,10 +59,11 @@ export struct Home {
               __Home__.inSearchMode = false
             })
             if (value != '') {
-              this.recommendOrSearch = 1
+              __Home__.recommendOrSearch = 1
               __Home__.req = http.createHttp()
               __Home__.searchBookArray.clearData()
-              zlibClient.searchBook(__Home__.req,this.searchWord,__Home__.searchBookIndex).then((res) => {
+              __Home__.searchWord = value
+              zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                 if (res[0] == 1) {
                   __Home__.recommendBookIndex ++
                   (JSON.parse(res[1]) as I_searchBook[]).forEach((item) => {
@@ -86,11 +87,11 @@ export struct Home {
           .onChange((value: string) => {
             if (value == '' || value == undefined) {
               XAnimation.runWithAnimation(() => {
-                this.searchWord = ''
-                this.recommendOrSearch = 0
+                __Home__.searchWord = ''
+                __Home__.recommendOrSearch = 0
               })
             }else {
-              this.searchWord = value
+              __Home__.searchWord = value
             }
           })
           .onTouch(() => {
@@ -106,7 +107,7 @@ export struct Home {
       .transition(XAnimation.getAnimation('up'))
       .zIndex(114514)
 
-      if ((this.recommendOrSearch == 0 && __Home__.recommendBookArray.totalCount() == 0) || ((this.recommendOrSearch == 1 && __Home__.searchBookArray.totalCount() == 0)))
+      if ((__Home__.recommendOrSearch == 0 && __Home__.recommendBookArray.totalCount() == 0) || ((__Home__.recommendOrSearch == 1 && __Home__.searchBookArray.totalCount() == 0)))
       {
         Column({space:10}){
           LoadingProgress()
@@ -120,7 +121,7 @@ export struct Home {
         .width('100%')
       }else {
         List({space:20}) {
-          if (this.recommendOrSearch == 0) {
+          if (__Home__.recommendOrSearch == 0) {
             LazyForEach(__Home__.recommendBookArray, (item: I_BookInfo) => {
               ListItem() {
                 HomeBookCover({data:item, type:0})
@@ -203,7 +204,7 @@ export struct Home {
             XAnimation.runWithAnimation(()=>{
               __Home__.canGetMore = false
             })
-            if (this.recommendOrSearch == 0) {
+            if (__Home__.recommendOrSearch == 0) {
               zlibClient.getRecommendBook(__Home__.req, __Home__.recommendBookIndex).then((res) => {
                 if (res[0] == 1) {
                   __Home__.recommendBookIndex ++
@@ -219,7 +220,7 @@ export struct Home {
                 })
               })
             }else {
-              zlibClient.searchBook(__Home__.req,this.searchWord,__Home__.searchBookIndex).then((res) => {
+              zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                 if (res[0] == 1) {
                   __Home__.recommendBookIndex ++
                   (JSON.parse(res[1]) as I_searchBook[]).forEach((item) => {
@@ -318,10 +319,10 @@ export struct Home {
               .backgroundColor($r('app.color.start_window_background_blur'))
               .onClick(() => {
                 __Home__.searchBookIndex = 1
-                this.searchWord = item.value
+                __Home__.searchWord = item.value
                __Home__.req = http.createHttp()
                 __Home__.searchBookArray.clearData()
-                zlibClient.searchBook(__Home__.req,this.searchWord,__Home__.searchBookIndex).then((res) => {
+                zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                   if (res[0] == 1) {
                     __Home__.recommendBookIndex ++
                     (JSON.parse(res[1]) as I_searchBook[]).forEach((item) => {
@@ -336,7 +337,7 @@ export struct Home {
                   })
                 })
                 XAnimation.runWithAnimation(() => {
-                  this.recommendOrSearch = 1
+                  __Home__.recommendOrSearch = 1
                   __Home__.inSearchMode = false
                 })
                 __Home__.searchHistory =
@@ -344,7 +345,6 @@ export struct Home {
                 __Home__.searchHistory.unshift({ value: item.value, time: Date.parse(new Date().toString()) })
                 XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
                   JSON.stringify( __Home__.searchHistory))
-                console.log( JSON.stringify( __Home__.searchHistory))
               })
             })
 

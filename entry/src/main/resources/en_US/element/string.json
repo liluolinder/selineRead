@@ -155,6 +155,10 @@
     {
       "name": "Text_GoTo",
       "value": "Go To"
+    },
+    {
+      "name": "Tip_ThereAreNotEmptyAnyMore",
+      "value": "It has never been this empty here."
     }
   ]
 }

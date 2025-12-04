@@ -6,8 +6,10 @@ export class DownloadInfo{
   @Trace fileImage:ResourceStr = ''
   @Trace progress:number = 0
   @Trace status:DownloadStatus = DownloadStatus.Idle
-
+  bookAuthor :string = ''
+  bookHref : string = ''
   downLoadTask?:DownloadTask
+  bookId:number = 0
 
 }
 

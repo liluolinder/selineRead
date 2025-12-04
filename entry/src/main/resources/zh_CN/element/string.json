@@ -155,6 +155,10 @@
     {
       "name": "Text_GoTo",
       "value": "转跳"
+    },
+    {
+      "name": "Tip_ThereAreNotEmptyAnyMore",
+      "value": "这里从未如此空旷"
     }
   ]
 }
