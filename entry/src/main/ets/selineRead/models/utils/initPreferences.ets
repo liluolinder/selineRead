@@ -1,5 +1,5 @@
 import { XPreferencesManager } from "commonpackage";
-import { __ZlibUser__ } from "../../commons/shareDatas";
+import { __Setting__, __ZlibUser__ } from "../../commons/shareDatas";
 import { __Home__ } from "../../pages/zlibrary/Home/Home";
 import { I_SearchHistory } from "../interfaces/I_SearchHistory";
 
@@ -7,6 +7,9 @@ export async function initPreferences() {
   console.log(`开始读取首选项`)
   __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.tur101.ru') as string
   __ZlibUser__.baseApi_url = __ZlibUser__.base_url + '/papi'
+
+  __Setting__.overrideConflictFile = XPreferencesManager.getPreferencesValue("selineRead", "overrideConflictFile", true) as boolean
+  __Setting__.shareAfterDownload = XPreferencesManager.getPreferencesValue("selineRead", "shareAfterDownload", true) as boolean
 
   __ZlibUser__.accountIndex = XPreferencesManager.getPreferencesValue("selineRead", "zlibAccountIndex", 0) as number
   __ZlibUser__.account = XPreferencesManager.getPreferencesValue("selineRead", "zlibAccount", '') as string

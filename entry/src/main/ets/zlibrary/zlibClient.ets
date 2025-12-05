@@ -6,7 +6,7 @@ import { CJLoader } from './CJloader/CJLoader';
 import { I_LoginRes } from './interface/I_loginInfo';
 import { I_BasicUserInfo, I_UserDownloadLimitAndDonation, I_ZlibUserInfo } from './interface/I_ZlibUserInfo';
 import { JSON } from '@kit.ArkTS';
-import { __Download__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
+import { __Download__, __Setting__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
 import { LNotificationManager, XContext, XPreferencesManager } from 'commonpackage';
 import { I_trulyDownloadUrl } from './interface/I_DownloadInfo';
 import { DownloadConfig, DownloadListener, DownloadProgressInfo } from '@hadss/super_fast_file_trans';
@@ -296,8 +296,9 @@ export class zlibClient {
               fileName: decodedFilename, // 下载后的本地文件名（必选）
               fileDir: downloadPath,
               concurrency: 1,
-              isOverwrite:true
+              isOverwrite:__Setting__.overrideConflictFile
             };
+            console.log(JSON.stringify(__Setting__.overrideConflictFile))
             BackgroundUtil.startContinuousTask()
             XContext.toast($r('app.string.Tip_StartDownload'))
 

@@ -7,7 +7,7 @@ import { XAnimation } from "commonpackage";
 import { ConfigurationConstant } from "@kit.AbilityKit";
 import { backgroundBlurModifier } from "../../models/classes/backGroundEffect";
 import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
-import { SettingBuilder } from "../zlibrary/Setting/Setting";
+import { SettingBuilder } from "../Setting/Setting";
 import { AboutUsBuilder } from "../AboutUS/AboutUS";
 
 

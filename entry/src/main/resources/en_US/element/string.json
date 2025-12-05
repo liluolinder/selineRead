@@ -159,6 +159,30 @@
     {
       "name": "Tip_ThereAreNotEmptyAnyMore",
       "value": "It has never been this empty here."
+    },
+    {
+      "name": "Text_ConflictFileHandling",
+      "value": "Conflict File Handling"
+    },
+    {
+      "name": "Text_Override",
+      "value": "Override"
+    },
+    {
+      "name": "Text_Coexistence",
+      "value": "Coexistence"
+    },
+    {
+      "name": "Title_DownloadSetting",
+      "value": "Download Setting"
+    },
+    {
+      "name": "Title_DisplaySetting",
+      "value": "Display Setting"
+    },
+    {
+      "name": "Title_ShareAfterDownload",
+      "value": "Open HUAWEI Share after download"
     }
   ]
 }

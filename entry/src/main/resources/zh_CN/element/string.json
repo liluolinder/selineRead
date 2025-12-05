@@ -159,6 +159,30 @@
     {
       "name": "Tip_ThereAreNotEmptyAnyMore",
       "value": "这里从未如此空旷"
+    },
+    {
+      "name": "Text_ConflictFileHandling",
+      "value": "冲突文件处理"
+    },
+    {
+      "name": "Text_Override",
+      "value": "覆盖"
+    },
+    {
+      "name": "Text_Coexistence",
+      "value": "共存"
+    },
+    {
+      "name": "Title_DownloadSetting",
+      "value": "下载设置"
+    },
+    {
+      "name": "Title_DisplaySetting",
+      "value": "显示设置"
+    },
+    {
+      "name": "Title_ShareAfterDownload",
+      "value": "下载完成打开分享"
     }
   ]
 }
