@@ -18,7 +18,6 @@ struct Index {
 
   aboutToAppear(): void {
     deleteDownloadCache()
-
   }
 
   build() {

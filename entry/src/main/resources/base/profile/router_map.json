@@ -32,7 +32,7 @@
         },
         {
             "name": "DownloadPage",
-            "pageSourceFile": "src/main/ets/selineRead/pages/zlibrary/BookShelf/DownloadPage.ets",
+            "pageSourceFile": "src/main/ets/selineRead/pages/BookShelf/DownloadPage.ets",
             "buildFunction": "DownloadPageBuilder"
         }
     ]

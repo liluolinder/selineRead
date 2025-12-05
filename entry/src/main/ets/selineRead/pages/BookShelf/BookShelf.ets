@@ -1,25 +1,25 @@
 import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from "commonpackage"
-import { __Download__, __System__, __UI__ } from "../../../commons/shareDatas"
-import { __CustomBackgroundData__ } from "../../../components/CustomBackground"
+import { __Download__, __System__, __UI__ } from "../../commons/shareDatas"
+import { __CustomBackgroundData__ } from "../../components/CustomBackground"
 import { ComposeTitleBar, LengthUnit, SymbolGlyphModifier } from "@kit.ArkUI"
-import { I_BookShelfBookInfo } from "../../../models/interfaces/I_BookShelfBookInfo"
-import { shareBook } from "../../../models/utils/ShareBook"
+import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo"
+import { shareBook } from "../../models/utils/ShareBook"
 import { fileIo, fileUri } from "@kit.CoreFileKit"
 import { Want, wantConstant } from "@kit.AbilityKit"
 import { BusinessError } from "@kit.BasicServicesKit"
-import { loadingDialog } from "../../../components/LoadingNewDialog"
-import { zlibClient } from "../../../../zlibrary/zlibClient"
+import { loadingDialog } from "../../components/LoadingNewDialog"
+import { zlibClient } from "../../../zlibrary/zlibClient"
 import { http } from "@kit.NetworkKit"
-import { __Home__ } from "../Home/Home"
-import { I_BookDetailedInfo } from "../../../models/interfaces/I_BookInfo"
-import { I_searchBook } from "../../../../zlibrary/interface/I_SearchInfo"
-import { I_SearchHistory } from "../../../models/interfaces/I_SearchHistory"
+import { __Home__ } from "../zlibrary/Home/Home"
+import { I_BookDetailedInfo } from "../../models/interfaces/I_BookInfo"
+import { I_searchBook } from "../../../zlibrary/interface/I_SearchInfo"
+import { I_SearchHistory } from "../../models/interfaces/I_SearchHistory"
 
 @ObservedV2
 export class BookShelfData{
   bookList: BasicDataSource<I_BookShelfBookInfo> =
     new BasicDataSource<I_BookShelfBookInfo>()
-  
+
   @Trace gettingBookNow:boolean = false
 
 }

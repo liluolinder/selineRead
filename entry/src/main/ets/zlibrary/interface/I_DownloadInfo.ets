@@ -1,4 +1,4 @@
-export interface I_DownloadInfo{
+export interface I_ZlibDownloadInfo{
   id:number
   extension:string
   filesizeString:string

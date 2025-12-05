@@ -5,10 +5,11 @@ import { __Download__, __System__, __UI__, __ZlibUser__ } from "../../commons/sh
 import { Home, __Home__ } from "../zlibrary/Home/Home";
 import { http } from "@kit.NetworkKit";
 import { I_BookInfo } from "../../models/interfaces/I_BookInfo";
-import { BookShelf, __BookShelf__ } from "../zlibrary/BookShelf/BookShelf";
+import { BookShelf, __BookShelf__ } from "../BookShelf/BookShelf";
 import { fileIo } from "@kit.CoreFileKit";
 import { RelationStoreManager } from "../../models/classes/DataBase";
 import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo";
+import { CommonEvent } from "../../models/classes/CommonEvent";
 
 @ComponentV2
 export struct Body {

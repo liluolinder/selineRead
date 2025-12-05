@@ -3,13 +3,15 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { XContext, XPreferencesManager } from 'commonpackage';
 import WindowsUtil from '../selineRead/models/classes/WindowsUtil';
-import { __System__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
+import { __Download__, __System__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
 import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
 import { initPreferences } from '../selineRead/models/utils/initPreferences';
 import { DownloadManager } from '@hadss/super_fast_file_trans';
 import { notificationManager } from '@kit.NotificationKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
 import { deleteDownloadCache } from '../selineRead/models/utils/ClearDownloadCache';
+import { StatusBarController } from '../selineRead/models/classes/StatusBarController';
+import { CommonEvent } from '../selineRead/models/classes/CommonEvent';
 
 const DOMAIN = 0x0000;
 
@@ -18,20 +20,26 @@ export default class EntryAbility extends UIAbility {
     try {
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
       XPreferencesManager.localPreferences(this.context, 'selineRead');
+
       initPreferences()
-      await RelationStoreManager.CreateDataBase(this.context).then((store)=>{
+
+      RelationStoreManager.CreateDataBase(this.context).then((store)=>{
         __ZlibUser__.dataBase = store
+        try {
+          RelationStoreManager.getZlibDownload(__ZlibUser__.dataBase)
+        }catch (e)
+        {
+          console.log(`读取数据库失败${JSON.stringify(e)}`)
+        }
       })
-      __ZlibUser__.downloadManager =  DownloadManager.getInstance();
+      __ZlibUser__.downloadManager = DownloadManager.getInstance();
+      __ZlibUser__.downloadManager.init(this.context);
 
-      try {
-        RelationStoreManager.getZlibDownload(__ZlibUser__.dataBase)
-      }catch (e)
-      {
-        console.log(`读取数据库失败${JSON.stringify(e)}`)
-      }
+      //StatusBarController.add2StatusBar(this.context)
 
-      await  __ZlibUser__.downloadManager.init(this.context);
+
+
+
     } catch (err) {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
     }

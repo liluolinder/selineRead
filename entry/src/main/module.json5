@@ -41,16 +41,12 @@
     ],
     "extensionAbilities": [
       {
-        "name": "EntryBackupAbility",
-        "srcEntry": "./ets/entrybackupability/EntryBackupAbility.ets",
-        "type": "backup",
-        "exported": false,
-        "metadata": [
-          {
-            "name": "ohos.extension.backup",
-            "resource": "$profile:backup_config"
-          }
-        ],
+        "name": "MyStatusBarViewAbility",
+        "icon": "$media:zlib",
+        "description": "statusBar",
+        "type": "statusBarView",
+        "exported": true,
+        "srcEntry": "./ets/statusBarViewAbility/StatusBarViewAbility.ets"
       }
     ],
     "requestPermissions": [

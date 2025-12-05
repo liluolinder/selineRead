@@ -6,7 +6,7 @@ import { CJLoader } from './CJloader/CJLoader';
 import { I_LoginRes } from './interface/I_loginInfo';
 import { I_BasicUserInfo, I_UserDownloadLimitAndDonation, I_ZlibUserInfo } from './interface/I_ZlibUserInfo';
 import { JSON } from '@kit.ArkTS';
-import { __Download__, __Setting__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
+import { Download, __Download__, __Setting__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
 import { LNotificationManager, XContext, XPreferencesManager } from 'commonpackage';
 import { I_trulyDownloadUrl } from './interface/I_DownloadInfo';
 import { DownloadConfig, DownloadListener, DownloadProgressInfo } from '@hadss/super_fast_file_trans';
@@ -16,6 +16,9 @@ import { shareBook } from '../selineRead/models/utils/ShareBook';
 import { DownloadInfo, DownloadStatus } from '../selineRead/models/classes/DownloadInfo';
 import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
 import { relationalStore } from '@kit.ArkData';
+import { fileIo } from '@kit.CoreFileKit';
+import { BookInfo } from '../selineRead/pages/zlibrary/BookInfo/BookInfo';
+import { CommonEvent } from '../selineRead/models/classes/CommonEvent';
 
 export class zlibClient {
   static async refreshUrl(): Promise<[number, string]> {
@@ -291,6 +294,14 @@ export class zlibClient {
 
         if (__ZlibUser__.downloadManager) {
           try {
+
+            if (__Setting__.overrideConflictFile) {
+              if (fileIo.accessSync(downloadPath+decodedFilename)) {
+                  fileIo.unlinkSync(downloadPath+decodedFilename)
+                  console.log(`删除重复文件成功`)
+              }
+            }
+
             let downloadConfig: DownloadConfig = {
               url: temp.location, // 远端下载地址（必选）
               fileName: decodedFilename, // 下载后的本地文件名（必选）
@@ -319,12 +330,17 @@ export class zlibClient {
             downloadItem.fileName = decodedFilename
             downloadItem.fileImage = bookInfo.image
             downloadItem.status = DownloadStatus.Idle
+            downloadItem.bookAuthor = bookInfo.author[0].name
+            downloadItem.bookHref = bookInfo.href??''
+            downloadItem.bookId = bookInfo.bookID??0
 
             let customDownloadListener: DownloadListener = {
               onSuccess: () => {
                 downloadItem.status = DownloadStatus.Complete
                 LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', decodedFilename)
-                shareBook(`${downloadPath}/${decodedFilename}`)
+                if (__Setting__.shareAfterDownload) {
+                  shareBook(`${downloadPath}/${decodedFilename}`)
+                }
                 XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadSuccess')) + decodedFilename, 3000)
                 console.log(`下载成功`)
                 let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
@@ -383,6 +399,7 @@ export class zlibClient {
               __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener)
             downloadItem.downLoadTask?.start()
             __Download__.downloadArray.pushUnshiftData(downloadItem)
+
 
           } catch (e) {
             XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(e),

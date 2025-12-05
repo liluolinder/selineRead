@@ -6,6 +6,7 @@ import { I_ZlibUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
 import { ZlibUser, __Download__, __ZlibUser__ } from "../../commons/shareDatas";
 import { ZlibUserInfo } from "../../../zlibrary/classes/UserInfo";
 import { DownloadInfo, DownloadStatus } from "./DownloadInfo";
+import { CommonEvent } from "./CommonEvent";
 
 export class RelationStoreManager {
   static async CreateDataBase(context: common.Context): Promise<relationalStore.RdbStore | undefined> {
@@ -147,9 +148,6 @@ export class RelationStoreManager {
             item.status = (haveDownload == 1 ? DownloadStatus.Complete : DownloadStatus.Failed)
             console.log(haveDownload.toString())
             __Download__.downloadArray.pushUnshiftData(item)
-
-
-
           }
           resultSet.close();
         }

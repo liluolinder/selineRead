@@ -1,22 +1,24 @@
-import { min_width } from "../../../commons/commonItem"
-import { __Download__, __System__ } from "../../../commons/shareDatas"
-import { __CustomBackgroundData__ } from "../../../components/CustomBackground"
-import { ProgressButton } from "@kit.ArkUI"
-import { DownloadInfo, DownloadStatus } from "../../../models/classes/DownloadInfo"
+import { DownloadPage } from "../BookShelf/DownloadPage"
+import { BusinessError, commonEventManager, emitter } from "@kit.BasicServicesKit";
+import { BasicDataSource } from "commonpackage";
+import { DownloadInfo, DownloadStatus } from "../../models/classes/DownloadInfo";
+import { ProgressButton } from "@kit.ArkUI";
 
-@Builder
-export function DownloadPageBuilder() {
-  DownloadPage()
+
+@ObservedV2
+class StatusBarInfo{
+   downloadArray:BasicDataSource<DownloadInfo> = new BasicDataSource<DownloadInfo>()
 }
 
+export let __StatusBar__:StatusBarInfo = new StatusBarInfo()
 
+@Entry
 @ComponentV2
-export struct DownloadPage {
-  @Local num: number = 1
+struct StatusBarViewEntry{
 
   build() {
-    NavDestination() {
-      if (__Download__.downloadArray.dataArray.length == 0) {
+    Column(){
+      if (__StatusBar__.downloadArray.dataArray.length == 0) {
         Column() {
           Text($r('app.string.Tip_ThereAreNotEmptyAnyMore'))
             .fontSize(26)
@@ -26,7 +28,7 @@ export struct DownloadPage {
         .justifyContent(FlexAlign.Center)
       } else {
         List({ space: 10 }) {
-          LazyForEach(__Download__.downloadArray, (item: DownloadInfo) => {
+          LazyForEach(__StatusBar__.downloadArray, (item: DownloadInfo) => {
             ListItem() {
               Row({ space: 10 }) {
                 Image(item.fileImage)
@@ -61,9 +63,9 @@ export struct DownloadPage {
                       if (item.downLoadTask) {
                         switch (item.status) {
                           case DownloadStatus.Idle : case DownloadStatus.Cancel:
-                            //处于初始化就启动
-                            item.downLoadTask.start();
-                            break;
+                          //处于初始化就启动
+                          item.downLoadTask.start();
+                          break;
                           case DownloadStatus.Starting:
                             //处于正在启动，不处理
                             break;
@@ -91,11 +93,6 @@ export struct DownloadPage {
         .width('100%')
         .padding({ left: 16, right: 16 })
       }
-    }.size({ width: '100%', height: '100%' })
-    .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-    Color.Transparent : $r('sys.color.comp_background_gray'))
-    .padding({ top: __System__.topRectHeight })
-    .title($r('app.string.Title_DownloadManager'))
-
+    }
   }
 }

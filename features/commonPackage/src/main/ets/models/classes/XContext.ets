@@ -44,6 +44,12 @@ export class XContext {
         return result;
     }
 
+    public static getPixelMapFromResoure(source:Resource):PixelMap{
+        const resManager = XContext.getAbilityContext().resourceManager;
+        const drawableDesc = resManager?.getDrawableDescriptor(source.id);
+        return drawableDesc?.getPixelMap();
+    }
+
     public static getColorFromResource(resource: Resource) {
         return XContext.getAbilityContext().resourceManager.getColorSync(resource.id)
     }

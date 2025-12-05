@@ -1,5 +1,6 @@
 {
   "src": [
-    "selineRead/pages/Index"
+    "selineRead/pages/Index",
+    "selineRead/pages/statusBarView/StatusBarViewEntry"
   ]
 }

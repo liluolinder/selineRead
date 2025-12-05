@@ -11,7 +11,7 @@ import { min_width } from "../../../commons/commonItem"
 import { BigImage } from "../../../components/BigImage"
 import { ListItemWithText } from "templatecomponent"
 import { http } from "@kit.NetworkKit"
-import { I_DownloadInfo } from "../../../../zlibrary/interface/I_DownloadInfo"
+import { I_ZlibDownloadInfo } from "../../../../zlibrary/interface/I_DownloadInfo"
 
 @Builder
 export function BookInfoBuilder() {
@@ -23,7 +23,7 @@ export struct BookInfo {
   pageInfos: NavPathStack = new NavPathStack()
   @Local errorText: string = ''
   @Local bookInfo: I_BookDetailedInfo | undefined = undefined
-  @Local downloadInfoArray: I_DownloadInfo[] = []
+  @Local downloadInfoArray: I_ZlibDownloadInfo[] = []
   @Local isShowDownloadMenu: boolean = false
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
   @Local pageWidth: number = -1
@@ -101,7 +101,7 @@ export struct BookInfo {
   @Builder
   DownloadMenu() {
     Menu() {
-      ForEach(this.downloadInfoArray, (item: I_DownloadInfo) => {
+      ForEach(this.downloadInfoArray, (item: I_ZlibDownloadInfo) => {
         MenuItem({ content: item.extension, labelInfo: item.filesizeString })
           .onClick(() => {
             zlibClient.downloadBook(item.href ?? '', this.bookInfo!).then((res) => {
@@ -311,7 +311,7 @@ export struct BookInfo {
                     let req = http.createHttp()
                     await zlibClient.getMoreDownloadWay(req, this.bookInfo?.bookID!).then((res) => {
                       if (res[0] == 1) {
-                        let downloadWayArray: I_DownloadInfo[] = JSON.parse(res[1])
+                        let downloadWayArray: I_ZlibDownloadInfo[] = JSON.parse(res[1])
                         if (!downloadWayArray || downloadWayArray.length == 0) {
                           this.downloadInfoArray = [
                             {
