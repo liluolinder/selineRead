@@ -13,7 +13,6 @@ export class BasicDataSource<T> implements IDataSource {
 
     registerDataChangeListener(listener: DataChangeListener): void {
         if (this.listeners.indexOf(listener) === -1) {
-            // r1Chk
             this.listeners.push(listener);
         }
     }
@@ -39,6 +38,11 @@ export class BasicDataSource<T> implements IDataSource {
 
     public clearData() {
         this.dataArray = []
+        this.notifyDataReload();
+    }
+
+    public deleteData(index:number){
+        this.dataArray.splice(index,1)
         this.notifyDataReload();
     }
 

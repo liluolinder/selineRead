@@ -2,6 +2,7 @@ import { bundleManager, common, Want } from "@kit.AbilityKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { WindowMode } from "@ohos.UiTest";
 import { fileUri, picker } from "@kit.CoreFileKit";
+import { I_AlterDialogParam } from "../interfaces/I_AlterDialogParam";
 
 export class XContext {
     private static UIAbilityContext: common.UIAbilityContext
@@ -83,6 +84,38 @@ export class XContext {
 
         }
     }
+
+    public static alterDialogWithTwoButton(param:I_AlterDialogParam){
+       try {
+           XContext.getContext().showAlertDialog(
+               {
+                   title: param.title,
+                   subtitle: param.subtitle,
+                   message:param.message,
+                   autoCancel: param.autoCancel??false,
+                   alignment: param.alignment,
+                   buttonDirection: param.buttonDirection,
+                   primaryButton: {
+                       value: 'cancel',
+                       action: () => {
+                           param.cancelCallBack()
+                       }
+                   },
+                   secondaryButton: {
+                       enabled: true,
+                       defaultFocus: true,
+                       style: DialogButtonStyle.HIGHLIGHT,
+                       value: 'ok',
+                       action: () => {
+                           param.confirmCallBack()
+                       }
+                   }
+               }
+           )
+       }catch (e){}
+    }
+
+
    public static async getDownloadFolderPath(): Promise<string> {
         const documentViewPicker = new picker.DocumentViewPicker()
         let documentSaveResult = await documentViewPicker.save({ pickerMode: picker.DocumentPickerMode.DOWNLOAD })

@@ -11,6 +11,7 @@ export class DownloadInfo implements I_DownloadInfo{
   bookHref : string = ''
   downLoadTask?:DownloadTask
   bookId:number = 0
+  downloadTime:string=''
 
   toInterface():I_DownloadInfo {
     let res:I_DownloadInfo = {

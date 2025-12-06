@@ -1,12 +1,10 @@
 import { relationalStore } from "@kit.ArkData";
 import { BusinessError } from "@kit.BasicServicesKit";
-import { XContext } from "commonpackage";
 import { common } from "@kit.AbilityKit";
-import { I_ZlibUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
-import { ZlibUser, __Download__, __ZlibUser__ } from "../../commons/shareDatas";
+import { __Download__, __ZlibUser__ } from "../../commons/shareDatas";
 import { ZlibUserInfo } from "../../../zlibrary/classes/UserInfo";
 import { DownloadInfo, DownloadStatus } from "./DownloadInfo";
-import { CommonEvent } from "./CommonEvent";
+
 
 export class RelationStoreManager {
   static async CreateDataBase(context: common.Context): Promise<relationalStore.RdbStore | undefined> {
@@ -92,6 +90,18 @@ export class RelationStoreManager {
     }
   }
 
+  static async deleteValue(store: relationalStore.RdbStore | undefined, predicates:relationalStore.RdbPredicates) {
+    if (store !== undefined) {
+      (store as relationalStore.RdbStore).delete(predicates, (err: BusinessError, rows: number) => {
+        if (err) {
+          console.error(`删除失败Code:${err.code}, message:${err.message}`);
+          return;
+        }
+        console.info(`删除成功 rows: ${rows}`);
+      })
+    }
+  }
+
   static async getZlibAccount(store: relationalStore.RdbStore | undefined, needClear: boolean = true) {
     if (store) {
       await ((store as relationalStore.RdbStore).query(new relationalStore.RdbPredicates('ZlibraryAccount'),
@@ -144,6 +154,7 @@ export class RelationStoreManager {
             item.bookAuthor = bookAuthor
             item.bookHref = bookHref
             item.bookId = bookId
+            item.downloadTime = bookDownloadTime
 
             item.status = (haveDownload == 1 ? DownloadStatus.Complete : DownloadStatus.Failed)
             console.log(haveDownload.toString())

@@ -183,6 +183,34 @@
     {
       "name": "Title_ShareAfterDownload",
       "value": "下载完成打开分享"
+    },
+    {
+      "name": "Text_Share",
+      "value": "分享"
+    },
+    {
+      "name": "Text_Export",
+      "value": "导出至"
+    },
+    {
+      "name": "Text_Delete",
+      "value": "删除"
+    },
+    {
+      "name": "Text_SearchSame",
+      "value": "搜同款"
+    },
+    {
+      "name": "Text_Detail",
+      "value": "详细"
+    },
+    {
+      "name": "Title_AreYouSure",
+      "value": "确定吗?"
+    },
+    {
+      "name": "Title_DeleteEnsure",
+      "value": "此操作会使文件失去很久很久(T_T)"
     }
   ]
 }

@@ -5,8 +5,10 @@
     "description": "$string:shared_desc",
     "deviceTypes": [
       "phone",
+      "wearable",
       "tablet",
-      "2in1"
+      "2in1",
+      "tv"
     ],
     "deliveryWithInstall": true,
     "pages": "$profile:main_pages"

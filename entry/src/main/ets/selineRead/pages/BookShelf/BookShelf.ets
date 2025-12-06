@@ -53,14 +53,14 @@ export struct BookShelf{
   }
 
   @Builder
-  BookMenu(item: I_BookShelfBookInfo) {
+  BookMenu(item: I_BookShelfBookInfo, index:number) {
     Menu() {
-      MenuItem({ content: '分享' })
+      MenuItem({ content: $r('app.string.Text_Share') })
         .onClick(() => {
           shareBook(item.bookPath)
         })
         .enabled(fileIo.accessSync(item.bookPath))
-      MenuItem({ content: '搜同款' })
+      MenuItem({ content: $r('app.string.Text_SearchSame') })
         .onClick(() => {
           let textFragment: string[] = item.bookName.split('.')
           let bookName = ''
@@ -97,7 +97,7 @@ export struct BookShelf{
           }
         })
         .enabled(fileIo.accessSync(item.bookPath))
-      MenuItem({ content: '查看详情' })
+      MenuItem({ content: $r('app.string.Text_Detail') })
         .onClick(async () => {
           this.isOpening = true
           let req = http.createHttp()
@@ -116,8 +116,26 @@ export struct BookShelf{
         })
         .enabled(item.bookHref!='')
 
-      MenuItem({ content: '导出至...',builder: ():void=>this.ExportMenu(item) })
+      MenuItem({ content: $r('app.string.Text_Export'),builder: ():void=>this.ExportMenu(item) })
         .enabled(fileIo.accessSync(item.bookPath))
+
+
+      MenuItem({content:$r('app.string.Text_Delete')})
+        .onClick(()=>{
+          XContext.alterDialogWithTwoButton({
+            title: $r('app.string.Title_AreYouSure'),
+            message:$r('app.string.Title_DeleteEnsure'),
+            cancelCallBack: (): void => {
+
+            },
+            confirmCallBack: (): void => {
+             try {
+               fileIo.unlink(item.bookPath)
+               __BookShelf__.bookList.deleteData(index)
+             }catch (e){}
+            }
+          })
+        })
 
     }
   }
@@ -183,6 +201,7 @@ export struct BookShelf{
                 .fontWeight(FontWeight.Bold)
             }.height('100%')
             .width('100%')
+            .padding({left:16, right:16})
             .justifyContent(FlexAlign.Center)
           }else {
             Column() {
@@ -191,6 +210,7 @@ export struct BookShelf{
                 .fontWeight(FontWeight.Bold)
             }.height('100%')
             .width('100%')
+            .padding({left:16, right:16})
             .justifyContent(FlexAlign.Center)
           }
         }else {
@@ -225,15 +245,16 @@ export struct BookShelf{
                       .textOverflow({overflow:TextOverflow.Ellipsis})
                   }.height('100%')
                   .layoutWeight(1)
-                }.height(100)
-              }.padding(16)
-              .backgroundColor($r('sys.color.comp_background_list_card'))
-              .borderRadius(20)
+                }.height(120)
+                .backgroundColor($r('sys.color.comp_background_list_card'))
+                .borderRadius(20)
+                .padding(16)
+              }
               .transition(XAnimation.getAnimation('bottom'))
-              .bindContextMenu(this.BookMenu(item), ResponseType.RightClick)
-              .bindContextMenu(this.BookMenu(item), ResponseType.LongPress,
+              .bindContextMenu(this.BookMenu(item, index), ResponseType.RightClick)
+              .bindContextMenu(this.BookMenu(item, index), ResponseType.LongPress,
                 { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
-            })
+            },(item:I_BookShelfBookInfo, index:number)=>JSON.stringify(item)+JSON.stringify(index))
           }.height('100%')
           .width('100%')
           .padding({left:16, right:16})

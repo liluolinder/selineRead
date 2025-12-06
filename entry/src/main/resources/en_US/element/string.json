@@ -183,6 +183,34 @@
     {
       "name": "Title_ShareAfterDownload",
       "value": "Open HUAWEI Share after download"
+    },
+    {
+      "name": "Text_Share",
+      "value": "Share"
+    },
+    {
+      "name": "Text_Export",
+      "value": "Export"
+    },
+    {
+      "name": "Text_Delete",
+      "value": "Delete"
+    },
+    {
+      "name": "Text_SearchSame",
+      "value": "Search for the same style"
+    },
+    {
+      "name": "Text_Detail",
+      "value": "View Details"
+    },
+    {
+      "name": "Title_AreYouSure",
+      "value": "Are you sure?"
+    },
+    {
+      "name": "Title_DeleteEnsure",
+      "value": "This operation will make the file lost for a very, very long time (T_T)"
     }
   ]
 }

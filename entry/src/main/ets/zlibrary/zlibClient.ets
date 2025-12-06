@@ -333,6 +333,7 @@ export class zlibClient {
             downloadItem.bookAuthor = bookInfo.author[0].name
             downloadItem.bookHref = bookInfo.href??''
             downloadItem.bookId = bookInfo.bookID??0
+            downloadItem.downloadTime = time.toISOString()
 
             let customDownloadListener: DownloadListener = {
               onSuccess: () => {

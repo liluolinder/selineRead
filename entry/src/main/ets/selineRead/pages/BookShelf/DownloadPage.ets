@@ -1,8 +1,10 @@
 import { min_width } from "../../commons/commonItem"
-import { __Download__, __System__ } from "../../commons/shareDatas"
+import { __Download__, __System__, __ZlibUser__ } from "../../commons/shareDatas"
 import { __CustomBackgroundData__ } from "../../components/CustomBackground"
 import { ProgressButton } from "@kit.ArkUI"
 import { DownloadInfo, DownloadStatus } from "../../models/classes/DownloadInfo"
+import { relationalStore } from "@kit.ArkData"
+import { RelationStoreManager } from "../../models/classes/DataBase"
 
 @Builder
 export function DownloadPageBuilder() {
@@ -16,7 +18,7 @@ export struct DownloadPage {
 
 
   @Builder
-  editCustom() {
+  editCustom(item: DownloadInfo, index:number) {
     Column(){
       Button({type:ButtonType.Circle}){
         SymbolGlyph($r('sys.symbol.trash_fill'))
@@ -26,9 +28,13 @@ export struct DownloadPage {
       }.padding(8)
       .backgroundColor($r('sys.color.warning'))
       .onClick(() => {
+        __Download__.downloadArray.deleteData(index)
+        item.downLoadTask?.cancel()
 
+        let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable')
+        predicates.equalTo('BookID', item.bookId).equalTo("BookDownLoadTime", item.downloadTime)
+        RelationStoreManager.deleteValue(__ZlibUser__.dataBase,predicates)
       })
-
     }.padding({left:16, right:16})
   }
 
@@ -41,10 +47,11 @@ export struct DownloadPage {
             .fontWeight(FontWeight.Bold)
         }.height('100%')
         .width('100%')
+        .padding({left:16, right:16})
         .justifyContent(FlexAlign.Center)
       } else {
         List({ space: 10 }) {
-          LazyForEach(__Download__.downloadArray, (item: DownloadInfo) => {
+          LazyForEach(__Download__.downloadArray, (item: DownloadInfo, index?:number) => {
             ListItem() {
               Row({ space: 10 }) {
                 Image(item.fileImage)
@@ -107,10 +114,10 @@ export struct DownloadPage {
             }
             .swipeAction({
               end: {
-                builder: () => { this.editCustom() },
+                builder: () => { this.editCustom(item, index) },
               }
             })
-          }, (item: DownloadInfo, index: number) => JSON.stringify(item))
+          }, (item: DownloadInfo, index: number) => JSON.stringify(item)+JSON.stringify(index))
         }.height('100%')
         .width('100%')
         .padding({ left: 16, right: 16 })
