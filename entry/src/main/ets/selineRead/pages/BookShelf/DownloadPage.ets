@@ -30,7 +30,6 @@ export struct DownloadPage {
       .onClick(() => {
         __Download__.downloadArray.deleteData(index)
         item.downLoadTask?.cancel()
-
         let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable')
         predicates.equalTo('BookID', item.bookId).equalTo("BookDownLoadTime", item.downloadTime)
         RelationStoreManager.deleteValue(__ZlibUser__.dataBase,predicates)

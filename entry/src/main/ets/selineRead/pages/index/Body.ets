@@ -10,6 +10,7 @@ import { fileIo } from "@kit.CoreFileKit";
 import { RelationStoreManager } from "../../models/classes/DataBase";
 import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo";
 import { CommonEvent } from "../../models/classes/CommonEvent";
+import { I_BasicUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
 
 @ComponentV2
 export struct Body {
@@ -75,6 +76,17 @@ export struct Body {
           __Home__.errorText = res[1]
         }
       })
+
+      if (__ZlibUser__.cookie!='') {
+        zlibClient.getPersonInfo(__ZlibUser__.cookie).then((res) => {
+          if (res[0] == 1) {
+            let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
+            __ZlibUser__.avatar = basicInfo.userAvatar
+            __ZlibUser__.userName = basicInfo.userName
+          }
+
+        })
+      }
     })
   }
 

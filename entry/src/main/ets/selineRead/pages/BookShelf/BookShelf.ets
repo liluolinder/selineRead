@@ -14,6 +14,7 @@ import { __Home__ } from "../zlibrary/Home/Home"
 import { I_BookDetailedInfo } from "../../models/interfaces/I_BookInfo"
 import { I_searchBook } from "../../../zlibrary/interface/I_SearchInfo"
 import { I_SearchHistory } from "../../models/interfaces/I_SearchHistory"
+import { min_width } from "../../commons/commonItem"
 
 @ObservedV2
 export class BookShelfData{
@@ -296,11 +297,21 @@ export struct BookShelf{
      .mode(NavigationMode.Stack)
      .menus([
        {
+         value: 'showSideBar',
+         symbolIcon: new SymbolGlyphModifier($r('sys.symbol.indent_right')),
+         action: () => {
+           XAnimation.runWithAnimation(() => {
+             __UI__.isShowSideBar = true
+           })
+         },
+         isEnabled:__System__.windowWidth < min_width
+       },
+       {
          value: 'downloadPage',
          symbolIcon: new SymbolGlyphModifier($r('sys.symbol.download')),
          action: () => {
            __UI__.mainPageStack.pushPathByName('DownloadPage',null)
-         }
+         },
        }
      ])
    }.padding({top:Math.max(16,__System__.topRectHeight)})

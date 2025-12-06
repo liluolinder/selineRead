@@ -46,6 +46,23 @@ export struct Home {
   build() {
     Stack({ alignContent: Alignment.Top }) {
       Row({ space: 10 }) {
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph($r('sys.symbol.indent_right'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .backdropBlur(100)
+        .useEffect(true)
+        .onClick(() => {
+          XAnimation.runWithAnimation(() => {
+            __UI__.isShowSideBar = true
+          })
+        })
+        .visibility(__Home__.inSearchMode || __System__.windowWidth > min_width  ? Visibility.None : Visibility.Visible)
+
         Search({ value: __Home__.searchWord })
           .width(__Home__.inSearchMode ? '100%' : "45%")
           .focusable(__Home__.inSearchMode)

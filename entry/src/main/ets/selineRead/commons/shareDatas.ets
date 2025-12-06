@@ -65,7 +65,7 @@ export class ZlibUser{
   @Trace password:string = ''
   @Trace cookie:string = ''
   @Trace avatar:string=''
-  @Trace userName:string=''
+  @Trace userName:ResourceStr=$r('app.string.Tip_GettingBookNow')
   notificationID:number=0
   dataBase?:relationalStore.RdbStore
   downloadManager?:DownloadManager
