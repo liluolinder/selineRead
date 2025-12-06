@@ -44,6 +44,35 @@ export struct ZlibraryAccount {
     }
   }
 
+
+  @Builder
+  editCustom(item:ZlibUserInfo ,index:number) {
+    Column(){
+      Button({type:ButtonType.Circle}){
+        SymbolGlyph($r('sys.symbol.trash_fill'))
+          .fontSize(28)
+          .fontColor([Color.White])
+
+      }.padding(8)
+      .backgroundColor($r('sys.color.warning'))
+      .onClick(() => {
+        __ZlibUser__.zlibAccountArray.deleteData(index)
+        let predicates = new relationalStore.RdbPredicates('ZlibraryAccount')
+        predicates.equalTo('Account', item.account).equalTo("Password", item.password)
+        RelationStoreManager.deleteValue(__ZlibUser__.dataBase,predicates)
+        __ZlibUser__.account = ''
+        __ZlibUser__.password = ''
+        __ZlibUser__.userName = ''
+        __ZlibUser__.cookie = ''
+        __ZlibUser__.accountIndex = -1
+        XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex",  __ZlibUser__.accountIndex)
+        XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", '')
+        XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", '')
+        XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", '')
+      })
+    }.padding({left:16, right:16})
+  }
+
   @Builder
   ZlibSettingBuilder(){
     Column(){
@@ -103,114 +132,122 @@ export struct ZlibraryAccount {
         } else {
           List({ space: 10 }) {
             LazyForEach(__ZlibUser__.zlibAccountArray, (item: ZlibUserInfo, index: number) => {
-              ListItemGroup() {
-                ListItemWithRadio({
-                  image: item.userAvatar == '' ? $r('app.media.zlib') : item.userAvatar,
-                  message: item.account,
-                  group: 'zlibAccount',
-                  checked: __ZlibUser__.accountIndex === index,
-                  index: index,
-                  onChange: (checked: boolean, itemIndex: number) => {
-                    if (checked) {
-                      XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex", itemIndex)
-                      XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", item.account ?? '')
-                      XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", item.password ?? '')
-                      XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", item.cookie ?? '')
-                      XAnimation.runWithAnimation(() => {
-                        __ZlibUser__.accountIndex = itemIndex
-                      })
-                      zlibClient.getPersonInfo(item.cookie ?? '').then((res) => {
-                        if (res[0] == 1) {
-                          let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
-                          item.userName = basicInfo.userName
-                          item.userDownloadLimitNumber = basicInfo.userDownloadLimitNumber
-                          item.userDonateNumber = basicInfo.userDonateNumber
-                          item.userAvatar = basicInfo.userAvatar
+              ListItem() {
+                Column(){
+                  ListItemWithRadio({
+                    image: item.userAvatar == '' ? $r('app.media.zlib') : item.userAvatar,
+                    message: item.account,
+                    group: 'zlibAccount',
+                    checked: __ZlibUser__.accountIndex === index,
+                    index: index,
+                    onChange: (checked: boolean, itemIndex: number) => {
+                      if (checked) {
+                        XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex", itemIndex)
+                        XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", item.account ?? '')
+                        XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", item.password ?? '')
+                        XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", item.cookie ?? '')
+                        XAnimation.runWithAnimation(() => {
+                          __ZlibUser__.accountIndex = itemIndex
+                        })
+                        __ZlibUser__.account = item.account!
+                        __ZlibUser__.password = item.password!
+                        __ZlibUser__.userName=$r('app.string.Tip_GettingBookNow')
+                        zlibClient.getPersonInfo(item.cookie ?? '').then((res) => {
+                          if (res[0] == 1) {
+                            let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
+                            item.userName = basicInfo.userName
+                            item.userDownloadLimitNumber = basicInfo.userDownloadLimitNumber
+                            item.userDonateNumber = basicInfo.userDonateNumber
+                            item.userAvatar = basicInfo.userAvatar
+                            __ZlibUser__.cookie = item.cookie!
+                            __ZlibUser__.avatar = item.userAvatar!
+                            __ZlibUser__.userName = item.userName!
+                          }
+                        })
+                      }
+                    }
+                  })
 
-                          __ZlibUser__.account = item.account!
-                          __ZlibUser__.password = item.password!
-                          __ZlibUser__.cookie = item.cookie!
-                          __ZlibUser__.avatar = item.userAvatar!
-                          __ZlibUser__.userName = item.userName!
+                  if (__ZlibUser__.accountIndex == index) {
+                    Column() {
+                      Row({ space: 10 }) {
+                        Stack() {
+                          Column({ space: 15 }) {
+                            SymbolGlyph($r('sys.symbol.download'))
+                              .fontSize(30)
+                              .fontWeight(FontWeight.Medium)
+                              .fontColor([$r('sys.color.font')])
+
+                            if (item.userDownloadLimitNumber && item.userDownloadLimitNumber != '') {
+                              Text(item.userDownloadLimitNumber)
+                                .fontWeight(FontWeight.Medium)
+                                .fontSize(18)
+                            } else {
+                              LoadingProgress()
+                                .size({
+                                  width: 20
+                                })
+                            }
+                          }
                         }
-                      })
+                        .layoutWeight(1)
+                        .height('100%')
+                        .borderRadius(20)
+                        .bindPopup($$this.showDownloadLimitTips, {
+                          message: '下载限制是Zlibrary官方设置的,可以通过对zlib官网捐赠提高限制值',
+                          onStateChange: (e) => {
+                            this.showDownloadLimitTips = e.isVisible
+                          }
+                        })
+                        .onClick(() => {
+                          this.showDownloadLimitTips = true;
+                        })
+
+                        Stack() {
+                          Column({ space: 15 }) {
+                            SymbolGlyph($r('sys.symbol.yuansign_moneybag'))
+                              .fontSize(30)
+                              .fontWeight(FontWeight.Medium)
+                              .fontColor([$r('sys.color.font')])
+                            if (item.userDonateNumber && item.userDonateNumber != '') {
+                              Text(item.userDonateNumber)
+                                .fontWeight(FontWeight.Medium)
+                                .fontSize(18)
+                            } else {
+                              LoadingProgress()
+                                .size({
+                                  width: 20
+                                })
+                            }
+                          }
+                        }
+                        .layoutWeight(1)
+                        .height('100%')
+                        .bindPopup(this.showDonationTips, {
+                          message: '此处捐赠额度指的是对zlib官方的捐赠，不是对此APP开发者的捐赠',
+                          onStateChange: (e) => {
+                            this.showDonationTips = e.isVisible
+                          }
+                        })
+                        .onClick(() => {
+                          this.showDonationTips = true;
+                        })
+
+                      }.size({ width: '100%', height: 120 })
                     }
                   }
-                })
-                if (__ZlibUser__.accountIndex == index) {
-                  ListItem() {
-                    Row({ space: 10 }) {
-                      Stack() {
-                        Column({ space: 15 }) {
-                          SymbolGlyph($r('sys.symbol.download'))
-                            .fontSize(30)
-                            .fontWeight(FontWeight.Medium)
-                            .fontColor([$r('sys.color.font')])
-
-                          if (item.userDownloadLimitNumber && item.userDownloadLimitNumber != '') {
-                            Text(item.userDownloadLimitNumber)
-                              .fontWeight(FontWeight.Medium)
-                              .fontSize(18)
-                          } else {
-                            LoadingProgress()
-                              .size({
-                                width: 20
-                              })
-                          }
-                        }
-                      }
-                      .layoutWeight(1)
-                      .height('100%')
-                      .borderRadius(20)
-                      .bindPopup($$this.showDownloadLimitTips, {
-                        message: '下载限制是Zlibrary官方设置的,可以通过对zlib官网捐赠提高限制值',
-                        onStateChange: (e) => {
-                          this.showDownloadLimitTips = e.isVisible
-                        }
-                      })
-                      .onClick(() => {
-                        this.showDownloadLimitTips = true;
-                      })
-
-                      Stack() {
-                        Column({ space: 15 }) {
-                          SymbolGlyph($r('sys.symbol.yuansign_moneybag'))
-                            .fontSize(30)
-                            .fontWeight(FontWeight.Medium)
-                            .fontColor([$r('sys.color.font')])
-                          if (item.userDonateNumber && item.userDonateNumber != '') {
-                            Text(item.userDonateNumber)
-                              .fontWeight(FontWeight.Medium)
-                              .fontSize(18)
-                          } else {
-                            LoadingProgress()
-                              .size({
-                                width: 20
-                              })
-                          }
-                        }
-                      }
-                      .layoutWeight(1)
-                      .height('100%')
-                      .bindPopup(this.showDonationTips, {
-                        message: '此处捐赠额度指的是对zlib官方的捐赠，不是对此APP开发者的捐赠',
-                        onStateChange: (e) => {
-                          this.showDonationTips = e.isVisible
-                        }
-                      })
-                      .onClick(() => {
-                        this.showDonationTips = true;
-                      })
-
-                    }.size({ width: '100%', height: 120 })
-                  }
-                }
+                } .backgroundColor($r('sys.color.comp_background_list_card'))
+                .borderRadius(20)
               }
-              .backgroundColor($r('sys.color.comp_background_list_card'))
-              .borderRadius(20)
+              .swipeAction({
+                end: {
+                  builder: () => { this.editCustom(item, index) },
+                }
+              })
+
               .transition(XAnimation.getAnimation('bottom', index * 200))
 
-            }, (item: ZlibUserInfo, index: number) => JSON.stringify(item))
+            }, (item: ZlibUserInfo, index: number) => JSON.stringify(item) + JSON.stringify(index))
           }
           .height('100%')
           .width('100%')

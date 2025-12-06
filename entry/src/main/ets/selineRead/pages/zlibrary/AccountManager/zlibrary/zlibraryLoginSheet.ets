@@ -1,4 +1,4 @@
-import { XAnimation, XPreferencesManager } from "commonpackage"
+import { XAnimation, XContext, XPreferencesManager } from "commonpackage"
 import { I_ZlibUserInfo } from "../../../../../zlibrary/interface/I_ZlibUserInfo"
 import { zlibClient } from "../../../../../zlibrary/zlibClient"
 import { __ZlibUser__ } from "../../../../commons/shareDatas"
@@ -45,7 +45,7 @@ export struct zlibLoginSheet {
         .id('logoWithName')
 
         Row({ space: 10 }) {
-          Text('欢迎')
+          Text($r('app.string.Title_Welcome'))
             .fontSize(28)
             .fontWeight(FontWeight.Normal)
         }
@@ -56,11 +56,11 @@ export struct zlibLoginSheet {
         .id('welcome')
 
         Column({ space: 10 }) {
-          TextInput({ placeholder: '邮箱', text: $$this.email })
+          TextInput({ placeholder: $r('app.string.Text_Account'), text: $$this.email })
             .height(48)
             .type(InputType.Email)
 
-          TextInput({ placeholder: '密码', text: $$this.password })
+          TextInput({ placeholder: $r('app.string.Text_Password'), text: $$this.password })
             .height(48)
             .type(InputType.Password)
 
@@ -73,9 +73,14 @@ export struct zlibLoginSheet {
         .id('input')
 
         Row() {
-          Button('创建账号')
+          Button($r('app.string.Text_CreateAccount'))
             .backgroundColor($r('sys.color.comp_background_list_card'))
             .fontColor($r('sys.color.font'))
+            .onClick(()=>{
+              XContext.getAbilityContext().startAbility({
+                uri: __ZlibUser__.base_url
+              })
+            })
         }
         .justifyContent(FlexAlign.SpaceBetween)
         .alignRules({

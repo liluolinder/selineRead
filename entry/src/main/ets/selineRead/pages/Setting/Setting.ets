@@ -57,7 +57,12 @@ export struct Setting {
 
               List() {
                 if (index == 0) {
-
+                  ListItem(){
+                    Column(){
+                      Text('Coming Soon')
+                    }.height(50)
+                    .padding(16)
+                  }
                 } else if (index == 1) {
                   this.downloadSetting()
                 }

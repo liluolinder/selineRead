@@ -211,6 +211,22 @@
     {
       "name": "Title_DeleteEnsure",
       "value": "此操作会使文件失去很久很久(T_T)"
+    },
+    {
+      "name": "Title_Welcome",
+      "value": "欢迎"
+    },
+    {
+      "name": "Text_Account",
+      "value": "账号"
+    },
+    {
+      "name": "Text_Password",
+      "value": "密码"
+    },
+    {
+      "name": "Text_CreateAccount",
+      "value": "创建账号"
     }
   ]
 }

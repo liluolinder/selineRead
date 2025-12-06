@@ -211,6 +211,22 @@
     {
       "name": "Title_DeleteEnsure",
       "value": "This operation will make the file lost for a very, very long time (T_T)"
+    },
+    {
+      "name": "Title_Welcome",
+      "value": "Welcome"
+    },
+    {
+      "name": "Text_Account",
+      "value": "Account"
+    },
+    {
+      "name": "Text_Password",
+      "value": "Password"
+    },
+    {
+      "name": "Text_CreateAccount",
+      "value": "Create new account"
     }
   ]
 }
