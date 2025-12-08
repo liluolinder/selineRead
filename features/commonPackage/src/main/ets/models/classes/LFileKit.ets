@@ -66,7 +66,7 @@ class LFileKit {
         });
     }
 
-    async write(dir: string, content: string, mode: WriteMode = WriteMode.Override): Promise<boolean> {
+    async write(dir: string, content: string|ArrayBuffer, mode: WriteMode = WriteMode.Override): Promise<boolean> {
         let openMode: number;
         switch (mode) {
             case WriteMode.Override:

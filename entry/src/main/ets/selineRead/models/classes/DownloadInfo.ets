@@ -1,5 +1,6 @@
 import { DownloadTask } from "@hadss/super_fast_file_trans"
 import { I_DownloadInfo } from "../interfaces/I_DownloadInfo"
+import { http } from "@kit.NetworkKit"
 
 @ObservedV2
 export class DownloadInfo implements I_DownloadInfo{
@@ -7,9 +8,10 @@ export class DownloadInfo implements I_DownloadInfo{
   @Trace fileImage:ResourceStr = ''
   @Trace progress:number = 0
   @Trace status:DownloadStatus = DownloadStatus.Idle
+  downloadType: "txt" | "other" = 'other'
   bookAuthor :string = ''
   bookHref : string = ''
-  downLoadTask?:DownloadTask
+  downLoadTask?:DownloadTask|http.HttpRequest
   bookId:number = 0
   downloadTime:string=''
 
@@ -21,8 +23,9 @@ export class DownloadInfo implements I_DownloadInfo{
       status: this.status,
       bookAuthor: this.bookAuthor,
       bookHref: this.bookHref,
-      downLoadTask:this.downLoadTask,
-      bookId: this.bookId
+      downLoadTask: this.downLoadTask,
+      bookId: this.bookId,
+      downloadType: this.downloadType
     }
     return res
   }
@@ -37,6 +40,7 @@ export class DownloadInfo implements I_DownloadInfo{
     res.bookHref = data.bookHref
     res.downLoadTask = data.downLoadTask
     res.bookId = data.bookId
+    res.downloadType = data.downloadType
 		return res
 	}
 

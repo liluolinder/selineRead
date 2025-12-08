@@ -60,26 +60,7 @@ struct StatusBarViewEntry{
                       item.status == DownloadStatus.Failed ? '失败' : item.status == DownloadStatus.Starting ? '启动中' :'下载',
                     enable: item.status != DownloadStatus.Complete && item.status != DownloadStatus.Failed,
                     clickCallback: () => {
-                      if (item.downLoadTask) {
-                        switch (item.status) {
-                          case DownloadStatus.Idle : case DownloadStatus.Cancel:
-                          //处于初始化就启动
-                          item.downLoadTask.start();
-                          break;
-                          case DownloadStatus.Starting:
-                            //处于正在启动，不处理
-                            break;
-                          case DownloadStatus.Downloading:
-                            item.downLoadTask.cancel();
-                            break;
-                          case DownloadStatus.Complete:
-                            //处于下载完成，不处理
-                            break;
-                          case DownloadStatus.Failed:
-                            //处于下载失败，后续实现
-                            break;
-                        }
-                      }
+
                     }
                   })
                 }
