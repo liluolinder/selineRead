@@ -63,15 +63,22 @@ export struct Body {
 
   aboutToAppear(): void {
     zlibClient.refreshUrl().then(() => {
+      console.log(__ZlibUser__.cookie);
       let req = http.createHttp()
       zlibClient.getRecommendBook(req, __Home__.recommendBookIndex).then((res) => {
+        console.log(JSON.stringify(res))
         __Home__.canGetMore = true
         if (res[0] == 1) {
-          (JSON.parse(res[1]) as I_BookInfo[]).forEach((item) => {
-            __Home__.recommendBookArray.pushData(item)
-          })
-          __Home__.recommendBookIndex++
-          __Home__.errorText = ''
+          console.log(JSON.stringify(res[1]));
+          if (JSON.stringify(res[1]) == "\"[]\"" ) {
+            __Home__.errorText = '返回值为空'
+          }else {
+            (JSON.parse(res[1]) as I_BookInfo[]).forEach((item) => {
+              __Home__.recommendBookArray.pushData(item)
+            })
+            __Home__.recommendBookIndex++
+            __Home__.errorText = ''
+          }
         } else {
           __Home__.errorText = res[1]
         }
@@ -87,6 +94,7 @@ export struct Body {
 
         })
       }
+
     })
   }
 

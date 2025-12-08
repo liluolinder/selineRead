@@ -39,6 +39,8 @@ export struct ZlibraryAccount {
             __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDonateNumber =
               basicInfo.userDonateNumber
             __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = basicInfo.userAvatar
+            __ZlibUser__.userName = basicInfo.userName
+            __ZlibUser__.avatar = basicInfo.userAvatar
           }
         })
     }
