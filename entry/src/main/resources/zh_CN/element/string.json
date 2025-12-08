@@ -227,6 +227,10 @@
     {
       "name": "Text_CreateAccount",
       "value": "创建账号"
+    },
+    {
+      "name": "Title_BookShelfSetting",
+      "value": "书架设置"
     }
   ]
 }

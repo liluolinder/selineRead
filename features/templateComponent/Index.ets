@@ -4,5 +4,6 @@ export  { ListItemWithText } from './src/main/ets/pages/components/ListItemWithT
 export  { ListItemWithInput } from './src/main/ets/pages/components/ListItemWithTextInput'
 export  { ListItemWithToggle } from './src/main/ets/pages/components/ListItemWithToggle'
 export  { ListItemWithRadio } from './src/main/ets/pages/components/ListItemWithRadio'
+export  { ListItemWithSelect } from './src/main/ets/pages/components/ListItemWithSelect'
 export  { SettingsClickItem, SettingsToggleItem } from './src/main/ets/pages/components/SettingsItem'
 export  { LiqD } from './src/main/ets/pages/components/LiqD'

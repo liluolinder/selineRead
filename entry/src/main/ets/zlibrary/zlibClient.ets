@@ -299,8 +299,24 @@ export class zlibClient {
                 fileIo.unlinkSync(downloadPath + decodedFilename)
                 console.log(`删除重复文件成功`)
               }
+            }else {
+              let newFileName = decodedFilename
+              if (!__Setting__.overrideConflictFile) {
+                const fileList: string[] =  fileIo.listFileSync(downloadPath);
+                if (fileList.includes(decodedFilename)) {
+                  let counter = 1;
+                  const nameParts = decodedFilename.split('.');
+                  const baseName = nameParts[0];
+                  console.log(baseName)
+                  const extension = nameParts.length > 1 ? `.${nameParts.slice(1).join('.')}` : '';
+                  while (fileList.includes(newFileName)) {
+                    newFileName = `${baseName}(${counter})${extension}`;
+                    counter++;
+                  }
+                }
+              }
+              decodedFilename = newFileName
             }
-
             BackgroundUtil.startContinuousTask()
             XContext.toast($r('app.string.Tip_StartDownload'))
             let time = new Date()
@@ -355,12 +371,9 @@ export class zlibClient {
                       console.log(`下载了:${data.byteLength}`);
                       allContent.push(data)
                     });
-
                     httpRequest.on("dataReceiveProgress", (data: http.DataReceiveProgressInfo) => {
                       console.info("dataReceiveProgress:" + JSON.stringify(data.totalSize));
                     });
-
-
                     httpRequest.on("dataEnd", () => {
                       let content: ArrayBuffer = new ArrayBuffer(length)
                       const mergedView = new Uint8Array(content);
@@ -370,6 +383,8 @@ export class zlibClient {
                         mergedView.set(view, offset);
                         offset += view.length;
                       });
+
+
                       File.write(downloadPath + decodedFilename, mergedView.buffer).then((res) => {
                         if (res) {
                           LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', decodedFilename)

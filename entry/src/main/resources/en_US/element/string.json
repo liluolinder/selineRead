@@ -227,6 +227,10 @@
     {
       "name": "Text_CreateAccount",
       "value": "Create new account"
+    },
+    {
+      "name": "Title_BookShelfSetting",
+      "value": "Bookshelf Setting"
     }
   ]
 }

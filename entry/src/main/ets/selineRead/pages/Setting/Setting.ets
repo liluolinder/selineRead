@@ -1,5 +1,5 @@
 import { XPreferencesManager } from "commonpackage"
-import { ListItemWithToggle } from "templatecomponent"
+import { ListItemWithSelect, ListItemWithToggle } from "templatecomponent"
 import { __Setting__ } from "../../commons/shareDatas"
 
 @Builder
@@ -12,6 +12,7 @@ export struct Setting {
   settingOptionArray: ResourceStr[] = [
     $r('app.string.Title_DisplaySetting'),
     $r('app.string.Title_DownloadSetting'),
+    $r('app.string.Title_BookShelfSetting'),
   ]
 
   @Builder
@@ -42,7 +43,34 @@ export struct Setting {
         }
       })
     }
+  }
 
+  @Builder
+  bookshelfSettingBuilder() {
+    ListItem() {
+      ListItemWithSelect({
+        message:'点击书籍打开方式',
+        select:__Setting__.bookShelfClickOpenWay,
+        selectArray:[
+          {
+            value:'无操作'
+          },
+          {
+            value:'打开本地阅读器(尚未完成)'
+          },
+          {
+            value:'华为阅读'
+          },
+          {
+            value:'格物阅读'
+          }
+        ],
+        onSelect:(index: number, value: string)=>{
+          __Setting__.bookShelfClickOpenWay = index
+          XPreferencesManager.putPreferencesValue('selineRead', "bookShelfClickOpenWay", index)
+        }
+      })
+    }
   }
 
   build() {
@@ -65,6 +93,8 @@ export struct Setting {
                   }
                 } else if (index == 1) {
                   this.downloadSetting()
+                }else if (index == 2) {
+                  this.bookshelfSettingBuilder()
                 }
               }
               .width('100%')

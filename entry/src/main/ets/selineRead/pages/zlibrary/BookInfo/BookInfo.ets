@@ -104,6 +104,16 @@ export struct BookInfo {
       ForEach(this.downloadInfoArray, (item: I_ZlibDownloadInfo) => {
         MenuItem({ content: item.extension, labelInfo: item.filesizeString })
           .onClick(() => {
+            if (item.extension == 'txt' || item.extension =='TXT'){
+              XContext.alterDialogWithTwoButton({
+                title: '致歉',
+                message:'由于TXT文件特殊性, 通知栏与下载管理页面均无法显示下载进度, 请耐心等待下载',
+                cancelCallBack: (): void => {
+                },
+                confirmCallBack: (): void => {
+                }
+              })
+            }
             zlibClient.downloadBook(item.href ?? '', this.bookInfo!).then((res) => {
               if (res[0] == 0) {
                 this.errorText = res[1]
@@ -280,6 +290,16 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
+                    if (this.bookInfo?.firstDownloadInfo?.format == 'TXT' || this.bookInfo?.firstDownloadInfo?.format == 'txt'){
+                      XContext.alterDialogWithTwoButton({
+                        title: '致歉',
+                        message:'由于TXT文件特殊性, 通知栏与下载管理页面均无法显示下载进度, 请耐心等待下载',
+                        cancelCallBack: (): void => {
+                        },
+                        confirmCallBack: (): void => {
+                        }
+                      })
+                    }
                     zlibClient.downloadBook(this.bookInfo?.firstDownloadUrl ?? '', this.bookInfo!).then((res) => {
                       if (res[0] == 0) {
                         this.errorText = res[1]

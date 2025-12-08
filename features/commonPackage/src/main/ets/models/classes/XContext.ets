@@ -96,7 +96,7 @@ export class XContext {
                    alignment: param.alignment,
                    buttonDirection: param.buttonDirection,
                    primaryButton: {
-                       value: 'cancel',
+                       value: '取消',
                        action: () => {
                            param.cancelCallBack()
                        }
@@ -105,7 +105,7 @@ export class XContext {
                        enabled: true,
                        defaultFocus: true,
                        style: DialogButtonStyle.HIGHLIGHT,
-                       value: 'ok',
+                       value: '确定',
                        action: () => {
                            param.confirmCallBack()
                        }

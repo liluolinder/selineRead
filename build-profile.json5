@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/通用调试证书.p12",
-          "storePassword": "00000020C146609CAFC403D71EEBBB52CD92C63EC186BE2CDB8C16DA47F681D6BE59A314F8F4788D929739FC80C4012E",
+          "storeFile": "D:/projects/Harmony/SelineRead_New/cer/linder_release/通用证书.p12",
+          "storePassword": "000000200DB2935FBB903E03D95DA9A330C2562B2DB1743BEFC2C65153B946F4BFC2D4D1379D5F4411E71B3916DBF4A7",
           "keyAlias": "key",
-          "keyPassword": "00000020FD4F93E251C67883B2CE5DA9CEDD9C0D07AA54EE5DB7C256F85F0C810826C83DD7A95740CA5F78AE9C46B28F",
+          "keyPassword": "00000020E66A18D2FBBA3951F661ECBAEFC093E94C701BC686619463AFF75807D11FECEC97BC100A7A61684FE401956D",
           "signAlg": "SHA256withECDSA",
-          "profile": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/SelineReadDebug.p7b",
-          "certpath": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/通用调试证书.cer"
+          "profile": "D:/projects/Harmony/SelineRead_New/cer/linder_release/SRRelease.p7b",
+          "certpath": "D:/projects/Harmony/SelineRead_New/cer/linder_release/通用发布证书.cer"
         }
       }
     ],

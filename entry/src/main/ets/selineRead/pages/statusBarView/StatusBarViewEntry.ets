@@ -60,7 +60,6 @@ struct StatusBarViewEntry{
                       item.status == DownloadStatus.Failed ? '失败' : item.status == DownloadStatus.Starting ? '启动中' :'下载',
                     enable: item.status != DownloadStatus.Complete && item.status != DownloadStatus.Failed,
                     clickCallback: () => {
-
                     }
                   })
                 }

@@ -12,6 +12,13 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: '1.1.5.0',
+      date: '2025/12/8',
+      optimizeArray:['本地书籍封面绑定'],
+      addNewFunArray:['新增书架书籍响应点击操作，可快捷导入三方阅读器(需在侧边栏设置中手动选择)'],
+      fixBugsArray:['无法下载txt文件']
+    },
+    {
       version: '1.1.4.5',
       date: '2025/12/6',
       addNewFunArray: ['书架书籍删除(长按/右键菜单)','下载管理删除下载任务(左滑)','账号管理支持删除','添加打开侧边栏按钮(显示宽度较小时)','允许设置下载时，文件冲突处理办法','允许设置是否下载完成后打开华为分享'],

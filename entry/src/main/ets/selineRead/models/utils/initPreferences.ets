@@ -8,6 +8,8 @@ export async function initPreferences() {
   __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.tur101.ru') as string
   __ZlibUser__.baseApi_url = __ZlibUser__.base_url + '/papi'
 
+  __Setting__.bookShelfClickOpenWay = XPreferencesManager.getPreferencesValue('selineRead', "bookShelfClickOpenWay", 0) as number
+
   __Setting__.overrideConflictFile = XPreferencesManager.getPreferencesValue("selineRead", "overrideConflictFile", true) as boolean
   __Setting__.shareAfterDownload = XPreferencesManager.getPreferencesValue("selineRead", "shareAfterDownload", true) as boolean
 

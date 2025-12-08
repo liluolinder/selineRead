@@ -91,5 +91,6 @@ export const __Download__: Download = new Download()
 export class Setting{
   @Trace overrideConflictFile:boolean = true
   @Trace shareAfterDownload:boolean = true
+  @Trace bookShelfClickOpenWay:number = 0
 }
 export const __Setting__: Setting = new Setting()

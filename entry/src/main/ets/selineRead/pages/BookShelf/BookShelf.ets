@@ -1,5 +1,5 @@
 import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from "commonpackage"
-import { __Download__, __System__, __UI__ } from "../../commons/shareDatas"
+import { __Download__, __Setting__, __System__, __UI__ } from "../../commons/shareDatas"
 import { __CustomBackgroundData__ } from "../../components/CustomBackground"
 import { ComposeTitleBar, LengthUnit, SymbolGlyphModifier } from "@kit.ArkUI"
 import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo"
@@ -17,19 +17,17 @@ import { I_SearchHistory } from "../../models/interfaces/I_SearchHistory"
 import { min_width } from "../../commons/commonItem"
 
 @ObservedV2
-export class BookShelfData{
+export class BookShelfData {
   bookList: BasicDataSource<I_BookShelfBookInfo> =
     new BasicDataSource<I_BookShelfBookInfo>()
-
-  @Trace gettingBookNow:boolean = false
-
+  @Trace gettingBookNow: boolean = false
 }
 
-export let __BookShelf__:BookShelfData = new BookShelfData()
+export let __BookShelf__: BookShelfData = new BookShelfData()
 
 @ComponentV2
-export struct BookShelf{
-  @Local isOpening:boolean = false
+export struct BookShelf {
+  @Local isOpening: boolean = false
   @Consumer('tabController') tabController: TabsController = new TabsController();
   @Consumer('currentTabIndex') currentTabIndex: number = 0
 
@@ -54,7 +52,7 @@ export struct BookShelf{
   }
 
   @Builder
-  BookMenu(item: I_BookShelfBookInfo, index:number) {
+  BookMenu(item: I_BookShelfBookInfo, index: number) {
     Menu() {
       MenuItem({ content: $r('app.string.Text_Share') })
         .onClick(() => {
@@ -65,10 +63,10 @@ export struct BookShelf{
         .onClick(() => {
           let textFragment: string[] = item.bookName.split('.')
           let bookName = ''
-          for (let index = 0; index < textFragment.length-1; index++) {
-            bookName +=textFragment[index]
+          for (let index = 0; index < textFragment.length - 1; index++) {
+            bookName += textFragment[index]
           }
-          bookName = bookName.replaceAll(" (Z-Library)","")
+          bookName = bookName.replaceAll(" (Z-Library)", "")
           this.tabController.changeIndex(0)
           __Home__.inSearchMode = false
           if (bookName != '') {
@@ -76,17 +74,17 @@ export struct BookShelf{
             __Home__.recommendOrSearch = 1
             __Home__.req = http.createHttp()
             __Home__.searchBookArray.clearData()
-            zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
+            zlibClient.searchBook(__Home__.req, __Home__.searchWord, __Home__.searchBookIndex).then((res) => {
               if (res[0] == 1) {
                 __Home__.recommendBookIndex ++
                 (JSON.parse(res[1]) as I_searchBook[]).forEach((item) => {
                   __Home__.searchBookArray.pushData(item)
                 })
                 __Home__.errorText = ''
-              }else {
+              } else {
                 __Home__.errorText = res[1]
               }
-              XAnimation.runWithAnimation(()=>{
+              XAnimation.runWithAnimation(() => {
                 __Home__.canGetMore = true
               })
             })
@@ -94,7 +92,7 @@ export struct BookShelf{
               __Home__.searchHistory.filter((item: I_SearchHistory) => item.value != bookName)
             __Home__.searchHistory.unshift({ value: bookName, time: Date.parse(new Date().toString()) })
             XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
-              JSON.stringify( __Home__.searchHistory))
+              JSON.stringify(__Home__.searchHistory))
           }
         })
         .enabled(fileIo.accessSync(item.bookPath))
@@ -102,38 +100,39 @@ export struct BookShelf{
         .onClick(async () => {
           this.isOpening = true
           let req = http.createHttp()
-          await zlibClient.getBookInfo(req,item.bookHref).then((res)=>{
-            if (res[0]==1) {
+          await zlibClient.getBookInfo(req, item.bookHref).then((res) => {
+            if (res[0] == 1) {
               __Home__.errorText = ''
-              let bookInfo:I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
+              let bookInfo: I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
               bookInfo.bookID = item.bookId
               bookInfo.href = item.bookHref
-              __UI__.mainPageStack.pushPathByName("bookInfoPage",bookInfo)
-            }else {
+              __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
+            } else {
               __Home__.errorText = res[1]
             }
           })
           this.isOpening = false
         })
-        .enabled(item.bookHref!='')
+        .enabled(item.bookHref != '')
 
-      MenuItem({ content: $r('app.string.Text_Export'),builder: ():void=>this.ExportMenu(item) })
+      MenuItem({ content: $r('app.string.Text_Export'), builder: (): void => this.ExportMenu(item) })
         .enabled(fileIo.accessSync(item.bookPath))
 
 
-      MenuItem({content:$r('app.string.Text_Delete')})
-        .onClick(()=>{
+      MenuItem({ content: $r('app.string.Text_Delete') })
+        .onClick(() => {
           XContext.alterDialogWithTwoButton({
             title: $r('app.string.Title_AreYouSure'),
-            message:$r('app.string.Title_DeleteEnsure'),
+            message: $r('app.string.Title_DeleteEnsure'),
             cancelCallBack: (): void => {
 
             },
             confirmCallBack: (): void => {
-             try {
-               fileIo.unlink(item.bookPath)
-               __BookShelf__.bookList.deleteData(index)
-             }catch (e){}
+              try {
+                fileIo.unlink(item.bookPath)
+                __BookShelf__.bookList.deleteData(index)
+              } catch (e) {
+              }
             }
           })
         })
@@ -142,8 +141,7 @@ export struct BookShelf{
   }
 
   @Builder
-  ExportMenu(item: I_BookShelfBookInfo)
-  {
+  ExportMenu(item: I_BookShelfBookInfo) {
     Menu() {
       MenuItem({ content: '格物阅读' })
         .onClick(async () => {
@@ -153,7 +151,7 @@ export struct BookShelf{
             uri: fileUri.getUriFromPath(item.bookPath),
             flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
           };
-         XContext.getAbilityContext().startAbility(want)
+          XContext.getAbilityContext().startAbility(want)
         })
         .enabled(fileIo.accessSync(item.bookPath))
 
@@ -191,129 +189,155 @@ export struct BookShelf{
   }
 
   build() {
-   Column(){
-     Navigation(){
-      Stack(){
-        if (__BookShelf__.bookList.dataArray.length==0){
-          if (__BookShelf__.gettingBookNow) {
-            Column() {
-              Text($r('app.string.Tip_GettingBookNow'))
-                .fontSize(26)
-                .fontWeight(FontWeight.Bold)
-            }.height('100%')
-            .width('100%')
-            .padding({left:16, right:16})
-            .justifyContent(FlexAlign.Center)
-          }else {
-            Column() {
-              Text($r('app.string.Tip_ThereAreNotEmptyAnyMore'))
-                .fontSize(26)
-                .fontWeight(FontWeight.Bold)
-            }.height('100%')
-            .width('100%')
-            .padding({left:16, right:16})
-            .justifyContent(FlexAlign.Center)
-          }
-        }else {
-          List({space:10}){
-            LazyForEach(__BookShelf__.bookList,(item:I_BookShelfBookInfo, index:number)=>{
-              ListItem(){
-                Row({space:10}){
-                  Image(item.bookImage)
-                    .aspectRatio(2 / 3)
-                    .autoResize(true)
-                    .height('100%')
-                    .shadow({
-                      radius: 25,
-                      color: Color.Gray,
-                      offsetX: 0,
-                      offsetY: 10
-                    })
-                  Column({space:5}){
-                    Text(item.bookName)
-                      .fontWeight(FontWeight.Medium)
-                      .fontSize(22)
-                      .width('100%')
-                      .maxLines(1)
-                      .textOverflow({overflow:TextOverflow.MARQUEE})
+    Column() {
+      Navigation() {
+        Stack() {
+          if (__BookShelf__.bookList.dataArray.length == 0) {
+            if (__BookShelf__.gettingBookNow) {
+              Column() {
+                Text($r('app.string.Tip_GettingBookNow'))
+                  .fontSize(26)
+                  .fontWeight(FontWeight.Bold)
+              }.height('100%')
+              .width('100%')
+              .padding({ left: 16, right: 16 })
+              .justifyContent(FlexAlign.Center)
+            } else {
+              Column() {
+                Text($r('app.string.Tip_ThereAreNotEmptyAnyMore'))
+                  .fontSize(26)
+                  .fontWeight(FontWeight.Bold)
+              }.height('100%')
+              .width('100%')
+              .padding({ left: 16, right: 16 })
+              .justifyContent(FlexAlign.Center)
+            }
+          } else {
+            List({ space: 10 }) {
+              LazyForEach(__BookShelf__.bookList, (item: I_BookShelfBookInfo, index: number) => {
+                ListItem() {
+                  Row({ space: 10 }) {
+                    Image(item.bookImage)
+                      .aspectRatio(2 / 3)
+                      .autoResize(true)
+                      .height('100%')
+                      .shadow({
+                        radius: 25,
+                        color: Color.Gray,
+                        offsetX: 0,
+                        offsetY: 10
+                      })
+                    Column({ space: 5 }) {
+                      Text(item.bookName)
+                        .fontWeight(FontWeight.Medium)
+                        .fontSize(22)
+                        .width('100%')
+                        .maxLines(1)
+                        .textOverflow({ overflow: TextOverflow.MARQUEE })
 
-                    Text(item.bookAuthor)
-                      .fontWeight(FontWeight.Normal)
-                      .fontSize(18)
-                      .width('100%')
-                      .maxLines(1)
-                      .opacity(0.8)
-                      .textOverflow({overflow:TextOverflow.Ellipsis})
-                  }.height('100%')
-                  .layoutWeight(1)
-                }.height(120)
-                .backgroundColor($r('sys.color.comp_background_list_card'))
-                .borderRadius(20)
-                .padding(16)
-              }
-              .transition(XAnimation.getAnimation('bottom'))
-              .bindContextMenu(this.BookMenu(item, index), ResponseType.RightClick)
-              .bindContextMenu(this.BookMenu(item, index), ResponseType.LongPress,
-                { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
-            },(item:I_BookShelfBookInfo, index:number)=>JSON.stringify(item)+JSON.stringify(index))
-          }.height('100%')
-          .width('100%')
-          .padding({left:16, right:16})
-          .borderRadius(20)
-          .contentEndOffset(16)
-        }
-
-        if (__Home__.errorText != '' && __Home__.recommendBookArray.dataArray.length != 0) {
-          Stack() {
-            Column({ space: 10 }) {
-              LoadingProgress().size({ width: 100, height: 100 })
-              Text(XContext.getStringFromResource($r('app.string.Tip_GettingError'))+'\n'+__Home__.errorText).fontSize(20).fontWeight(FontWeight.Medium).textAlign(TextAlign.Center)
-              Button('知道了')
-                .backgroundColor($r('sys.color.button_background_color_transparent'))
-                .fontColor($r('sys.color.font'))
-                .padding({left:32,right:32})
-                .onClick(()=>{
-                  __Home__.errorText = ''
+                      Text(item.bookAuthor)
+                        .fontWeight(FontWeight.Normal)
+                        .fontSize(18)
+                        .width('100%')
+                        .maxLines(1)
+                        .opacity(0.8)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    }.height('100%')
+                    .layoutWeight(1)
+                  }.height(120)
+                  .backgroundColor($r('sys.color.comp_background_list_card'))
+                  .borderRadius(20)
+                  .padding(16)
+                }
+                .onClick(() => {
+                  let want: Want = {
+                    bundleName: 'com.huawei.hmsapp.books',
+                    action: 'ohos.want.action.viewData',
+                    uri: fileUri.getUriFromPath(item.bookPath),
+                    flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
+                  };
+                  switch (__Setting__.bookShelfClickOpenWay) {
+                    case 2:
+                      want.bundleName = 'com.huawei.hmsapp.books'
+                      XContext.getAbilityContext().startAbility(want)
+                      break;
+                    case 3:
+                      want.bundleName = 'com.hm.ultimate.reader'
+                      XContext.getAbilityContext().startAbility(want)
+                      break;
+                  }
                 })
-            }.borderRadius(20).padding(20).backgroundColor($r('app.color.start_window_background_blur')).backdropBlur(100)
+                .transition(XAnimation.getAnimation('bottom'))
+                .bindContextMenu(this.BookMenu(item, index), ResponseType.RightClick)
+                .bindContextMenu(this.BookMenu(item, index), ResponseType.LongPress,
+                  { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
+              }, (item: I_BookShelfBookInfo, index: number) => JSON.stringify(item) + JSON.stringify(index))
+            }
+            .height('100%')
+            .width('100%')
+            .padding({ left: 16, right: 16 })
+            .borderRadius(20)
+            .contentEndOffset(16)
           }
-          .size({ width: '100%', height: '100%' })
-          .padding(16)
-          .backgroundColor($r('sys.color.comp_background_tertiary'))
-          .transition(TransitionEffect.OPACITY.animation({ curve: Curve.Ease, duration: 300 }))
-          .zIndex(114514)
-        }
 
-        if (this.isOpening)
+          if (__Home__.errorText != '' && __Home__.recommendBookArray.dataArray.length != 0) {
+            Stack() {
+              Column({ space: 10 }) {
+                LoadingProgress().size({ width: 100, height: 100 })
+                Text(XContext.getStringFromResource($r('app.string.Tip_GettingError')) + '\n' + __Home__.errorText)
+                  .fontSize(20)
+                  .fontWeight(FontWeight.Medium)
+                  .textAlign(TextAlign.Center)
+                Button('知道了')
+                  .backgroundColor($r('sys.color.button_background_color_transparent'))
+                  .fontColor($r('sys.color.font'))
+                  .padding({ left: 32, right: 32 })
+                  .onClick(() => {
+                    __Home__.errorText = ''
+                  })
+              }
+              .borderRadius(20)
+              .padding(20)
+              .backgroundColor($r('app.color.start_window_background_blur'))
+              .backdropBlur(100)
+            }
+            .size({ width: '100%', height: '100%' })
+            .padding(16)
+            .backgroundColor($r('sys.color.comp_background_tertiary'))
+            .transition(TransitionEffect.OPACITY.animation({ curve: Curve.Ease, duration: 300 }))
+            .zIndex(114514)
+          }
+
+          if (this.isOpening) {
+            loadingDialog()
+          }
+
+        }.size({ width: '100%', height: '100%' })
+      }
+      .size({ width: '100%', height: '100%' })
+      .title($r('app.string.Title_BookShelf'))
+      .hideToolBar(true)
+      .hideBackButton(true)
+      .mode(NavigationMode.Stack)
+      .menus([
         {
-          loadingDialog()
+          value: 'showSideBar',
+          symbolIcon: new SymbolGlyphModifier($r('sys.symbol.indent_right')),
+          action: () => {
+            XAnimation.runWithAnimation(() => {
+              __UI__.isShowSideBar = true
+            })
+          },
+          isEnabled: __System__.windowWidth < min_width
+        },
+        {
+          value: 'downloadPage',
+          symbolIcon: new SymbolGlyphModifier($r('sys.symbol.download')),
+          action: () => {
+            __UI__.mainPageStack.pushPathByName('DownloadPage', null)
+          },
         }
-
-      }.size({width:'100%', height:'100%'})
-     }.size({width:'100%', height:'100%'})
-     .title($r('app.string.Title_BookShelf'))
-     .hideToolBar(true)
-     .hideBackButton(true)
-     .mode(NavigationMode.Stack)
-     .menus([
-       {
-         value: 'showSideBar',
-         symbolIcon: new SymbolGlyphModifier($r('sys.symbol.indent_right')),
-         action: () => {
-           XAnimation.runWithAnimation(() => {
-             __UI__.isShowSideBar = true
-           })
-         },
-         isEnabled:__System__.windowWidth < min_width
-       },
-       {
-         value: 'downloadPage',
-         symbolIcon: new SymbolGlyphModifier($r('sys.symbol.download')),
-         action: () => {
-           __UI__.mainPageStack.pushPathByName('DownloadPage',null)
-         },
-       }
-     ])
-   }.padding({top:Math.max(16,__System__.topRectHeight)})
+      ])
+    }.padding({ top: Math.max(16, __System__.topRectHeight) })
   }
 }

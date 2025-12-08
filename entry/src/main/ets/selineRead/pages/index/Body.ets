@@ -36,8 +36,11 @@ export struct Body {
               bookHref:"",
               bookId:0
             }
+
+
             __Download__.downloadArray.dataArray.forEach((itemA) => {
-              if (itemA.fileName.includes(item) || item.includes(itemA.fileName)) {
+
+              if (itemA.fileName.includes(item)|| itemA.fileName.split('.')[0].includes(item) || itemA.fileName.includes(item.split('.')[0]) || item.includes(itemA.fileName)||item.includes(itemA.fileName.split('.')[0])) {
                 bookInfo.bookImage = itemA.fileImage
                 bookInfo.bookAuthor = itemA.bookAuthor
                 bookInfo.bookHref = itemA.bookHref
