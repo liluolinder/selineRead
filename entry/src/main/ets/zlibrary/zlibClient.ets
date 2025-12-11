@@ -2,8 +2,6 @@ import { http } from '@kit.NetworkKit';
 import { BusinessError, request } from '@kit.BasicServicesKit';
 import { firstDownloadInfo, I_BookDetailedInfo, I_BookInfo } from '../selineRead/models/interfaces/I_BookInfo';
 import { user_agent } from '../selineRead/commons/commonItem';
-import { I_LoginRes } from './interface/I_loginInfo';
-import { I_BasicUserInfo, I_UserDownloadLimitAndDonation, I_ZlibUserInfo } from './interface/I_ZlibUserInfo';
 import { JSON, util } from '@kit.ArkTS';
 import { Download, __Download__, __Setting__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
 import { File, LNotificationManager, XContext, XPreferencesManager } from 'commonpackage';
@@ -18,6 +16,7 @@ import { relationalStore } from '@kit.ArkData';
 import { fileIo } from '@kit.CoreFileKit';
 import { BookInfo } from '../selineRead/pages/zlibrary/BookInfo/BookInfo';
 import { CommonEvent } from '../selineRead/models/classes/CommonEvent';
+import { I_loginRes } from './interface/I_loginInfo';
 
 export class zlibClient {
   static async refreshUrl(): Promise<[number, string]> {
@@ -53,44 +52,21 @@ export class zlibClient {
   static async login(email: string, password: string): Promise<[number, string]> {
     console.log(`尝试登录`)
     let req = http.createHttp()
-    return await req.request(`${__ZlibUser__.base_url}/rpc.php`, {
-      method: http.RequestMethod.GET,
+    return await req.request(`${__ZlibUser__.baseEApi_url}/user/login?email=${email}&password=${password}`, {
+      method: http.RequestMethod.POST,
       header: {
         'sec-ch-ua-platform': '"Windows"',
         'user-agent': user_agent,
       },
-      extraData: {
-        'isModal': 'true',
-        'email': email,
-        'password': password,
-        'site_mode': 'books',
-        'action': 'login',
-        'redirectUrl': '',
-        'gg_json_mode': '1'
-      }
     }).then(async (data: http.HttpResponse) => {
-      try {
-        let obj = JSON.parse(JSON.stringify(data))
-        let result: I_LoginRes = JSON.parse((obj as object)?.['result']) as I_LoginRes
-        if (result.response.message == undefined || result.response.message == null) {
-          let cookie =
-            `siteLanguage=zh; selectedSiteMode=books; remix_userkey=${result.response.user_key}; remix_userid=${result.response.user_id}; redirects_count=%7B%22auth%22%3A1%2C%22hide-auth-params%22%3A1%7D`
-          let basicInfo: I_BasicUserInfo = JSON.parse((await zlibClient.getPersonInfo(cookie))[1]) as I_BasicUserInfo
-          let userInfo: I_ZlibUserInfo = {
-            account: email,
-            password: password,
-            cookie: cookie,
-            userName: basicInfo.userName,
-            userDownloadLimitNumber: basicInfo.userDownloadLimitNumber,
-            userDonateNumber: basicInfo.userDonateNumber,
-            userAvatar: basicInfo.userAvatar
-          }
-          return [1, JSON.stringify(userInfo)] as [number, string]
-        } else {
-          return [0, result.response.message] as [number, string]
-        }
-      } catch (err) {
-        return [0, JSON.stringify(err)] as [number, string]
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result']) as I_loginRes
+
+      if (result.success == 0) {
+        return [0,result.error] as [number, string]
+      }else {
+        result.user.passWord = password
+        return [1,JSON.stringify(result.user)] as [number, string]
       }
     })
       .catch((err: BusinessError) => {
@@ -103,7 +79,7 @@ export class zlibClient {
   static async getPersonInfo(cookie: string): Promise<[number, string]> {
     console.log(`尝试获取用户数据`)
     let req = http.createHttp()
-    return await req.request(`${__ZlibUser__.base_url}/?ts`, {
+    return await req.request(`${__ZlibUser__.baseEApi_url}/eapi/user/profile`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
@@ -112,6 +88,7 @@ export class zlibClient {
       }
     }).then((data: http.HttpResponse) => {
       try {
+        console.log(JSON.stringify(data.result));
         return [1, ''] as [number, string]
 
       } catch (err) {
@@ -164,6 +141,7 @@ export class zlibClient {
  */
   static async getBookInfo(req: http.HttpRequest, bookHref: string): Promise<[number, string]> {
     console.log(`尝试获取书籍信息`)
+    console.log(bookHref)
     return await req.request(`${__ZlibUser__.base_url}${bookHref}`, {
       method: http.RequestMethod.GET,
       header: {

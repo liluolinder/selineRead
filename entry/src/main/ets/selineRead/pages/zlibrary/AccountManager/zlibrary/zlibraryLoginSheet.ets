@@ -5,6 +5,7 @@ import { __ZlibUser__ } from "../../../../commons/shareDatas"
 import { RelationStoreManager } from "../../../../models/classes/DataBase"
 import { relationalStore } from "@kit.ArkData"
 import { ZlibUserInfo } from "../../../../../zlibrary/classes/UserInfo"
+import { I_loginRes_user } from "../../../../../zlibrary/interface/I_loginInfo"
 
 @Builder
 export function ZlibLoginSheetBuilder() {
@@ -122,33 +123,35 @@ export struct zlibLoginSheet {
                   this.loginErrorInfo = res[1]
                   this.localLoginState = loginState.Error
                 } else {
-                  let userInfo: I_ZlibUserInfo = JSON.parse(res[1]) as I_ZlibUserInfo
+                  let userInfo: I_loginRes_user = JSON.parse(res[1]) as I_loginRes_user
+                  let cookie =
+                    `siteLanguage=zh; remix_userkey=${userInfo.remix_userkey}; remix_userid=${userInfo.id}`
                   await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibraryAccount', {
-                    Account: userInfo.account,
-                    Password: userInfo.password,
-                    Cookie: userInfo.cookie
+                    Account: userInfo.email,
+                    Password: userInfo.passWord,
+                    Cookie: cookie
                   })
                   let userInfoClass:ZlibUserInfo = new ZlibUserInfo()
-                  userInfoClass.account = userInfo.account
-                  userInfoClass.password = userInfo.password
-                  userInfoClass.cookie = userInfo.cookie
-                  userInfoClass.userName = userInfo.userName
-                  userInfoClass.userDownloadLimitNumber = userInfo.userDownloadLimitNumber
-                  userInfoClass.userDonateNumber = userInfo.userDonateNumber
-                  userInfoClass.userAvatar = userInfo.userAvatar
+                  userInfoClass.account = userInfo.email
+                  userInfoClass.password = userInfo.passWord
+                  userInfoClass.cookie = cookie
+                  userInfoClass.userName = userInfo.name
+                  userInfoClass.userDownloadLimitNumber = `${userInfo.downloads_today}/${userInfo.downloads_limit}`
+                  userInfoClass.userDonateNumber = `${userInfo.donations_active}`
+                  userInfoClass.userAvatar = ``
                   __ZlibUser__.zlibAccountArray.pushData(userInfoClass)
                   __ZlibUser__.accountIndex = __ZlibUser__.zlibAccountArray.totalCount()-1
-                  __ZlibUser__.account = userInfo.account
-                  __ZlibUser__.password = userInfo.password
-                  __ZlibUser__.cookie = userInfo.cookie
-                  __ZlibUser__.userName = userInfo.userName
-                  __ZlibUser__.avatar = userInfo.userAvatar
+                  __ZlibUser__.account = userInfo.email
+                  __ZlibUser__.password = userInfo.passWord
+                  __ZlibUser__.cookie = cookie
+                  __ZlibUser__.userName = userInfo.name
+                  __ZlibUser__.avatar = ``
                   XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex",  __ZlibUser__.accountIndex)
-                  XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", userInfo.account??'')
-                  XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", userInfo.password??'')
-                  XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", userInfo.cookie??'')
-
+                  XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", userInfo.email??'')
+                  XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", userInfo.passWord??'')
+                  XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", cookie??'')
                   this.showLoginSheet = false
+                  zlibClient.getPersonInfo(cookie)
                 }
               })
             }

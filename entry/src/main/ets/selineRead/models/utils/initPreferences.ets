@@ -7,7 +7,7 @@ export async function initPreferences() {
   console.log(`开始读取首选项`)
   __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.tur101.ru') as string
   __ZlibUser__.baseApi_url = __ZlibUser__.base_url + '/papi'
-
+  __ZlibUser__.baseEApi_url = __ZlibUser__.base_url + '/eapi'
   __Setting__.bookShelfClickOpenWay = XPreferencesManager.getPreferencesValue('selineRead', "bookShelfClickOpenWay", 0) as number
 
   __Setting__.overrideConflictFile = XPreferencesManager.getPreferencesValue("selineRead", "overrideConflictFile", true) as boolean

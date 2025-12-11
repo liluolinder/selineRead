@@ -89,6 +89,7 @@ export struct ZlibraryAccount {
               //保存地址
               __ZlibUser__.base_url = returnText
               __ZlibUser__.baseApi_url = returnText + '/papi'
+              __ZlibUser__.baseEApi_url = returnText + '/eapi'
               XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", returnText)
               //重新获取数据
               __Home__.recommendBookIndex = 1

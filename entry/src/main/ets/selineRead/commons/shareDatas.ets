@@ -73,6 +73,7 @@ export class ZlibUser{
   zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
   base_url: string = 'https://zh.cn101.ru'
   baseApi_url: string = this.base_url+'/papi'
+  baseEApi_url:string = this.base_url+'/eapi'
 
 }
 
