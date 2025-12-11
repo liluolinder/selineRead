@@ -10,6 +10,20 @@ export interface I_ZlibSearchRes{
   error:string
 }
 
+export interface I_ZLibRecommendBook{
+  success:number
+  books:I_ZLibRecommendBook_Book[]
+  error:string
+}
+
+export interface I_ZLibRecommendBook_Book{
+  id: number
+  title: string
+  author: string
+  cover: string
+  hash: string
+}
+
 
 export interface I_ZlibBookInfoRes_Book{
   id: number

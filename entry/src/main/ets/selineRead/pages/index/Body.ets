@@ -12,6 +12,7 @@ import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo
 import { CommonEvent } from "../../models/classes/CommonEvent";
 import { I_BasicUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
 import { I_loginRes_user } from "../../../zlibrary/interface/I_loginInfo";
+import { I_ZlibBookInfoRes_Book, I_ZLibRecommendBook_Book } from "../../../zlibrary/interface/I_ZlibBookInfo";
 
 @ComponentV2
 export struct Body {
@@ -69,7 +70,7 @@ export struct Body {
     zlibClient.refreshUrl().then(() => {
       console.log(__ZlibUser__.cookie);
       let req = http.createHttp()
-      zlibClient.getRecommendBook(req, __Home__.recommendBookIndex).then((res) => {
+      zlibClient.getRecommendBook(req).then((res) => {
         console.log(JSON.stringify(res))
         __Home__.canGetMore = true
         if (res[0] == 1) {
@@ -77,7 +78,7 @@ export struct Body {
           if (JSON.stringify(res[1]) == "\"[]\"" ) {
             __Home__.errorText = '返回值为空'
           }else {
-            (JSON.parse(res[1]) as I_BookInfo[]).forEach((item) => {
+            (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
               __Home__.recommendBookArray.pushData(item)
             })
             __Home__.recommendBookIndex++

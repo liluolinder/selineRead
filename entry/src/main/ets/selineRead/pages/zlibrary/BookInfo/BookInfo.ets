@@ -10,8 +10,6 @@ import { zlibClient } from "../../../../zlibrary/zlibClient"
 import { min_width } from "../../../commons/commonItem"
 import { BigImage } from "../../../components/BigImage"
 import { ListItemWithText } from "templatecomponent"
-import { http } from "@kit.NetworkKit"
-import { I_ZlibDownloadInfo } from "../../../../zlibrary/interface/I_DownloadInfo"
 import { I_ZlibBookInfoRes_Book } from "../../../../zlibrary/interface/I_ZlibBookInfo"
 
 @Builder
@@ -24,7 +22,6 @@ export struct BookInfo {
   pageInfos: NavPathStack = new NavPathStack()
   @Local errorText: string = ''
   @Local bookInfo: I_ZlibBookInfoRes_Book | undefined = undefined
-  @Local downloadInfoArray: I_ZlibDownloadInfo[] = []
   @Local isShowDownloadMenu: boolean = false
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
   @Local pageWidth: number = -1
@@ -271,7 +268,11 @@ export struct BookInfo {
                       })
                     }
 
-                    zlibClient.getBookDownloadUrl(this.bookInfo!)
+                    zlibClient.getBookDownloadUrl(this.bookInfo!).then((res)=>{
+                      if (res[0]==0) {
+                        this.errorText = res[1]
+                      }
+                    })
 
                   })
                 }

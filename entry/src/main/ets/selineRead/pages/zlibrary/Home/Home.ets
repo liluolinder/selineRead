@@ -1,4 +1,4 @@
-import { curves, LengthMetrics, UIUtils } from "@kit.ArkUI"
+import { curves, LengthMetrics, } from "@kit.ArkUI"
 import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from "commonpackage"
 import { min_width } from "../../../commons/commonItem"
 import { __System__, __UI__, __ZlibUser__ } from "../../../commons/shareDatas"
@@ -8,10 +8,9 @@ import { zlibClient } from "../../../../zlibrary/zlibClient"
 import { it } from "@ohos/hypium"
 import { loadingDialog, loadingNewDialog } from "../../../components/LoadingNewDialog"
 import { resourceManager } from "@kit.LocalizationKit"
-import { I_searchBook } from "../../../../zlibrary/interface/I_SearchInfo"
 import { I_SearchHistory } from "../../../models/interfaces/I_SearchHistory"
 import { RelationStoreManager } from "../../../models/classes/DataBase"
-import { I_ZlibBookInfoRes_Book } from "../../../../zlibrary/interface/I_ZlibBookInfo"
+import { I_ZlibBookInfoRes_Book, I_ZLibRecommendBook_Book } from "../../../../zlibrary/interface/I_ZlibBookInfo"
 
 
 @ObservedV2
@@ -26,10 +25,10 @@ export class HomeData {
 
   req = http.createHttp()
 
-  recommendBookArray: BasicDataSource<I_BookInfo> =
-    new BasicDataSource<I_BookInfo>()
+  @Trace recommendBookArray: BasicDataSource<I_ZLibRecommendBook_Book> =
+    new BasicDataSource<I_ZLibRecommendBook_Book>()
 
-  searchBookArray: BasicDataSource<I_ZlibBookInfoRes_Book> =
+  @Trace searchBookArray: BasicDataSource<I_ZlibBookInfoRes_Book> =
     new BasicDataSource<I_ZlibBookInfoRes_Book>()
 
   @Trace searchHistory:I_SearchHistory[]=[]
@@ -155,7 +154,7 @@ export struct Home {
       }else {
         List({space:20}) {
           if (__Home__.recommendOrSearch == 0) {
-            LazyForEach(__Home__.recommendBookArray, (item: I_BookInfo) => {
+            LazyForEach(__Home__.recommendBookArray, (item: I_ZLibRecommendBook_Book) => {
               ListItem() {
                 HomeBookCover({data:item, type:0})
               }
@@ -165,7 +164,7 @@ export struct Home {
                     this.isOpenBook = true
                   })
                   let req = http.createHttp()
-                  await zlibClient.getBookInfo(req,item.url).then((res)=>{
+                  await zlibClient.getBookInfo(req,item.id, item.hash).then((res)=>{
                     if (res[0]==1) {
                       __Home__.errorText = ''
                       let book = JSON.parse(res[1]) as I_ZlibBookInfoRes_Book
@@ -186,7 +185,7 @@ export struct Home {
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
-            },(item: I_BookInfo) => JSON.stringify(item))
+            },(item: I_ZlibBookInfoRes_Book, index:number) => JSON.stringify(item)+JSON.stringify(index))
           }else {
             LazyForEach(__Home__.searchBookArray, (item: I_ZlibBookInfoRes_Book) => {
               ListItem() {
@@ -198,7 +197,7 @@ export struct Home {
                     this.isOpenBook = true
                   })
                   let req = http.createHttp()
-                  await zlibClient.getBookInfo(req,item.href).then((res)=>{
+                  await zlibClient.getBookInfo(req,item.id, item.hash).then((res)=>{
                     if (res[0]==1) {
                       __Home__.errorText = ''
                       let bookInfo:I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
@@ -221,7 +220,7 @@ export struct Home {
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
-            },(item: I_BookInfo) => JSON.stringify(item))
+            },(item: I_ZlibBookInfoRes_Book, index:number) => JSON.stringify(item)+JSON.stringify(index))
           }
         }
         .onAreaChange((_, newValue) => {
@@ -232,25 +231,11 @@ export struct Home {
         .onReachEnd( () => {
           __Home__.req = http.createHttp()
           if (__Home__.canGetMore) {
-            XAnimation.runWithAnimation(()=>{
-              __Home__.canGetMore = false
-            })
             if (__Home__.recommendOrSearch == 0) {
-              zlibClient.getRecommendBook(__Home__.req, __Home__.recommendBookIndex).then((res) => {
-                if (res[0] == 1) {
-                  __Home__.recommendBookIndex ++
-                  (JSON.parse(res[1]) as I_BookInfo[]).forEach((item) => {
-                    __Home__.recommendBookArray.pushData(item)
-                  })
-                  __Home__.errorText = ''
-                }else {
-                  __Home__.errorText = res[1]
-                }
-                XAnimation.runWithAnimation(()=>{
-                  __Home__.canGetMore = true
-                })
-              })
             }else {
+              XAnimation.runWithAnimation(()=>{
+                __Home__.canGetMore = false
+              })
               zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                 if (res[0] == 1) {
                   __Home__.recommendBookIndex ++
@@ -412,7 +397,7 @@ export struct Home {
 
 @ComponentV2
 export struct HomeBookCover {
-  @Param @Require data: I_BookInfo | I_ZlibBookInfoRes_Book
+  @Param @Require data: I_ZLibRecommendBook_Book | I_ZlibBookInfoRes_Book
   @Param defaultImg: ResourceStr = $r('app.media.default_cover')
   @Param haveShadow: boolean = true
   @Param imageFit: ImageFit = ImageFit.Auto

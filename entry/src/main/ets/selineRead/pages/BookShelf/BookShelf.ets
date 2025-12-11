@@ -12,7 +12,6 @@ import { zlibClient } from "../../../zlibrary/zlibClient"
 import { http } from "@kit.NetworkKit"
 import { __Home__ } from "../zlibrary/Home/Home"
 import { I_BookDetailedInfo } from "../../models/interfaces/I_BookInfo"
-import { I_searchBook } from "../../../zlibrary/interface/I_SearchInfo"
 import { I_SearchHistory } from "../../models/interfaces/I_SearchHistory"
 import { min_width } from "../../commons/commonItem"
 import { I_ZlibBookInfoRes_Book } from "../../../zlibrary/interface/I_ZlibBookInfo"
@@ -101,7 +100,8 @@ export struct BookShelf {
         .onClick(async () => {
           this.isOpening = true
           let req = http.createHttp()
-          await zlibClient.getBookInfo(req, item.bookHref).then((res) => {
+          let splitBook = item.bookHref.split(`/`)
+          await zlibClient.getBookInfo(req,Number(splitBook[2]),splitBook[3]).then((res) => {
             if (res[0] == 1) {
               __Home__.errorText = ''
               let bookInfo: I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo

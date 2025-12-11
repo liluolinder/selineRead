@@ -5,9 +5,7 @@ import { user_agent } from '../selineRead/commons/commonItem';
 import { JSON, util } from '@kit.ArkTS';
 import { Download, __Download__, __Setting__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
 import { File, LNotificationManager, XContext, XPreferencesManager } from 'commonpackage';
-import { I_trulyDownloadUrl } from './interface/I_DownloadInfo';
 import { DownloadConfig, DownloadListener, DownloadProgressInfo } from '@hadss/super_fast_file_trans';
-import { I_searchBook } from './interface/I_SearchInfo';
 import { BackgroundUtil } from '../selineRead/models/classes/BackgroundRunningManager';
 import { shareBook } from '../selineRead/models/utils/ShareBook';
 import { DownloadInfo, DownloadStatus } from '../selineRead/models/classes/DownloadInfo';
@@ -17,7 +15,9 @@ import { fileIo } from '@kit.CoreFileKit';
 import { BookInfo } from '../selineRead/pages/zlibrary/BookInfo/BookInfo';
 import { CommonEvent } from '../selineRead/models/classes/CommonEvent';
 import { I_loginRes } from './interface/I_loginInfo';
-import { I_ZlibBookInfoRes, I_ZlibBookInfoRes_Book, I_ZlibSearchRes } from './interface/I_ZlibBookInfo';
+import { I_ZlibBookInfoRes, I_ZlibBookInfoRes_Book,
+  I_ZLibRecommendBook,
+  I_ZlibSearchRes } from './interface/I_ZlibBookInfo';
 import { I_ZlibDownloadRes, I_ZlibDownloadRes_file } from './interface/I_ZlibDownload';
 
 export class zlibClient {
@@ -115,9 +115,9 @@ export class zlibClient {
     @Param page 请求页数>=1, 默认值位1
     @Return 类型为[number, string]元组 元素0表示获取状态（0为失败， 1为成功） string表示消息(成功为序列化后的数据字符串，其余为报错内容)
    */
-  static async getRecommendBook(req: http.HttpRequest, page: number = 1): Promise<[number, string]> {
+  static async getRecommendBook(req: http.HttpRequest): Promise<[number, string]> {
     console.log(`尝试获取推荐书籍`)
-    return await req.request(`${__ZlibUser__.baseApi_url}/book/mostpopular/mosaic/20/${page}`, {
+    return await req.request(__ZlibUser__.cookie == ''?`${__ZlibUser__.baseEApi_url}/book/most-popular`:`${__ZlibUser__.baseEApi_url}/user/book/recommended`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
@@ -125,14 +125,15 @@ export class zlibClient {
         'cookie': __ZlibUser__.cookie
       }
     }).then((data: http.HttpResponse) => {
-      try {
-        let obj = JSON.parse(JSON.stringify(data))
-        let result = JSON.parse((obj as object)?.['result'])
-        let bookArray: I_BookInfo[] = (result as object)?.['books']
-        return [1, JSON.stringify(bookArray)] as [number, string]
-      } catch (err) {
-        return [0, JSON.stringify(err)] as [number, string]
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result']) as I_ZLibRecommendBook
+      if (result.success == 0) {
+        return [0,result.error] as [number, string]
+      }else {
+        console.log(JSON.stringify(result.books))
+        return [1,JSON.stringify(result.books)] as [number, string]
       }
+
     })
       .catch((err: BusinessError) => {
         return [0, JSON.stringify(err)] as [number, string]
@@ -149,10 +150,7 @@ export class zlibClient {
   @Param bookHref 书籍详细url/Href
   @Return 类型为[number, string]元组 元素0表示获取状态（0为失败， 1为成功） string表示消息(成功为序列化后的数据字符串，其余为报错内容)
  */
-  static async getBookInfo(req: http.HttpRequest, bookHref: string): Promise<[number, string]> {
-    let bookSplit = bookHref.split('/')
-    let bookId = bookSplit[2]
-    let bookHash = bookSplit[3]
+  static async getBookInfo(req: http.HttpRequest, bookId: number, bookHash:string): Promise<[number, string]> {
     return await req.request(`${__ZlibUser__.baseEApi_url}/book/${bookId}/${bookHash}`, {
       method: http.RequestMethod.GET,
       header: {
@@ -207,6 +205,7 @@ export class zlibClient {
 
   static async getBookDownloadUrl(bookInfo: I_ZlibBookInfoRes_Book):Promise<[number, string]>{
     let req = http.createHttp()
+    XContext.toast($r('app.string.Tip_TryToDownload'))
     return await req.request(`${__ZlibUser__.baseEApi_url}/book/${bookInfo.id}/${bookInfo.hash}/file`, {
       method: http.RequestMethod.GET,
       header: {
@@ -215,6 +214,7 @@ export class zlibClient {
         'Cookie': __ZlibUser__.cookie,
       }
     }).then((data: http.HttpResponse) => {
+      console.log(JSON.stringify(data.result))
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result']) as I_ZlibDownloadRes
       if (result.success == 0) {
