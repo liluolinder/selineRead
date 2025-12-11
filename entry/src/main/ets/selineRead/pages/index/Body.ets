@@ -11,6 +11,7 @@ import { RelationStoreManager } from "../../models/classes/DataBase";
 import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo";
 import { CommonEvent } from "../../models/classes/CommonEvent";
 import { I_BasicUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
+import { I_loginRes_user } from "../../../zlibrary/interface/I_loginInfo";
 
 @ComponentV2
 export struct Body {
@@ -90,11 +91,10 @@ export struct Body {
       if (__ZlibUser__.cookie!='') {
         zlibClient.getPersonInfo(__ZlibUser__.cookie).then((res) => {
           if (res[0] == 1) {
-            let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
-            __ZlibUser__.avatar = basicInfo.userAvatar
-            __ZlibUser__.userName = basicInfo.userName
+            let basicInfo = JSON.parse(res[1]) as I_loginRes_user
+            __ZlibUser__.avatar = ''
+            __ZlibUser__.userName = basicInfo.name
           }
-
         })
       }
 

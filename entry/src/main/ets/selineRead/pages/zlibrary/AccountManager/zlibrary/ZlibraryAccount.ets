@@ -12,6 +12,7 @@ import { ZlibUserInfo } from "../../../../../zlibrary/classes/UserInfo";
 import { http } from "@kit.NetworkKit";
 import { __Home__ } from "../../Home/Home";
 import { I_BookInfo } from "../../../../models/interfaces/I_BookInfo";
+import { I_loginRes_user } from "../../../../../zlibrary/interface/I_loginInfo";
 
 @Builder
 export function ZlibraryAccountBuilder() {
@@ -32,15 +33,15 @@ export struct ZlibraryAccount {
       zlibClient.getPersonInfo(__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].cookie ?? '')
         .then((res) => {
           if (res[0] == 1) {
-            let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
-            __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = basicInfo.userName
+            let basicInfo = JSON.parse(res[1]) as I_loginRes_user
+            __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = basicInfo.name
             __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
-              basicInfo.userDownloadLimitNumber
+              `${basicInfo.downloads_today}/${basicInfo.downloads_limit}`
             __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDonateNumber =
-              basicInfo.userDonateNumber
-            __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = basicInfo.userAvatar
-            __ZlibUser__.userName = basicInfo.userName
-            __ZlibUser__.avatar = basicInfo.userAvatar
+              `${basicInfo.donations_active}`
+            __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = ''
+            __ZlibUser__.userName = basicInfo.name
+            __ZlibUser__.avatar = ''
           }
         })
     }
@@ -157,11 +158,11 @@ export struct ZlibraryAccount {
                         __ZlibUser__.userName=$r('app.string.Tip_GettingBookNow')
                         zlibClient.getPersonInfo(item.cookie ?? '').then((res) => {
                           if (res[0] == 1) {
-                            let basicInfo = JSON.parse(res[1]) as I_BasicUserInfo
-                            item.userName = basicInfo.userName
-                            item.userDownloadLimitNumber = basicInfo.userDownloadLimitNumber
-                            item.userDonateNumber = basicInfo.userDonateNumber
-                            item.userAvatar = basicInfo.userAvatar
+                            let basicInfo = JSON.parse(res[1]) as I_loginRes_user
+                            item.userName = basicInfo.name
+                            item.userDownloadLimitNumber = `${basicInfo.downloads_today}/${basicInfo.downloads_limit}`
+                            item.userDonateNumber = `${basicInfo.donations_active}`
+                            item.userAvatar = ''
                             __ZlibUser__.cookie = item.cookie!
                             __ZlibUser__.avatar = item.userAvatar!
                             __ZlibUser__.userName = item.userName!

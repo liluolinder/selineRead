@@ -12,6 +12,12 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: '1.1.5.1',
+      date: '2025/12/8',
+      addNewFunArray:['主页顶栏新增打开下载管理器按钮'],
+      fixBugsArray:['修复zlib官方策略修改导致无法访问问题']
+    },
+    {
       version: '1.1.5.0',
       date: '2025/12/8',
       optimizeArray:['本地书籍封面绑定'],

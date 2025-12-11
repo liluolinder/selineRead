@@ -11,6 +11,7 @@ import { resourceManager } from "@kit.LocalizationKit"
 import { I_searchBook } from "../../../../zlibrary/interface/I_SearchInfo"
 import { I_SearchHistory } from "../../../models/interfaces/I_SearchHistory"
 import { RelationStoreManager } from "../../../models/classes/DataBase"
+import { I_ZlibBookInfoRes_Book } from "../../../../zlibrary/interface/I_ZlibBookInfo"
 
 
 @ObservedV2
@@ -28,8 +29,8 @@ export class HomeData {
   recommendBookArray: BasicDataSource<I_BookInfo> =
     new BasicDataSource<I_BookInfo>()
 
-  searchBookArray: BasicDataSource<I_searchBook> =
-    new BasicDataSource<I_searchBook>()
+  searchBookArray: BasicDataSource<I_ZlibBookInfoRes_Book> =
+    new BasicDataSource<I_ZlibBookInfoRes_Book>()
 
   @Trace searchHistory:I_SearchHistory[]=[]
 
@@ -83,7 +84,7 @@ export struct Home {
               zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                 if (res[0] == 1) {
                   __Home__.recommendBookIndex ++
-                  (JSON.parse(res[1]) as I_searchBook[]).forEach((item) => {
+                  (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
                     __Home__.searchBookArray.pushData(item)
                   })
                   __Home__.errorText = ''
@@ -116,6 +117,21 @@ export struct Home {
               __Home__.inSearchMode = true
             })
           })
+
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph($r('sys.symbol.download'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .backdropBlur(100)
+        .useEffect(true)
+        .onClick(() => {
+          __UI__.mainPageStack.pushPathByName('DownloadPage', null)
+        })
+        .visibility(__Home__.inSearchMode  ? Visibility.None : Visibility.Visible)
       }
       .zIndex(1)
       .justifyContent(FlexAlign.End)
@@ -152,10 +168,8 @@ export struct Home {
                   await zlibClient.getBookInfo(req,item.url).then((res)=>{
                     if (res[0]==1) {
                       __Home__.errorText = ''
-                      let bookInfo:I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
-                      bookInfo.bookID = item.id
-                      bookInfo.href = item.url
-                      __UI__.mainPageStack.pushPathByName("bookInfoPage",bookInfo)
+                      let book = JSON.parse(res[1]) as I_ZlibBookInfoRes_Book
+                      __UI__.mainPageStack.pushPathByName("bookInfoPage",book)
                     }else {
                       __Home__.errorText = res[1]
                     }
@@ -174,7 +188,7 @@ export struct Home {
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
             },(item: I_BookInfo) => JSON.stringify(item))
           }else {
-            LazyForEach(__Home__.searchBookArray, (item: I_searchBook) => {
+            LazyForEach(__Home__.searchBookArray, (item: I_ZlibBookInfoRes_Book) => {
               ListItem() {
                 HomeBookCover({data:item, type:1})
               }
@@ -240,7 +254,7 @@ export struct Home {
               zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                 if (res[0] == 1) {
                   __Home__.recommendBookIndex ++
-                  (JSON.parse(res[1]) as I_searchBook[]).forEach((item) => {
+                  (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
                     __Home__.searchBookArray.pushData(item)
                   })
                   __Home__.errorText = ''
@@ -342,7 +356,7 @@ export struct Home {
                 zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                   if (res[0] == 1) {
                     __Home__.recommendBookIndex ++
-                    (JSON.parse(res[1]) as I_searchBook[]).forEach((item) => {
+                    (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
                       __Home__.searchBookArray.pushData(item)
                     })
                     __Home__.errorText = ''
@@ -398,7 +412,7 @@ export struct Home {
 
 @ComponentV2
 export struct HomeBookCover {
-  @Param @Require data: I_BookInfo | I_searchBook
+  @Param @Require data: I_BookInfo | I_ZlibBookInfoRes_Book
   @Param defaultImg: ResourceStr = $r('app.media.default_cover')
   @Param haveShadow: boolean = true
   @Param imageFit: ImageFit = ImageFit.Auto
@@ -408,7 +422,7 @@ export struct HomeBookCover {
   build() {
     Column({ space: 10 }) {
       Stack() {
-        Image((this.type == 0?(this.data as I_BookInfo).cover:(this.data as I_searchBook).image) ?? this.defaultImg)
+        Image(this.data.cover ?? this.defaultImg)
           .transition(TransitionEffect.OPACITY)
           .objectFit(this.imageFit)
           .aspectRatio(2/3)
@@ -441,7 +455,7 @@ export struct HomeBookCover {
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.MARQUEE }).fontWeight(FontWeight.Medium)
           .width('100%')
-        Text((this.type == 0?(this.data as I_BookInfo).author:(this.data as I_searchBook).writer))
+        Text((this.data.author))
           .fontSize(12)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).opacity(0.6)

@@ -151,7 +151,6 @@ export struct zlibLoginSheet {
                   XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", userInfo.passWord??'')
                   XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", cookie??'')
                   this.showLoginSheet = false
-                  zlibClient.getPersonInfo(cookie)
                 }
               })
             }

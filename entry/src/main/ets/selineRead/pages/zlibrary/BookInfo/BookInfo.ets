@@ -12,6 +12,7 @@ import { BigImage } from "../../../components/BigImage"
 import { ListItemWithText } from "templatecomponent"
 import { http } from "@kit.NetworkKit"
 import { I_ZlibDownloadInfo } from "../../../../zlibrary/interface/I_DownloadInfo"
+import { I_ZlibBookInfoRes_Book } from "../../../../zlibrary/interface/I_ZlibBookInfo"
 
 @Builder
 export function BookInfoBuilder() {
@@ -22,7 +23,7 @@ export function BookInfoBuilder() {
 export struct BookInfo {
   pageInfos: NavPathStack = new NavPathStack()
   @Local errorText: string = ''
-  @Local bookInfo: I_BookDetailedInfo | undefined = undefined
+  @Local bookInfo: I_ZlibBookInfoRes_Book | undefined = undefined
   @Local downloadInfoArray: I_ZlibDownloadInfo[] = []
   @Local isShowDownloadMenu: boolean = false
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
@@ -98,37 +99,11 @@ export struct BookInfo {
       }.size({ width: '100%', height: '100%' })
     }*/
 
-  @Builder
-  DownloadMenu() {
-    Menu() {
-      ForEach(this.downloadInfoArray, (item: I_ZlibDownloadInfo) => {
-        MenuItem({ content: item.extension, labelInfo: item.filesizeString })
-          .onClick(() => {
-            if (item.extension == 'txt' || item.extension =='TXT'){
-              XContext.alterDialogWithTwoButton({
-                title: '致歉',
-                message:'由于TXT文件特殊性, 通知栏与下载管理页面均无法显示下载进度, 请耐心等待下载',
-                cancelCallBack: (): void => {
-                },
-                confirmCallBack: (): void => {
-                }
-              })
-            }
-            zlibClient.downloadBook(item.href ?? '', this.bookInfo!).then((res) => {
-              if (res[0] == 0) {
-                this.errorText = res[1]
-              }
-            })
-          })
-      })
-    }
-  }
-
   build() {
     NavDestination() {
       if (this.isViewingBigImage) {
         BigImage({
-          image: this.bookInfo?.image
+          image: this.bookInfo?.cover
         })
           .zIndex(114514)
       } else {
@@ -138,7 +113,7 @@ export struct BookInfo {
               List({ space: 10 }) {
                 ListItem() {
                   Row({ space: 20 }) {
-                    BookCover({ data: this.bookInfo?.image })
+                    BookCover({ data: this.bookInfo?.cover })
                       .transition(TransitionEffect.OPACITY)
                       .geometryTransition('image')
                       .size({ height: 160, width: 116 })
@@ -148,17 +123,12 @@ export struct BookInfo {
                       })
 
                     Column({ space: 5 }) {
-                      Text(this.bookInfo?.name)
+                      Text(this.bookInfo?.title)
                         .fontWeight(FontWeight.Bold)
                         .fontSize(24)
                         .maxLines(3)
                         .textOverflow({ overflow: TextOverflow.Ellipsis })
-                      Text() {
-                        ForEach(this.bookInfo?.author, (item: authorInfo) => {
-                          Span(item.name)
-                          Span(' ')
-                        })
-                      }
+                      Text(this.bookInfo?.author)
                       .maxLines(3)
                       .fontSize(18)
                       .opacity(0.6)
@@ -211,32 +181,32 @@ export struct BookInfo {
                 ListItemGroup() {
                   ListItemWithText({
                     leftMessage: $r('app.string.Text_Rate'),
-                    rightMessage: this.bookInfo?.review.reviewRating.ratingValue
+                    rightMessage: this.bookInfo?.interestScore
                   })
 
                   ListItemWithText({
                     leftMessage: $r('app.string.Text_Language'),
-                    rightMessage: this.bookInfo?.inLanguage.name
+                    rightMessage: this.bookInfo?.language
                   })
 
                   ListItemWithText({
                     leftMessage: 'ISBN',
-                    rightMessage: this.bookInfo?.isbn == '' ? '???' : this.bookInfo?.isbn
+                    rightMessage: this.bookInfo?.identifier == '' ? '???' : this.bookInfo?.identifier
                   })
 
                   ListItemWithText({
                     leftMessage: $r('app.string.Text_Publisher'),
-                    rightMessage: this.bookInfo?.publisher.name == '' ? '???' : this.bookInfo?.publisher.name
+                    rightMessage: this.bookInfo?.publisher == '' ? '???' : this.bookInfo?.publisher
                   })
 
                   ListItemWithText({
                     leftMessage: $r('app.string.Text_PublishYear'),
-                    rightMessage: this.bookInfo?.datePublished?.toString() ?? '???'
+                    rightMessage: this.bookInfo?.year?.toString() ?? '???'
                   })
 
                   ListItemWithText({
                     leftMessage: $r('app.string.Text_TotalPage'),
-                    rightMessage: this.bookInfo?.numberOfPages! <= 0 ? '???' : this.bookInfo?.numberOfPages.toString()
+                    rightMessage: this.bookInfo?.pages! <= 0 ? '???' : this.bookInfo?.pages.toString()
                   })
 
 
@@ -278,7 +248,7 @@ export struct BookInfo {
 
                 ListItem() {
                   Button({ type: ButtonType.Normal, stateEffect: true }) {
-                    Text(this.bookInfo?.firstDownloadInfo?.format + '   ' + this.bookInfo?.firstDownloadInfo?.size)
+                    Text(this.bookInfo?.extension + '   ' + this.bookInfo?.filesizeString)
                   }
                   .height(55)
                   .borderRadius(20)
@@ -290,7 +260,7 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
-                    if (this.bookInfo?.firstDownloadInfo?.format == 'TXT' || this.bookInfo?.firstDownloadInfo?.format == 'txt'){
+                    if (this.bookInfo?.extension == 'TXT' || this.bookInfo?.extension == 'txt'){
                       XContext.alterDialogWithTwoButton({
                         title: '致歉',
                         message:'由于TXT文件特殊性, 通知栏与下载管理页面均无法显示下载进度, 请耐心等待下载',
@@ -300,65 +270,12 @@ export struct BookInfo {
                         }
                       })
                     }
-                    zlibClient.downloadBook(this.bookInfo?.firstDownloadUrl ?? '', this.bookInfo!).then((res) => {
-                      if (res[0] == 0) {
-                        this.errorText = res[1]
-                      }
-                    })
+
+                    zlibClient.getBookDownloadUrl(this.bookInfo!)
+
                   })
                 }
                 .transition(XAnimation.getAnimation('bottom', 250))
-
-                ListItem() {
-                  Button({ type: ButtonType.Normal, stateEffect: true }) {
-                    Text('更多下载选项')
-                  }
-                  .height(55)
-                  .borderRadius(20)
-                  .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-                  .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
-                    undefined)
-                  .useEffect(true)
-                  .width('100%')
-                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-                  .bindMenu(this.isShowDownloadMenu, this.DownloadMenu, {
-                    onDisappear: () => {
-                      this.isShowDownloadMenu = false
-                    }
-                  })
-                  .onClick(async () => {
-                    let req = http.createHttp()
-                    await zlibClient.getMoreDownloadWay(req, this.bookInfo?.bookID!).then((res) => {
-                      if (res[0] == 1) {
-                        let downloadWayArray: I_ZlibDownloadInfo[] = JSON.parse(res[1])
-                        if (!downloadWayArray || downloadWayArray.length == 0) {
-                          this.downloadInfoArray = [
-                            {
-                              id: 0,
-                              extension: "暂无其他下载方式",
-                              filesizeString: "",
-                              href: ""
-                            }
-                          ]
-                        } else {
-                          this.downloadInfoArray = downloadWayArray
-                        }
-                      } else {
-                        this.downloadInfoArray = [
-                          {
-                            id: 0,
-                            extension: "暂无其他下载方式",
-                            filesizeString: "",
-                            href: ""
-                          }
-                        ]
-                      }
-                      this.isShowDownloadMenu = true
-                    })
-                  })
-                }
-                .transition(XAnimation.getAnimation('bottom', 300))
               }
               .scrollBar(BarState.Off)
               .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
@@ -450,10 +367,10 @@ export struct BookInfo {
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
     Color.Transparent : $r('sys.color.comp_background_gray'))
     .padding({ top: __System__.topRectHeight })
-    .title(this.bookInfo?.name)
+    .title(this.bookInfo?.title)
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
-      this.bookInfo = context.pathInfo.param as I_BookDetailedInfo
+      this.bookInfo = context.pathInfo.param as I_ZlibBookInfoRes_Book
     })
     .opacity(this.pageOpacity)
     .onShown(() => {

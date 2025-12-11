@@ -15,6 +15,7 @@ import { I_BookDetailedInfo } from "../../models/interfaces/I_BookInfo"
 import { I_searchBook } from "../../../zlibrary/interface/I_SearchInfo"
 import { I_SearchHistory } from "../../models/interfaces/I_SearchHistory"
 import { min_width } from "../../commons/commonItem"
+import { I_ZlibBookInfoRes_Book } from "../../../zlibrary/interface/I_ZlibBookInfo"
 
 @ObservedV2
 export class BookShelfData {
@@ -77,7 +78,7 @@ export struct BookShelf {
             zlibClient.searchBook(__Home__.req, __Home__.searchWord, __Home__.searchBookIndex).then((res) => {
               if (res[0] == 1) {
                 __Home__.recommendBookIndex ++
-                (JSON.parse(res[1]) as I_searchBook[]).forEach((item) => {
+                (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
                   __Home__.searchBookArray.pushData(item)
                 })
                 __Home__.errorText = ''

@@ -17,6 +17,8 @@ import { fileIo } from '@kit.CoreFileKit';
 import { BookInfo } from '../selineRead/pages/zlibrary/BookInfo/BookInfo';
 import { CommonEvent } from '../selineRead/models/classes/CommonEvent';
 import { I_loginRes } from './interface/I_loginInfo';
+import { I_ZlibBookInfoRes, I_ZlibBookInfoRes_Book, I_ZlibSearchRes } from './interface/I_ZlibBookInfo';
+import { I_ZlibDownloadRes, I_ZlibDownloadRes_file } from './interface/I_ZlibDownload';
 
 export class zlibClient {
   static async refreshUrl(): Promise<[number, string]> {
@@ -79,7 +81,7 @@ export class zlibClient {
   static async getPersonInfo(cookie: string): Promise<[number, string]> {
     console.log(`尝试获取用户数据`)
     let req = http.createHttp()
-    return await req.request(`${__ZlibUser__.baseEApi_url}/eapi/user/profile`, {
+    return await req.request(`${__ZlibUser__.baseEApi_url}/user/profile`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
@@ -88,8 +90,14 @@ export class zlibClient {
       }
     }).then((data: http.HttpResponse) => {
       try {
-        console.log(JSON.stringify(data.result));
-        return [1, ''] as [number, string]
+        let obj = JSON.parse(JSON.stringify(data))
+        let result = JSON.parse((obj as object)?.['result']) as I_loginRes
+        if (result.success == 0) {
+          return [0,result.error] as [number, string]
+        }else {
+          return [1,JSON.stringify(result.user)] as [number, string]
+        }
+
 
       } catch (err) {
         return [0, JSON.stringify(err)] as [number, string]
@@ -134,15 +142,18 @@ export class zlibClient {
   }
 
 
+
+
   /*
   @Param req http请求体
   @Param bookHref 书籍详细url/Href
   @Return 类型为[number, string]元组 元素0表示获取状态（0为失败， 1为成功） string表示消息(成功为序列化后的数据字符串，其余为报错内容)
  */
   static async getBookInfo(req: http.HttpRequest, bookHref: string): Promise<[number, string]> {
-    console.log(`尝试获取书籍信息`)
-    console.log(bookHref)
-    return await req.request(`${__ZlibUser__.base_url}${bookHref}`, {
+    let bookSplit = bookHref.split('/')
+    let bookId = bookSplit[2]
+    let bookHash = bookSplit[3]
+    return await req.request(`${__ZlibUser__.baseEApi_url}/book/${bookId}/${bookHash}`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
@@ -150,29 +161,13 @@ export class zlibClient {
         'Cookie': __ZlibUser__.cookie,
       }
     }).then((data: http.HttpResponse) => {
-      try {
-        let resHtml = JSON.stringify(data.result)
-        try {
-          let resBookInfo: I_BookDetailedInfo = {
-            name: '',
-            description: "",
-            author: [],
-            publisher: { name: '' },
-            image: "",
-            isbn: "",
-            numberOfPages: 0,
-            datePublished: 0,
-            inLanguage: { name: '' },
-            terms: [],
-            review: { reviewBody: '', datePublished: '', reviewRating: { ratingValue: '' } }
-          }
-
-          return [1, JSON.stringify(resBookInfo)] as [number, string]
-        } catch (err) {
-          return [0, JSON.stringify(err)] as [number, string]
-        }
-      } catch (err) {
-        return [0, JSON.stringify(err)] as [number, string]
+      console.log(JSON.stringify(data.result))
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result']) as I_ZlibBookInfoRes
+      if (result.success == 0) {
+        return [0,result.error] as [number, string]
+      }else {
+        return [1,JSON.stringify(result.book)] as [number, string]
       }
     })
       .catch((err: BusinessError) => {
@@ -182,44 +177,26 @@ export class zlibClient {
       });
   }
 
-  /*
-  @Param req http请求体
-  @Param bookID 书籍id
-  @Return 类型为[number, string]元组 元素0表示获取状态（0为失败， 1为成功） string表示消息(成功为序列化后的数据字符串，其余为报错内容)
- */
-  static async getMoreDownloadWay(req: http.HttpRequest, bookID: number): Promise<[number, string]> {
-    console.log(`尝试获取更多下载方式`)
-    return await req.request(`${__ZlibUser__.baseApi_url}/book/${bookID}/formats`, {
-      method: http.RequestMethod.GET,
-      header: {
-        'sec-ch-ua-platform': '"Windows"',
-        'user-agent': user_agent,
-        'Cookie': __ZlibUser__.cookie,
-      }
-    }).then((data: http.HttpResponse) => {
-      let obj = JSON.parse(JSON.stringify(data));
-      let result = JSON.parse((obj as object)?.['result']);
-      return [1, JSON.stringify((result as object)?.['books'])] as [number, string]
-    })
-      .catch((err: BusinessError) => {
-        return [0, JSON.stringify(err)] as [number, string]
-      }).finally(() => {
-        req.destroy()
-      });
-  }
 
   static async searchBook(req: http.HttpRequest, bookName: string, page: number = 1) {
-    return await req.request(`${__ZlibUser__.base_url}/s/${encodeURI(bookName)}?page=${page}`, {
-      method: http.RequestMethod.GET,
+    return await req.request(`${__ZlibUser__.baseEApi_url}/book/search?message=${encodeURI(bookName)}&page=${page}`, {
+      method: http.RequestMethod.POST,
       header: {
         'sec-ch-ua-platform': '"Windows"',
         'user-agent': user_agent,
         'Cookie': __ZlibUser__.cookie,
       }
     }).then((data: http.HttpResponse) => {
-      //let jsonString: string = CJLoader.getSearchBookArray(JSON.stringify(data.result))
-      let jsonArray: I_searchBook[] = JSON.parse("") as I_searchBook[]
-      return [1, JSON.stringify(jsonArray)] as [number, string]
+     console.log(JSON.stringify(data.result))
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result']) as I_ZlibSearchRes
+
+      if (result.success == 0) {
+        return [0,result.error] as [number, string]
+      }else {
+        return [1,JSON.stringify(result.books)] as [number, string]
+      }
+
     })
       .catch((err: BusinessError) => {
         return [0, JSON.stringify(err)] as [number, string]
@@ -228,323 +205,319 @@ export class zlibClient {
       });
   }
 
-  static async downloadBook(bookUrl: string, bookInfo: I_BookDetailedInfo): Promise<[number, string]> {
+  static async getBookDownloadUrl(bookInfo: I_ZlibBookInfoRes_Book):Promise<[number, string]>{
     let req = http.createHttp()
-    let url: string = __ZlibUser__.base_url + bookUrl
-    XContext.toast($r('app.string.Tip_TryToDownload'))
-    return await req.request(url,
-      {
-        method: http.RequestMethod.POST,
-        header: {
-          'sec-ch-ua-platform': '"Windows"',
-          'user-agent': user_agent,
-          'Cookie': __ZlibUser__.cookie,
-        }
-      }).then(async (data: http.HttpResponse) => {
+    return await req.request(`${__ZlibUser__.baseEApi_url}/book/${bookInfo.id}/${bookInfo.hash}/file`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': user_agent,
+        'Cookie': __ZlibUser__.cookie,
+      }
+    }).then((data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result']) as I_ZlibDownloadRes
+      if (result.success == 0) {
+        return [0,result.error] as [number, string]
+      }else {
+        return zlibClient.downloadBook(result.file, bookInfo)
+      }
 
-      let temp: I_trulyDownloadUrl = JSON.parse(JSON.stringify(data.header)) as I_trulyDownloadUrl
-      if (temp.location == undefined || temp.location.includes('wrongHash') || !temp.location.includes('books-files')) {
-        return [0, XContext.getStringFromResource($r('app.string.Tip_DownloadError'))] as [number, string]
-      } else {
-        let matches = JSON.stringify(temp.location.split('/')[7]).match(new RegExp('filename=([^&]+)'));
-        let encodedFilename: string = matches ? matches[1] : '';
-        let decodedFilename = decodeURI(encodedFilename)
-        let downloadPath = await XContext.getDownloadFolderPath()
-        let id = __ZlibUser__.notificationID++
+    })
+      .catch((err: BusinessError) => {
+        return [0, JSON.stringify(err)] as [number, string]
+      }).finally(() => {
+        req.destroy()
+      });
+  }
 
-        if (__ZlibUser__.downloadManager) {
-          try {
-            if (__Setting__.overrideConflictFile) {
-              if (fileIo.accessSync(downloadPath + decodedFilename)) {
-                fileIo.unlinkSync(downloadPath + decodedFilename)
-                console.log(`删除重复文件成功`)
+  static async downloadBook(book:I_ZlibDownloadRes_file, bookInfo: I_ZlibBookInfoRes_Book): Promise<[number, string]> {
+    let decodedFilename =`${book.description}.${book.extension}`
+    let downloadPath = await XContext.getDownloadFolderPath()
+    let id = __ZlibUser__.notificationID++
+    XContext.toast($r('app.string.Tip_StartDownload'))
+    if (__ZlibUser__.downloadManager) {
+      try {
+        if (__Setting__.overrideConflictFile) {
+          if (fileIo.accessSync(downloadPath + decodedFilename)) {
+            fileIo.unlinkSync(downloadPath + decodedFilename)
+            console.log(`删除重复文件成功`)
+          }
+        }else {
+          let newFileName = decodedFilename
+          if (!__Setting__.overrideConflictFile) {
+            const fileList: string[] =  fileIo.listFileSync(downloadPath);
+            if (fileList.includes(decodedFilename)) {
+              let counter = 1;
+              const nameParts = decodedFilename.split('.');
+              const baseName = nameParts[0];
+              console.log(baseName)
+              const extension = nameParts.length > 1 ? `.${nameParts.slice(1).join('.')}` : '';
+              while (fileList.includes(newFileName)) {
+                newFileName = `${baseName}(${counter})${extension}`;
+                counter++;
               }
-            }else {
-              let newFileName = decodedFilename
-              if (!__Setting__.overrideConflictFile) {
-                const fileList: string[] =  fileIo.listFileSync(downloadPath);
-                if (fileList.includes(decodedFilename)) {
-                  let counter = 1;
-                  const nameParts = decodedFilename.split('.');
-                  const baseName = nameParts[0];
-                  console.log(baseName)
-                  const extension = nameParts.length > 1 ? `.${nameParts.slice(1).join('.')}` : '';
-                  while (fileList.includes(newFileName)) {
-                    newFileName = `${baseName}(${counter})${extension}`;
-                    counter++;
-                  }
-                }
-              }
-              decodedFilename = newFileName
             }
-            BackgroundUtil.startContinuousTask()
-            XContext.toast($r('app.string.Tip_StartDownload'))
-            let time = new Date()
-            let downloadItem: DownloadInfo = new DownloadInfo()
-            downloadItem.fileName = decodedFilename
-            downloadItem.fileImage = bookInfo.image
-            downloadItem.status = DownloadStatus.Idle
-            downloadItem.bookAuthor = bookInfo.author[0].name
-            downloadItem.bookHref = bookInfo.href ?? ''
-            downloadItem.bookId = bookInfo.bookID ?? 0
-            downloadItem.downloadTime = time.toISOString()
-            downloadItem.downLoadTask = undefined
-            await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
-              BookID: bookInfo.bookID ?? 0,
-              BookHref: bookInfo.href ?? '',
-              BookName: decodedFilename,
-              BookAuthor: JSON.stringify(bookInfo.author[0]?.name),
-              BookPublisher: bookInfo.publisher.name,
-              BookImage: bookInfo.image,
-              BookDownLoadTime: time.toISOString(),
-              HaveDownload: 0
+          }
+          decodedFilename = newFileName
+        }
+        BackgroundUtil.startContinuousTask()
+        XContext.toast($r('app.string.Tip_StartDownload'))
+        let time = new Date()
+        let downloadItem: DownloadInfo = new DownloadInfo()
+        downloadItem.fileName = decodedFilename
+        downloadItem.fileImage = bookInfo.cover
+        downloadItem.status = DownloadStatus.Idle
+        downloadItem.bookAuthor = bookInfo.author
+        downloadItem.bookHref = bookInfo.href ?? ''
+        downloadItem.bookId = bookInfo.id ?? 0
+        downloadItem.downloadTime = time.toISOString()
+        downloadItem.downLoadTask = undefined
+        await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
+          BookID: bookInfo.id ?? 0,
+          BookHref: bookInfo.href ?? '',
+          BookName: decodedFilename,
+          BookAuthor: JSON.stringify(bookInfo.author),
+          BookPublisher: bookInfo.publisher,
+          BookImage: bookInfo.cover,
+          BookDownLoadTime: time.toISOString(),
+          HaveDownload: 0
+        })
+        let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+        predicates.equalTo('BookName', decodedFilename)
+          .equalTo("BookID", bookInfo.id ?? 0)
+          .equalTo("BookDownLoadTime", time.toISOString())
+        if (decodedFilename.includes('txt') || decodedFilename.includes('TXT')) {
+          let allContent: ArrayBuffer[] = []
+          let length: number = 0
+          downloadItem.downloadType = 'txt'
+          __Download__.downloadArray.pushUnshiftData(downloadItem)
+          let req = http.createHttp()
+          req.request(book.downloadLink,
+            {
+              method: http.RequestMethod.HEAD,
+              header: {
+                'sec-ch-ua-platform': '"Windows"',
+                'user-agent': user_agent,
+                'Cookie': __ZlibUser__.cookie,
+              }
             })
-            let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
-            predicates.equalTo('BookName', decodedFilename)
-              .equalTo("BookID", bookInfo.bookID ?? 0)
-              .equalTo("BookDownLoadTime", time.toISOString())
-            if (decodedFilename.includes('txt') || decodedFilename.includes('TXT')) {
-              let allContent: ArrayBuffer[] = []
-              let length: number = 0
-              downloadItem.downloadType = 'txt'
-              __Download__.downloadArray.pushUnshiftData(downloadItem)
-              let req = http.createHttp()
-              req.request(temp.location,
-                {
-                  method: http.RequestMethod.HEAD,
+            .then((res) => {
+              if (res.responseCode == 200) {
+                let httpRequest = http.createHttp();
+                downloadItem.downLoadTask = httpRequest
+                downloadItem.status = DownloadStatus.Downloading
+                LNotificationManager.pushNotificationWithProgress(id, 10, `TXT文件不展示下载进度`,
+                  decodedFilename)
+
+                httpRequest.on("dataReceive", (data: ArrayBuffer) => {
+                  length += data.byteLength
+                  console.log(`下载了:${data.byteLength}`);
+                  allContent.push(data)
+                });
+                httpRequest.on("dataReceiveProgress", (data: http.DataReceiveProgressInfo) => {
+                  console.info("dataReceiveProgress:" + JSON.stringify(data.totalSize));
+                });
+                httpRequest.on("dataEnd", () => {
+                  let content: ArrayBuffer = new ArrayBuffer(length)
+                  const mergedView = new Uint8Array(content);
+                  let offset = 0;
+                  allContent.forEach(buffer => {
+                    const view = new Uint8Array(buffer);
+                    mergedView.set(view, offset);
+                    offset += view.length;
+                  });
+
+                  File.write(downloadPath + decodedFilename, mergedView.buffer).then((res) => {
+                    if (res) {
+                      LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', decodedFilename)
+                      downloadItem.status = DownloadStatus.Complete
+                      RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                        BookID: bookInfo.id ?? 0,
+                        BookHref: bookInfo.href ?? '',
+                        BookName: decodedFilename,
+                        BookAuthor: JSON.stringify(bookInfo.author),
+                        BookPublisher: bookInfo.publisher,
+                        BookImage: bookInfo.cover,
+                        BookDownLoadTime: time.toISOString(),
+                        HaveDownload: 1
+                      })
+                      if (__Setting__.shareAfterDownload) {
+                        shareBook(`${downloadPath}/${decodedFilename}`)
+                      }
+                      console.log(`下载完成`);
+                    } else {
+                      RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                        BookID: bookInfo.id ?? 0,
+                        BookHref: bookInfo.href ?? '',
+                        BookName: decodedFilename,
+                        BookAuthor: JSON.stringify(bookInfo.author),
+                        BookPublisher: bookInfo.publisher,
+                        BookImage: bookInfo.cover,
+                        BookDownLoadTime: time.toISOString(),
+                        HaveDownload: 2
+                      })
+                      downloadItem.status = DownloadStatus.Failed
+                      LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
+                      XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify('保存失败'),3000)
+                    }
+                  })
+                  httpRequest.off('dataEnd')
+                  httpRequest.off('dataReceive')
+                  httpRequest.off('dataReceiveProgress')
+                });
+                httpRequest.requestInStream(book.downloadLink, {
+                  method: http.RequestMethod.GET,
                   header: {
                     'sec-ch-ua-platform': '"Windows"',
                     'user-agent': user_agent,
                     'Cookie': __ZlibUser__.cookie,
                   }
-                })
-                .then((res) => {
-                  if (res.responseCode == 200) {
-                    let httpRequest = http.createHttp();
-                    downloadItem.downLoadTask = httpRequest
-                    downloadItem.status = DownloadStatus.Downloading
-                    LNotificationManager.pushNotificationWithProgress(id, 10, `TXT文件不展示下载进度`,
-                      decodedFilename)
-
-                    httpRequest.on("dataReceive", (data: ArrayBuffer) => {
-                      length += data.byteLength
-                      console.log(`下载了:${data.byteLength}`);
-                      allContent.push(data)
-                    });
-                    httpRequest.on("dataReceiveProgress", (data: http.DataReceiveProgressInfo) => {
-                      console.info("dataReceiveProgress:" + JSON.stringify(data.totalSize));
-                    });
-                    httpRequest.on("dataEnd", () => {
-                      let content: ArrayBuffer = new ArrayBuffer(length)
-                      const mergedView = new Uint8Array(content);
-                      let offset = 0;
-                      allContent.forEach(buffer => {
-                        const view = new Uint8Array(buffer);
-                        mergedView.set(view, offset);
-                        offset += view.length;
-                      });
-
-
-                      File.write(downloadPath + decodedFilename, mergedView.buffer).then((res) => {
-                        if (res) {
-                          LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', decodedFilename)
-                          downloadItem.status = DownloadStatus.Complete
-                          RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                            BookID: bookInfo.bookID ?? 0,
-                            BookHref: bookInfo.href ?? '',
-                            BookName: decodedFilename,
-                            BookAuthor: JSON.stringify(bookInfo.author[0]?.name),
-                            BookPublisher: bookInfo.publisher.name,
-                            BookImage: bookInfo.image,
-                            BookDownLoadTime: time.toISOString(),
-                            HaveDownload: 1
-                          })
-                          if (__Setting__.shareAfterDownload) {
-                            shareBook(`${downloadPath}/${decodedFilename}`)
-                          }
-                          console.log(`下载完成`);
-                        } else {
-                          RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                            BookID: bookInfo.bookID ?? 0,
-                            BookHref: bookInfo.href ?? '',
-                            BookName: decodedFilename,
-                            BookAuthor: JSON.stringify(bookInfo.author[0]?.name),
-                            BookPublisher: bookInfo.publisher.name,
-                            BookImage: bookInfo.image,
-                            BookDownLoadTime: time.toISOString(),
-                            HaveDownload: 2
-                          })
-                          downloadItem.status = DownloadStatus.Failed
-                          LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
-                          XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify('保存失败'),3000)
-                        }
-                      })
-                      httpRequest.off('dataEnd')
-                      httpRequest.off('dataReceive')
-                      httpRequest.off('dataReceiveProgress')
-                    });
-                    console.log(temp.location)
-                    httpRequest.requestInStream(temp.location, {
-                      method: http.RequestMethod.GET,
-                      header: {
-                        'sec-ch-ua-platform': '"Windows"',
-                        'user-agent': user_agent,
-                        'Cookie': __ZlibUser__.cookie,
-                      }
-                    }).then((data: number) => {
-                      console.info("requestInStream OK!" + data);
-                    }).catch((err: Error) => {
-                      RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                        BookID: bookInfo.bookID ?? 0,
-                        BookHref: bookInfo.href ?? '',
-                        BookName: decodedFilename,
-                        BookAuthor: JSON.stringify(bookInfo.author[0]?.name),
-                        BookPublisher: bookInfo.publisher.name,
-                        BookImage: bookInfo.image,
-                        BookDownLoadTime: time.toISOString(),
-                        HaveDownload: 2
-                      })
-                      console.log(`下载失败:${JSON.stringify(err)}`)
-                      downloadItem.status = DownloadStatus.Failed
-                      LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
-                      XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(err),3000)
-                    })
-                  }else {
-                    RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                      BookID: bookInfo.bookID ?? 0,
-                      BookHref: bookInfo.href ?? '',
-                      BookName: decodedFilename,
-                      BookAuthor: JSON.stringify(bookInfo.author[0]?.name),
-                      BookPublisher: bookInfo.publisher.name,
-                      BookImage: bookInfo.image,
-                      BookDownLoadTime: time.toISOString(),
-                      HaveDownload: 2
-                    })
-                    downloadItem.status = DownloadStatus.Failed
-                    LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
-                    XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + '链接服务器失败',3000)
-                  }
-
-                }).catch((err: BusinessError) => {
-                RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                  BookID: bookInfo.bookID ?? 0,
-                  BookHref: bookInfo.href ?? '',
-                  BookName: decodedFilename,
-                  BookAuthor: JSON.stringify(bookInfo.author[0]?.name),
-                  BookPublisher: bookInfo.publisher.name,
-                  BookImage: bookInfo.image,
-                  BookDownLoadTime: time.toISOString(),
-                  HaveDownload: 2
-                })
-                console.log(`下载失败:${JSON.stringify(err)}`)
-                downloadItem.status = DownloadStatus.Failed
-                downloadItem.downloadType = 'other'
-                LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
-                XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(err),3000)
-              })
-
-
-            } else {
-              let downloadConfig: DownloadConfig = {
-                url: temp.location, // 远端下载地址（必选）
-                fileName: decodedFilename, // 下载后的本地文件名（必选）
-                fileDir: downloadPath,
-                concurrency: 1,
-                isOverwrite: __Setting__.overrideConflictFile,
-                isBreakpointResume: false,
-                requestHeaders: {
-                  'sec-ch-ua-platform': '"Windows"',
-                  'user-agent': user_agent
-                }
-              }
-
-              let customDownloadListener: DownloadListener = {
-                onSuccess: () => {
-                  downloadItem.status = DownloadStatus.Complete
-                  LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', decodedFilename)
-                  if (__Setting__.shareAfterDownload) {
-                    shareBook(`${downloadPath}/${decodedFilename}`)
-                  }
-                  XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadSuccess')) + decodedFilename,
-                    3000)
-                  console.log(`下载成功`)
-                  let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
-                  predicates.equalTo('BookName', decodedFilename)
-                    .equalTo("BookID", bookInfo.bookID ?? 0)
-                    .equalTo("BookDownLoadTime", time.toISOString())
+                }).then((data: number) => {
+                  console.info("requestInStream OK!" + data);
+                }).catch((err: Error) => {
                   RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                    BookID: bookInfo.bookID ?? 0,
+                    BookID: bookInfo.id ?? 0,
                     BookHref: bookInfo.href ?? '',
                     BookName: decodedFilename,
-                    BookAuthor: JSON.stringify(bookInfo.author[0]?.name),
-                    BookPublisher: bookInfo.publisher.name,
-                    BookImage: bookInfo.image,
-                    BookDownLoadTime: time.toISOString(),
-                    HaveDownload: 1
-                  })
-                },
-                onFail: (err: BusinessError) => {
-                  downloadItem.status = DownloadStatus.Failed
-                  LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
-                  console.log(`下载失败:${JSON.stringify(err)}`)
-                  XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) +
-                  JSON.stringify(err),
-                    3000)
-                  RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                    BookID: bookInfo.bookID ?? 0,
-                    BookHref: bookInfo.href ?? '',
-                    BookName: decodedFilename,
-                    BookAuthor: JSON.stringify(bookInfo.author[0]?.name),
-                    BookPublisher: bookInfo.publisher.name,
-                    BookImage: bookInfo.image,
+                    BookAuthor: JSON.stringify(bookInfo.author),
+                    BookPublisher: bookInfo.publisher,
+                    BookImage: bookInfo.cover,
                     BookDownLoadTime: time.toISOString(),
                     HaveDownload: 2
                   })
-                  return [0, JSON.stringify(err)] as [number, string]
-                },
-                onProgressUpdate: (downloadProgress: DownloadProgressInfo) => {
-                  if (downloadItem.status != DownloadStatus.Downloading) {
-                    downloadItem.status = DownloadStatus.Downloading
-                  }
-                  let progress = Math.trunc(downloadProgress.transferredSize / downloadProgress.totalSize * 10000) / 100
-                  downloadItem.progress = progress
-                  LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`,
-                    decodedFilename)
-                  console.log(`onProgressUpdate:, download: transferred size:${downloadProgress.transferredSize}, total size:${downloadProgress.totalSize}`)
-                },
-                onStart: () => {
-                  downloadItem.status = DownloadStatus.Starting
-                  console.log(`正在开始`)
-                },
-                onCancel: () => {
-                  downloadItem.status = DownloadStatus.Cancel
-                  console.log(`正在取消`)
-                }
-              };
+                  console.log(`下载失败:${JSON.stringify(err)}`)
+                  downloadItem.status = DownloadStatus.Failed
+                  LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
+                  XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(err),3000)
+                })
+              }else {
+                RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                  BookID: bookInfo.id ?? 0,
+                  BookHref: bookInfo.href ?? '',
+                  BookName: decodedFilename,
+                  BookAuthor: JSON.stringify(bookInfo.author),
+                  BookPublisher: bookInfo.publisher,
+                  BookImage: bookInfo.cover,
+                  BookDownLoadTime: time.toISOString(),
+                  HaveDownload: 2
+                })
+                downloadItem.status = DownloadStatus.Failed
+                LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
+                XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + '链接服务器失败',3000)
+              }
 
-              downloadItem.downLoadTask =
-                __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener)
+            }).catch((err: BusinessError) => {
+            RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+              BookID: bookInfo.id ?? 0,
+              BookHref: bookInfo.href ?? '',
+              BookName: decodedFilename,
+              BookAuthor: JSON.stringify(bookInfo.author),
+              BookPublisher: bookInfo.publisher,
+              BookImage: bookInfo.cover,
+              BookDownLoadTime: time.toISOString(),
+              HaveDownload: 2
+            })
+            console.log(`下载失败:${JSON.stringify(err)}`)
+            downloadItem.status = DownloadStatus.Failed
+            downloadItem.downloadType = 'other'
+            LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
+            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(err),3000)
+          })
 
-              downloadItem.downLoadTask?.start()
 
-              __Download__.downloadArray.pushUnshiftData(downloadItem)
-
+        } else {
+          let downloadConfig: DownloadConfig = {
+            url: book.downloadLink, // 远端下载地址（必选）
+            fileName: decodedFilename, // 下载后的本地文件名（必选）
+            fileDir: downloadPath,
+            concurrency: 1,
+            isOverwrite: __Setting__.overrideConflictFile,
+            isBreakpointResume: false,
+            requestHeaders: {
+              'sec-ch-ua-platform': '"Windows"',
+              'user-agent': user_agent
             }
-          } catch (e) {
-            XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(e),
-              3000)
           }
+
+          let customDownloadListener: DownloadListener = {
+            onSuccess: () => {
+              downloadItem.status = DownloadStatus.Complete
+              LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', decodedFilename)
+              if (__Setting__.shareAfterDownload) {
+                shareBook(`${downloadPath}/${decodedFilename}`)
+              }
+              XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadSuccess')) + decodedFilename,
+                3000)
+              console.log(`下载成功`)
+              let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+              predicates.equalTo('BookName', decodedFilename)
+                .equalTo("BookID", bookInfo.id ?? 0)
+                .equalTo("BookDownLoadTime", time.toISOString())
+              RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                BookID: bookInfo.id ?? 0,
+                BookHref: bookInfo.href ?? '',
+                BookName: decodedFilename,
+                BookAuthor: JSON.stringify(bookInfo.author),
+                BookPublisher: bookInfo.publisher,
+                BookImage: bookInfo.cover,
+                BookDownLoadTime: time.toISOString(),
+                HaveDownload: 1
+              })
+            },
+            onFail: (err: BusinessError) => {
+              downloadItem.status = DownloadStatus.Failed
+              LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', decodedFilename)
+              console.log(`下载失败:${JSON.stringify(err)}`)
+              XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) +
+              JSON.stringify(err),
+                3000)
+              RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                BookID: bookInfo.id ?? 0,
+                BookHref: bookInfo.href ?? '',
+                BookName: decodedFilename,
+                BookAuthor: JSON.stringify(bookInfo.author),
+                BookPublisher: bookInfo.publisher,
+                BookImage: bookInfo.cover,
+                BookDownLoadTime: time.toISOString(),
+                HaveDownload: 2
+              })
+              return [0, JSON.stringify(err)] as [number, string]
+            },
+            onProgressUpdate: (downloadProgress: DownloadProgressInfo) => {
+              if (downloadItem.status != DownloadStatus.Downloading) {
+                downloadItem.status = DownloadStatus.Downloading
+              }
+              let progress = Math.trunc(downloadProgress.transferredSize / downloadProgress.totalSize * 10000) / 100
+              downloadItem.progress = progress
+              LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`,
+                decodedFilename)
+              console.log(`onProgressUpdate:, download: transferred size:${downloadProgress.transferredSize}, total size:${downloadProgress.totalSize}`)
+            },
+            onStart: () => {
+              downloadItem.status = DownloadStatus.Starting
+              console.log(`正在开始`)
+            },
+            onCancel: () => {
+              downloadItem.status = DownloadStatus.Cancel
+              console.log(`正在取消`)
+            }
+          };
+
+          downloadItem.downLoadTask =
+            __ZlibUser__.downloadManager.createDownloadTask(downloadConfig, customDownloadListener)
+
+          downloadItem.downLoadTask?.start()
+
+          __Download__.downloadArray.pushUnshiftData(downloadItem)
+
         }
-        return [1, ''] as [number, string]
-      }
-    })
-      .catch((err: BusinessError) => {
-        XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(err),
+      } catch (e) {
+        XContext.toast(XContext.getStringFromResource($r('app.string.Tip_DownloadingError')) + JSON.stringify(e),
           3000)
-        return [0, JSON.stringify(err)] as [number, string]
-      })
-      .finally(() => {
-        req.destroy()
-      });
+      }
+    }
+    return [1, ''] as [number, string]
   }
+
 }
