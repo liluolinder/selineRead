@@ -2,7 +2,6 @@ import { http } from '@kit.NetworkKit';
 import { BusinessError, request } from '@kit.BasicServicesKit';
 import { firstDownloadInfo, I_BookDetailedInfo, I_BookInfo } from '../selineRead/models/interfaces/I_BookInfo';
 import { user_agent } from '../selineRead/commons/commonItem';
-import { CJLoader } from './CJloader/CJLoader';
 import { I_LoginRes } from './interface/I_loginInfo';
 import { I_BasicUserInfo, I_UserDownloadLimitAndDonation, I_ZlibUserInfo } from './interface/I_ZlibUserInfo';
 import { JSON, util } from '@kit.ArkTS';
@@ -113,17 +112,8 @@ export class zlibClient {
       }
     }).then((data: http.HttpResponse) => {
       try {
-        let res: I_UserDownloadLimitAndDonation =
-          JSON.parse(CJLoader.getUserDownloadLimitAndDonation(JSON.stringify(data.result))) as I_UserDownloadLimitAndDonation
-        let avatar = CJLoader.getUserAvatar(JSON.stringify(data.result))
-        let userName = CJLoader.getUserName(JSON.stringify(data.result))
-        let tempUserInfo: I_BasicUserInfo = {
-          userName: userName,
-          userDownloadLimitNumber: res.downloadLimit,
-          userDonateNumber: res.donation,
-          userAvatar: avatar
-        }
-        return [1, JSON.stringify(tempUserInfo)] as [number, string]
+        return [1, ''] as [number, string]
+
       } catch (err) {
         return [0, JSON.stringify(err)] as [number, string]
       }
@@ -198,15 +188,7 @@ export class zlibClient {
             terms: [],
             review: { reviewBody: '', datePublished: '', reviewRating: { ratingValue: '' } }
           }
-          let firstDownloadUrl: string = CJLoader.getBookFirstDownloadUrl(resHtml)
-          let firstDownloadInfo: string = CJLoader.getBookFirstDownloadInfo(resHtml)
-          resHtml = CJLoader.getBookInfo(resHtml)
-            .replaceAll("\\n", "")
-            .replaceAll("\\\"", "\"")
-            .replaceAll("\"datePublished\": ,", "")
-          resBookInfo = (JSON.parse(resHtml) as object) as I_BookDetailedInfo
-          resBookInfo.firstDownloadUrl = firstDownloadUrl.replaceAll("\\\"", "")
-          resBookInfo.firstDownloadInfo = (JSON.parse(firstDownloadInfo) as object) as firstDownloadInfo
+
           return [1, JSON.stringify(resBookInfo)] as [number, string]
         } catch (err) {
           return [0, JSON.stringify(err)] as [number, string]
@@ -257,8 +239,8 @@ export class zlibClient {
         'Cookie': __ZlibUser__.cookie,
       }
     }).then((data: http.HttpResponse) => {
-      let jsonString: string = CJLoader.getSearchBookArray(JSON.stringify(data.result))
-      let jsonArray: I_searchBook[] = JSON.parse(jsonString) as I_searchBook[]
+      //let jsonString: string = CJLoader.getSearchBookArray(JSON.stringify(data.result))
+      let jsonArray: I_searchBook[] = JSON.parse("") as I_searchBook[]
       return [1, JSON.stringify(jsonArray)] as [number, string]
     })
       .catch((err: BusinessError) => {
