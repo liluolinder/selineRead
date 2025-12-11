@@ -82,7 +82,7 @@ export struct Home {
               __Home__.searchWord = value
               zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                 if (res[0] == 1) {
-                  __Home__.recommendBookIndex ++
+                  __Home__.searchBookIndex ++
                   (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
                     __Home__.searchBookArray.pushData(item)
                   })
@@ -238,7 +238,8 @@ export struct Home {
               })
               zlibClient.searchBook(__Home__.req,__Home__.searchWord,__Home__.searchBookIndex).then((res) => {
                 if (res[0] == 1) {
-                  __Home__.recommendBookIndex ++
+                  __Home__.searchBookIndex+=1;
+                  console.log(`${__Home__.searchBookIndex}`);
                   (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
                     __Home__.searchBookArray.pushData(item)
                   })

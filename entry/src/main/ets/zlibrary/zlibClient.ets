@@ -177,6 +177,7 @@ export class zlibClient {
 
 
   static async searchBook(req: http.HttpRequest, bookName: string, page: number = 1) {
+    console.log(JSON.stringify(page))
     return await req.request(`${__ZlibUser__.baseEApi_url}/book/search?message=${encodeURI(bookName)}&page=${page}`, {
       method: http.RequestMethod.POST,
       header: {
