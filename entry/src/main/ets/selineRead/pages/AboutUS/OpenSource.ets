@@ -12,11 +12,6 @@ export struct OpenSource{
 
   @Local projects:I_openSource[]=[
     {
-      projectName:'html4cj',
-      url:'https://gitcode.com/Cangjie-TPC/html4cj',
-      license:'MIT'
-    },
-    {
       projectName:'@hadss/super_fast_file_trans',
       url:'https://ohpm.openharmony.cn/#/cn/detail/@hadss%2Fsuper_fast_file_trans',
       license:'Apache-2.0'

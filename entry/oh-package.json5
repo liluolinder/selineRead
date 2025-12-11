@@ -9,7 +9,6 @@
     commonpackage: 'file:../features/commonPackage',
     color: 'file:../features/color',
     templatecomponent: 'file:../features/templateComponent',
-    "libark_interop_loader.so": "file:./src/main/cangjie/loader",
     "cjhyapiregister": "file:./har/CJHyAPIRegister-v1.0.1.har"
   }
 }
