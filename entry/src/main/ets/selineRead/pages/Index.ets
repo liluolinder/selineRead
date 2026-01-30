@@ -20,6 +20,24 @@ struct Index {
     deleteDownloadCache()
   }
 
+  onBackPress(): boolean | void {
+    if (__Home__.inSearchMode) {
+      XAnimation.runWithAnimation(() => {
+      __Home__.inSearchMode = false
+      })
+      return true
+    }
+    if (__System__.windowWidth < min_width && __UI__.isShowSideBar) {
+      XAnimation.runWithAnimation(() => {
+        __UI__.isShowSideBar = false
+      })
+      return true
+    }
+
+    return false
+  }
+
+
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
       if (__System__.pcMode) {

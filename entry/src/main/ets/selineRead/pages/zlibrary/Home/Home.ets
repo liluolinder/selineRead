@@ -63,7 +63,8 @@ export struct Home {
         })
         .visibility(__Home__.inSearchMode || __System__.windowWidth > min_width  ? Visibility.None : Visibility.Visible)
 
-        Search({ value: __Home__.searchWord })
+        Search({ value: __Home__.searchWord, })
+          .searchButton(__Home__.inSearchMode?$r('app.string.search'):undefined)
           .width(__Home__.inSearchMode ? '100%' : "45%")
           .focusable(__Home__.inSearchMode)
           .backgroundColor($r('app.color.start_window_background_blur'))

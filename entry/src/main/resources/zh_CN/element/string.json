@@ -231,6 +231,10 @@
     {
       "name": "Title_BookShelfSetting",
       "value": "书架设置"
+    },
+    {
+      "name": "search",
+      "value": "搜索"
     }
   ]
 }

@@ -127,23 +127,6 @@ export struct AboutUS {
         })
 
         ListItem() {
-          ListItemWithArrow({
-            message: '新版功能不全？点击使用老版本',
-          })
-        }.borderRadius(20)
-        .backgroundColor($r('sys.color.comp_background_list_card'))
-        .transition(XAnimation.getAnimation('bottom', 350))
-        .onClick(() => {
-          let want: Want = {
-            action: 'ohos.want.action.viewData',
-            entities: ['entity.system.browsable'],
-            uri: 'https://appgallery.huawei.com/link/invite-test-wap?taskId=9f1123b105cfa5fee69a5bf303e7a949&invitationCode=2Y2W87SBF7B',
-          };
-          XContext.getAbilityContext().startAbility(want)
-        })
-
-
-        ListItem() {
           LiqD()
         }.clip(true)
         .transition(XAnimation.getAnimation('bottom', 400))

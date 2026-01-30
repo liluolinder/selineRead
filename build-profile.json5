@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/通用调试证书.p12",
-          "storePassword": "000000202358D516DDE78C5600F9D4C890530161FB45AA85530C4C58F2309457AE44B7223053CE245A62EA7BD1A7F6A6",
-          "keyAlias": "key",
-          "keyPassword": "0000002047A94DC1ADEDDD973C2E60121EFF45F4862EB921D357E21718C6C55761224D8ED5171CF17230BFC95E73F917",
+          "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BAB44B05BBFD9364C7AE0C0A39CB6701EDE3BB93AEDD1E945D7F1553467243D348C9D55E0388CFA",
+          "profile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.p7b",
           "signAlg": "SHA256withECDSA",
-          "profile": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/SelineReadDebug.p7b",
-          "certpath": "D:/projects/Harmony/SelineRead_New/cer/linder_debug/通用调试证书.cer"
+          "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.p12",
+          "storePassword": "0000001BD307557D3E2D01FC7DC18A143664600297C4E33FB0EF7CE867077C0F637B7D0FB74E4AC7F13D83"
         }
       }
     ],
