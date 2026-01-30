@@ -76,6 +76,9 @@
       {
         "name": "ohos.permission.WINDOW_TOPMOST"
       },
+      {
+        "name" : "ohos.permission.DETECT_GESTURE"
+      }
     ]
   }
 }

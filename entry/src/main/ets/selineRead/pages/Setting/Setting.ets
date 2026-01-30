@@ -1,6 +1,7 @@
-import { XPreferencesManager } from "commonpackage"
+import { XAnimation, XPreferencesManager } from "commonpackage"
 import { ListItemWithSelect, ListItemWithToggle } from "templatecomponent"
 import { __Setting__ } from "../../commons/shareDatas"
+import { motion } from "@kit.MultimodalAwarenessKit"
 
 @Builder
 export function SettingBuilder() {
@@ -14,6 +15,41 @@ export struct Setting {
     $r('app.string.Title_DownloadSetting'),
     $r('app.string.Title_BookShelfSetting'),
   ]
+
+  @Builder
+  displaySetting() {
+    ListItem() {
+      if (canIUse("SystemCapability.MultimodalAwareness.Motion")){
+        ListItemWithToggle({
+          type: ToggleType.Switch,
+          checked: __Setting__.needPerceptiveGrip,
+          message: $r('app.string.perceptiveGrip'),
+          onChange: (status: boolean) => {
+            XPreferencesManager.putPreferencesValue('selineRead', "needPerceptiveGrip", status)
+            __Setting__.needPerceptiveGrip = status
+            if (status) {
+              try {
+                motion.on('holdingHandChanged', (state)=>{
+                  console.log('testTAG', state)
+                  XAnimation.runWithAnimation(()=> __Setting__.isLeftHand = state == motion.HoldingHandStatus.LEFT_HAND_HELD)
+                })
+              }catch{}
+            }else{
+              try {
+                motion.off('holdingHandChanged');
+                XAnimation.runWithAnimation(()=> __Setting__.isLeftHand = false)
+              }catch{}
+            }
+          }
+        })
+      }else{
+        Column(){
+          Text('Coming Soon')
+        }.height(50)
+        .padding(16)
+      }
+    }
+  }
 
   @Builder
   downloadSetting() {
@@ -85,12 +121,7 @@ export struct Setting {
 
               List() {
                 if (index == 0) {
-                  ListItem(){
-                    Column(){
-                      Text('Coming Soon')
-                    }.height(50)
-                    .padding(16)
-                  }
+                 this.displaySetting()
                 } else if (index == 1) {
                   this.downloadSetting()
                 }else if (index == 2) {

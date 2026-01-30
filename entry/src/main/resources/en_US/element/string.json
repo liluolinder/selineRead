@@ -235,6 +235,10 @@
     {
       "name": "search",
       "value": "Search"
+    },
+    {
+      "name": "perceptiveGrip",
+      "value": "Perceptive Grip"
     }
   ]
 }

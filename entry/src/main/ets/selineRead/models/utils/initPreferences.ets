@@ -1,7 +1,8 @@
-import { XPreferencesManager } from "commonpackage";
+import { XAnimation, XPreferencesManager } from "commonpackage";
 import { __Setting__, __ZlibUser__ } from "../../commons/shareDatas";
 import { __Home__ } from "../../pages/zlibrary/Home/Home";
 import { I_SearchHistory } from "../interfaces/I_SearchHistory";
+import { motion } from "@kit.MultimodalAwarenessKit";
 
 export async function initPreferences() {
   console.log(`开始读取首选项`)
@@ -12,6 +13,18 @@ export async function initPreferences() {
 
   __Setting__.overrideConflictFile = XPreferencesManager.getPreferencesValue("selineRead", "overrideConflictFile", true) as boolean
   __Setting__.shareAfterDownload = XPreferencesManager.getPreferencesValue("selineRead", "shareAfterDownload", true) as boolean
+  __Setting__.needPerceptiveGrip = XPreferencesManager.getPreferencesValue("selineRead", "needPerceptiveGrip", false) as boolean
+
+  if (__Setting__.needPerceptiveGrip) {
+    if(canIUse("SystemCapability.MultimodalAwareness.Motion") ){
+      try {
+        motion.on('holdingHandChanged', (state)=>{
+          console.log('testTAG', state)
+          XAnimation.runWithAnimation(()=> __Setting__.isLeftHand = state == motion.HoldingHandStatus.LEFT_HAND_HELD)
+        })
+      }catch{}
+    }
+  }
 
   __ZlibUser__.accountIndex = XPreferencesManager.getPreferencesValue("selineRead", "zlibAccountIndex", 0) as number
   __ZlibUser__.account = XPreferencesManager.getPreferencesValue("selineRead", "zlibAccount", '') as string

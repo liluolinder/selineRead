@@ -1,7 +1,7 @@
 import { XAnimation, XContext } from 'commonpackage';
 import { zlibClient } from '../../zlibrary/zlibClient';
 import { min_width } from '../commons/commonItem';
-import { __System__, __UI__, __ZlibUser__ } from '../commons/shareDatas';
+import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../commons/shareDatas';
 import { DecorBar } from '../components/DecorBar';
 import { RelationStoreManager } from '../models/classes/DataBase';
 import { deleteDownloadCache } from '../models/utils/ClearDownloadCache';
@@ -48,10 +48,11 @@ struct Index {
       Navigation(__UI__.mainPageStack)
       {
         SideBarContainer(__UI__.sideBarMode) {
-          SideBar()
+          SideBar().visibility(__System__.windowWidth >= min_width ?Visibility.Visible :__UI__.isShowSideBar?Visibility.Visible:Visibility.Hidden)
           Body()
         }
         .showSideBar(__UI__.isShowSideBar)
+        .sideBarPosition(__System__.windowWidth >= min_width ? SideBarPosition.Start : __Setting__.isLeftHand?SideBarPosition.Start:SideBarPosition.End)
         .autoHide(false)
         .showControlButton(false)
         .sideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
@@ -61,9 +62,15 @@ struct Index {
           PanGesture({ fingers: 1, direction: PanDirection.Right })
             .onActionEnd(() => {
               if (__System__.windowWidth < min_width) {
-                XAnimation.runWithAnimation(() => {
-                  __UI__.isShowSideBar = true
-                })
+                if (__Setting__.isLeftHand){
+                  XAnimation.runWithAnimation(() => {
+                    __UI__.isShowSideBar = true
+                  })
+                }else {
+                  XAnimation.runWithAnimation(() => {
+                    __UI__.isShowSideBar = false
+                  })
+                }
               }
             })
         )
@@ -71,9 +78,15 @@ struct Index {
           PanGesture({ fingers: 1, direction: PanDirection.Left })
             .onActionEnd(() => {
               if (__System__.windowWidth < min_width) {
-                XAnimation.runWithAnimation(() => {
-                  __UI__.isShowSideBar = false
-                })
+                if (__Setting__.isLeftHand){
+                  XAnimation.runWithAnimation(() => {
+                    __UI__.isShowSideBar = false
+                  })
+                }else {
+                  XAnimation.runWithAnimation(() => {
+                    __UI__.isShowSideBar = true
+                  })
+                }
               }
             })
         )

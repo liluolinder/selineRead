@@ -93,5 +93,7 @@ export class Setting{
   @Trace overrideConflictFile:boolean = true
   @Trace shareAfterDownload:boolean = true
   @Trace bookShelfClickOpenWay:number = 0
+  @Trace needPerceptiveGrip:boolean = false
+  @Trace isLeftHand:boolean = false
 }
 export const __Setting__: Setting = new Setting()

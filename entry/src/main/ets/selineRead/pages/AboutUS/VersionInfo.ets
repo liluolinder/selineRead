@@ -12,6 +12,13 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: '1.1.5.2',
+      date: '2026/1/20',
+      addNewFunArray:['在支持的设备上支持智感握持(适人握持)'],
+      fixBugsArray:['修复部分情况下无法获取书籍消息'],
+      optimizeArray:['修复搜索，打开侧边栏下使用系统侧滑不再直接退出APP','搜索栏显示搜索Button']
+    },
+    {
       version: '1.1.5.1',
       date: '2025/12/8',
       addNewFunArray:['主页顶栏新增打开下载管理器按钮'],
