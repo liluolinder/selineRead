@@ -34,7 +34,6 @@ export default class EntryAbility extends UIAbility {
       })
       __ZlibUser__.downloadManager = DownloadManager.getInstance();
       __ZlibUser__.downloadManager.init(this.context);
-
       //StatusBarController.add2StatusBar(this.context)
 
 
