@@ -122,11 +122,7 @@ ohpm install
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 开启 Pull Request
 
-## 开源引用
 
-本项目使用了以下开源项目：
-
-- [项目名称] - [项目协议] - [项目链接]
 
 ## 鸣谢
 
