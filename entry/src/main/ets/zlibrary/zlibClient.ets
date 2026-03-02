@@ -435,6 +435,9 @@ export class zlibClient {
             concurrency: 1,
             isOverwrite: __Setting__.overrideConflictFile,
             isBreakpointResume: false,
+            transferTimeout:60000*4,
+            connectTimeout:60000*4,
+            inactivityTimeout:60000*4,
             requestHeaders: {
               'sec-ch-ua-platform': '"Windows"',
               'user-agent': user_agent
