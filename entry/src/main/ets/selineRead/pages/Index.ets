@@ -1,4 +1,5 @@
 import { XAnimation, XContext } from 'commonpackage';
+import { ZlibClientArk } from 'libohos_app_cangjie_entry.so';
 import { zlibClient } from '../../zlibrary/zlibClient';
 import { min_width } from '../commons/commonItem';
 import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../commons/shareDatas';
@@ -23,7 +24,7 @@ struct Index {
   onBackPress(): boolean | void {
     if (__Home__.inSearchMode) {
       XAnimation.runWithAnimation(() => {
-      __Home__.inSearchMode = false
+        __Home__.inSearchMode = false
       })
       return true
     }
@@ -37,7 +38,6 @@ struct Index {
     return false
   }
 
-
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
       if (__System__.pcMode) {
@@ -45,14 +45,16 @@ struct Index {
           .zIndex(114514)
       }
 
-      Navigation(__UI__.mainPageStack)
-      {
+      Navigation(__UI__.mainPageStack) {
         SideBarContainer(__UI__.sideBarMode) {
-          SideBar().visibility(__System__.windowWidth >= min_width ?Visibility.Visible :__UI__.isShowSideBar?Visibility.Visible:Visibility.Hidden)
+          SideBar()
+            .visibility(__System__.windowWidth >= min_width ? Visibility.Visible :
+              __UI__.isShowSideBar ? Visibility.Visible : Visibility.Hidden)
           Body()
         }
         .showSideBar(__UI__.isShowSideBar)
-        .sideBarPosition(__System__.windowWidth >= min_width ? SideBarPosition.Start : __Setting__.isLeftHand?SideBarPosition.Start:SideBarPosition.End)
+        .sideBarPosition(__System__.windowWidth >= min_width ? SideBarPosition.Start :
+          __Setting__.isLeftHand ? SideBarPosition.Start : SideBarPosition.End)
         .autoHide(false)
         .showControlButton(false)
         .sideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
@@ -62,11 +64,11 @@ struct Index {
           PanGesture({ fingers: 1, direction: PanDirection.Right })
             .onActionEnd(() => {
               if (__System__.windowWidth < min_width) {
-                if (__Setting__.isLeftHand){
+                if (__Setting__.isLeftHand) {
                   XAnimation.runWithAnimation(() => {
                     __UI__.isShowSideBar = true
                   })
-                }else {
+                } else {
                   XAnimation.runWithAnimation(() => {
                     __UI__.isShowSideBar = false
                   })
@@ -78,11 +80,11 @@ struct Index {
           PanGesture({ fingers: 1, direction: PanDirection.Left })
             .onActionEnd(() => {
               if (__System__.windowWidth < min_width) {
-                if (__Setting__.isLeftHand){
+                if (__Setting__.isLeftHand) {
                   XAnimation.runWithAnimation(() => {
                     __UI__.isShowSideBar = false
                   })
-                }else {
+                } else {
                   XAnimation.runWithAnimation(() => {
                     __UI__.isShowSideBar = true
                   })
@@ -91,26 +93,26 @@ struct Index {
             })
         )
       }
-        .size({ width: '100%', height: '100%' })
-        .navBarWidthRange([400, 1200])
-        .backgroundColor(Color.Transparent)
-        .layoutWeight(1)
-        .hideToolBar(true)
-        .navBarWidth('1100')
-        .mode(__UI__.indexNavigationMode)
-        .onNavigationModeChange((mode) => {
-          if (mode == NavigationMode.Split) {
-            __UI__.mainPageStack.clear(true)
-            __UI__.mainPageStack.pushPathByName('EmptyPage', false)
-          }
-          if (mode == NavigationMode.Auto) {
-            __UI__.mainPageStack.clear(true)
-            __UI__.mainPageStack.pushPathByName('EmptyPage', false)
-          }
-          if (mode == NavigationMode.Stack) {
-            __UI__.mainPageStack.removeByName('EmptyPage')
-          }
-        })
+      .size({ width: '100%', height: '100%' })
+      .navBarWidthRange([400, 1200])
+      .backgroundColor(Color.Transparent)
+      .layoutWeight(1)
+      .hideToolBar(true)
+      .navBarWidth('1100')
+      .mode(__UI__.indexNavigationMode)
+      .onNavigationModeChange((mode) => {
+        if (mode == NavigationMode.Split) {
+          __UI__.mainPageStack.clear(true)
+          __UI__.mainPageStack.pushPathByName('EmptyPage', false)
+        }
+        if (mode == NavigationMode.Auto) {
+          __UI__.mainPageStack.clear(true)
+          __UI__.mainPageStack.pushPathByName('EmptyPage', false)
+        }
+        if (mode == NavigationMode.Stack) {
+          __UI__.mainPageStack.removeByName('EmptyPage')
+        }
+      })
 
     }
   }

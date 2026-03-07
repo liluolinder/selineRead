@@ -7,11 +7,11 @@
         "material": {
           "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BAB44B05BBFD9364C7AE0C0A39CB6701EDE3BB93AEDD1E945D7F1553467243D348C9D55E0388CFA",
+          "keyPassword": "0000001BCD784AA24603CCD4255685B9133B384FFDE4A10F53D3DD23F7CD881B159C37B108FB969141A4D3",
           "profile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.p12",
-          "storePassword": "0000001BD307557D3E2D01FC7DC18A143664600297C4E33FB0EF7CE867077C0F637B7D0FB74E4AC7F13D83"
+          "storePassword": "0000001BA0A5A5978F622E990D8516B34237077896D0F48ED8CF8D7D2C11B10549A2879D983CBED6A42A2E"
         }
       }
     ],
@@ -19,8 +19,8 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "targetSdkVersion": "6.0.0(20)",
-        "compatibleSdkVersion": "5.0.5(17)",
+        "targetSdkVersion": "6.0.2(22)",
+        "compatibleSdkVersion": "6.0.2(22)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {

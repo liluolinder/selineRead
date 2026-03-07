@@ -1,16 +1,14 @@
-import { curves, LengthMetrics, } from "@kit.ArkUI"
-import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from "commonpackage"
-import { min_width } from "../../../commons/commonItem"
-import { __Setting__, __System__, __UI__, __ZlibUser__ } from "../../../commons/shareDatas"
-import { I_BookDetailedInfo, I_BookInfo } from "../../../models/interfaces/I_BookInfo"
-import { http } from "@kit.NetworkKit"
-import { zlibClient } from "../../../../zlibrary/zlibClient"
-import { it } from "@ohos/hypium"
-import { loadingDialog, loadingNewDialog } from "../../../components/LoadingNewDialog"
-import { resourceManager } from "@kit.LocalizationKit"
-import { I_SearchHistory } from "../../../models/interfaces/I_SearchHistory"
-import { RelationStoreManager } from "../../../models/classes/DataBase"
-import { I_ZlibBookInfoRes_Book, I_ZLibRecommendBook_Book } from "../../../../zlibrary/interface/I_ZlibBookInfo"
+import { curves, LengthMetrics, } from '@kit.ArkUI'
+import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from 'commonpackage'
+import { min_width } from '../../../commons/commonItem'
+import { __Setting__, __System__, __UI__ } from '../../../commons/shareDatas'
+import { I_BookDetailedInfo } from '../../../models/interfaces/I_BookInfo'
+import { http } from '@kit.NetworkKit'
+import { zlibClient } from '../../../../zlibrary/zlibClient'
+import { loadingDialog, loadingNewDialog } from '../../../components/LoadingNewDialog'
+import { I_SearchHistory } from '../../../models/interfaces/I_SearchHistory'
+import { I_ZlibBookInfoRes_Book } from '../../../../zlibrary/interface/I_ZlibBookInfo'
+import { ZlibBookInfoBriefArk } from 'libohos_app_cangjie_entry.so'
 
 
 @ObservedV2
@@ -23,8 +21,8 @@ export class HomeData {
   @Trace recommendOrSearch: number = 0
   @Trace searchWord: string = ''
   req = http.createHttp()
-  @Trace recommendBookArray: BasicDataSource<I_ZLibRecommendBook_Book> =
-    new BasicDataSource<I_ZLibRecommendBook_Book>()
+  @Trace recommendBookArray: BasicDataSource<ZlibBookInfoBriefArk> =
+    new BasicDataSource<ZlibBookInfoBriefArk>()
   @Trace searchBookArray: BasicDataSource<I_ZlibBookInfoRes_Book> =
     new BasicDataSource<I_ZlibBookInfoRes_Book>()
   @Trace searchHistory: I_SearchHistory[] = []
@@ -172,7 +170,7 @@ export struct Home {
       } else {
         List({ space: 20 }) {
           if (__Home__.recommendOrSearch == 0) {
-            LazyForEach(__Home__.recommendBookArray, (item: I_ZLibRecommendBook_Book) => {
+            LazyForEach(__Home__.recommendBookArray, (item: ZlibBookInfoBriefArk) => {
               ListItem() {
                 HomeBookCover({ data: item, type: 0 })
               }
@@ -181,18 +179,17 @@ export struct Home {
                   XAnimation.runWithAnimation(() => {
                     this.isOpenBook = true
                   })
-                  let req = http.createHttp()
-                  await zlibClient.getBookInfo(req, item.id, item.hash).then((res) => {
-                    if (res[0] == 1) {
-                      __Home__.errorText = ''
-                      let book = JSON.parse(res[1]) as I_ZlibBookInfoRes_Book
-                      __UI__.mainPageStack.pushPathByName("bookInfoPage", book)
-                    } else {
-                      __Home__.errorText = res[1]
-                    }
-                  })
-                  XAnimation.runWithAnimation(() => {
-                    this.isOpenBook = false
+                  item.getDetailInfo(undefined,(bookInfo)=>{
+                    __Home__.errorText = ''
+                    __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
+                    XAnimation.runWithAnimation(() => {
+                      this.isOpenBook = false
+                    })
+                  },(error)=>{
+                    __Home__.errorText = error
+                    XAnimation.runWithAnimation(() => {
+                      this.isOpenBook = false
+                    })
                   })
                 }
               })
@@ -415,7 +412,7 @@ export struct Home {
 
 @ComponentV2
 export struct HomeBookCover {
-  @Param @Require data: I_ZLibRecommendBook_Book | I_ZlibBookInfoRes_Book
+  @Param @Require data: ZlibBookInfoBriefArk | I_ZlibBookInfoRes_Book
   @Param defaultImg: ResourceStr = $r('app.media.default_cover')
   @Param haveShadow: boolean = true
   @Param imageFit: ImageFit = ImageFit.Auto

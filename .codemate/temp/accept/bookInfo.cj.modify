@@ -1,0 +1,53 @@
+/**
+ * Created on 2026/3/7
+ */
+package ohos_app_cangjie_entry.zlibAPI4cj
+
+import ohos.ark_interop.*
+import ohos.ark_interop_macro.*
+import zlibraryAPI4CJ.dataModel.BookInfo
+
+@Interop[ArkTS]
+public class BookInfoArk {
+    public var id: UInt64 = 0
+    public var contentType: String = ''
+    public var title: String = ''
+    public var author: ?String = None
+    public var volume: String = ''
+    public var year: UInt64 = 0
+    public var edition: ?String = None
+    public var publisher: ?String = None
+    public var identifier: ?String = None
+    public var language: String = ''
+    public var pages: UInt64 = 0
+    public var series: String = ''
+    public var cover: String = ''
+    public var termsHash: String = ''
+    public var active: UInt64 = 0
+    public var deleted: UInt64 = 0
+    public var filesize: UInt64 = 0
+    public var filesizeString: String = ''
+    public var extension: String = ''
+    public var md5: String = ''
+    public var sha256: String = ''
+    public var href: String = ''
+    public var hash: String = ''
+    public var kindleAvailable: Bool = false
+    public var sendToEmailAvailable: Bool = false
+    public var interestScore: String = ''
+    public var qualityScore: String = ''
+    public var description: String = ''
+    public var dl: String = ''
+    public var readOnlineUrl: String = ''
+    public var isUserSavedBook: ?Bool = None
+    public var dataSaved: ?String = None
+    public var readOnlineAvailable: Bool = false
+
+    @Interop[ArkTS, Invisible]
+    public static func fromCJ(cjValue: BookInfo): BookInfoArk {
+        let r = BookInfoArk()
+        r
+    }
+
+    public BookInfoArk() {}
+}

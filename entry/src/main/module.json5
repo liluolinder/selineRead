@@ -7,9 +7,6 @@
     "deviceTypes": [
       "phone",
       "tablet",
-      "2in1",
-      "tv",
-      "wearable"
     ],
     "deliveryWithInstall": true,
     "installationFree": false,

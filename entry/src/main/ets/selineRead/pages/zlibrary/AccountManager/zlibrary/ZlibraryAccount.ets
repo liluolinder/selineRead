@@ -104,7 +104,7 @@ export struct ZlibraryAccount {
                     __Home__.recommendBookArray.clearData;
                     __Home__.errorText = '';
                     (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-                      __Home__.recommendBookArray.pushData(item)
+                      //__Home__.recommendBookArray.pushData(item)
                     });
                     __Home__.recommendBookIndex++;
                   }else {
@@ -178,7 +178,7 @@ export struct ZlibraryAccount {
                               __Home__.recommendBookArray.clearData
                               __Home__.errorText = '';
                               (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-                                __Home__.recommendBookArray.pushData(item)
+                              //  __Home__.recommendBookArray.pushData(item)
                               });
                             }else {
                               __Home__.errorText = res[1];

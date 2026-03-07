@@ -10,7 +10,10 @@
       "filter": {
         "enableOverride": true
       }
-    }
+    },
+    "cangjieOptions": {
+      "path": "./cjpm.toml"
+    },
   },
   "buildOptionSet": [
     {

@@ -1,6 +1,7 @@
 {
   "files": [
-    "**/*.ets"
+    "**/*.ets",
+    "**/*.cj"
   ],
   "ignore": [
     "**/src/ohosTest/**/*",

@@ -13,6 +13,7 @@ import { CommonEvent } from "../../models/classes/CommonEvent";
 import { I_BasicUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
 import { I_loginRes_user } from "../../../zlibrary/interface/I_loginInfo";
 import { I_ZlibBookInfoRes_Book, I_ZLibRecommendBook_Book } from "../../../zlibrary/interface/I_ZlibBookInfo";
+import { ZlibClientArk } from "libohos_app_cangjie_entry.so";
 
 @ComponentV2
 export struct Body {
@@ -38,7 +39,6 @@ export struct Body {
               bookHref:"",
               bookId:0
             }
-
 
             __Download__.downloadArray.dataArray.forEach((itemA) => {
 
@@ -67,7 +67,31 @@ export struct Body {
   }
 
   aboutToAppear(): void {
-    zlibClient.refreshUrl().then(() => {
+
+    let client = new ZlibClientArk()
+    client.checkAccess(true,(res)=>{
+      if (res) {
+        client.getRecommendBook(
+         async  (books) => {
+            if (books.length == 0) {
+              __Home__.errorText = '返回值为空'
+            }else {
+              books.forEach((item)=>{
+                __Home__.recommendBookArray.pushData(item)
+              })
+              __Home__.recommendBookIndex++
+              __Home__.errorText = ''
+            }
+            __Home__.canGetMore = true
+          },
+          (error) => {
+            __Home__.errorText = error
+            __Home__.canGetMore = true
+          })
+      }
+    }, (err)=>{__Home__.errorText = err})
+
+/*    zlibClient.refreshUrl().then(() => {
       console.log(__ZlibUser__.cookie);
       let req = http.createHttp()
       zlibClient.getRecommendBook(req).then((res) => {
@@ -81,8 +105,6 @@ export struct Body {
             (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
               __Home__.recommendBookArray.pushData(item)
             })
-            __Home__.recommendBookIndex++
-            __Home__.errorText = ''
           }
         } else {
           __Home__.errorText = res[1]
@@ -99,7 +121,7 @@ export struct Body {
         })
       }
 
-    })
+    })*/
   }
 
   build() {

@@ -1,0 +1,53 @@
+
+export declare class ZlibBookInfoArk {
+    id: number
+    contentType: string
+    title: string
+    author: string | undefined
+    volume: string
+    year: number
+    edition: string | undefined
+    publisher: string | undefined
+    identifier: string | undefined
+    language: string
+    pages: number
+    series: string
+    cover: string
+    termsHash: string
+    active: number
+    deleted: number
+    filesize: number
+    filesizeString: string
+    extension: string
+    md5: string
+    sha256: string
+    href: string
+    hash: string
+    kindleAvailable: boolean
+    sendToEmailAvailable: boolean
+    interestScore: string
+    qualityScore: string
+    description: string
+    dl: string
+    readOnlineUrl: string
+    isUserSavedBook: boolean | undefined
+    dataSaved: string | undefined
+    readOnlineAvailable: boolean
+    constructor ()
+}
+
+export declare class ZlibClientArk {
+    checkAccess(autoRedirect: boolean, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
+    getRecommendBook(returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
+    constructor ()
+}
+
+export declare class ZlibBookInfoBriefArk {
+    id: number
+    title: string
+    author: string
+    cover: string
+    hash: string
+    getDetailInfo(cookie: string | undefined, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
+    constructor ()
+}

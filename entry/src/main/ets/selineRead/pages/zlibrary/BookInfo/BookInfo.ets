@@ -1,16 +1,12 @@
-import { XAnimation, XContext } from "commonpackage"
-import { __System__, __UI__ } from "../../../commons/shareDatas"
-import { __CustomBackgroundData__ } from "../../../components/CustomBackground"
-import { DividerTmp } from "../../../models/classes/DividerTmp"
-import { authorInfo, I_BookDetailedInfo } from "../../../models/interfaces/I_BookInfo"
-import { systemShare } from "@kit.ShareKit"
-import { SymbolGlyphModifier } from "@kit.ArkUI"
-import { loadingDialog, loadingNewDialog } from "../../../components/LoadingNewDialog"
-import { zlibClient } from "../../../../zlibrary/zlibClient"
-import { min_width } from "../../../commons/commonItem"
-import { BigImage } from "../../../components/BigImage"
-import { ListItemWithText } from "templatecomponent"
-import { I_ZlibBookInfoRes_Book } from "../../../../zlibrary/interface/I_ZlibBookInfo"
+import { XAnimation, XContext } from 'commonpackage'
+import { __System__ } from '../../../commons/shareDatas'
+import { __CustomBackgroundData__ } from '../../../components/CustomBackground'
+import { DividerTmp } from '../../../models/classes/DividerTmp'
+import { SymbolGlyphModifier } from '@kit.ArkUI'
+import { min_width } from '../../../commons/commonItem'
+import { BigImage } from '../../../components/BigImage'
+import { ListItemWithText } from 'templatecomponent'
+import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.so'
 
 @Builder
 export function BookInfoBuilder() {
@@ -21,7 +17,7 @@ export function BookInfoBuilder() {
 export struct BookInfo {
   pageInfos: NavPathStack = new NavPathStack()
   @Local errorText: string = ''
-  @Local bookInfo: I_ZlibBookInfoRes_Book | undefined = undefined
+  @Local bookInfo: ZlibBookInfoArk | undefined = undefined
   @Local isShowDownloadMenu: boolean = false
   @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
   @Local pageWidth: number = -1
@@ -268,11 +264,11 @@ export struct BookInfo {
                       })
                     }
 
-                    zlibClient.getBookDownloadUrl(this.bookInfo!).then((res)=>{
-                      if (res[0]==0) {
-                        this.errorText = res[1]
-                      }
-                    })
+                    // zlibClient.getBookDownloadUrl(this.bookInfo!).then((res)=>{
+                    //   if (res[0]==0) {
+                    //     this.errorText = res[1]
+                    //   }
+                    // })
 
                   })
                 }
@@ -371,7 +367,7 @@ export struct BookInfo {
     .title(this.bookInfo?.title)
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
-      this.bookInfo = context.pathInfo.param as I_ZlibBookInfoRes_Book
+      this.bookInfo = context.pathInfo.param as ZlibBookInfoArk
     })
     .opacity(this.pageOpacity)
     .onShown(() => {
