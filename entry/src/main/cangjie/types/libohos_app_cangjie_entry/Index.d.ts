@@ -33,12 +33,14 @@ export declare class ZlibBookInfoArk {
     isUserSavedBook: boolean | undefined
     dataSaved: string | undefined
     readOnlineAvailable: boolean
+    getDownloadInfo(cookie: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
     constructor ()
 }
 
 export declare class ZlibClientArk {
     checkAccess(autoRedirect: boolean, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
     getRecommendBook(returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
+    login(email: string, password: string, returnFunc: () => void, errorFunc: (funcArg0: string) => void): void
     constructor ()
 }
 

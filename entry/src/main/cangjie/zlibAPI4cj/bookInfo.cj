@@ -43,6 +43,8 @@ public class ZlibBookInfoArk {
     public var dataSaved: Option<String> = None
     public var readOnlineAvailable: Bool = false
 
+    var cjValue: BookInfo = BookInfo()
+
     @Interop[ArkTS, Invisible]
     public static func fromCJ(cjValue: BookInfo): ZlibBookInfoArk {
         let r = ZlibBookInfoArk()
@@ -79,7 +81,30 @@ public class ZlibBookInfoArk {
         r.isUserSavedBook = cjValue.isUserSavedBook
         r.dataSaved = cjValue.dataSaved
         r.readOnlineAvailable = cjValue.readOnlineAvailable
+        r.cjValue = cjValue
         r
+    }
+
+    public func getDownloadInfo(cookie: String, returnFunc: (String) -> Unit, errorFunc: (String) -> Unit): Unit {
+        let context = JSRuntime().mainContext
+        spawn {
+            try {
+                let reqs = cjValue.getDownloadInfo(cookie: cookie)
+                if (reqs.success == 1) {
+                    returnFunc(reqs
+                        .file
+                        .downloadLink)
+                } else {
+                    context.postJSTask {
+                        errorFunc('获取错误')
+                    }
+                }
+            } catch (err: Exception) {
+                context.postJSTask {
+                    errorFunc(err.toString())
+                }
+            }
+        }
     }
 
     public ZlibBookInfoArk() {}

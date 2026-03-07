@@ -264,6 +264,12 @@ export struct BookInfo {
                       })
                     }
 
+                    this.bookInfo?.getDownloadInfo('',(res)=>{
+                      XContext.toast(res)
+                    },(error)=>{
+                      XContext.toast(error)
+                    })
+
                     // zlibClient.getBookDownloadUrl(this.bookInfo!).then((res)=>{
                     //   if (res[0]==0) {
                     //     this.errorText = res[1]

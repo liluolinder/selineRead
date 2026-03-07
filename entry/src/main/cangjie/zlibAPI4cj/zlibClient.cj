@@ -13,7 +13,6 @@ import zlibraryAPI4CJ.common.canAccessZlib
 public class ZlibClientArk {
     let client: ZlibClient = ZlibClient()
 
-
     public func checkAccess(autoRedirect: Bool, returnFunc: (Bool) -> Unit, errorFunc: (String) -> Unit): Unit {
         let context = JSRuntime().mainContext
         spawn {
@@ -38,6 +37,7 @@ public class ZlibClientArk {
                 if (reqs.success == 1) {
                     let temp = reqs
                         .books
+                        .getOrThrow()
                         .map({bookInfo => ZlibBookInfoBriefArk.fromCJ(bookInfo)})
                     let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
                     context.postJSTask {
@@ -45,13 +45,23 @@ public class ZlibClientArk {
                     }
                 } else {
                     context.postJSTask {
-                        errorFunc("获取错误:未知错误")
+                        errorFunc("获取错误:${reqs.errorInfo.getOrDefault({=> '位置错误'})}")
                     }
                 }
             } catch (error: Exception) {
                 context.postJSTask {
                     errorFunc(error.toString())
                 }
+            }
+        }
+    }
+
+    public func login(email: String, password: String, returnFunc: () -> Unit, errorFunc: (String) -> Unit): Unit {
+        let context = JSRuntime().mainContext
+        spawn {
+            try {
+                client.login(email: email, password: password)
+            } catch (err: Exception) {
             }
         }
     }
