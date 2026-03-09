@@ -38,7 +38,7 @@ public class ZlibBookInfoBriefArk {
                 let reqs = cjValue.getBookInfo(cookie: cookie)
                 if (reqs.success == 1) {
                     context.postJSTask {
-                        returnFunc(ZlibBookInfoArk.fromCJ(reqs.book))
+                        returnFunc(ZlibBookInfoArk.fromCJ(reqs.book.getOrThrow()))
                     }
                 } else {
                     context.postJSTask {

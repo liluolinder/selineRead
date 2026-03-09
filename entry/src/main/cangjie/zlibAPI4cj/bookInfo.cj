@@ -93,6 +93,7 @@ public class ZlibBookInfoArk {
                 if (reqs.success == 1) {
                     returnFunc(reqs
                         .file
+                        .getOrThrow()
                         .downloadLink)
                 } else {
                     context.postJSTask {
