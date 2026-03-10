@@ -31,20 +31,21 @@ export struct ZlibraryAccount {
   async aboutToAppear(): Promise<void> {
     await RelationStoreManager.getZlibAccount(__ZlibUser__.dataBase)
     if (__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]) {
-      zlibClient.getPersonInfo(__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].cookie ?? '')
-        .then((res) => {
-          if (res[0] == 1) {
-            let basicInfo = JSON.parse(res[1]) as I_loginRes_user
-            __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = basicInfo.name
-            __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
-              `${basicInfo.downloads_today}/${basicInfo.downloads_limit}`
-            __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDonateNumber =
-              `${basicInfo.donations_active}`
-            __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = ''
-            __ZlibUser__.userName = basicInfo.name
-            __ZlibUser__.avatar = ''
-          }
-        })
+      let nowChooseAccount = __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]
+      __ZlibUser__.zlibClient.login(nowChooseAccount.account,nowChooseAccount.password,(res)=>{
+
+        __ZlibUser__.localChooseAccount = res
+
+        __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = res.name
+        __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
+          `${res.todayDownloadNum}/${res.downloadLimit}`
+        __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = ''
+        __ZlibUser__.userName = res.name
+        __ZlibUser__.avatar = ''
+      },(error)=>{
+        XContext.toast(error)
+      })
+
     }
   }
 
@@ -147,7 +148,6 @@ export struct ZlibraryAccount {
                     index: index,
                     onChange: (checked: boolean, itemIndex: number) => {
                       if (checked) {
-                        console.log(`124`)
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex", itemIndex)
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", item.account ?? '')
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", item.password ?? '')
@@ -155,21 +155,23 @@ export struct ZlibraryAccount {
                         XAnimation.runWithAnimation(() => {
                           __ZlibUser__.accountIndex = itemIndex
                         })
+
                         __ZlibUser__.account = item.account!
                         __ZlibUser__.password = item.password!
                         __ZlibUser__.userName=$r('app.string.Tip_GettingBookNow')
-                        zlibClient.getPersonInfo(item.cookie ?? '').then((res) => {
-                          if (res[0] == 1) {
-                            let basicInfo = JSON.parse(res[1]) as I_loginRes_user
-                            item.userName = basicInfo.name
-                            item.userDownloadLimitNumber = `${basicInfo.downloads_today}/${basicInfo.downloads_limit}`
-                            item.userDonateNumber = `${basicInfo.donations_active}`
-                            item.userAvatar = ''
-                            __ZlibUser__.cookie = item.cookie!
-                            __ZlibUser__.avatar = item.userAvatar!
-                            __ZlibUser__.userName = item.userName!
-                          }
-                        })
+
+                      __ZlibUser__.zlibClient.login(__ZlibUser__.account,__ZlibUser__.password,(user)=>{
+                        __ZlibUser__.localChooseAccount = user
+                        item.userName = user.name
+                        item.userDownloadLimitNumber = `${user.todayDownloadNum}/${user.downloadLimit}`
+                        item.userAvatar = ''
+                        __ZlibUser__.cookie = item.cookie!
+                        __ZlibUser__.avatar = item.userAvatar!
+                        __ZlibUser__.userName = item.userName!
+                      },(error)=>{
+                        XContext.toast(error)
+                      })
+
                         zlibClient.refreshUrl().then(()=>{
                           let req = http.createHttp();
                           zlibClient.getRecommendBook(req).then((res)  => {
@@ -185,6 +187,7 @@ export struct ZlibraryAccount {
                             }
                           })
                         })
+
                       }
                     }
                   })

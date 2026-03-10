@@ -6,7 +6,8 @@ import { SymbolGlyphModifier } from '@kit.ArkUI'
 import { min_width } from '../../../commons/commonItem'
 import { BigImage } from '../../../components/BigImage'
 import { ListItemWithText } from 'templatecomponent'
-import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.so'
+import { download, ZlibBookInfoArk } from 'libohos_app_cangjie_entry.so'
+import url from '@ohos.url'
 
 @Builder
 export function BookInfoBuilder() {
@@ -253,19 +254,23 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
-                    if (this.bookInfo?.extension == 'TXT' || this.bookInfo?.extension == 'txt'){
-                      XContext.alterDialogWithTwoButton({
-                        title: '致歉',
-                        message:'由于TXT文件特殊性, 通知栏与下载管理页面均无法显示下载进度, 请耐心等待下载',
-                        cancelCallBack: (): void => {
-                        },
-                        confirmCallBack: (): void => {
-                        }
-                      })
-                    }
+                    // if (this.bookInfo?.extension == 'TXT' || this.bookInfo?.extension == 'txt'){
+                    //   XContext.alterDialogWithTwoButton({
+                    //     title: '致歉',
+                    //     message:'由于TXT文件特殊性, 通知栏与下载管理页面均无法显示下载进度, 请耐心等待下载',
+                    //     cancelCallBack: (): void => {
+                    //     },
+                    //     confirmCallBack: (): void => {
+                    //     }
+                    //   })
+                    // }
 
-                    this.bookInfo?.getDownloadInfo('',(res)=>{
+                    this.bookInfo?.getDownloadInfo('bsrv=f1010f9db44398249b1cf2172ad4c2fd; c_token=6E975C44D2DD903138F67D90BD87C787DC3FAEA341044; siteLanguage=zh; remix_userkey=13f69d3b981cc9d2aa1907afbe23c7cf; remix_userid=41080408; selectedSiteMode=books; redirects_count=%7B%22auth%22%3A1%2C%22hide-auth-params%22%3A1%7D',
+                      async (res)=>{
                       XContext.toast(res)
+                        console.log(res)
+
+                      download(encodeURI(res), await XContext.getDownloadFolderPath())
                     },(error)=>{
                       XContext.toast(error)
                     })

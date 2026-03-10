@@ -26,6 +26,10 @@ release = "--fast-math -O2 -s -Woff all -Won apilevel-check"
 path = "D:\\linderSeline\\projects\\Cangjie\\LinderHttp"
 [dependencies.zlibraryAPI4CJ]
 path = "D:\\linderSeline\\projects\\Cangjie\\zlibraryAPI4CJ"
+[dependencies.selineWebdav]
+path = "D:\\linderSeline\\projects\\Cangjie\\selineWebdav"
+[dependencies.selineDownload]
+path = "D:\\linderSeline\\projects\\Cangjie\\selineDownload"
 
 [target]
 [target.aarch64-linux-ohos]

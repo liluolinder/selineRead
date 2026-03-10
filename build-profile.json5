@@ -7,11 +7,11 @@
         "material": {
           "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001A110028DBBCB2E6AFCFE3204D4E6FC0F40FBC08EC4B70D4D534B68A3627B1B585D13F11451C9A",
+          "keyPassword": "0000001BCAE635CFD363C752550B1171B5F0E5E72EC1B2B15D38189566290FDCE51BBDB11BE584DC49FC10",
           "profile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.p12",
-          "storePassword": "0000001AA4BD7BBB43BBE0683C3B10482ABFCD9A65B93425ACC9A201EC368332ED5EC9CDA1894693A10A"
+          "storePassword": "0000001BF9336891D025B6C7602EBCBB936AC323163B18064782128C5853B2A137D32304D4CED4924ACCF5"
         }
       }
     ],

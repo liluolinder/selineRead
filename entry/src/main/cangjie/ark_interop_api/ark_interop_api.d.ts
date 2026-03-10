@@ -1,7 +1,18 @@
+export declare class ZlibUserInfoArk {
+    id: number
+    email: string
+    name: string
+    kindleEmail: string
+    remixUserKey: string
+    todayDownloadNum: number
+    downloadLimit: number
+    cookie: string
+}
+
 export declare class ZlibClientArk {
     checkAccess(autoRedirect: boolean, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
     getRecommendBook(returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
-    login(email: string, password: string, returnFunc: () => void, errorFunc: (funcArg0: string) => void): void
+    login(email: string, password: string, returnFunc: (funcArg0: ZlibUserInfoArk) => void, errorFunc: (funcArg0: string) => void): void
 }
 
 export declare class ZlibBookInfoBriefArk {
@@ -54,4 +65,7 @@ export declare interface CustomLib {
     ZlibBookInfoArk: {new (): ZlibBookInfoArk}
     ZlibBookInfoBriefArk: {new (): ZlibBookInfoBriefArk}
     ZlibClientArk: {new (): ZlibClientArk}
+    ZlibUserInfoArk: {new (): ZlibUserInfoArk}
+    startWevDav(path: string): void
+    download(downloadUrl: string, downloadPath: string): void
 }

@@ -8,6 +8,7 @@ import { I_ZlibUserInfo } from "../../zlibrary/interface/I_ZlibUserInfo"
 import { ZlibUserInfo } from "../../zlibrary/classes/UserInfo"
 import { DownloadManager } from "@hadss/super_fast_file_trans"
 import { DownloadInfo } from "../models/classes/DownloadInfo"
+import { ZlibClientArk, ZlibUserInfoArk } from "libohos_app_cangjie_entry.so"
 
 
 @ObservedV2
@@ -60,6 +61,8 @@ export const __UI__: UIData = new UIData()
 
 @ObservedV2
 export class ZlibUser{
+  zlibClient:ZlibClientArk = new ZlibClientArk()
+  localChooseAccount:ZlibUserInfoArk = new ZlibUserInfoArk()
   @Trace accountIndex: number = 1
   @Trace account:string = ''
   @Trace password:string = ''

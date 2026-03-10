@@ -17,10 +17,8 @@ public class ZlibBookInfoBriefArk {
 
     var cjValue: BookInfoBrief = BookInfoBrief()
 
-
     @Interop[ArkTS, Invisible]
     public static func fromCJ(cjValue: BookInfoBrief): ZlibBookInfoBriefArk {
-
         let r = ZlibBookInfoBriefArk()
         r.id = cjValue.id
         r.title = cjValue.title
@@ -32,22 +30,25 @@ public class ZlibBookInfoBriefArk {
     }
 
     public func getDetailInfo(cookie: Option<String>, returnFunc: (ZlibBookInfoArk) -> Unit, errorFunc: (String) -> Unit): Unit {
-        let context = JSRuntime().mainContext
-        spawn {
-            try {
-                let reqs = cjValue.getBookInfo(cookie: cookie)
-                if (reqs.success == 1) {
-                    context.postJSTask {
-                        returnFunc(ZlibBookInfoArk.fromCJ(reqs.book.getOrThrow()))
+        if (let Some(context) <- globalcontext) {
+            spawn {
+                try {
+                    let reqs = cjValue.getBookInfo(cookie: cookie)
+                    if (reqs.success == 1) {
+                        context.postJSTask {
+                            returnFunc(ZlibBookInfoArk.fromCJ(reqs
+                                .book
+                                .getOrThrow()))
+                        }
+                    } else {
+                        context.postJSTask {
+                            errorFunc('获取错误')
+                        }
                     }
-                } else {
+                } catch (err: Exception) {
                     context.postJSTask {
-                        errorFunc('获取错误')
+                        errorFunc(err.toString())
                     }
-                }
-            } catch (err: Exception) {
-                context.postJSTask {
-                    errorFunc(err.toString())
                 }
             }
         }

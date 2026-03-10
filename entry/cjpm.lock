@@ -1,3 +1,4 @@
 version = 0
 
 [requires]
+  ignite = {git = "https://gitcode.com/cinyu/ignite-cangjie.git", commitId = "4b8a2de92a54e8ef0dc4dd3e30b8a5b145ebd223"}

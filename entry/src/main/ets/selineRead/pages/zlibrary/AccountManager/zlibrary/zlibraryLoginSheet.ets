@@ -121,56 +121,58 @@ export struct zlibLoginSheet {
               this.loginErrorInfo = 'Account Or Password cannot be empty'
             } else {
               this.localLoginState = loginState.Loading
-              zlibClient.login(this.email, this.password).then(async (res) => {
-                if (res[0] == 0) {
-                  this.loginErrorInfo = res[1]
-                  this.localLoginState = loginState.Error
-                } else {
-                  let userInfo: I_loginRes_user = JSON.parse(res[1]) as I_loginRes_user
-                  let cookie =
-                    `siteLanguage=zh; remix_userkey=${userInfo.remix_userkey}; remix_userid=${userInfo.id}`
-                  await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibraryAccount', {
-                    Account: userInfo.email,
-                    Password: userInfo.passWord,
-                    Cookie: cookie
-                  })
-                  let userInfoClass:ZlibUserInfo = new ZlibUserInfo()
-                  userInfoClass.account = userInfo.email
-                  userInfoClass.password = userInfo.passWord
-                  userInfoClass.cookie = cookie
-                  userInfoClass.userName = userInfo.name
-                  userInfoClass.userDownloadLimitNumber = `${userInfo.downloads_today}/${userInfo.downloads_limit}`
-                  userInfoClass.userDonateNumber = `${userInfo.donations_active}`
-                  userInfoClass.userAvatar = ``
-                  __ZlibUser__.zlibAccountArray.pushData(userInfoClass)
-                  __ZlibUser__.accountIndex = __ZlibUser__.zlibAccountArray.totalCount()-1
-                  __ZlibUser__.account = userInfo.email
-                  __ZlibUser__.password = userInfo.passWord
-                  __ZlibUser__.cookie = cookie
-                  __ZlibUser__.userName = userInfo.name
-                  __ZlibUser__.avatar = ``
-                  XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex",  __ZlibUser__.accountIndex)
-                  XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", userInfo.email??'')
-                  XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", userInfo.passWord??'')
-                  XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", cookie??'')
-                  zlibClient.refreshUrl().then(()=>{
-                    let req = http.createHttp();
-                    zlibClient.getRecommendBook(req).then((res)  => {
-                      __Home__.canGetMore = true
-                      if (res[0] == 1) {
-                        __Home__.recommendBookArray.clearData;
-                        __Home__.errorText = '';
-                        (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-                          //__Home__.recommendBookArray.pushData(item)
-                        });
-                        __Home__.recommendBookIndex++;
-                      }else {
-                        __Home__.errorText = res[1];
-                      }
-                    })
-                  })
-                  this.showLoginSheet = false
-                }
+
+
+              __ZlibUser__.zlibClient.login(this.email, this.password, async (user)=>{
+                __ZlibUser__.localChooseAccount = user
+                let cookie = user.cookie
+                await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibraryAccount', {
+                  Account: this.email,
+                  Password: this.password,
+                  Cookie: cookie
+                })
+                let userInfoClass:ZlibUserInfo = new ZlibUserInfo()
+                userInfoClass.account = this.email
+                userInfoClass.password = this.password
+                userInfoClass.cookie = cookie
+                userInfoClass.userName = user.name
+                userInfoClass.userDownloadLimitNumber = `${user.todayDownloadNum}/${user.downloadLimit}`
+                userInfoClass.userAvatar = ``
+                __ZlibUser__.zlibAccountArray.pushData(userInfoClass)
+                __ZlibUser__.accountIndex = __ZlibUser__.zlibAccountArray.totalCount()-1
+                __ZlibUser__.account = this.email
+                __ZlibUser__.password = this.password
+                __ZlibUser__.cookie = cookie
+                __ZlibUser__.userName = user.name
+                __ZlibUser__.avatar = ``
+                XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex",  __ZlibUser__.accountIndex)
+                XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", this.email??'')
+                XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", this.password??'')
+                XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", cookie??'')
+
+                // zlibClient.refreshUrl().then(()=>{
+                //   let req = http.createHttp();
+                //   zlibClient.getRecommendBook(req).then((res)  => {
+                //     __Home__.canGetMore = true
+                //     if (res[0] == 1) {
+                //       __Home__.recommendBookArray.clearData;
+                //       __Home__.errorText = '';
+                //       (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
+                //         //__Home__.recommendBookArray.pushData(item)
+                //       });
+                //       __Home__.recommendBookIndex++;
+                //     }else {
+                //       __Home__.errorText = res[1];
+                //     }
+                //   })
+                // })
+
+                this.showLoginSheet = false
+
+              },(error)=>{
+                this.loginErrorInfo = error
+                this.localLoginState = loginState.Error
+                XContext.toast(error)
               })
             }
           }

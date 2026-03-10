@@ -116,9 +116,12 @@ export class XContext {
     }
 
 
-   public static async getDownloadFolderPath(): Promise<string> {
+    public static async getDownloadFolderPath(): Promise<string> {
         const documentViewPicker = new picker.DocumentViewPicker()
         let documentSaveResult = await documentViewPicker.save({ pickerMode: picker.DocumentPickerMode.DOWNLOAD })
+        console.log(documentSaveResult[0])
+        console.log(`${new fileUri.FileUri(documentSaveResult[0])}`)
+        console.log(`${new fileUri.FileUri(documentSaveResult[0]).path}`)
         return new fileUri.FileUri(documentSaveResult[0]).path + '/'
     }
 

@@ -67,11 +67,9 @@ export struct Body {
   }
 
   aboutToAppear(): void {
-
-    let client = new ZlibClientArk()
-    client.checkAccess(true,(res)=>{
+    __ZlibUser__.zlibClient.checkAccess(true,(res)=>{
       if (res) {
-        client.getRecommendBook(
+        __ZlibUser__.zlibClient.getRecommendBook(
          async  (books) => {
             if (books.length == 0) {
               __Home__.errorText = '返回值为空'
@@ -88,6 +86,8 @@ export struct Body {
             __Home__.errorText = error
             __Home__.canGetMore = true
           })
+
+
       }
     }, (err)=>{__Home__.errorText = err})
 

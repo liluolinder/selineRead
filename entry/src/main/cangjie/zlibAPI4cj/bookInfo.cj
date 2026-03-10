@@ -86,23 +86,25 @@ public class ZlibBookInfoArk {
     }
 
     public func getDownloadInfo(cookie: String, returnFunc: (String) -> Unit, errorFunc: (String) -> Unit): Unit {
-        let context = JSRuntime().mainContext
-        spawn {
-            try {
-                let reqs = cjValue.getDownloadInfo(cookie: cookie)
-                if (reqs.success == 1) {
-                    returnFunc(reqs
-                        .file
-                        .getOrThrow()
-                        .downloadLink)
-                } else {
-                    context.postJSTask {
-                        errorFunc('获取错误')
+        if (let Some(context) <- globalcontext) {
+            spawn {
+                try {
+                    let reqs = cjValue.getDownloadInfo(cookie: cookie)
+                    if (reqs.success == 1) {
+                        if (let Some(file) <- reqs.file) {
+                            context.postJSTask {
+                                returnFunc(file.downloadLink)
+                            }
+                        }
+                    } else {
+                        context.postJSTask {
+                            errorFunc('获取错误')
+                        }
                     }
-                }
-            } catch (err: Exception) {
-                context.postJSTask {
-                    errorFunc(err.toString())
+                } catch (err: Exception) {
+                    context.postJSTask {
+                        errorFunc(err.toString())
+                    }
                 }
             }
         }

@@ -1,6 +1,5 @@
 import { XAnimation, XContext } from 'commonpackage';
-import { ZlibClientArk } from 'libohos_app_cangjie_entry.so';
-import { zlibClient } from '../../zlibrary/zlibClient';
+import { startWevDav } from 'libohos_app_cangjie_entry.so';
 import { min_width } from '../commons/commonItem';
 import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../commons/shareDatas';
 import { DecorBar } from '../components/DecorBar';
@@ -17,8 +16,9 @@ struct Index {
   @Provider('tabController') tabController: TabsController = new TabsController();
   @Provider('currentTabIndex') currentTabIndex: number = 0
 
-  aboutToAppear(): void {
+  async aboutToAppear(): Promise<void> {
     deleteDownloadCache()
+    startWevDav(await XContext.getDownloadFolderPath())
   }
 
   onBackPress(): boolean | void {
