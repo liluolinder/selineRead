@@ -86,8 +86,6 @@ export struct Body {
             __Home__.errorText = error
             __Home__.canGetMore = true
           })
-
-
       }
     }, (err)=>{__Home__.errorText = err})
 

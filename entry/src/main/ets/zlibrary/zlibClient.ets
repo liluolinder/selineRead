@@ -78,6 +78,7 @@ export class zlibClient {
       });
   }
 
+
   static async getPersonInfo(cookie: string): Promise<[number, string]> {
     console.log(`尝试获取用户数据`)
     let req = http.createHttp()

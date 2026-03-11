@@ -8,7 +8,7 @@ import { I_ZlibUserInfo } from "../../zlibrary/interface/I_ZlibUserInfo"
 import { ZlibUserInfo } from "../../zlibrary/classes/UserInfo"
 import { DownloadManager } from "@hadss/super_fast_file_trans"
 import { DownloadInfo } from "../models/classes/DownloadInfo"
-import { ZlibClientArk, ZlibUserInfoArk } from "libohos_app_cangjie_entry.so"
+import { DownloadManageArk, ZlibClientArk, ZlibUserInfoArk } from "libohos_app_cangjie_entry.so"
 
 
 @ObservedV2
@@ -72,6 +72,8 @@ export class ZlibUser{
   notificationID:number=0
   dataBase?:relationalStore.RdbStore
   downloadManager?:DownloadManager
+
+  downloadManageCJ?:DownloadManageArk
 
   zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
   base_url: string = 'https://zh.cn101.ru'

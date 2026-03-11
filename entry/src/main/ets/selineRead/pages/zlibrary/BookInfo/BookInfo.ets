@@ -1,13 +1,14 @@
-import { XAnimation, XContext } from 'commonpackage'
-import { __System__ } from '../../../commons/shareDatas'
+import { LNotificationManager, XAnimation, XContext } from 'commonpackage'
+import { __System__, __ZlibUser__ } from '../../../commons/shareDatas'
 import { __CustomBackgroundData__ } from '../../../components/CustomBackground'
 import { DividerTmp } from '../../../models/classes/DividerTmp'
 import { SymbolGlyphModifier } from '@kit.ArkUI'
 import { min_width } from '../../../commons/commonItem'
 import { BigImage } from '../../../components/BigImage'
 import { ListItemWithText } from 'templatecomponent'
-import { download, ZlibBookInfoArk } from 'libohos_app_cangjie_entry.so'
+import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.so'
 import url from '@ohos.url'
+import { BackgroundUtil } from '../../../models/classes/BackgroundRunningManager'
 
 @Builder
 export function BookInfoBuilder() {
@@ -123,10 +124,10 @@ export struct BookInfo {
                         .maxLines(3)
                         .textOverflow({ overflow: TextOverflow.Ellipsis })
                       Text(this.bookInfo?.author)
-                      .maxLines(3)
-                      .fontSize(18)
-                      .opacity(0.6)
-                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                        .maxLines(3)
+                        .fontSize(18)
+                        .opacity(0.6)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
 
                     }.alignItems(HorizontalAlign.Start).layoutWeight(1)
 
@@ -134,7 +135,7 @@ export struct BookInfo {
 
                 }
                 .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
                 .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
                   undefined)
                 .useEffect(true)
@@ -147,10 +148,10 @@ export struct BookInfo {
                     Scroll() {
                       Row() {
                         Text(this.bookInfo?.description == '' ? '暂无简介' :
-                        this.bookInfo?.description
-                          .replaceAll("&lt;br&gt;", "")
-                          .replaceAll("&lt;p&gt;", "")
-                          .replaceAll("&lt;/p&gt;", "")
+                          this.bookInfo?.description
+                            .replaceAll("&lt;br&gt;", "")
+                            .replaceAll("&lt;p&gt;", "")
+                            .replaceAll("&lt;/p&gt;", "")
                         )
                           .fontWeight(FontWeight.Normal)
                           .fontSize(16)
@@ -165,7 +166,7 @@ export struct BookInfo {
                 }
                 .borderRadius(20)
                 .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
                 .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
                   undefined)
                 .useEffect(true)
@@ -208,7 +209,7 @@ export struct BookInfo {
                 .transition(XAnimation.getAnimation('bottom', 150))
                 .borderRadius(20)
                 .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
                 .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
                   undefined)
                 .useEffect(true)
@@ -223,7 +224,7 @@ export struct BookInfo {
                   .height(55)
                   .borderRadius(20)
                   .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                    $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
                   .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
                     undefined)
                   .useEffect(true)
@@ -247,39 +248,50 @@ export struct BookInfo {
                   .height(55)
                   .borderRadius(20)
                   .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                    $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
                   .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
                     undefined)
                   .useEffect(true)
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(() => {
-                    // if (this.bookInfo?.extension == 'TXT' || this.bookInfo?.extension == 'txt'){
-                    //   XContext.alterDialogWithTwoButton({
-                    //     title: '致歉',
-                    //     message:'由于TXT文件特殊性, 通知栏与下载管理页面均无法显示下载进度, 请耐心等待下载',
-                    //     cancelCallBack: (): void => {
-                    //     },
-                    //     confirmCallBack: (): void => {
-                    //     }
-                    //   })
-                    // }
+                    BackgroundUtil.startContinuousTask()
+                    this.bookInfo?.getDownloadInfo(__ZlibUser__.cookie,
+                      async (res) => {
+                        let bookName = url.URL.parseURL(res).params.get('filename')
+                        let id = __ZlibUser__.notificationID++
+                        __ZlibUser__.downloadManageCJ?.createTask(bookName, encodeURI(res), bookName,
+                          (task) => {
+                            task.setStartCallback(() => {
+                              console.log(`开始下载`)
+                            })
+                              .setErrorCallback((error) => {
+                                console.log(`下载失败${error}`)
+                                this.errorText = error
+                                LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', bookName!)
+                              })
+                              .setCompleteCallback(()=>{
+                                LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', bookName!)
+                                console.log(`下载完成`)
+                              })
+                              .setProgressCallback((hasDownload, total, speed) => {
+                                console.log(`已下载${hasDownload},共${total},当前速度${speed}`)
+                                let progress = Math.trunc(hasDownload / total * 10000) / 100
+                                LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`,
+                                  bookName!)
+                              })
 
-                    this.bookInfo?.getDownloadInfo('bsrv=f1010f9db44398249b1cf2172ad4c2fd; c_token=6E975C44D2DD903138F67D90BD87C787DC3FAEA341044; siteLanguage=zh; remix_userkey=13f69d3b981cc9d2aa1907afbe23c7cf; remix_userid=41080408; selectedSiteMode=books; redirects_count=%7B%22auth%22%3A1%2C%22hide-auth-params%22%3A1%7D',
-                      async (res)=>{
-                      XContext.toast(res)
-                        console.log(res)
+                            task.start()
 
-                      download(encodeURI(res), await XContext.getDownloadFolderPath())
-                    },(error)=>{
-                      XContext.toast(error)
-                    })
+                          }, (error) => {
+                            this.errorText = error
+                            console.log(error)
+                          })
+                      }, (error) => {
+                        this.errorText = error
+                        XContext.toast(error)
+                      })
 
-                    // zlibClient.getBookDownloadUrl(this.bookInfo!).then((res)=>{
-                    //   if (res[0]==0) {
-                    //     this.errorText = res[1]
-                    //   }
-                    // })
 
                   })
                 }
@@ -373,7 +385,7 @@ export struct BookInfo {
     // })
     .size({ width: '100%', height: '100%' })
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-    Color.Transparent : $r('sys.color.comp_background_gray'))
+      Color.Transparent : $r('sys.color.comp_background_gray'))
     .padding({ top: __System__.topRectHeight })
     .title(this.bookInfo?.title)
     .onReady((context: NavDestinationContext) => {

@@ -42,7 +42,7 @@ public class ZlibBookInfoBriefArk {
                         }
                     } else {
                         context.postJSTask {
-                            errorFunc('获取错误')
+                            errorFunc('获取错误:${reqs.errorInfo.getOrDefault {=> '未知错误'}}')
                         }
                     }
                 } catch (err: Exception) {

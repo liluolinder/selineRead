@@ -61,11 +61,27 @@ export declare class ZlibBookInfoArk {
     getDownloadInfo(cookie: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
 }
 
+export declare class DownloadTaskArk {
+    setStartCallback(event: () => void): DownloadTaskArk
+    setProgressCallback(event: (funcArg0: number, funcArg1: number, funcArg2: string) => void): DownloadTaskArk
+    setRetryCallback(event: (funcArg0: number, funcArg1: number) => void): DownloadTaskArk
+    setErrorCallback(event: (funcArg0: string) => void): DownloadTaskArk
+    setPauseCallback(event: () => void): DownloadTaskArk
+    setCompleteCallback(event: () => void): DownloadTaskArk
+    start(): void
+    cancel(): void
+}
+
+export declare class DownloadManageArk {
+    createTask(taskID: string, downloadUrl: string, fileName: string, returnFunc: (funcArg0: DownloadTaskArk) => void, errorFunc: (funcArg0: string) => void): void
+}
+
 export declare interface CustomLib {
+    DownloadManageArk: {new (downloadPath: string): DownloadManageArk}
+    DownloadTaskArk: {new (): DownloadTaskArk}
     ZlibBookInfoArk: {new (): ZlibBookInfoArk}
     ZlibBookInfoBriefArk: {new (): ZlibBookInfoBriefArk}
     ZlibClientArk: {new (): ZlibClientArk}
     ZlibUserInfoArk: {new (): ZlibUserInfoArk}
     startWevDav(path: string): void
-    download(downloadUrl: string, downloadPath: string): void
 }
