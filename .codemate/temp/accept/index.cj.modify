@@ -1,0 +1,30 @@
+package ohos_app_cangjie_entry
+
+import ohos.ark_interop.JSContext
+import ohos.ark_interop.JSModule
+import ohos.ark_interop_macro.*
+import ohos.ark_interop.*
+import selineWebdav.startWebDavWithAuth
+import stdx.logger.{SimpleLogger}
+import stdx.log.{setGlobalLogger}
+import std.io.OutputStream
+import stdx.log.LogLevel
+import stdx.log.Logger
+import stdx.log.Attr
+import stdx.log.LogRecord
+import std.time.DateTime
+
+var globalcontext: Option<JSContext> = None
+
+let _ = JSModule.registerModule {
+    context, _ =>
+        globalcontext = context
+        let tl = LinderLogger()
+        tl.level = LogLevel.TRACE
+        setGlobalLogger(tl)
+}
+
+ public class LinderLogger <: Logger {
+
+
+}
