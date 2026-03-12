@@ -12,10 +12,30 @@ export struct OpenSource{
 
   @Local projects:I_openSource[]=[
     {
-      projectName:'@hadss/super_fast_file_trans',
-      url:'https://ohpm.openharmony.cn/#/cn/detail/@hadss%2Fsuper_fast_file_trans',
+      projectName:'LinderHttp',
+      url:'https://gitcode.com/LiquidStudio/LinderHttp',
+      license:'MulanPSL2'
+    },
+    {
+      projectName:'zlibraryAPI4CJ',
+      url:'https://gitcode.com/LiquidStudio/zlibraryAPI4CJ',
+      license:'MulanPSL2'
+    },
+    {
+      projectName:'selineDownload',
+      url:'https://gitcode.com/LiquidStudio/selineDownload',
+      license:'MulanPSL2'
+    },
+    {
+      projectName:'selineWebdav',
+      url:'https://gitcode.com/LiquidStudio/selineWebdav',
+      license:'MulanPSL2'
+    },
+    {
+      projectName:'ignite',
+      url:'https://gitcode.com/cinyu/ignite-cangjie',
       license:'Apache-2.0'
-    }
+    },
   ]
 
   build() {

@@ -59,43 +59,43 @@ export struct BookShelf {
           shareBook(item.bookPath)
         })
         .enabled(fileIo.accessSync(item.bookPath))
-      MenuItem({ content: $r('app.string.Text_SearchSame') })
-        .onClick(() => {
-          let textFragment: string[] = item.bookName.split('.')
-          let bookName = ''
-          for (let index = 0; index < textFragment.length - 1; index++) {
-            bookName += textFragment[index]
-          }
-          bookName = bookName.replaceAll(" (Z-Library)", "")
-          this.tabController.changeIndex(0)
-          __Home__.inSearchMode = false
-          if (bookName != '') {
-            __Home__.searchWord = bookName
-            __Home__.recommendOrSearch = 1
-            __Home__.req = http.createHttp()
-            __Home__.searchBookArray.clearData()
-            zlibClient.searchBook(__Home__.req, __Home__.searchWord, __Home__.searchBookIndex).then((res) => {
-              if (res[0] == 1) {
-                __Home__.recommendBookIndex ++
-                (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
-                  __Home__.searchBookArray.pushData(item)
-                })
-                __Home__.errorText = ''
-              } else {
-                __Home__.errorText = res[1]
-              }
-              XAnimation.runWithAnimation(() => {
-                __Home__.canGetMore = true
-              })
-            })
-            __Home__.searchHistory =
-              __Home__.searchHistory.filter((item: I_SearchHistory) => item.value != bookName)
-            __Home__.searchHistory.unshift({ value: bookName, time: Date.parse(new Date().toString()) })
-            XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
-              JSON.stringify(__Home__.searchHistory))
-          }
-        })
-        .enabled(fileIo.accessSync(item.bookPath))
+      // MenuItem({ content: $r('app.string.Text_SearchSame') })
+      //   .onClick(() => {
+      //     let textFragment: string[] = item.bookName.split('.')
+      //     let bookName = ''
+      //     for (let index = 0; index < textFragment.length - 1; index++) {
+      //       bookName += textFragment[index]
+      //     }
+      //     bookName = bookName.replaceAll(" (Z-Library)", "")
+      //     this.tabController.changeIndex(0)
+      //     __Home__.inSearchMode = false
+      //     if (bookName != '') {
+      //       __Home__.searchWord = bookName
+      //       __Home__.recommendOrSearch = 1
+      //       __Home__.req = http.createHttp()
+      //       __Home__.searchBookArray.clearData()
+      //       zlibClient.searchBook(__Home__.req, __Home__.searchWord, __Home__.searchBookIndex).then((res) => {
+      //         if (res[0] == 1) {
+      //           __Home__.recommendBookIndex ++
+      //           (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
+      //             __Home__.searchBookArray.pushData(item)
+      //           })
+      //           __Home__.errorText = ''
+      //         } else {
+      //           __Home__.errorText = res[1]
+      //         }
+      //         XAnimation.runWithAnimation(() => {
+      //           __Home__.canGetMore = true
+      //         })
+      //       })
+      //       __Home__.searchHistory =
+      //         __Home__.searchHistory.filter((item: I_SearchHistory) => item.value != bookName)
+      //       __Home__.searchHistory.unshift({ value: bookName, time: Date.parse(new Date().toString()) })
+      //       XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
+      //         JSON.stringify(__Home__.searchHistory))
+      //     }
+      //   })
+      //   .enabled(fileIo.accessSync(item.bookPath))
       MenuItem({ content: $r('app.string.Text_Detail') })
         .onClick(async () => {
           this.isOpening = true

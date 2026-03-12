@@ -265,8 +265,10 @@ export class zlibClient {
         }
         BackgroundUtil.startContinuousTask()
         XContext.toast($r('app.string.Tip_StartDownload'))
+
         let time = new Date()
         let downloadItem: DownloadInfo = new DownloadInfo()
+
         downloadItem.fileName = decodedFilename
         downloadItem.fileImage = bookInfo.cover
         downloadItem.status = DownloadStatus.Idle
@@ -275,6 +277,7 @@ export class zlibClient {
         downloadItem.bookId = bookInfo.id ?? 0
         downloadItem.downloadTime = time.toISOString()
         downloadItem.downLoadTask = undefined
+
         await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
           BookID: bookInfo.id ?? 0,
           BookHref: bookInfo.href ?? '',
@@ -285,7 +288,9 @@ export class zlibClient {
           BookDownLoadTime: time.toISOString(),
           HaveDownload: 0
         })
+
         let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+
         predicates.equalTo('BookName', decodedFilename)
           .equalTo("BookID", bookInfo.id ?? 0)
           .equalTo("BookDownLoadTime", time.toISOString())
@@ -444,7 +449,6 @@ export class zlibClient {
               'user-agent': user_agent
             }
           }
-
           let customDownloadListener: DownloadListener = {
             onSuccess: () => {
               downloadItem.status = DownloadStatus.Complete
@@ -515,6 +519,8 @@ export class zlibClient {
           downloadItem.downLoadTask?.start()
 
           __Download__.downloadArray.pushUnshiftData(downloadItem)
+
+
 
         }
       } catch (e) {

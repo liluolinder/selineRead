@@ -4,26 +4,14 @@ import ohos.ark_interop.JSContext
 import ohos.ark_interop.JSModule
 import ohos.ark_interop_macro.*
 import ohos.ark_interop.*
-import ohos.hilog.Hilog
 import selineWebdav.startWebDavWithAuth
-import selineDownload.DownloadConfig
-import selineDownload.DownloadTask
-import stdx.log.LogLevel
-import stdx.logger.SimpleLogger
-import std.env.getStdOut
-import stdx.log.setGlobalLogger
-import stdx.encoding.url.URL
+
 
 var globalcontext: Option<JSContext> = None
 
 let _ = JSModule.registerModule {context, _ => globalcontext = context}
 
-@Interop[ArkTS]
-public func startWevDav(path: String): Unit {
-    spawn {
-        startWebDavWithAuth(path, "admin", "admin123", port: 8088, host: '127.0.0.1')
-    }
-}
+
 
 //@Interop[ArkTS]
 //public func download(downloadUrl: String, downloadPath: String, fileName: String): Unit {

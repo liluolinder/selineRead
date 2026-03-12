@@ -1,6 +1,7 @@
 import { DownloadTask } from "@hadss/super_fast_file_trans"
 import { I_DownloadInfo } from "../interfaces/I_DownloadInfo"
 import { http } from "@kit.NetworkKit"
+import { DownloadTaskArk } from "libohos_app_cangjie_entry.so"
 
 @ObservedV2
 export class DownloadInfo implements I_DownloadInfo{
@@ -11,7 +12,7 @@ export class DownloadInfo implements I_DownloadInfo{
   downloadType: "txt" | "other" = 'other'
   bookAuthor :string = ''
   bookHref : string = ''
-  downLoadTask?:DownloadTask|http.HttpRequest
+  downLoadTask?:DownloadTask|http.HttpRequest|DownloadTaskArk
   bookId:number = 0
   downloadTime:string=''
 

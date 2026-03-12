@@ -1,5 +1,5 @@
 import { XAnimation, XContext } from 'commonpackage';
-import { DownloadManageArk, startWevDav } from 'libohos_app_cangjie_entry.so';
+import { DownloadManageArk, webdavArk } from 'libohos_app_cangjie_entry.so';
 import { min_width } from '../commons/commonItem';
 import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../commons/shareDatas';
 import { DecorBar } from '../components/DecorBar';
@@ -18,9 +18,13 @@ struct Index {
 
   async aboutToAppear(): Promise<void> {
     deleteDownloadCache()
-    startWevDav(await XContext.getDownloadFolderPath())
     __ZlibUser__.downloadManageCJ = new DownloadManageArk(await XContext.getDownloadFolderPath())
-
+    if (__Setting__.webdavServerEnabled) {
+      __Setting__.webdavClient =
+        new webdavArk(await XContext.getDownloadFolderPath(), __Setting__.webdavPort, __Setting__.webdavAccount,
+          __Setting__.webdavPassword)
+      __Setting__.webdavClient.start()
+    }
   }
 
   onBackPress(): boolean | void {

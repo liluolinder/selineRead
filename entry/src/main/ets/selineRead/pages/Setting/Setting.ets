@@ -1,25 +1,47 @@
-import { XAnimation, XPreferencesManager } from "commonpackage"
-import { ListItemWithSelect, ListItemWithToggle } from "templatecomponent"
+import { XAnimation, XContext, XPreferencesManager } from "commonpackage"
+import { ListItemWithInput, ListItemWithSelect, ListItemWithToggle } from "templatecomponent"
 import { __Setting__ } from "../../commons/shareDatas"
 import { motion } from "@kit.MultimodalAwarenessKit"
+import { webdavArk } from "libohos_app_cangjie_entry.so"
+import { pasteboard } from "@kit.BasicServicesKit"
 
 @Builder
 export function SettingBuilder() {
   Setting()
 }
 
+interface SettingTitle {
+  title: ResourceStr,
+  needTip: boolean
+  tip?: string
+}
+
 @ComponentV2
 export struct Setting {
-  settingOptionArray: ResourceStr[] = [
-    $r('app.string.Title_DisplaySetting'),
-    $r('app.string.Title_DownloadSetting'),
-    $r('app.string.Title_BookShelfSetting'),
+  settingOptionArray: SettingTitle[] = [
+    {
+      title: $r('app.string.Title_DisplaySetting'),
+      needTip: false
+    },
+    {
+      title: $r('app.string.Title_DownloadSetting'),
+      needTip: false
+    },
+    {
+      title: $r('app.string.Title_BookShelfSetting'),
+      needTip: false
+    },
+    {
+      title: 'WebDAV服务器',
+      needTip: true,
+      tip: '启用内置webdav服务，将下载目录/Seline Read(阅韵心读)挂载,便于导入其他APP，只有在关闭服务器情况下，才可以配置参数'
+    }
   ]
 
   @Builder
   displaySetting() {
     ListItem() {
-      if (canIUse("SystemCapability.MultimodalAwareness.Motion")){
+      if (canIUse("SystemCapability.MultimodalAwareness.Motion")) {
         ListItemWithToggle({
           type: ToggleType.Switch,
           checked: __Setting__.needPerceptiveGrip,
@@ -29,21 +51,24 @@ export struct Setting {
             __Setting__.needPerceptiveGrip = status
             if (status) {
               try {
-                motion.on('holdingHandChanged', (state)=>{
+                motion.on('holdingHandChanged', (state) => {
                   console.log('testTAG', state)
-                  XAnimation.runWithAnimation(()=> __Setting__.isLeftHand = state == motion.HoldingHandStatus.LEFT_HAND_HELD)
+                  XAnimation.runWithAnimation(() => __Setting__.isLeftHand =
+                    state == motion.HoldingHandStatus.LEFT_HAND_HELD)
                 })
-              }catch{}
-            }else{
+              } catch {
+              }
+            } else {
               try {
                 motion.off('holdingHandChanged');
-                XAnimation.runWithAnimation(()=> __Setting__.isLeftHand = false)
-              }catch{}
+                XAnimation.runWithAnimation(() => __Setting__.isLeftHand = false)
+              } catch {
+              }
             }
           }
         })
-      }else{
-        Column(){
+      } else {
+        Column() {
           Text('Coming Soon')
         }.height(50)
         .padding(16)
@@ -59,7 +84,7 @@ export struct Setting {
         checked: __Setting__.overrideConflictFile,
         message: $r('app.string.Text_ConflictFileHandling'),
         toggleMessage: __Setting__.overrideConflictFile ? $r('app.string.Text_Override') :
-        $r('app.string.Text_Coexistence'),
+          $r('app.string.Text_Coexistence'),
         onChange: (status: boolean) => {
           __Setting__.overrideConflictFile = status
           XPreferencesManager.putPreferencesValue('selineRead', "overrideConflictFile", status)
@@ -85,23 +110,23 @@ export struct Setting {
   bookshelfSettingBuilder() {
     ListItem() {
       ListItemWithSelect({
-        message:'点击书籍打开方式',
-        select:__Setting__.bookShelfClickOpenWay,
-        selectArray:[
+        message: '点击书籍打开方式',
+        select: __Setting__.bookShelfClickOpenWay,
+        selectArray: [
           {
-            value:'无操作'
+            value: '无操作'
           },
           {
-            value:'打开本地阅读器(尚未完成)'
+            value: '打开本地阅读器(尚未完成)'
           },
           {
-            value:'华为阅读'
+            value: '华为阅读'
           },
           {
-            value:'格物阅读'
+            value: '格物阅读'
           }
         ],
-        onSelect:(index: number, value: string)=>{
+        onSelect: (index: number, value: string) => {
           __Setting__.bookShelfClickOpenWay = index
           XPreferencesManager.putPreferencesValue('selineRead', "bookShelfClickOpenWay", index)
         }
@@ -109,23 +134,127 @@ export struct Setting {
     }
   }
 
+  @Builder
+  webdavSettingBuilder() {
+    ListItem() {
+      ListItemWithToggle({
+        type: ToggleType.Switch,
+        checked: __Setting__.webdavServerEnabled,
+        message: '打开WebDAV服务器',
+        onChange: async (status: boolean) => {
+          __Setting__.webdavServerEnabled = status
+          XPreferencesManager.putPreferencesValue('selineRead', "webdavServerEnabled", status)
+          if (status) {
+            __Setting__.webdavClient =
+              new webdavArk(await XContext.getDownloadFolderPath(), __Setting__.webdavPort, __Setting__.webdavAccount,
+                __Setting__.webdavPassword)
+            __Setting__.webdavClient.start()
+          } else {
+            __Setting__.webdavClient?.stop()
+          }
+        }
+      })
+    }
+
+    if (__Setting__.webdavServerEnabled) {
+      ListItem() {
+        Row() {
+          Column() {
+            Text('服务地址')
+              .fontSize(14)
+              .fontColor($r('sys.color.font_secondary'))
+            Text(`http://127.0.0.1:${__Setting__.webdavPort}`)
+              .fontSize(16)
+              .margin({ top: 4 })
+          }.alignItems(HorizontalAlign.Start)
+
+          Button('复制')
+            .backgroundColor($r('app.color.linder_blue'))
+            .height(40)
+            .width(60)
+            .onClick(()=>{
+              let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, `http://127.0.0.1:${__Setting__.webdavPort}`);
+              pasteboard.getSystemPasteboard().setData(pasteData) //写入剪切板
+              XContext.toast($r('app.string.Tip_Success'))
+            })
+        }
+        .justifyContent(FlexAlign.SpaceBetween)
+        .width('100%')
+        .padding({
+          left: 16,
+          right: 16,
+          top: 12,
+          bottom: 12
+        })
+
+      }
+    }
+
+    ListItem() {
+      ListItemWithInput({
+        message: '端口',
+        text: __Setting__.webdavPort.toString(),
+        onchange: (value: string) => {
+          const port = parseInt(value)
+          if (port > 0 && port <= 65535) {
+            __Setting__.webdavPort = port
+            XPreferencesManager.putPreferencesValue('selineRead', "webdavPort", port)
+          }
+        }
+      })
+    }.enabled(!__Setting__.webdavServerEnabled)
+
+    ListItem() {
+      ListItemWithInput({
+        message: '账号',
+        text: __Setting__.webdavAccount,
+        onchange: (value: string) => {
+          if (value != '') {
+            __Setting__.webdavAccount = value
+            XPreferencesManager.putPreferencesValue('selineRead', "webdavAccount", value)
+          } else {
+            XContext.toast('不可为空')
+          }
+
+        }
+      })
+    }.enabled(!__Setting__.webdavServerEnabled)
+
+    ListItem() {
+      ListItemWithInput({
+        message: '密码',
+        text: __Setting__.webdavPassword,
+        onchange: (value: string) => {
+          if (value != '') {
+            __Setting__.webdavPassword = value
+            XPreferencesManager.putPreferencesValue('selineRead', "webdavPassword", value)
+          } else {
+            XContext.toast('不可为空')
+          }
+        }
+      })
+    }.enabled(!__Setting__.webdavServerEnabled)
+  }
+
   build() {
     Column() {
       Scroll() {
         Column({ space: 20 }) {
-          ForEach(this.settingOptionArray, (title: ResourceStr, index: number) => {
+          ForEach(this.settingOptionArray, (title: SettingTitle, index: number) => {
             Column({ space: 10 }) {
-              Text(title)
-                .width('100%')
-                .fontWeight(FontWeight.Bold)
+              SettingTitleBuilder({
+                item: title
+              })
 
               List() {
                 if (index == 0) {
-                 this.displaySetting()
+                  this.displaySetting()
                 } else if (index == 1) {
                   this.downloadSetting()
-                }else if (index == 2) {
+                } else if (index == 2) {
                   this.bookshelfSettingBuilder()
+                } else if (index == 3) {
+                  this.webdavSettingBuilder()
                 }
               }
               .width('100%')
@@ -148,5 +277,28 @@ export struct Setting {
     }.size({ width: '100%', height: '100&' })
     .padding({ left: 16, right: 16, bottom: 16 })
     .backgroundColor($r('sys.color.background_tertiary'))
+  }
+}
+
+@ComponentV2
+struct SettingTitleBuilder {
+  @Require @Param item: SettingTitle
+  @Local showTip: boolean = false
+
+  build() {
+    Row({ space: 5 }) {
+      Text(this.item.title)
+        .fontWeight(FontWeight.Bold)
+      if (this.item.needTip) {
+        SymbolGlyph($r('sys.symbol.questionmark_circle'))
+          .fontSize(20)
+          .onClick(() => {
+            this.showTip = true
+          })
+          .bindPopup(this.showTip!!, {
+            message: this.item.tip
+          })
+      }
+    }.width('100%')
   }
 }

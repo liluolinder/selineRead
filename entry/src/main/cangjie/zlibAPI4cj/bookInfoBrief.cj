@@ -29,7 +29,7 @@ public class ZlibBookInfoBriefArk {
         r
     }
 
-    public func getDetailInfo(cookie: Option<String>, returnFunc: (ZlibBookInfoArk) -> Unit, errorFunc: (String) -> Unit): Unit {
+    public func getDetailInfo(cookie: String, returnFunc: (ZlibBookInfoArk) -> Unit, errorFunc: (String) -> Unit): Unit {
         if (let Some(context) <- globalcontext) {
             spawn {
                 try {
@@ -47,7 +47,7 @@ public class ZlibBookInfoBriefArk {
                     }
                 } catch (err: Exception) {
                     context.postJSTask {
-                        errorFunc(err.toString())
+                        errorFunc("获取错误"+err.toString())
                     }
                 }
             }

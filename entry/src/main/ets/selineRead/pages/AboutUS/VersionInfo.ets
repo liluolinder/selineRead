@@ -12,24 +12,19 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
-      version: '1.1.5.2',
-      date: '2026/1/20',
-      addNewFunArray:['在支持的设备上支持智感握持(适人握持)'],
-      fixBugsArray:['修复部分情况下无法获取书籍消息'],
-      optimizeArray:['修复搜索，打开侧边栏下使用系统侧滑不再直接退出APP','搜索栏显示搜索Button']
-    },
-    {
-      version: '1.1.5.1',
-      date: '2025/12/8',
-      addNewFunArray:['主页顶栏新增打开下载管理器按钮'],
-      fixBugsArray:['修复zlib官方策略修改导致无法访问问题']
+      version: '1.1.6.5',
+      description:'下个版本更新预告:管理zlibrary地址器(^~^),碰一碰分享书籍,隔空抓取书籍,收藏书籍',
+      date: '2026/3/12',
+      addNewFunArray:['新增内置webdav服务'],
+      fixBugsArray:['修复无法下载的问题'],
+      optimizeArray:['优化请求稳定性']
     },
     {
       version: '1.1.5.0',
       date: '2025/12/8',
-      optimizeArray:['本地书籍封面绑定'],
-      addNewFunArray:['新增书架书籍响应点击操作，可快捷导入三方阅读器(需在侧边栏设置中手动选择)'],
-      fixBugsArray:['无法下载txt文件']
+      optimizeArray:['本地书籍封面绑定','修复搜索，打开侧边栏下使用系统侧滑不再直接退出APP','搜索栏显示搜索Button'],
+      addNewFunArray:['新增书架书籍响应点击操作，可快捷导入三方阅读器(需在侧边栏设置中手动选择)','主页顶栏新增打开下载管理器按钮','在支持的设备上支持智感握持(适人握持)'],
+      fixBugsArray:['无法下载txt文件','修复zlib官方策略修改导致无法访问问题','修复部分情况下无法获取书籍消息']
     },
     {
       version: '1.1.4.5',

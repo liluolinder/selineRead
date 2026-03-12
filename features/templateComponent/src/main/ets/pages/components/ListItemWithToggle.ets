@@ -20,16 +20,20 @@ export struct ListItemWithToggle {
         space: { main: LengthMetrics.vp(10) }
       }) {
         Row({ space: 10 }) {
-          SymbolGlyph(this.enable && this.symbol1 ? this.symbol1 : this.symbol)
-            .fontSize(22)
-            .fontColor([$r('sys.color.font')])
-            .symbolEffect(new ReplaceSymbolEffect(EffectScope.WHOLE), Number(this.enable))
-          Text(this.message)
-            .fontSize(17)
-            .fontWeight(FontWeight.Medium)
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.MARQUEE })
-            .layoutWeight(1)
+         if (this.symbol){
+           SymbolGlyph(this.symbol)
+             .fontSize(22)
+             .fontColor([$r('sys.color.font')])
+             .symbolEffect(new ReplaceSymbolEffect(EffectScope.WHOLE), Number(this.enable))
+         }
+         if (this.message){
+           Text(this.message)
+             .fontSize(17)
+             .fontWeight(FontWeight.Medium)
+             .maxLines(1)
+             .textOverflow({ overflow: TextOverflow.MARQUEE })
+             .layoutWeight(1)
+         }
         }.layoutWeight(1)
 
         Toggle({ type: this.type, isOn: this.enable }) {

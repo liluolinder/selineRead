@@ -9,6 +9,14 @@ export async function initPreferences() {
   __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.tur101.ru') as string
   __ZlibUser__.baseApi_url = __ZlibUser__.base_url + '/papi'
   __ZlibUser__.baseEApi_url = __ZlibUser__.base_url + '/eapi'
+  __ZlibUser__.zlibClient.setZlibUrl(__ZlibUser__.base_url)
+  __Setting__.webdavServerEnabled = XPreferencesManager.getPreferencesValue("selineRead","webdavServerEnabled",false) as boolean
+
+  __Setting__.webdavPort = XPreferencesManager.getPreferencesValue("selineRead","webdavPort",8088) as number
+
+  __Setting__.webdavAccount = XPreferencesManager.getPreferencesValue("selineRead","webdavAccount",'admin') as string
+  __Setting__.webdavPassword = XPreferencesManager.getPreferencesValue("selineRead","webdavPassword",'admin') as string
+
   __Setting__.bookShelfClickOpenWay = XPreferencesManager.getPreferencesValue('selineRead', "bookShelfClickOpenWay", 0) as number
   __Setting__.overrideConflictFile = XPreferencesManager.getPreferencesValue("selineRead", "overrideConflictFile", true) as boolean
   __Setting__.shareAfterDownload = XPreferencesManager.getPreferencesValue("selineRead", "shareAfterDownload", true) as boolean

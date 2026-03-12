@@ -69,6 +69,11 @@ export struct Body {
   aboutToAppear(): void {
     __ZlibUser__.zlibClient.checkAccess(true,(res)=>{
       if (res) {
+        __ZlibUser__.zlibClient.getZlibUrl((res)=>{
+          console.log(res)
+          __ZlibUser__.base_url = res
+          XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
+        })
         __ZlibUser__.zlibClient.getRecommendBook(
          async  (books) => {
             if (books.length == 0) {
@@ -86,6 +91,16 @@ export struct Body {
             __Home__.errorText = error
             __Home__.canGetMore = true
           })
+
+        if (__ZlibUser__.account!='') {
+          __ZlibUser__.zlibClient.login(__ZlibUser__.account,__ZlibUser__.password,(res)=>{
+            __ZlibUser__.localChooseAccount = res
+            __ZlibUser__.cookie = res.cookie
+          },(error)=>{
+            __Home__.errorText = error
+          })
+        }
+
       }
     }, (err)=>{__Home__.errorText = err})
 

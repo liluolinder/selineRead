@@ -42,7 +42,7 @@ export struct SideBar {
             if (__UI__.isLargeSidebar) {
               if (__ZlibUser__.account != '') {
                 Column({ space: 2 }) {
-                  Text(__ZlibUser__.userName??'未命名')
+                  Text(__ZlibUser__.localChooseAccount.name??'未命名')
                     .fontWeight(FontWeight.Bold)
                     .fontSize(20)
                     .textAlign(TextAlign.Center)

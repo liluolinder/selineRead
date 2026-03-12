@@ -15,6 +15,9 @@ export declare class ZlibClientArk {
     checkAccess(autoRedirect: boolean, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
     getRecommendBook(returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
     login(email: string, password: string, returnFunc: (funcArg0: ZlibUserInfoArk) => void, errorFunc: (funcArg0: string) => void): void
+    search(bookName: string, page: number, returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
+    getZlibUrl(returnFunc: (funcArg0: string) => void): void
+    setZlibUrl(url: string): void
     constructor ()
 }
 
@@ -24,7 +27,7 @@ export declare class ZlibBookInfoBriefArk {
     author: string
     cover: string
     hash: string
-    getDetailInfo(cookie: string | undefined, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
+    getDetailInfo(cookie: string, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
     constructor ()
 }
 
@@ -83,4 +86,8 @@ export declare class DownloadManageArk {
     constructor (downloadPath: string)
 }
 
-export declare function startWevDav(path: string): void
+export declare class webdavArk {
+    start(): void
+    stop(): void
+    constructor (rootPath: string, port: number, account: string, password: string)
+}

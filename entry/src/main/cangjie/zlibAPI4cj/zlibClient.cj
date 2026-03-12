@@ -8,6 +8,8 @@ import ohos.ark_interop_macro.*
 import zlibraryAPI4CJ.*
 import zlibraryAPI4CJ.dataModel.*
 import zlibraryAPI4CJ.common.canAccessZlib
+import zlibraryAPI4CJ.common.zlibBaseUrl
+import zlibraryAPI4CJ.common.zlibEAPI
 
 var globalcontext: Option<JSContext> = None
 
@@ -83,6 +85,59 @@ public class ZlibClientArk {
                 }
             }
         }
+    }
+
+    public func search(bookName: String, page: UInt16, returnFunc: (JSArrayEx<ZlibBookInfoBriefArk>) -> Unit,
+        errorFunc: (String) -> Unit): Unit {
+        if (let Some(context) <- globalcontext) {
+            spawn {
+                try {
+                    let reqs = client.search(message: bookName, page: page)
+                    if (reqs.success == 1) {
+                        let temp = reqs
+                            .books
+                            .map(
+                                {
+                                    bookinfo: BookInfo =>
+                                        let book = BookInfoBrief()
+                                        book.title = bookinfo.title
+                                        book.id = bookinfo.id
+                                        book.hash = bookinfo.hash
+                                        book.author = bookinfo
+                                            .author
+                                            .getOrDefault {''}
+                                        book.cover = bookinfo.cover
+                                        ZlibBookInfoBriefArk.fromCJ(book)
+                                }
+                            )
+                        let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
+                        context.postJSTask {
+                            returnFunc(res)
+                        }
+                    } else {
+                        context.postJSTask {
+                            errorFunc("获取错误:搜索错误")
+                        }
+                    }
+                } catch (err: Exception) {
+                }
+            }
+        }
+    }
+
+    public func getZlibUrl(returnFunc: (String) -> Unit):Unit{
+        if (let Some(context) <- globalcontext) {
+            spawn {
+                context.postJSTask {
+                        returnFunc(zlibBaseUrl)
+                    }
+            }
+        }
+    }
+
+    public func setZlibUrl(url:String):Unit{
+        zlibBaseUrl = url
+        zlibEAPI = "${zlibBaseUrl}/eapi"
     }
 
     public ZlibClientArk() {}

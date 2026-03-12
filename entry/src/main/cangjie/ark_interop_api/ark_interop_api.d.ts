@@ -13,6 +13,9 @@ export declare class ZlibClientArk {
     checkAccess(autoRedirect: boolean, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
     getRecommendBook(returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
     login(email: string, password: string, returnFunc: (funcArg0: ZlibUserInfoArk) => void, errorFunc: (funcArg0: string) => void): void
+    search(bookName: string, page: number, returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
+    getZlibUrl(returnFunc: (funcArg0: string) => void): void
+    setZlibUrl(url: string): void
 }
 
 export declare class ZlibBookInfoBriefArk {
@@ -21,7 +24,7 @@ export declare class ZlibBookInfoBriefArk {
     author: string
     cover: string
     hash: string
-    getDetailInfo(cookie: string | undefined, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
+    getDetailInfo(cookie: string, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
 }
 
 export declare class ZlibBookInfoArk {
@@ -76,12 +79,17 @@ export declare class DownloadManageArk {
     createTask(taskID: string, downloadUrl: string, fileName: string, returnFunc: (funcArg0: DownloadTaskArk) => void, errorFunc: (funcArg0: string) => void): void
 }
 
+export declare class webdavArk {
+    start(): void
+    stop(): void
+}
+
 export declare interface CustomLib {
+    webdavArk: {new (rootPath: string, port: number, account: string, password: string): webdavArk}
     DownloadManageArk: {new (downloadPath: string): DownloadManageArk}
     DownloadTaskArk: {new (): DownloadTaskArk}
     ZlibBookInfoArk: {new (): ZlibBookInfoArk}
     ZlibBookInfoBriefArk: {new (): ZlibBookInfoBriefArk}
     ZlibClientArk: {new (): ZlibClientArk}
     ZlibUserInfoArk: {new (): ZlibUserInfoArk}
-    startWevDav(path: string): void
 }

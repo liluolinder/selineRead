@@ -1,5 +1,5 @@
 import { LNotificationManager, XAnimation, XContext } from 'commonpackage'
-import { __System__, __ZlibUser__ } from '../../../commons/shareDatas'
+import { __Download__, __Setting__, __System__, __ZlibUser__ } from '../../../commons/shareDatas'
 import { __CustomBackgroundData__ } from '../../../components/CustomBackground'
 import { DividerTmp } from '../../../models/classes/DividerTmp'
 import { SymbolGlyphModifier } from '@kit.ArkUI'
@@ -9,6 +9,10 @@ import { ListItemWithText } from 'templatecomponent'
 import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.so'
 import url from '@ohos.url'
 import { BackgroundUtil } from '../../../models/classes/BackgroundRunningManager'
+import { DownloadInfo, DownloadStatus } from '../../../models/classes/DownloadInfo'
+import { RelationStoreManager } from '../../../models/classes/DataBase'
+import { relationalStore } from '@kit.ArkData'
+import { shareBook } from '../../../models/utils/ShareBook'
 
 @Builder
 export function BookInfoBuilder() {
@@ -260,29 +264,94 @@ export struct BookInfo {
                       async (res) => {
                         let bookName = url.URL.parseURL(res).params.get('filename')
                         let id = __ZlibUser__.notificationID++
+
+                        let time = new Date()
+                        let downloadItem: DownloadInfo = new DownloadInfo()
+
+                        downloadItem.fileName = bookName!
+                        downloadItem.fileImage = this.bookInfo?.cover!
+                        downloadItem.status = DownloadStatus.Idle
+                        downloadItem.bookAuthor = this.bookInfo?.author!
+                        downloadItem.bookHref = this.bookInfo?.href ?? ''
+                        downloadItem.bookId = this.bookInfo?.id!
+                        downloadItem.downloadTime = time.toISOString()
+                        downloadItem.downLoadTask = undefined
+
+                        //写入下载管理器
+                        __Download__.downloadArray.pushUnshiftData(downloadItem)
+
+                        //插入数据库
+                        await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
+                          BookID: this.bookInfo?.id!,
+                          BookHref: this.bookInfo?.href ?? '',
+                          BookName: bookName!,
+                          BookAuthor: this.bookInfo?.author!,
+                          BookPublisher: this.bookInfo?.publisher!,
+                          BookImage: this.bookInfo?.cover!,
+                          BookDownLoadTime: time.toISOString(),
+                          HaveDownload: 0
+                        })
                         __ZlibUser__.downloadManageCJ?.createTask(bookName, encodeURI(res), bookName,
                           (task) => {
+                            downloadItem.downLoadTask = task
                             task.setStartCallback(() => {
-                              console.log(`开始下载`)
+                              XContext.toast(`开始下载喵(^~^)`)
+                              downloadItem.status = DownloadStatus.Starting
                             })
                               .setErrorCallback((error) => {
-                                console.log(`下载失败${error}`)
+                                let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+                                predicates.equalTo('BookName', bookName)
+                                  .equalTo("BookID", this.bookInfo?.id ?? 0)
+                                  .equalTo("BookDownLoadTime", time.toISOString())
+                                RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                                  BookID: this.bookInfo?.id!,
+                                  BookHref: this.bookInfo?.href ?? '',
+                                  BookName: bookName!,
+                                  BookAuthor: this.bookInfo?.author!,
+                                  BookPublisher: this.bookInfo?.publisher!,
+                                  BookImage: this.bookInfo?.cover!,
+                                  BookDownLoadTime: time.toISOString(),
+                                  HaveDownload: 2
+                                })
+                                console.log(`下载失败${error}`,2000)
+                                downloadItem.status = DownloadStatus.Failed
                                 this.errorText = error
                                 LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', bookName!)
                               })
-                              .setCompleteCallback(()=>{
+                              .setCompleteCallback(async ()=>{
+                                downloadItem.progress = 100
+                                let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+                                predicates.equalTo('BookName', bookName)
+                                  .equalTo("BookID", this.bookInfo?.id ?? 0)
+                                  .equalTo("BookDownLoadTime", time.toISOString())
+                                RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                                  BookID: this.bookInfo?.id!,
+                                  BookHref: this.bookInfo?.href ?? '',
+                                  BookName: bookName!,
+                                  BookAuthor: this.bookInfo?.author!,
+                                  BookPublisher: this.bookInfo?.publisher!,
+                                  BookImage: this.bookInfo?.cover!,
+                                  BookDownLoadTime: time.toISOString(),
+                                  HaveDownload: 1
+                                })
+                                downloadItem.status = DownloadStatus.Complete
                                 LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', bookName!)
                                 console.log(`下载完成`)
+                                if (__Setting__.shareAfterDownload) {
+                                  shareBook(`${await XContext.getDownloadFolderPath()}/${bookName}`)
+                                }
                               })
                               .setProgressCallback((hasDownload, total, speed) => {
+                                if (downloadItem.status != DownloadStatus.Downloading) {
+                                  downloadItem.status = DownloadStatus.Downloading
+                                }
                                 console.log(`已下载${hasDownload},共${total},当前速度${speed}`)
                                 let progress = Math.trunc(hasDownload / total * 10000) / 100
-                                LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`,
+                                downloadItem.progress = progress
+                                  LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`,
                                   bookName!)
                               })
-
                             task.start()
-
                           }, (error) => {
                             this.errorText = error
                             console.log(error)

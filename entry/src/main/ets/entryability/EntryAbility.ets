@@ -3,7 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { XContext, XPreferencesManager } from 'commonpackage';
 import WindowsUtil from '../selineRead/models/classes/WindowsUtil';
-import { __Download__, __System__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
+import { __Download__, __Setting__, __System__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
 import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
 import { initPreferences } from '../selineRead/models/utils/initPreferences';
 import { DownloadManager } from '@hadss/super_fast_file_trans';
@@ -22,7 +22,6 @@ export default class EntryAbility extends UIAbility {
       XPreferencesManager.localPreferences(this.context, 'selineRead');
 
       initPreferences()
-
       RelationStoreManager.CreateDataBase(this.context).then((store)=>{
         __ZlibUser__.dataBase = store
         try {
@@ -34,10 +33,6 @@ export default class EntryAbility extends UIAbility {
       })
       __ZlibUser__.downloadManager = DownloadManager.getInstance();
       __ZlibUser__.downloadManager.init(this.context);
-      //StatusBarController.add2StatusBar(this.context)
-
-
-
 
     } catch (err) {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
@@ -50,6 +45,7 @@ export default class EntryAbility extends UIAbility {
       await __ZlibUser__.downloadManager.cleanAll(this.context);
     }
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onDestroy');
+    __Setting__.webdavClient?.stop()
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {

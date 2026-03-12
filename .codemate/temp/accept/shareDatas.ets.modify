@@ -8,7 +8,7 @@ import { I_ZlibUserInfo } from "../../zlibrary/interface/I_ZlibUserInfo"
 import { ZlibUserInfo } from "../../zlibrary/classes/UserInfo"
 import { DownloadManager } from "@hadss/super_fast_file_trans"
 import { DownloadInfo } from "../models/classes/DownloadInfo"
-import { DownloadManageArk, webdavArk, ZlibClientArk, ZlibUserInfoArk } from "libohos_app_cangjie_entry.so"
+import { DownloadManageArk, ZlibClientArk, ZlibUserInfoArk } from "libohos_app_cangjie_entry.so"
 
 
 @ObservedV2
@@ -100,10 +100,5 @@ export class Setting{
   @Trace bookShelfClickOpenWay:number = 0
   @Trace needPerceptiveGrip:boolean = false
   @Trace isLeftHand:boolean = false
-  @Trace webdavServerEnabled:boolean = false
-  @Trace webdavPort:number = 8088
-  @Trace webdavAccount:string = 'admin'
-  @Trace webdavPassword:string = 'admin'
-  @Trace webdavClient?:webdavArk
 }
 export const __Setting__: Setting = new Setting()

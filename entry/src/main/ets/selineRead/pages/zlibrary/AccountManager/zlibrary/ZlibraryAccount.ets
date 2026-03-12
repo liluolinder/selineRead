@@ -32,10 +32,10 @@ export struct ZlibraryAccount {
     await RelationStoreManager.getZlibAccount(__ZlibUser__.dataBase)
     if (__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]) {
       let nowChooseAccount = __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]
+      console.log(JSON.stringify(nowChooseAccount))
+      console.log(`喵喵喵`)
       __ZlibUser__.zlibClient.login(nowChooseAccount.account,nowChooseAccount.password,(res)=>{
-
         __ZlibUser__.localChooseAccount = res
-
         __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = res.name
         __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
           `${res.todayDownloadNum}/${res.downloadLimit}`
@@ -48,7 +48,6 @@ export struct ZlibraryAccount {
 
     }
   }
-
 
   @Builder
   editCustom(item:ZlibUserInfo ,index:number) {
@@ -94,27 +93,11 @@ export struct ZlibraryAccount {
               __ZlibUser__.baseApi_url = returnText + '/papi'
               __ZlibUser__.baseEApi_url = returnText + '/eapi'
               XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", returnText)
-              //重新获取数据
-              __Home__.recommendBookIndex = 1
-              __Home__.errorText = '';
-              zlibClient.refreshUrl().then(()=>{
-                let req = http.createHttp();
-                zlibClient.getRecommendBook(req).then((res)  => {
-                  __Home__.canGetMore = true
-                  if (res[0] == 1) {
-                    __Home__.recommendBookArray.clearData;
-                    __Home__.errorText = '';
-                    (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-                      //__Home__.recommendBookArray.pushData(item)
-                    });
-                    __Home__.recommendBookIndex++;
-                  }else {
-                    __Home__.errorText = res[1];
-                  }
-                })
-              })
 
-              XContext.toast($r('app.string.Tip_Success'))
+              __ZlibUser__.zlibClient.setZlibUrl(returnText)
+
+              XContext.toast(`请重启APP以加载数据`,4000)
+
             }
           })
         }.backgroundColor($r('sys.color.comp_background_list_card'))

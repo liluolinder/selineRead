@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.cer",
-          "keyAlias": "debugKey",
-          "keyPassword": "0000001BCAE635CFD363C752550B1171B5F0E5E72EC1B2B15D38189566290FDCE51BBDB11BE584DC49FC10",
-          "profile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.p7b",
+          "storeFile": "D:/linderSeline/projects/Harmony/SelineRead/证书/release/通用证书.p12",
+          "storePassword": "00000020780D6D96E7EBF229A0280452870397EAF734336364A3291079ED40C61F6EECFCC7FCE7E6AFD46832D66F13A5",
+          "keyAlias": "key",
+          "keyPassword": "000000207B573AA3ABEC03439ADB13A3442A8273C6FF1E21E75726BD6A541A5BFCDA5F9F950B1A0C7A932C59BA38708A",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_pfJKIZtp66J5wZs6dKiN3hXp7p9PSSisDUxlTBsvCJs=.p12",
-          "storePassword": "0000001BF9336891D025B6C7602EBCBB936AC323163B18064782128C5853B2A137D32304D4CED4924ACCF5"
+          "profile": "D:/linderSeline/projects/Harmony/SelineRead/证书/release/releaseRelease.p7b",
+          "certpath": "D:/linderSeline/projects/Harmony/SelineRead/证书/release/通用发布证书.cer"
         }
       }
     ],

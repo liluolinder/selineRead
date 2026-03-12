@@ -1,7 +1,7 @@
 import { curves, LengthMetrics, } from '@kit.ArkUI'
 import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from 'commonpackage'
 import { min_width } from '../../../commons/commonItem'
-import { __Setting__, __System__, __UI__ } from '../../../commons/shareDatas'
+import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../../../commons/shareDatas'
 import { I_BookDetailedInfo } from '../../../models/interfaces/I_BookInfo'
 import { http } from '@kit.NetworkKit'
 import { zlibClient } from '../../../../zlibrary/zlibClient'
@@ -23,8 +23,8 @@ export class HomeData {
   req = http.createHttp()
   @Trace recommendBookArray: BasicDataSource<ZlibBookInfoBriefArk> =
     new BasicDataSource<ZlibBookInfoBriefArk>()
-  @Trace searchBookArray: BasicDataSource<I_ZlibBookInfoRes_Book> =
-    new BasicDataSource<I_ZlibBookInfoRes_Book>()
+  @Trace searchBookArray: BasicDataSource<ZlibBookInfoBriefArk> =
+    new BasicDataSource<ZlibBookInfoBriefArk>()
   @Trace searchHistory: I_SearchHistory[] = []
 }
 
@@ -99,23 +99,32 @@ export struct Home {
             })
             if (value != '') {
               __Home__.recommendOrSearch = 1
+
               __Home__.req = http.createHttp()
               __Home__.searchBookArray.clearData()
               __Home__.searchWord = value
-              zlibClient.searchBook(__Home__.req, __Home__.searchWord, __Home__.searchBookIndex).then((res) => {
-                if (res[0] == 1) {
-                  __Home__.searchBookIndex ++
-                  (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
-                    __Home__.searchBookArray.pushData(item)
-                  })
-                  __Home__.errorText = ''
-                } else {
-                  __Home__.errorText = res[1]
+              __Home__.searchBookIndex = 1
+              __ZlibUser__.zlibClient.search((__Home__.searchWord), __Home__.searchBookIndex,(books)=>{
+
+                if (books.length!=0) {
+                  __Home__.searchBookIndex++
+                 books.forEach((book)=>{
+                   __Home__.searchBookArray.pushData(book)
+                 })
+
+                }else {
+                  __Home__.errorText = '返回值空'
                 }
+
                 XAnimation.runWithAnimation(() => {
                   __Home__.canGetMore = true
                 })
+              },(error)=>{
+                __Home__.errorText = error
               })
+
+
+
               __Home__.searchHistory =
                 __Home__.searchHistory.filter((item: I_SearchHistory) => item.value != value)
               __Home__.searchHistory.unshift({ value: value, time: Date.parse(new Date().toString()) })
@@ -172,23 +181,23 @@ export struct Home {
           if (__Home__.recommendOrSearch == 0) {
             LazyForEach(__Home__.recommendBookArray, (item: ZlibBookInfoBriefArk) => {
               ListItem() {
-                HomeBookCover({ data: item, type: 0 })
+                HomeBookCover({ data: item })
               }
               .onClick(async () => {
                 if (!this.isOpenBook) {
                   XAnimation.runWithAnimation(() => {
                     this.isOpenBook = true
                   })
-                  item.getDetailInfo(undefined,(bookInfo)=>{
+                  item.getDetailInfo("",(bookInfo)=>{
                     __Home__.errorText = ''
                     __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
                     XAnimation.runWithAnimation(() => {
                       this.isOpenBook = false
                     })
                   },(error)=>{
-                    __Home__.errorText = error
                     XAnimation.runWithAnimation(() => {
                       this.isOpenBook = false
+                      __Home__.errorText = error
                     })
                   })
                 }
@@ -200,28 +209,30 @@ export struct Home {
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
-            }, (item: I_ZlibBookInfoRes_Book, index: number) => JSON.stringify(item) + JSON.stringify(index))
+            }, (item: ZlibBookInfoBriefArk, index: number) => JSON.stringify(item) + JSON.stringify(index))
           } else {
-            LazyForEach(__Home__.searchBookArray, (item: I_ZlibBookInfoRes_Book) => {
+            LazyForEach(__Home__.searchBookArray, (item: ZlibBookInfoBriefArk) => {
               ListItem() {
-                HomeBookCover({ data: item, type: 1 })
+                HomeBookCover({ data: item })
               }
               .onClick(async () => {
+                console.log(`1234214`)
                 if (!this.isOpenBook) {
                   XAnimation.runWithAnimation(() => {
                     this.isOpenBook = true
                   })
-                  let req = http.createHttp()
-                  await zlibClient.getBookInfo(req, item.id, item.hash).then((res) => {
-                    if (res[0] == 1) {
-                      __Home__.errorText = ''
-                      let bookInfo: I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
-                      bookInfo.bookID = Number(item.id)
-                      bookInfo.href = item.href
-                      __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
-                    } else {
-                      __Home__.errorText = res[1]
-                    }
+
+                  item.getDetailInfo("",(bookInfo)=>{
+                    __Home__.errorText = ''
+                    __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
+                    XAnimation.runWithAnimation(() => {
+                      this.isOpenBook = false
+                    })
+                  },(error)=>{
+                    XAnimation.runWithAnimation(() => {
+                      this.isOpenBook = false
+                      __Home__.errorText = error
+                    })
                   })
                   XAnimation.runWithAnimation(() => {
                     this.isOpenBook = false
@@ -235,7 +246,7 @@ export struct Home {
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
-            }, (item: I_ZlibBookInfoRes_Book, index: number) => JSON.stringify(item) + JSON.stringify(index))
+            }, (item: ZlibBookInfoBriefArk, index: number) => JSON.stringify(item) + JSON.stringify(index))
           }
         }
         .onAreaChange((_, newValue) => {
@@ -251,20 +262,24 @@ export struct Home {
               XAnimation.runWithAnimation(() => {
                 __Home__.canGetMore = false
               })
-              zlibClient.searchBook(__Home__.req, __Home__.searchWord, __Home__.searchBookIndex).then((res) => {
-                if (res[0] == 1) {
-                  __Home__.searchBookIndex += 1;
-                  console.log(`${__Home__.searchBookIndex}`);
-                  (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
-                    __Home__.searchBookArray.pushData(item)
+
+              __ZlibUser__.zlibClient.search((__Home__.searchWord), __Home__.searchBookIndex,(books)=>{
+
+                if (books.length!=0) {
+                  __Home__.searchBookIndex ++
+                  books.forEach((book)=>{
+                    __Home__.searchBookArray.pushData(book)
                   })
-                  __Home__.errorText = ''
-                } else {
-                  __Home__.errorText = res[1]
+
+                }else {
+                  __Home__.errorText = '返回值空'
                 }
+
                 XAnimation.runWithAnimation(() => {
                   __Home__.canGetMore = true
                 })
+              },(error)=>{
+                __Home__.errorText = error
               })
 
             }
@@ -351,24 +366,30 @@ export struct Home {
               })
               .backgroundColor($r('app.color.start_window_background_blur'))
               .onClick(() => {
-                __Home__.searchBookIndex = 1
                 __Home__.searchWord = item.value
                 __Home__.req = http.createHttp()
                 __Home__.searchBookArray.clearData()
-                zlibClient.searchBook(__Home__.req, __Home__.searchWord, __Home__.searchBookIndex).then((res) => {
-                  if (res[0] == 1) {
-                    __Home__.recommendBookIndex ++
-                    (JSON.parse(res[1]) as I_ZlibBookInfoRes_Book[]).forEach((item) => {
-                      __Home__.searchBookArray.pushData(item)
+                __Home__.searchBookIndex = 1
+
+                __ZlibUser__.zlibClient.search((__Home__.searchWord), __Home__.searchBookIndex,(books)=>{
+
+                  if (books.length!=0) {
+                    __Home__.searchBookIndex++
+                    books.forEach((book)=>{
+                      __Home__.searchBookArray.pushData(book)
                     })
-                    __Home__.errorText = ''
-                  } else {
-                    __Home__.errorText = res[1]
+
+                  }else {
+                    __Home__.errorText = '返回值空'
                   }
+
                   XAnimation.runWithAnimation(() => {
                     __Home__.canGetMore = true
                   })
+                },(error)=>{
+                  __Home__.errorText = error
                 })
+
                 XAnimation.runWithAnimation(() => {
                   __Home__.recommendOrSearch = 1
                   __Home__.inSearchMode = false
@@ -416,7 +437,6 @@ export struct HomeBookCover {
   @Param defaultImg: ResourceStr = $r('app.media.default_cover')
   @Param haveShadow: boolean = true
   @Param imageFit: ImageFit = ImageFit.Auto
-  @Param type: number = 0
   @Local private isFinish: boolean = false
 
   build() {
