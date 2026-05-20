@@ -1,0 +1,22 @@
+{
+    "clawMode.mode": "editor",
+    "workbench.activityBar.location": "default",
+    "editor.gotoLocation.alternativeDeclarationCommand": "editor.action.revealDefinition",
+    "editor.gotoLocation.alternativeDefinitionCommand": "editor.action.revealDefinition",
+    "editor.gotoLocation.alternativeTypeDefinitionCommand": "editor.action.revealDefinition",
+    "editor.selectionHighlight": false,
+    "files.autoSave": "onFocusChange",
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.quickSuggestions": {
+        "other": "on",
+        "comments": "off",
+        "strings": "on"
+    },
+    "terminal.integrated.env.windows": {
+        "DEVECO_CANGJIE_HOME": "C:\\Program\\SDK\\Cangjie",
+        "ABI": "arm64-v8a",
+        "AARCH64_LIBS": "C:\\Program\\SDK\\Cangjie\\build\\linux_ohos_aarch64_llvm\\ohos",
+        "AARCH64_KIT_LIBS": "C:\\Program\\SDK\\Cangjie\\build\\linux_ohos_aarch64_llvm\\kit",
+        "AARCH64_MACRO_LIBS": "C:\\Program\\SDK\\Cangjie\\build\\x86_64-w64-mingw32\\macro\\ohos"
+    }
+}

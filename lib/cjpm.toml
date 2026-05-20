@@ -1,0 +1,49 @@
+[target]
+  [target.aarch64-linux-ohos]
+    compile-option = "--cfg target_platform=hos -B \"${DEVECO_CANGJIE_HOME}/compiler/third_party/llvm/bin\" -B \"${DEVECO_OH_NATIVE_HOME}/sysroot/usr/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/sysroot/usr/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/llvm/lib/clang/15.0.4/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/llvm/lib/aarch64-linux-ohos\" -L \"${DEVECO_CANGJIE_HOME}/build/linux_ohos_aarch64_llvm/openssl\" --sysroot \"${DEVECO_OH_NATIVE_HOME}/sysroot\""
+    [target.aarch64-linux-ohos.bin-dependencies]
+      path-option = [ "${AARCH64_LIBS}", "${AARCH64_KIT_LIBS}", "${AARCH64_MACRO_LIBS}","${CANGJIE_STDX_PATH}/linux_ohos_aarch64_cjnative/dynamic/stdx", "${CJMP_SDK_HOME}/cjmp-libs/ohos/dynamic/cjmp" ]
+
+
+  [target.aarch64-linux-android26]
+    compile-option = "--cfg target_platform=android --sysroot \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/sysroot\" -L \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/lib/clang/17/lib/linux\" -L \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/sysroot/usr/lib/aarch64-linux-android/26\" -B \"${ANDROID_CANGJIE_PATH}/third_party/llvm/bin\" -L \"${ANDROID_BRIDGE}\" -ljniseline_read"
+    [target.aarch64-linux-android26.bin-dependencies]
+      path-option = [ "${ANDROID_CJ_FRONTEND}/ohos", "${ANDROID_CJ_FRONTEND}/macro/ohos", "${ANDROID_CANGJIE_STDX_PATH}", "${ANDROID_CJMP_LIBS_PATH}/cjmp" ]
+
+  [target.aarch64-apple-ios]
+    compile-option = "--cfg target_platform=ios --sysroot=${IOS_SDK_DIR} -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin -L${IOS_BRIDGE} -ljniseline_read"
+    [target.aarch64-apple-ios.bin-dependencies]
+      path-option = ["${IOS_CJ_FRONTEND}/ohos", "${IOS_CJ_FRONTEND}/macro/ohos", "${IOS_CANGJIE_STDX_PATH}", "${IOS_CJMP_LIBS_PATH}/cjmp" ]
+    package-option = {}
+
+  [target.aarch64-apple-ios-simulator]
+    compile-option = "--cfg target_platform=ios-sim --sysroot=${IOS_SIM_SDK_DIR} -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin -L${IOS_BRIDGE} -ljniseline_read"
+    [target.aarch64-apple-ios-simulator.bin-dependencies]
+      path-option = ["${IOS_SIM_CJ_FRONTEND}/ohos", "${IOS_SIM_CJ_FRONTEND}/macro/ohos", "${IOS_SIM_CANGJIE_STDX_PATH}", "${IOS_SIM_CJMP_LIBS_PATH}/cjmp" ]
+    package-option = {}
+
+[package]
+  cjc-version = "1.1.0"
+  compile-option = ""
+  description = "Keels Application"
+  link-option = ""
+  name = "ohos_app_cangjie_entry"
+  output-type = "dynamic"
+  src-dir = "."
+  target-dir = ""
+  version = "1.0.0"
+  [package.package-configuration]
+  [package.scripts]
+
+[profile]
+  [profile.build]
+    incremental = true
+    lto = ""
+  [profile.customized-option]
+    debug = "-g -Woff all"
+    release = "--fast-math -O2 -s -Woff all"
+  [profile.test]
+
+[dependencies]
+[dependencies.zlibraryAPI4CJ]
+path = "C:\\Project\\Cangjie\\zlibraryAPI4CJ"

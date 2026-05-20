@@ -1,0 +1,56 @@
+{
+	"app":	{
+		"bundleName":	"seline.book.read",
+		"vendor":	"example",
+		"versionCode":	1000000,
+		"versionName":	"1.0.0",
+		"icon":	"$media:app_icon",
+		"label":	"$string:app_name",
+		"apiReleaseType":	"Release",
+		"compileSdkVersion":	"5.0.2.123",
+		"targetAPIVersion":	50002014,
+		"minAPIVersion":	50002014,
+		"compileSdkType":	"HarmonyOS",
+		"appEnvironments":	[],
+		"bundleType":	"app",
+		"buildMode":	"release",
+		"debug":	false,
+		"iconId":	16777217,
+		"labelId":	16777216
+	},
+	"module":	{
+		"name":	"entry",
+		"type":	"entry",
+		"description":	"$string:module_desc",
+		"mainElement":	"EntryAbility",
+		"deviceTypes":	["phone"],
+		"deliveryWithInstall":	true,
+		"installationFree":	false,
+		"pages":	"$profile:main_pages",
+		"srcEntry": "ohos_app_cangjie_entry.MyAbilityStage",
+		"abilities":	[{
+				"name":	"EntryAbility",
+				"srcEntry":	"ohos_app_cangjie_entry.MainAbility",
+				"description":	"$string:EntryAbility_desc",
+				"icon":	"$media:layered_image",
+				"label":	"$string:EntryAbility_label",
+				"startWindowIcon":	"$media:startIcon",
+				"startWindowBackground":	"$color:start_window_background",
+				"exported":	true,
+				"skills":	[{
+						"entities":	["entity.system.home"],
+						"actions":	["action.system.home"]
+					}],
+				"descriptionId":	16777218,
+				"iconId":	16777225,
+				"labelId":	16777219,
+				"startWindowIconId":	16777226,
+				"startWindowBackgroundId":	16777221
+			}],
+		"packageName":	"entry",
+		"virtualMachine":	"ark12.0.6.0",
+		"compileMode":	"esmodule",
+		"dependencies":	[],
+		"descriptionId":	16777220
+	}
+}
