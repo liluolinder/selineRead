@@ -35,3 +35,7 @@ app.*.map.json
 /build
 **/cjpm.lock
 *.macrocall
+.arts
+.cache
+.codeartsdoer
+lib/.cache

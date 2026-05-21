@@ -8,20 +8,19 @@ import zlibraryAPI4CJ.dataModel.*
 import zlibraryAPI4CJ.*
 import ohos_app_cangjie_entry.components.BookCover
 import ohos.arkui.ui_context.*
-
+import ohos_app_cangjie_entry.logic.*
+import ohos_app_cangjie_entry.models.*
 @Entry
 @Component
 public class Home {
     
     @State
     var books:Array<BookInfoBrief> = Array<BookInfoBrief>()
-    
+
     protected func aboutToAppear():Unit {
-         spawn{
-            
-            Hilog.info(1145,'meow','meow:124141241')
+         Hilog.info(1145,'meow','meow11:${meow()}')
+        spawn{ 
             let flag = canAccessZlib(autoRedirect: true)
-            Hilog.info(1145,'meow',"${flag}")
             if(canAccessZlib(autoRedirect: true)){
                 let zlibClient = ZlibClient()
                 launch{
@@ -43,6 +42,8 @@ public class Home {
                   .borderRadius(25)
                   .clip(true)
                   .zIndex(2)
+                 
+                  
 
                 List (space:10){
                     ForEach(books, itemGeneratorFunc: {
@@ -63,9 +64,10 @@ public class Home {
                 }
                     .size(width: 100.percent, height: 100.percent)
                     .lanes(2)
+                    .padding(left:16, right:16)
             }.size(width: 100.percent, height: 100.percent)
             .backgroundColor(Color.Gray)
-            .padding(left:16, right:16)
+           .padding(top:window.topAvoid)
     }
 
 }

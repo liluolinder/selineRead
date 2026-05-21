@@ -3,6 +3,7 @@ package ohos_app_cangjie_entry
 internal import ohos.app.ability.ability_stage.AbilityStage
 internal import ohos.app.ability.ability_constant.LaunchReason
 internal import ohos.window.*
+import ohos_app_cangjie_entry.models.*
 
 class MainAbility <: UIAbility {
     public init() {
@@ -20,6 +21,6 @@ class MainAbility <: UIAbility {
 
     public override func onWindowStageCreate(windowStage: WindowStage): Unit {
         windowStage.loadContent("EntryView")
-        //windowStage.getMainWindow().setWindowLayoutFullScreen(true)
+        window.initWindow(windowStage)
     }
 }

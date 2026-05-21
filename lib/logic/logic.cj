@@ -12,9 +12,16 @@ public func logicTest(): String {
 
 foreign func FfiLogicTest(): CString
 foreign func FfiFreeString(str: CString): Unit
+foreign func FfiGetStatusBarHeight():Int64
 
 @When[target_platform == "hos"]
 public func logicTest(): String {
     return "String returned from logicTest func in CJ. HarmonyOS APP natively supports the Cangjie language."
 }
 
+
+@When[target_platform == "android"]
+public func meow(): Int64 {
+    let statusBarHeight: Int64 = unsafe { FfiGetStatusBarHeight() }
+    statusBarHeight
+}
