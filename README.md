@@ -38,8 +38,6 @@ Seline Read 是专为鸿蒙系统打造的 Z-Library 第三方客户端，提供
 - **目标 SDK 版本**: HarmonyOS 6.0.2 (API 22)
 - **支持设备**: 手机、平板、2合1设备、电视、穿戴设备
 
-### 核心依赖
-- `@hadss/super_fast_file_trans` - 高速文件传输组件
 
 ## 项目结构
 
