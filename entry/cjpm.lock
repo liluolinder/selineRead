@@ -1,4 +1,7 @@
 version = 0
 
 [requires]
-  ignite = {git = "https://gitcode.com/cinyu/ignite-cangjie.git", commitId = "4b8a2de92a54e8ef0dc4dd3e30b8a5b145ebd223"}
+  ignite = {git = "https://gitcode.com/cinyu/ignite-cangjie.git", commitId = "9ebb4c3ab9ff2d2650e560e5aa923eabd79ad4c9", branch = "main"}
+  JinguiSSL = {git = "https://gitcode.com/cinyu/jinguiSSL.git", commitId = "cc8aa9ca95e16ae4f31038c8ade768cd7b11c652"}
+  jinguissl_core = {git = "https://gitcode.com/CjKu/JinguiCore.git", commitId = "b0b6a2e5c2c32ec9c86120c2418adaeb97b5020e"}
+  seajson = {git = "https://gitcode.com/CjKu/SeaJson.git", commitId = "90f7e87674f0a4c410785b2614ca88d6661918a0"}

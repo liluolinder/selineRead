@@ -1,7 +1,3 @@
-export declare class webdavArk {
-    start(): void
-    stop(): void
-}
 
 export declare class ZlibUserInfoArk {
     id: number
@@ -12,6 +8,7 @@ export declare class ZlibUserInfoArk {
     todayDownloadNum: number
     downloadLimit: number
     cookie: string
+    constructor()
 }
 
 export declare class ZlibClientArk {
@@ -21,6 +18,7 @@ export declare class ZlibClientArk {
     search(bookName: string, page: number, returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
     getZlibUrl(returnFunc: (funcArg0: string) => void): void
     setZlibUrl(url: string): void
+    constructor()
 }
 
 export declare class ZlibBookInfoBriefArk {
@@ -30,6 +28,7 @@ export declare class ZlibBookInfoBriefArk {
     cover: string
     hash: string
     getDetailInfo(cookie: string, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
+    constructor()
 }
 
 export declare class ZlibBookInfoArk {
@@ -67,29 +66,5 @@ export declare class ZlibBookInfoArk {
     dataSaved: string | undefined
     readOnlineAvailable: boolean
     getDownloadInfo(cookie: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
-}
-
-export declare class DownloadTaskArk {
-    setStartCallback(event: () => void): DownloadTaskArk
-    setProgressCallback(event: (funcArg0: number, funcArg1: number, funcArg2: string) => void): DownloadTaskArk
-    setRetryCallback(event: (funcArg0: number, funcArg1: number) => void): DownloadTaskArk
-    setErrorCallback(event: (funcArg0: string) => void): DownloadTaskArk
-    setPauseCallback(event: () => void): DownloadTaskArk
-    setCompleteCallback(event: () => void): DownloadTaskArk
-    start(): void
-    cancel(): void
-}
-
-export declare class DownloadManageArk {
-    createTask(taskID: string, downloadUrl: string, fileName: string, returnFunc: (funcArg0: DownloadTaskArk) => void, errorFunc: (funcArg0: string) => void): void
-}
-
-export declare interface CustomLib {
-    DownloadManageArk: { new (downloadPath: string): DownloadManageArk }
-    DownloadTaskArk: { new (): DownloadTaskArk }
-    ZlibBookInfoArk: { new (): ZlibBookInfoArk }
-    ZlibBookInfoBriefArk: { new (): ZlibBookInfoBriefArk }
-    ZlibClientArk: { new (): ZlibClientArk }
-    ZlibUserInfoArk: { new (): ZlibUserInfoArk }
-    webdavArk: { new (rootPath: string, port: number, account: string, password: string): webdavArk }
+    constructor()
 }

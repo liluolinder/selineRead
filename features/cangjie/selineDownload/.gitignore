@@ -1,0 +1,26 @@
+.git/
+.vscode/
+.idea/
+.cache/
+.log/
+download/
+cangjieDoc/
+
+# cangjie
+build/
+target/
+output/
+module-resolve.json
+module-lock.json
+cjpm.lock
+.cjpm-history
+*.macrocall
+*.gcda
+*.gcno
+
+
+# 其他
+log
+report
+tmp
+.arts

@@ -11,25 +11,22 @@ version = "1.0.0"
 package-configuration = { }
 scripts = { }
 
+
 [profile]
 [profile.build]
-incremental = true
-lto = ""
-[profile.build.combined]
-ohos_app_cangjie_entry = "dynamic"
-[profile.customized-option]
+incremental = []
 debug = "-g -Woff all -Won apilevel-check"
 release = "--fast-math -O2 -s -Woff all -Won apilevel-check"
 [profile.test]
 
-[dependencies.linderHttp]
-path = "D:\\linderSeline\\projects\\Cangjie\\LinderHttp"
 [dependencies.zlibraryAPI4CJ]
-path = "D:\\linderSeline\\projects\\Cangjie\\zlibraryAPI4CJ"
+path = "../features/cangjie/zlibraryAPI4CJ"
 [dependencies.selineWebdav]
-path = "D:\\linderSeline\\projects\\Cangjie\\selineWebdav"
+path = "../features/cangjie/selineWebdav"
 [dependencies.selineDownload]
-path = "D:\\linderSeline\\projects\\Cangjie\\selineDownload"
+path = "../features/cangjie/selineDownload"
+[dependencies.linderHttp]
+path = "../features/cangjie/linderHttp"
 
 [target]
 [target.aarch64-linux-ohos]
