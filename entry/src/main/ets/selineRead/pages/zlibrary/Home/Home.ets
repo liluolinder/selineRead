@@ -60,7 +60,7 @@ export struct Home {
               __Home__.searchWord = value
               __Home__.searchBookIndex = 1
               __ZlibUser__.zlibClient.search((__Home__.searchWord), __Home__.searchBookIndex,(books)=>{
-
+                console.log(JSON.stringify(books))
                 if (books.length!=0) {
                   __Home__.searchBookIndex++
                  books.forEach((book)=>{
@@ -75,6 +75,7 @@ export struct Home {
                   __Home__.canGetMore = true
                 })
               },(error)=>{
+                console.log(error)
                 __Home__.errorText = error
               })
 

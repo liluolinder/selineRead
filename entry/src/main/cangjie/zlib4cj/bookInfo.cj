@@ -39,7 +39,7 @@ public class ZlibBookInfoArk {
     public var qualityScore: String = ''
     public var description: String = ''
     public var dl: String = ''
-    public var readOnlineUrl: String = ''
+    public var readOnlineUrl: Option<String> = ''
     public var isUserSavedBook: Option<Bool> = None
     public var dataSaved: Option<String> = None
     public var readOnlineAvailable: Bool = false

@@ -52,7 +52,7 @@ public class BookInfo <: Serializable<BookInfo> {
     public var qualityScore: String = ''
     public var description: String = ''
     public var dl: String = ''
-    public var readOnlineUrl: String = ''
+    public var readOnlineUrl: ?String = ''
     public var isUserSavedBook: ?Bool = None
     public var dataSaved: ?String = None
     public var readOnlineAvailable: Bool = false
@@ -149,7 +149,7 @@ public class BookInfo <: Serializable<BookInfo> {
             .add(field<String>("qualityScore", qualityScore))
             .add(field<String>("description", description))
             .add(field<String>("dl", dl))
-            .add(field<String>("readOnlineUrl", readOnlineUrl))
+            .add(field<?String>("readOnlineUrl", readOnlineUrl))
             .add(field<?Bool>("_isUserSavedBook", isUserSavedBook))
             .add(field<?String>('date_saved', dataSaved))
             .add(field<Bool>("readOnlineAvailable", readOnlineAvailable))
@@ -190,7 +190,7 @@ public class BookInfo <: Serializable<BookInfo> {
         result.qualityScore = String.deserialize(dms.get("qualityScore"))
         result.description = String.deserialize(dms.get("description"))
         result.dl = String.deserialize(dms.get("dl"))
-        result.readOnlineUrl = String.deserialize(dms.get("readOnlineUrl"))
+        result.readOnlineUrl = Option<String>.deserialize(dms.get("readOnlineUrl"))
         result.isUserSavedBook = Option<Bool>.deserialize(dms.get("_isUserSavedBook"))
         result.dataSaved = Option<String>.deserialize(dms.get("date_saved"))
         result.readOnlineAvailable = Bool.deserialize(dms.get("readOnlineAvailable"))

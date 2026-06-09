@@ -1,3 +1,40 @@
+export declare class ZlibBookInfoArk {
+    id: number
+    contentType: string
+    title: string
+    author: string | undefined
+    volume: string
+    year: number
+    edition: string | undefined
+    publisher: string | undefined
+    identifier: string | undefined
+    language: string
+    pages: number
+    series: string
+    cover: string
+    termsHash: string
+    active: number
+    deleted: number
+    filesize: number
+    filesizeString: string
+    extension: string
+    md5: string
+    sha256: string
+    href: string
+    hash: string
+    kindleAvailable: boolean
+    sendToEmailAvailable: boolean
+    interestScore: string
+    qualityScore: string
+    description: string
+    dl: string
+    readOnlineUrl: string | undefined
+    isUserSavedBook: boolean | undefined
+    dataSaved: string | undefined
+    readOnlineAvailable: boolean
+    getDownloadInfo(cookie: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
+}
+
 export declare class webdavArk {
     start(): void
     stop(): void

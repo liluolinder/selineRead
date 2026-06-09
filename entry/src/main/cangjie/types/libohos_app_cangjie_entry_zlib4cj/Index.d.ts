@@ -61,7 +61,7 @@ export declare class ZlibBookInfoArk {
     qualityScore: string
     description: string
     dl: string
-    readOnlineUrl: string
+    readOnlineUrl: string | undefined
     isUserSavedBook: boolean | undefined
     dataSaved: string | undefined
     readOnlineAvailable: boolean

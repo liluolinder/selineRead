@@ -11,6 +11,7 @@ import zlibraryAPI4CJ.common.canAccessZlib
 import zlibraryAPI4CJ.common.zlibBaseUrl
 import zlibraryAPI4CJ.common.zlibEAPI
 import ohos_app_cangjie_entry.run2JS
+import ohos.hilog.Hilog
 
 var globalcontext: Option<JSContext> = None
 
@@ -116,6 +117,11 @@ public class ZlibClientArk {
                                         ZlibBookInfoBriefArk.fromCJ(book)
                                 }
                             )
+
+                        for (i in temp){
+                            Hilog.info(1145,'14',i.title)
+                        }
+
                         let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
                         
                         run2JS{
@@ -127,6 +133,9 @@ public class ZlibClientArk {
                         }
                     }
                 } catch (err: Exception) {
+                     run2JS {
+                            errorFunc(err.message)
+                      }
                 }
             }
         }
