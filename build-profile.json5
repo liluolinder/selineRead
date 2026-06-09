@@ -4,8 +4,8 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "targetSdkVersion": "6.0.2(22)",
-        "compatibleSdkVersion": "6.0.2(22)",
+        "targetSdkVersion": "6.1.1(24)",
+        "compatibleSdkVersion": "6.1.1(24)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {
@@ -28,13 +28,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_wW2rXNdf8r7cep3QrXAbGvnnZ62RHxWeK8Nsmc7AYk0=.cer",
-          "keyAlias": "debugKey",
-          "keyPassword": "0000001B2A5ED0826DCECD0D42630B92E8759117B4A76CEED1E1F1E4D95E9D026E6FBE7DCDF084F4B36B33",
-          "profile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_wW2rXNdf8r7cep3QrXAbGvnnZ62RHxWeK8Nsmc7AYk0=.p7b",
+          "storeFile": "C:/Project/Harmony/SelineRead/证书/res/通用证书.p12",
+          "storePassword": "00000020D0D69C9B515D4149BAC7E58F1F2EDDD3E411E4A90E599F358B95CCC9394C9F700A487D05ED55EBF163CDFD96",
+          "keyAlias": "key",
+          "keyPassword": "0000002059B8ADEFFE5BA51ACC2A10DE4A80D04F76C55E7DD63A2D1DD9F5280A702835CB07667F1AD60BCAA48D21DADB",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_SelineRead_wW2rXNdf8r7cep3QrXAbGvnnZ62RHxWeK8Nsmc7AYk0=.p12",
-          "storePassword": "0000001B455088571C2D3734199904D81192E917D4102369C44E63092C81271E21FAF20FF3F3171194AF56"
+          "profile": "C:/Project/Harmony/SelineRead/证书/res/SR发布Release.p7b",
+          "certpath": "C:/Project/Harmony/SelineRead/证书/res/通用发布证书.cer"
         }
       }
     ]

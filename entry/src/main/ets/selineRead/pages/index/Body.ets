@@ -4,20 +4,21 @@ import { min_width } from "../../commons/commonItem";
 import { __Download__, __System__, __UI__, __ZlibUser__ } from "../../commons/shareDatas";
 import { Home, __Home__ } from "../zlibrary/Home/Home";
 import { http } from "@kit.NetworkKit";
-import { I_BookInfo } from "../../models/interfaces/I_BookInfo";
 import { BookShelf, __BookShelf__ } from "../BookShelf/BookShelf";
 import { fileIo } from "@kit.CoreFileKit";
-import { RelationStoreManager } from "../../models/classes/DataBase";
 import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo";
-import { CommonEvent } from "../../models/classes/CommonEvent";
-import { I_BasicUserInfo } from "../../../zlibrary/interface/I_ZlibUserInfo";
-import { I_loginRes_user } from "../../../zlibrary/interface/I_loginInfo";
-import { I_ZlibBookInfoRes_Book, I_ZLibRecommendBook_Book } from "../../../zlibrary/interface/I_ZlibBookInfo";
-import { ZlibClientArk } from "libohos_app_cangjie_entry.so";
+import { hdsMaterial, HdsTabs, HdsTabsController } from "@kit.UIDesignKit";
+import { SymbolGlyphModifier } from "@kit.ArkUI";
+import { SettingBuilder } from "../Setting/Setting";
+import { AboutUsBuilder } from "../AboutUS/AboutUS";
+import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
 
 @ComponentV2
 export struct Body {
-  @Consumer('tabController') tabController: TabsController = new TabsController();
+  @Provider("showSetting") showSetting:boolean = false
+  @Provider("showAboutUs") showAboutUs:boolean = false
+
+  @Consumer('tabController') tabController: HdsTabsController = new HdsTabsController();
   @Consumer('mainPageStack') pageStack: NavPathStack = new NavPathStack()
   @Consumer('currentTabIndex') currentTabIndex: number = 0
 
@@ -30,19 +31,21 @@ export struct Body {
         let downloadPath = await XContext.getDownloadFolderPath()
         fileIo.listFileSync(downloadPath).forEach((item) => {
           let textFragment: string[] = item.split('.')
-          if (textFragment[textFragment.length-1] != 'sfftdownload') {
+          if (textFragment[textFragment.length - 1] != 'sfftdownload') {
             let bookInfo: I_BookShelfBookInfo = {
               bookName: item,
               bookPath: downloadPath + item,
               bookImage: $r('app.media.default_cover'),
               bookAuthor: "",
-              bookHref:"",
-              bookId:0
+              bookHref: "",
+              bookId: 0
             }
 
             __Download__.downloadArray.dataArray.forEach((itemA) => {
 
-              if (itemA.fileName.includes(item)|| itemA.fileName.split('.')[0].includes(item) || itemA.fileName.includes(item.split('.')[0]) || item.includes(itemA.fileName)||item.includes(itemA.fileName.split('.')[0])) {
+              if (itemA.fileName.includes(item) || itemA.fileName.split('.')[0].includes(item) ||
+                itemA.fileName.includes(item.split('.')[0]) || item.includes(itemA.fileName) ||
+                item.includes(itemA.fileName.split('.')[0])) {
                 bookInfo.bookImage = itemA.fileImage
                 bookInfo.bookAuthor = itemA.bookAuthor
                 bookInfo.bookHref = itemA.bookHref
@@ -66,20 +69,22 @@ export struct Body {
     }
   }
 
+  @Local showAccountManager:boolean = false
+
   aboutToAppear(): void {
-    __ZlibUser__.zlibClient.checkAccess(true,(res)=>{
+    __ZlibUser__.zlibClient.checkAccess(true, (res) => {
       if (res) {
-        __ZlibUser__.zlibClient.getZlibUrl((res)=>{
+        __ZlibUser__.zlibClient.getZlibUrl((res) => {
           console.log(res)
           __ZlibUser__.base_url = res
           XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
         })
         __ZlibUser__.zlibClient.getRecommendBook(
-         async  (books) => {
+          async (books) => {
             if (books.length == 0) {
               __Home__.errorText = '返回值为空'
-            }else {
-              books.forEach((item)=>{
+            } else {
+              books.forEach((item) => {
                 __Home__.recommendBookArray.pushData(item)
               })
               __Home__.recommendBookIndex++
@@ -92,73 +97,178 @@ export struct Body {
             __Home__.canGetMore = true
           })
 
-        if (__ZlibUser__.account!='') {
-          __ZlibUser__.zlibClient.login(__ZlibUser__.account,__ZlibUser__.password,(res)=>{
+        if (__ZlibUser__.account != '') {
+          __ZlibUser__.zlibClient.login(__ZlibUser__.account, __ZlibUser__.password, (res) => {
             __ZlibUser__.localChooseAccount = res
             __ZlibUser__.cookie = res.cookie
-          },(error)=>{
+          }, (error) => {
             __Home__.errorText = error
           })
         }
 
       }
-    }, (err)=>{__Home__.errorText = err})
+    }, (err) => {
+      __Home__.errorText = err
+    })
 
-/*    zlibClient.refreshUrl().then(() => {
-      console.log(__ZlibUser__.cookie);
-      let req = http.createHttp()
-      zlibClient.getRecommendBook(req).then((res) => {
-        console.log(JSON.stringify(res))
-        __Home__.canGetMore = true
-        if (res[0] == 1) {
-          console.log(JSON.stringify(res[1]));
-          if (JSON.stringify(res[1]) == "\"[]\"" ) {
-            __Home__.errorText = '返回值为空'
-          }else {
-            (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-              __Home__.recommendBookArray.pushData(item)
+    /*    zlibClient.refreshUrl().then(() => {
+          console.log(__ZlibUser__.cookie);
+          let req = http.createHttp()
+          zlibClient.getRecommendBook(req).then((res) => {
+            console.log(JSON.stringify(res))
+            __Home__.canGetMore = true
+            if (res[0] == 1) {
+              console.log(JSON.stringify(res[1]));
+              if (JSON.stringify(res[1]) == "\"[]\"" ) {
+                __Home__.errorText = '返回值为空'
+              }else {
+                (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
+                  __Home__.recommendBookArray.pushData(item)
+                })
+              }
+            } else {
+              __Home__.errorText = res[1]
+            }
+          })
+
+          if (__ZlibUser__.cookie!='') {
+            zlibClient.getPersonInfo(__ZlibUser__.cookie).then((res) => {
+              if (res[0] == 1) {
+                let basicInfo = JSON.parse(res[1]) as I_loginRes_user
+                __ZlibUser__.avatar = ''
+                __ZlibUser__.userName = basicInfo.name
+              }
             })
           }
-        } else {
-          __Home__.errorText = res[1]
-        }
+
+        })*/
+  }
+
+  @Builder
+  miniBarBuilder() {
+    Row() {
+
+      Column(){
+        Image($r('app.media.SRIcon'))
+      }.width(48)
+      .height(48)
+      .margin({ left: 4, right: 4 })
+
+      Button({ type: ButtonType.Circle }) {
+        SymbolGlyph($r('sys.symbol.download'))
+          .fontSize(25)
+          .fontColor([$r('sys.color.font')])
+      }
+      .width(48)
+      .height(48)
+      .backgroundColor(Color.Transparent)
+      .margin({ left: 4, right: 4 })
+      .onClick(() => {
+        __UI__.mainPageStack.pushPathByName('DownloadPage', null)
       })
 
-      if (__ZlibUser__.cookie!='') {
-        zlibClient.getPersonInfo(__ZlibUser__.cookie).then((res) => {
-          if (res[0] == 1) {
-            let basicInfo = JSON.parse(res[1]) as I_loginRes_user
-            __ZlibUser__.avatar = ''
-            __ZlibUser__.userName = basicInfo.name
-          }
-        })
-      }
 
-    })*/
+      Button({ type: ButtonType.Circle }) {
+        SymbolGlyph($r('sys.symbol.gearshape'))
+          .fontSize(25)
+          .fontColor([$r('sys.color.font')])
+      }
+      .width(48)
+      .height(48)
+      .backgroundColor(Color.Transparent)
+      .margin({ left: 4, right: 4 })
+      .onClick(() => {
+        this.showSetting = true
+      })
+      .bindSheet($$this.showSetting,SettingBuilder(),{
+        preferType:SheetType.CENTER,
+        height:SheetSize.LARGE,
+        title:{title:$r('app.string.Title_Setting')},
+        backgroundColor:$r('sys.color.background_tertiary')
+      })
+
+      Button({ type: ButtonType.Circle }) {
+        SymbolGlyph($r('sys.symbol.info_circle'))
+          .fontSize(25)
+          .fontColor([$r('sys.color.font')])
+      }
+      .width(48)
+      .height(48)
+      .backgroundColor(Color.Transparent)
+      .margin({ left: 4, right: 4 })
+      .onClick(()=>{
+        this.showAboutUs = true
+      })
+      .bindSheet($$this.showAboutUs,AboutUsBuilder(),{
+        preferType:SheetType.CENTER,
+        height:SheetSize.LARGE,
+        title:{title:$r('app.string.Title_AboutUS')},
+        backgroundColor:$r('sys.color.background_tertiary')
+      })
+
+    }.justifyContent(FlexAlign.SpaceAround)
+    .width('100%')
   }
 
   build() {
     Stack() {
-      Tabs({ controller: this.tabController, index: $$this.currentTabIndex }) {
+      HdsTabs({ controller: this.tabController }) {
         TabContent() {
           Home()
-        }
+        }.tabBar(new BottomTabBarStyle({
+          normal: new SymbolGlyphModifier($r('sys.symbol.house')),
+        }, $r('app.string.Title_Home')))
 
         TabContent() {
           BookShelf()
-        }
+        }.tabBar(new BottomTabBarStyle({
+          normal: new SymbolGlyphModifier($r('sys.symbol.book_closed_right_left')),
+        }, $r('app.string.Title_BookShelf')))
 
         TabContent() {
-        }
+
+        }.tabBar(new BottomTabBarStyle({
+          normal: new SymbolGlyphModifier($r('sys.symbol.person')),
+        },__ZlibUser__.account != ''?__ZlibUser__.localChooseAccount.name??'未命名':'请先登录' ))
 
       }
-      .height('100%')
+      .barOverlap(true)
+      .barPosition(BarPosition.End)
+      .animationDuration(300)
       .scrollable(false)
-      .vertical(__System__.windowWidth > min_width)
-      .barWidth(0)
-      .barHeight(0)
-      .barMode(BarMode.Fixed)
+      .height('100%')
       .backgroundColor($r('sys.color.comp_background_gray'))
+      .barFloatingStyle({
+        barWidth: { smallWidth: 250, mediumWidth: 300, largeWidth: 320 },
+        barBottomMargin: 28,
+        systemMaterialEffect: {
+          materialType: hdsMaterial.MaterialType.IMMERSIVE,
+          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+        },
+        miniBar: {
+          miniBarBuilder: () => this.miniBarBuilder(),
+          miniBarWidth:{smallWidth: 250,mediumWidth: 300,largeWidth:320}
+        }
+      })
+      .onContentWillChange((currentIndex: number, comingIndex: number)=>{
+        if (comingIndex == 2) {
+          this.showAccountManager = true
+        }
+        return !(comingIndex == 2)
+      })
+      .onChange((index)=>{
+        if (index==2) {
+          index = this.currentTabIndex
+        }
+        this.currentTabIndex = index
+      })
+      .bindSheet($$this.showAccountManager, AccountManagerBuilder() , {
+        title:{title:$r('app.string.Title_AccountManager')},
+        preferType:SheetType.CENTER,
+        height:SheetSize.LARGE,
+        backgroundColor:$r('sys.color.background_tertiary')
+      })
+
 
       if (__System__.windowWidth < min_width && __UI__.isShowSideBar) {
         Stack().height('100%').width('100%').onClick(() => {

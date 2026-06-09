@@ -4,11 +4,13 @@ import { BasicDataSource, XAnimation } from "commonpackage"
 import { min_split_width, min_width } from "./commonItem"
 import { __CustomBackgroundData__ } from "../components/CustomBackground"
 import { relationalStore } from "@kit.ArkData"
-import { I_ZlibUserInfo } from "../../zlibrary/interface/I_ZlibUserInfo"
 import { ZlibUserInfo } from "../../zlibrary/classes/UserInfo"
 import { DownloadManager } from "@hadss/super_fast_file_trans"
 import { DownloadInfo } from "../models/classes/DownloadInfo"
-import { DownloadManageArk, webdavArk, ZlibClientArk, ZlibUserInfoArk } from "libohos_app_cangjie_entry.so"
+import { DownloadManageArk } from "libohos_app_cangjie_entry.download.so"
+import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
+import { ZlibUserInfoArk, ZlibClientArk } from "libohos_app_cangjie_entry.zlib4cj.so"
+
 
 
 @ObservedV2

@@ -2,14 +2,16 @@
 cjc-version = "1.1.0"
 name = "zlibraryAPI4CJ"
 version = "1.0.0"
-output-type = "dynamic"
+output-type = "static"
 
 [profile]
 [profile.build]
 incremental = []
+compile-option = "-g -Woff all -Won apilevel-check"
+[profile.test]
+[profile.customized-option]
 debug = "-g -Woff all -Won apilevel-check"
 release = "--fast-math -O2 -s -Woff all -Won apilevel-check"
-[profile.test]
 
 [dependencies.linderHttp]
 path = "../linderHttp"

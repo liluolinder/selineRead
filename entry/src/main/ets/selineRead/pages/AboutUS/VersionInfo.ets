@@ -12,8 +12,15 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
-      version: '1.1.6.5',
+      version: '1.1.6.6',
       description:'下个版本更新预告:管理zlibrary地址器(^~^),碰一碰分享书籍,隔空抓取书籍,收藏书籍',
+      date: '2026/6/9',
+      addNewFunArray:['使用悬浮tab栏，删除侧边栏'],
+      fixBugsArray:['修复因仓颉导致的软件崩溃问题（API24）'],
+      optimizeArray:['在搜索栏/搜索列表界面使用系统返回手势时不再直接退出APP','优化部分场景性能']
+    },
+    {
+      version: '1.1.6.5',
       date: '2026/3/12',
       addNewFunArray:['新增内置webdav服务'],
       fixBugsArray:['修复无法下载的问题'],

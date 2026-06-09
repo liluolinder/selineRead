@@ -6,13 +6,14 @@ import { SymbolGlyphModifier } from '@kit.ArkUI'
 import { min_width } from '../../../commons/commonItem'
 import { BigImage } from '../../../components/BigImage'
 import { ListItemWithText } from 'templatecomponent'
-import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.so'
+
 import url from '@ohos.url'
 import { BackgroundUtil } from '../../../models/classes/BackgroundRunningManager'
 import { DownloadInfo, DownloadStatus } from '../../../models/classes/DownloadInfo'
 import { RelationStoreManager } from '../../../models/classes/DataBase'
 import { relationalStore } from '@kit.ArkData'
 import { shareBook } from '../../../models/utils/ShareBook'
+import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 
 @Builder
 export function BookInfoBuilder() {

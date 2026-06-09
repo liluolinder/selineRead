@@ -1,7 +1,7 @@
 /**
  * Created on 2026/3/10
  */
-package ohos_app_cangjie_entry.zlibAPI4cj
+package ohos_app_cangjie_entry.zlib4cj
 
 import ohos.ark_interop.*
 import ohos.ark_interop_macro.*

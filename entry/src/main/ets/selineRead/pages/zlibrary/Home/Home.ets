@@ -8,7 +8,7 @@ import { zlibClient } from '../../../../zlibrary/zlibClient'
 import { loadingDialog, loadingNewDialog } from '../../../components/LoadingNewDialog'
 import { I_SearchHistory } from '../../../models/interfaces/I_SearchHistory'
 import { I_ZlibBookInfoRes_Book } from '../../../../zlibrary/interface/I_ZlibBookInfo'
-import { ZlibBookInfoBriefArk } from 'libohos_app_cangjie_entry.so'
+import { ZlibBookInfoBriefArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 
 
 @ObservedV2
@@ -36,54 +36,9 @@ export struct Home {
   @Local columnNumber: number = 0
   @Local isOpenBook: boolean = false
 
-  @Builder
-  openSideBarButton() {
-    Button({ type: ButtonType.Circle }) {
-      SymbolGlyph($r('sys.symbol.indent_right'))
-        .fontSize(24)
-        .fontColor([$r('sys.color.font_secondary')])
-    }
-    .width(40)
-    .height(40)
-    .backgroundColor($r('app.color.start_window_background_blur'))
-    .backdropBlur(100)
-    .useEffect(true)
-    .onClick(() => {
-      XAnimation.runWithAnimation(() => {
-        __UI__.isShowSideBar = true
-      })
-    })
-    .visibility(__Home__.inSearchMode || __System__.windowWidth > min_width ? Visibility.None : Visibility.Visible)
-  }
-
-  @Builder
-  openDownloadButton() {
-    Button({ type: ButtonType.Circle }) {
-      SymbolGlyph($r('sys.symbol.download'))
-        .fontSize(24)
-        .fontColor([$r('sys.color.font_secondary')])
-    }
-    .width(40)
-    .height(40)
-    .backgroundColor($r('app.color.start_window_background_blur'))
-    .backdropBlur(100)
-    .useEffect(true)
-    .onClick(() => {
-      __UI__.mainPageStack.pushPathByName('DownloadPage', null)
-    })
-    .visibility(__Home__.inSearchMode ? Visibility.None : Visibility.Visible)
-  }
-
   build() {
     Stack({ alignContent: Alignment.Top }) {
       Row({ space: 10 }) {
-
-        if (__Setting__.isLeftHand) {
-          this.openSideBarButton()
-        } else {
-          this.openDownloadButton()
-        }
-
         Search({ value: __Home__.searchWord, })
           .searchButton(__Home__.inSearchMode ? $r('app.string.search') : undefined)
           .width(__Home__.inSearchMode ? '100%' : "45%")
@@ -92,7 +47,7 @@ export struct Home {
           .enableKeyboardOnFocus(__Home__.recommendOrSearch == 1)
           .backdropBlur(100)
           .useEffect(true)
-          .layoutWeight(1)
+          //.layoutWeight(1)
           .onSubmit((value: string) => {
             XAnimation.runWithAnimation(() => {
               __Home__.inSearchMode = false
@@ -147,12 +102,6 @@ export struct Home {
               __Home__.inSearchMode = true
             })
           })
-
-        if (__Setting__.isLeftHand) {
-          this.openDownloadButton()
-        } else {
-          this.openSideBarButton()
-        }
 
 
       }
@@ -216,7 +165,6 @@ export struct Home {
                 HomeBookCover({ data: item })
               }
               .onClick(async () => {
-                console.log(`1234214`)
                 if (!this.isOpenBook) {
                   XAnimation.runWithAnimation(() => {
                     this.isOpenBook = true
@@ -233,9 +181,6 @@ export struct Home {
                       this.isOpenBook = false
                       __Home__.errorText = error
                     })
-                  })
-                  XAnimation.runWithAnimation(() => {
-                    this.isOpenBook = false
                   })
                 }
               })
@@ -286,6 +231,7 @@ export struct Home {
           }
         })
         .contentStartOffset(Math.max(__System__.topRectHeight, 16) + 64)
+        .contentEndOffset(Math.max(__System__.bottomRectHeight,16) + 80)
         .alignSelf(ItemAlign.Center)
         .align(Alignment.Center)
         .edgeEffect(EdgeEffect.Spring)
@@ -319,12 +265,12 @@ export struct Home {
         .zIndex(114514)
       }
 
-      if (this.isOpenBook) {
-        loadingDialog()
-      }
-
       if (!__Home__.canGetMore) {
         loadingNewDialog()
+      }
+
+      if (this.isOpenBook) {
+        loadingDialog()
       }
 
       if (__Home__.inSearchMode) {
@@ -489,4 +435,3 @@ export struct HomeBookCover {
 
   }
 }
-

@@ -9,11 +9,12 @@ import { backgroundBlurModifier } from "../../models/classes/backGroundEffect";
 import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
 import { SettingBuilder } from "../Setting/Setting";
 import { AboutUsBuilder } from "../AboutUS/AboutUS";
+import { HdsTabsController } from "@kit.UIDesignKit";
 
 
 @ComponentV2
 export struct SideBar {
-  @Consumer('tabController') tabController: TabsController = new TabsController();
+  @Consumer('tabController') tabController: HdsTabsController = new HdsTabsController();
   @Consumer('currentTabIndex') currentTabIndex: number = 0
   @Provider('showLoginOrUserInfo') showLoginOrUserInfo: boolean = false
   @Provider("showSetting") showSetting:boolean = false
@@ -100,7 +101,6 @@ export struct SideBar {
                   if (this.currentTabIndex != index) {
                     switch (index) {
                       case 0:
-                        //__Client__.getRecentSong(true)
                         break
                       case 1:
                         break

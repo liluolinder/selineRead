@@ -278,7 +278,7 @@ export struct BookShelf {
             .width('100%')
             .padding({ left: 16, right: 16 })
             .borderRadius(20)
-            .contentEndOffset(16)
+            .contentEndOffset(Math.max(__System__.bottomRectHeight,16) + 80)
           }
 
           if (__Home__.errorText != '' && __Home__.recommendBookArray.dataArray.length != 0) {
@@ -320,25 +320,6 @@ export struct BookShelf {
       .hideToolBar(true)
       .hideBackButton(true)
       .mode(NavigationMode.Stack)
-      .menus([
-        {
-          value: 'showSideBar',
-          symbolIcon: new SymbolGlyphModifier($r('sys.symbol.indent_right')),
-          action: () => {
-            XAnimation.runWithAnimation(() => {
-              __UI__.isShowSideBar = true
-            })
-          },
-          isEnabled: __System__.windowWidth < min_width
-        },
-        {
-          value: 'downloadPage',
-          symbolIcon: new SymbolGlyphModifier($r('sys.symbol.download')),
-          action: () => {
-            __UI__.mainPageStack.pushPathByName('DownloadPage', null)
-          },
-        }
-      ])
     }.padding({ top: Math.max(16, __System__.topRectHeight) })
   }
 }

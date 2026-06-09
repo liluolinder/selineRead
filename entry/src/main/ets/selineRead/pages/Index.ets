@@ -1,9 +1,9 @@
 import { XAnimation, XContext } from 'commonpackage';
-import { DownloadManageArk, webdavArk } from 'libohos_app_cangjie_entry.so';
+import { DownloadManageArk } from 'libohos_app_cangjie_entry.download.so';
+import { webdavArk } from 'libohos_app_cangjie_entry.webdav.so';
 import { min_width } from '../commons/commonItem';
 import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../commons/shareDatas';
 import { DecorBar } from '../components/DecorBar';
-import { RelationStoreManager } from '../models/classes/DataBase';
 import { deleteDownloadCache } from '../models/utils/ClearDownloadCache';
 import { Body } from './index/Body';
 import { SideBar } from './index/SideBar';
@@ -23,14 +23,16 @@ struct Index {
       __Setting__.webdavClient =
         new webdavArk(await XContext.getDownloadFolderPath(), __Setting__.webdavPort, __Setting__.webdavAccount,
           __Setting__.webdavPassword)
-      __Setting__.webdavClient.start()
+      __Setting__.webdavClient?.start()
     }
   }
 
   onBackPress(): boolean | void {
-    if (__Home__.inSearchMode) {
+    if (__Home__.inSearchMode || __Home__.recommendOrSearch == 1) {
       XAnimation.runWithAnimation(() => {
         __Home__.inSearchMode = false
+        __Home__.recommendOrSearch = 0
+        __Home__.searchWord = ''
       })
       return true
     }
@@ -52,52 +54,7 @@ struct Index {
       }
 
       Navigation(__UI__.mainPageStack) {
-        SideBarContainer(__UI__.sideBarMode) {
-          SideBar()
-            .visibility(__System__.windowWidth >= min_width ? Visibility.Visible :
-              __UI__.isShowSideBar ? Visibility.Visible : Visibility.Hidden)
-          Body()
-        }
-        .showSideBar(__UI__.isShowSideBar)
-        .sideBarPosition(__System__.windowWidth >= min_width ? SideBarPosition.Start :
-          __Setting__.isLeftHand ? SideBarPosition.Start : SideBarPosition.End)
-        .autoHide(false)
-        .showControlButton(false)
-        .sideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
-        .maxSideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
-        .minSideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
-        .gesture(
-          PanGesture({ fingers: 1, direction: PanDirection.Right })
-            .onActionEnd(() => {
-              if (__System__.windowWidth < min_width) {
-                if (__Setting__.isLeftHand) {
-                  XAnimation.runWithAnimation(() => {
-                    __UI__.isShowSideBar = true
-                  })
-                } else {
-                  XAnimation.runWithAnimation(() => {
-                    __UI__.isShowSideBar = false
-                  })
-                }
-              }
-            })
-        )
-        .gesture(
-          PanGesture({ fingers: 1, direction: PanDirection.Left })
-            .onActionEnd(() => {
-              if (__System__.windowWidth < min_width) {
-                if (__Setting__.isLeftHand) {
-                  XAnimation.runWithAnimation(() => {
-                    __UI__.isShowSideBar = false
-                  })
-                } else {
-                  XAnimation.runWithAnimation(() => {
-                    __UI__.isShowSideBar = true
-                  })
-                }
-              }
-            })
-        )
+        Body()
       }
       .size({ width: '100%', height: '100%' })
       .navBarWidthRange([400, 1200])
@@ -123,3 +80,51 @@ struct Index {
     }
   }
 }
+
+
+// SideBarContainer(__UI__.sideBarMode) {
+//   SideBar()
+//     .visibility(__System__.windowWidth >= min_width ? Visibility.Visible :
+//       __UI__.isShowSideBar ? Visibility.Visible : Visibility.Hidden)
+//
+// }
+// .showSideBar(__UI__.isShowSideBar)
+// .sideBarPosition(__System__.windowWidth >= min_width ? SideBarPosition.Start :
+//   __Setting__.isLeftHand ? SideBarPosition.Start : SideBarPosition.End)
+// .autoHide(false)
+// .showControlButton(false)
+// .sideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
+// .maxSideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
+// .minSideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
+// .gesture(
+//   PanGesture({ fingers: 1, direction: PanDirection.Right })
+//     .onActionEnd(() => {
+//       if (__System__.windowWidth < min_width) {
+//         if (__Setting__.isLeftHand) {
+//           XAnimation.runWithAnimation(() => {
+//             __UI__.isShowSideBar = true
+//           })
+//         } else {
+//           XAnimation.runWithAnimation(() => {
+//             __UI__.isShowSideBar = false
+//           })
+//         }
+//       }
+//     })
+// )
+// .gesture(
+//   PanGesture({ fingers: 1, direction: PanDirection.Left })
+//     .onActionEnd(() => {
+//       if (__System__.windowWidth < min_width) {
+//         if (__Setting__.isLeftHand) {
+//           XAnimation.runWithAnimation(() => {
+//             __UI__.isShowSideBar = false
+//           })
+//         } else {
+//           XAnimation.runWithAnimation(() => {
+//             __UI__.isShowSideBar = true
+//           })
+//         }
+//       }
+//     })
+// )

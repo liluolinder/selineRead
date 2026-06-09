@@ -48,6 +48,6 @@ public class webdavArk {
             users: users,
             encodeHref: false
         )
-        webdavServer = WebDavServer(handlerConfig, host: '127.0.0.1', port: port)
+        webdavServer = WebDavServer(handlerConfig, host: '0.0.0.0', port: port)
     }
 }

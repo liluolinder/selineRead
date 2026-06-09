@@ -13,9 +13,7 @@ export function loadingNewDialog() {
   .size({ width: '100%', height: '100%' })
   .padding({ bottom: Math.max(16, __System__.bottomRectHeight + (__System__.windowWidth > min_width ? 0 : 100)) })
   .enabled(false)
-  .zIndex(114514)
   .transition(XAnimation.getAnimation('bottom'))
-  .zIndex(114514)
 }
 
 @Builder
@@ -28,6 +26,5 @@ export function loadingDialog() {
   }
   .size({ width: '100%', height: '100%' })
   .transition(TransitionEffect.OPACITY.animation({ curve: Curve.Ease, duration: 300 }))
-  .zIndex(114514)
 }
 

@@ -12,7 +12,7 @@
       }
     },
     "cangjieOptions": {
-      "path": "./cjpm.toml"
+      "path": "./cjpm.toml",
     },
   },
   "buildOptionSet": [

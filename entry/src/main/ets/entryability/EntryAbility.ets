@@ -9,9 +9,6 @@ import { initPreferences } from '../selineRead/models/utils/initPreferences';
 import { DownloadManager } from '@hadss/super_fast_file_trans';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
-import { deleteDownloadCache } from '../selineRead/models/utils/ClearDownloadCache';
-import { StatusBarController } from '../selineRead/models/classes/StatusBarController';
-import { CommonEvent } from '../selineRead/models/classes/CommonEvent';
 
 const DOMAIN = 0x0000;
 

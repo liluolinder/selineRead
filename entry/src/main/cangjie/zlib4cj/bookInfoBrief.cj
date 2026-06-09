@@ -1,11 +1,12 @@
 /**
  * Created on 2026/3/7
  */
-package ohos_app_cangjie_entry.zlibAPI4cj
+package ohos_app_cangjie_entry.zlib4cj
 
 import ohos.ark_interop.*
 import ohos.ark_interop_macro.*
 import zlibraryAPI4CJ.dataModel.BookInfoBrief
+import ohos_app_cangjie_entry.run2JS
 
 @Interop[ArkTS]
 public class ZlibBookInfoBriefArk {
@@ -35,18 +36,18 @@ public class ZlibBookInfoBriefArk {
                 try {
                     let reqs = cjValue.getBookInfo(cookie: cookie)
                     if (reqs.success == 1) {
-                        context.postJSTask {
+                        run2JS{
                             returnFunc(ZlibBookInfoArk.fromCJ(reqs
                                 .book
                                 .getOrThrow()))
                         }
                     } else {
-                        context.postJSTask {
-                            errorFunc('获取错误:${reqs.errorInfo.getOrDefault {=> '未知错误'}}')
+                        run2JS{
+                             errorFunc('获取错误:${reqs.errorInfo.getOrDefault {=> '未知错误'}}')
                         }
                     }
                 } catch (err: Exception) {
-                    context.postJSTask {
+                    run2JS{
                         errorFunc("获取错误"+err.toString())
                     }
                 }

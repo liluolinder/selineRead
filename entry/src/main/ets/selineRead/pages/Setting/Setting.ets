@@ -2,7 +2,7 @@ import { XAnimation, XContext, XPreferencesManager } from "commonpackage"
 import { ListItemWithInput, ListItemWithSelect, ListItemWithToggle } from "templatecomponent"
 import { __Setting__ } from "../../commons/shareDatas"
 import { motion } from "@kit.MultimodalAwarenessKit"
-import { webdavArk } from "libohos_app_cangjie_entry.so"
+import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
 import { pasteboard } from "@kit.BasicServicesKit"
 
 @Builder
@@ -148,7 +148,7 @@ export struct Setting {
             __Setting__.webdavClient =
               new webdavArk(await XContext.getDownloadFolderPath(), __Setting__.webdavPort, __Setting__.webdavAccount,
                 __Setting__.webdavPassword)
-            __Setting__.webdavClient.start()
+            __Setting__.webdavClient?.start()
           } else {
             __Setting__.webdavClient?.stop()
           }
@@ -188,6 +188,7 @@ export struct Setting {
         })
 
       }
+
     }
 
     ListItem() {

@@ -8,6 +8,7 @@ import ohos.ark_interop_macro.*
 import selineDownload.DownloadManager
 import selineDownload.DownloadConfig
 import selineDownload.DownloadTask
+import ohos_app_cangjie_entry.run2JS
 
 var globalcontext: Option<JSContext> = None
 
@@ -29,11 +30,11 @@ public class DownloadManageArk {
                     let task = downloadManage.createTask(taskID, config)
                     let resTask = DownloadTaskArk()
                     resTask.setTask(task)
-                    context.postJSTask{
+                    run2JS{
                         returnFunc(resTask)
                     }
                 } catch (eror: Exception) {
-                    context.postJSTask{
+                    run2JS{
                         errorFunc("错误:${eror.toString()}")
                     }
                 }

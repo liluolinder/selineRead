@@ -1,7 +1,7 @@
 /**
  * Created on 2026/3/7
  */
-package ohos_app_cangjie_entry.zlibAPI4cj
+package ohos_app_cangjie_entry.zlib4cj
 
 import ohos.ark_interop.*
 import ohos.ark_interop_macro.*
@@ -10,6 +10,7 @@ import zlibraryAPI4CJ.dataModel.*
 import zlibraryAPI4CJ.common.canAccessZlib
 import zlibraryAPI4CJ.common.zlibBaseUrl
 import zlibraryAPI4CJ.common.zlibEAPI
+import ohos_app_cangjie_entry.run2JS
 
 var globalcontext: Option<JSContext> = None
 
@@ -24,11 +25,11 @@ public class ZlibClientArk {
             spawn {
                 try {
                     let res = canAccessZlib(autoRedirect: autoRedirect)
-                    context.postJSTask {
+                    run2JS {
                         returnFunc(res)
                     }
                 } catch (err: Exception) {
-                    context.postJSTask {
+                    run2JS {
                         errorFunc(err.toString())
                     }
                 }
@@ -47,16 +48,16 @@ public class ZlibClientArk {
                             .getOrThrow()
                             .map({bookInfo => ZlibBookInfoBriefArk.fromCJ(bookInfo)})
                         let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
-                        context.postJSTask {
+                        run2JS {
                             returnFunc(res)
                         }
                     } else {
-                        context.postJSTask {
+                        run2JS {
                             errorFunc("获取错误:${reqs.errorInfo.getOrDefault({=> '未知错误'})}")
                         }
                     }
                 } catch (error: Exception) {
-                    context.postJSTask {
+                    run2JS {
                         errorFunc(error.toString())
                     }
                 }
@@ -74,14 +75,19 @@ public class ZlibClientArk {
                     if (reqs.success == 1) {
                         if (let Some(info) <- reqs.userInfo) {
                             let res = ZlibUserInfoArk.fromCJ(info)
-                            context.postJSTask {returnFunc(res)}
+                            run2JS {
+                                returnFunc(res)
+                            }
                         }
                     } else {
-                        context.postJSTask {
+                        run2JS {
                             errorFunc("获取错误:${reqs.errorInfo.getOrDefault({=> '未知错误'})}")
                         }
                     }
                 } catch (err: Exception) {
+                    run2JS {
+                        errorFunc(err.toString())
+                    }
                 }
             }
         }
@@ -111,11 +117,12 @@ public class ZlibClientArk {
                                 }
                             )
                         let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
-                        context.postJSTask {
+                        
+                        run2JS{
                             returnFunc(res)
                         }
                     } else {
-                        context.postJSTask {
+                        run2JS {
                             errorFunc("获取错误:搜索错误")
                         }
                     }
@@ -125,17 +132,17 @@ public class ZlibClientArk {
         }
     }
 
-    public func getZlibUrl(returnFunc: (String) -> Unit):Unit{
+    public func getZlibUrl(returnFunc: (String) -> Unit): Unit {
         if (let Some(context) <- globalcontext) {
             spawn {
-                context.postJSTask {
-                        returnFunc(zlibBaseUrl)
-                    }
+                run2JS {
+                    returnFunc(zlibBaseUrl)
+                }
             }
         }
     }
 
-    public func setZlibUrl(url:String):Unit{
+    public func setZlibUrl(url: String): Unit {
         zlibBaseUrl = url
         zlibEAPI = "${zlibBaseUrl}/eapi"
     }

@@ -1,7 +1,7 @@
 import { DownloadTask } from "@hadss/super_fast_file_trans"
 import { DownloadStatus } from "../classes/DownloadInfo"
 import { http } from "@kit.NetworkKit"
-import { DownloadTaskArk } from "libohos_app_cangjie_entry.so"
+import { DownloadTaskArk } from "libohos_app_cangjie_entry.download.so"
 
 export interface I_DownloadInfo {
   fileName: string

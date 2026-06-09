@@ -6,6 +6,7 @@ package ohos_app_cangjie_entry.download
 import ohos.ark_interop.*
 import ohos.ark_interop_macro.*
 import selineDownload.DownloadTask
+import ohos_app_cangjie_entry.run2JS
 
 @Interop[ArkTS]
 public class DownloadTaskArk {
@@ -20,7 +21,7 @@ public class DownloadTaskArk {
         if (let Some(Context) <- globalcontext) {
             if (let Some(_task) <- task) {
                 _task.setStartCallback {
-                    Context.postJSTask {
+                    run2JS {
                         event()
                     }
                 }
@@ -34,7 +35,7 @@ public class DownloadTaskArk {
             if (let Some(_task) <- task) {
                 _task.setProgressCallback {
                     progress =>
-                    Context.postJSTask {
+                    run2JS {
                         event(progress.downloadedBytes, progress.totalBytes, progress.formattedSpeed)
                     }
                 }
@@ -47,7 +48,7 @@ public class DownloadTaskArk {
         if (let Some(Context) <- globalcontext) {
             if (let Some(_task) <- task) {
                 _task.setRetryCallback {
-                    retryNum, totalNum => Context.postJSTask {
+                    retryNum, totalNum => run2JS {
                         event(retryNum, totalNum)
                     }
                 }
@@ -60,7 +61,7 @@ public class DownloadTaskArk {
         if (let Some(Context) <- globalcontext) {
             if (let Some(_task) <- task) {
                 _task.setErrorCallback {
-                    error => Context.postJSTask {
+                    error => run2JS {
                         event(error.toString())
                     }
                 }
@@ -73,7 +74,7 @@ public class DownloadTaskArk {
         if (let Some(Context) <- globalcontext) {
             if (let Some(_task) <- task) {
                 _task.setPauseCallback {
-                    Context.postJSTask {
+                    run2JS {
                         event()
                     }
                 }
@@ -86,7 +87,7 @@ public class DownloadTaskArk {
         if (let Some(Context) <- globalcontext) {
             if (let Some(_task) <- task) {
                 _task.setCompleteCallback {
-                    Context.postJSTask {
+                    run2JS {
                         event()
                     }
                 }

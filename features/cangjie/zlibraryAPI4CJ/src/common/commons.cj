@@ -2,7 +2,7 @@ package zlibraryAPI4CJ.common
 
 import linderHttp.*
 
-public var zlibBaseUrl: String = "https://zh.nyu101.ru"
+public var zlibBaseUrl: String = "https://zh.zlibraryd.ru/"
 public var zlibEAPI: String = "${zlibBaseUrl}/eapi"
 
 public func changeUrl(url: String) {

@@ -9,10 +9,10 @@
     commonpackage: 'file:../features/commonPackage',
     color: 'file:../features/color',
     templatecomponent: 'file:../features/templateComponent',
-    "libohos_app_cangjie_entry.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry",
     "libark_interop_api.so": "file:src/main/cangjie/ark_interop_api",
-    "libohos_app_cangjie_entry.zlibAPI4cj.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry_zlibAPI4cj",
     "libohos_app_cangjie_entry.webdav.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry_webdav",
+    "libohos_app_cangjie_entry.zlib4cj.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry_zlib4cj",
     "libohos_app_cangjie_entry.download.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry_download",
+    "libohos_app_cangjie_entry.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry",
   }
 }

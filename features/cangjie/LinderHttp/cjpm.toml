@@ -1,13 +1,9 @@
 [package]
-cjc-version = "1.1.0"
-name = "selineDownload"
-organization = ""
-version = "1.0.2"
-output-type = "static"
-
-[dependencies]
-[dependencies.linderHttp]
-path = "../linderHttp"
+  cjc-version = "1.1.0"
+  name = "linderHttp"
+  version = "1.0.0"
+  target-dir = ""
+  output-type = "static"
 
 [profile]
 [profile.build]
