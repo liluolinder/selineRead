@@ -42,10 +42,11 @@ public class ZlibUserInfoArk {
         }
     }
 
-    public func getSavedBook(page: UInt64, returnFunc: (JSArrayEx<ZlibBookInfoArk>, PaginationArk) -> Unit, errorFunc: (String) -> Unit): Unit {
+    public func getSavedBook(page: UInt64, returnFunc: (JSArrayEx<ZlibBookInfoArk>, PaginationArk) -> Unit,
+        errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
-                Hilog.info(1414,'1145','开始获取')
+                Hilog.info(1414, '1145', '开始获取')
                 let reqs = cjValue.getSaved(page: page)
                 if (reqs.success == 1) {
                     let tempBooks = reqs
@@ -60,17 +61,46 @@ public class ZlibUserInfoArk {
                         .pagination
                         .getOrThrow())
 
-                    run2JS{
+                    run2JS {
                         returnFunc(bookResArray, pagiinationRes)
                     }
-
                 } else {
                     run2JS {
                         errorFunc('获取错误:${reqs.errorInfo.getOrDefault {=> '未知错误'}}')
                     }
                 }
             } catch (err: Exception) {
-                Hilog.info(1414,'1145','err:${err.message}')
+                Hilog.info(1414, '1145', 'err:${err.message}')
+                run2JS {
+                    errorFunc(err.message)
+                }
+            }
+        }
+    }
+
+    public func getRecommendBook(returnFunc: (JSArrayEx<ZlibBookInfoBriefArk>) -> Unit, errorFunc: (String) -> Unit): Unit {
+        spawn {
+            try {
+                Hilog.info(1414, '1145', '开始获取')
+                let reqs = cjValue.getRecommendBook()
+                if (reqs.success == 1) {
+                    let tempBooks = reqs
+                        .books
+                        .getOrThrow()
+                        .map {
+                            book => ZlibBookInfoBriefArk.fromCJ(book)
+                        }
+                    let bookResArray = JSArrayEx<ZlibBookInfoBriefArk>(tempBooks)
+
+                    run2JS {
+                        returnFunc(bookResArray)
+                    }
+                } else {
+                    run2JS {
+                        errorFunc('获取错误:${reqs.errorInfo.getOrDefault {=> '未知错误'}}')
+                    }
+                }
+            } catch (err: Exception) {
                 run2JS {
                     errorFunc(err.message)
                 }

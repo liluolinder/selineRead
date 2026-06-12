@@ -12,6 +12,7 @@ import { SymbolGlyphModifier } from "@kit.ArkUI";
 import { SettingBuilder } from "../Setting/Setting";
 import { AboutUsBuilder } from "../AboutUS/AboutUS";
 import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
+import { ZlibBookInfoBriefArk } from "libohos_app_cangjie_entry.zlib4cj.so";
 
 @ComponentV2
 export struct Body {
@@ -72,6 +73,29 @@ export struct Body {
 
   @Local showAccountManager:boolean = false
 
+  private putBooks(books:ZlibBookInfoBriefArk[]){
+    if (books.length == 0) {
+      __Home__.errorText = '返回值为空'
+    } else {
+      books.forEach((item) => {
+        __Home__.recommendBookArray.pushData(item)
+      })
+      __Home__.errorText = ''
+    }
+    __Home__.canGetMore = true
+  }
+
+  private getCommonRecommend(){
+    __ZlibUser__.zlibClient.getRecommendBook(
+      async (books) => {
+        this.putBooks(books)
+      },
+      (error) => {
+        __Home__.errorText = error
+        __Home__.canGetMore = true
+      })
+  }
+
   aboutToAppear(): void {
     __ZlibUser__.zlibClient.checkAccess(true, (res) => {
       if (res) {
@@ -80,32 +104,25 @@ export struct Body {
           __ZlibUser__.base_url = res
           XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
         })
-        __ZlibUser__.zlibClient.getRecommendBook(
-          async (books) => {
-            if (books.length == 0) {
-              __Home__.errorText = '返回值为空'
-            } else {
-              books.forEach((item) => {
-                __Home__.recommendBookArray.pushData(item)
-              })
-              __Home__.recommendBookIndex++
-              __Home__.errorText = ''
-            }
-            __Home__.canGetMore = true
-          },
-          (error) => {
-            __Home__.errorText = error
-            __Home__.canGetMore = true
-          })
 
         if (__ZlibUser__.account != '') {
           __ZlibUser__.zlibClient.login(__ZlibUser__.account, __ZlibUser__.password, (res) => {
             __ZlibUser__.localChooseAccount = res
             __ZlibUser__.cookie = res.cookie
+            __ZlibUser__.localChooseAccount.getRecommendBook((books)=>{
+              this.putBooks(books)
+            },(error)=>{
+              __Home__.errorText = error
+              __Home__.canGetMore = true
+            })
           }, (error) => {
             __Home__.errorText = error
+            this.getCommonRecommend()
           })
+        }else {
+          this.getCommonRecommend()
         }
+
 
       }
     }, (err) => {

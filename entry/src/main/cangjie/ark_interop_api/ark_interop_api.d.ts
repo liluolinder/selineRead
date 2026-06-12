@@ -15,6 +15,7 @@ export declare class ZlibUserInfoArk {
     downloadLimit: number
     cookie: string
     getSavedBook(page: number, returnFunc: (funcArg0: Array<ZlibBookInfoArk>, funcArg1: PaginationArk) => void, errorFunc: (funcArg0: string) => void): void
+    getRecommendBook(returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
 }
 
 export declare class ZlibClientArk {
