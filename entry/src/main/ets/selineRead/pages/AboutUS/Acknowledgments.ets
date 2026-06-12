@@ -62,6 +62,12 @@ export struct Acknowledgments {
           barrier: 'ICON绘制'
         },
         {
+          name: '千里怀天',
+          info: 'QQ群机器人',
+          avatar: "https://avatars.githubusercontent.com/u/185685455?v=4",
+          githubHome:'Dominic485649'
+        },
+        {
           name: '未定义',
           info: '格物阅读开发者',
           avatar: $r('app.media.avatar_weidingyi'),

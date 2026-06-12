@@ -24,8 +24,7 @@ export function ZlibraryAccountBuilder() {
 export struct ZlibraryAccount {
   @Local showDownloadLimitTips: boolean = false
   @Local showDonationTips: boolean = false
-  @Local showZlibSetting:boolean = false
-
+  @Local showZlibSetting: boolean = false
   @Provider('showZlibLoginSheet') showLoginSheet: boolean = false
 
   async aboutToAppear(): Promise<void> {
@@ -34,7 +33,7 @@ export struct ZlibraryAccount {
       let nowChooseAccount = __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]
       console.log(JSON.stringify(nowChooseAccount))
       console.log(`喵喵喵`)
-      __ZlibUser__.zlibClient.login(nowChooseAccount.account,nowChooseAccount.password,(res)=>{
+      __ZlibUser__.zlibClient.login(nowChooseAccount.account, nowChooseAccount.password, (res) => {
         __ZlibUser__.localChooseAccount = res
         __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = res.name
         __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
@@ -42,7 +41,7 @@ export struct ZlibraryAccount {
         __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = ''
         __ZlibUser__.userName = res.name
         __ZlibUser__.avatar = ''
-      },(error)=>{
+      }, (error) => {
         XContext.toast(error)
       })
 
@@ -50,9 +49,9 @@ export struct ZlibraryAccount {
   }
 
   @Builder
-  editCustom(item:ZlibUserInfo ,index:number) {
-    Column(){
-      Button({type:ButtonType.Circle}){
+  editCustom(item: ZlibUserInfo, index: number) {
+    Column() {
+      Button({ type: ButtonType.Circle }) {
         SymbolGlyph($r('sys.symbol.trash_fill'))
           .fontSize(28)
           .fontColor([Color.White])
@@ -63,31 +62,31 @@ export struct ZlibraryAccount {
         __ZlibUser__.zlibAccountArray.deleteData(index)
         let predicates = new relationalStore.RdbPredicates('ZlibraryAccount')
         predicates.equalTo('Account', item.account).equalTo("Password", item.password)
-        RelationStoreManager.deleteValue(__ZlibUser__.dataBase,predicates)
+        RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
         __ZlibUser__.account = ''
         __ZlibUser__.password = ''
         __ZlibUser__.userName = ''
         __ZlibUser__.cookie = ''
         __ZlibUser__.accountIndex = -1
-        XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex",  __ZlibUser__.accountIndex)
+        XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex", __ZlibUser__.accountIndex)
         XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", '')
         XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", '')
         XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", '')
       })
-    }.padding({left:16, right:16})
+    }.padding({ left: 16, right: 16 })
   }
 
   @Builder
-  ZlibSettingBuilder(){
-    Column(){
-      List(){
-        ListItem(){
+  ZlibSettingBuilder() {
+    Column() {
+      List() {
+        ListItem() {
           ListItemWithInput({
-            image:$r('app.media.zlib'),
-            message:$r('app.string.Title_ServerAddress'),
-            text:__ZlibUser__.base_url,
-            placeholder:$r('app.string.Tip_TapHereToType'),
-            returnFunc:(returnText:string)=>{
+            image: $r('app.media.zlib'),
+            message: $r('app.string.Title_ServerAddress'),
+            text: __ZlibUser__.base_url,
+            placeholder: $r('app.string.Tip_TapHereToType'),
+            returnFunc: (returnText: string) => {
               //保存地址
               __ZlibUser__.base_url = returnText
               __ZlibUser__.baseApi_url = returnText + '/papi'
@@ -96,7 +95,7 @@ export struct ZlibraryAccount {
 
               __ZlibUser__.zlibClient.setZlibUrl(returnText)
 
-              XContext.toast(`请重启APP以加载数据`,4000)
+              XContext.toast(`请重启APP以加载数据`, 4000)
 
             }
           })
@@ -104,7 +103,7 @@ export struct ZlibraryAccount {
         .borderRadius(20)
       }.width('100%')
       .height('100%')
-      .padding({left:16, right:16})
+      .padding({ left: 16, right: 16 })
     }.width('100%')
   }
 
@@ -122,12 +121,12 @@ export struct ZlibraryAccount {
           List({ space: 10 }) {
             LazyForEach(__ZlibUser__.zlibAccountArray, (item: ZlibUserInfo, index: number) => {
               ListItem() {
-                Column(){
+                Column() {
                   ListItemWithRadio({
                     image: item.userAvatar == '' ? $r('app.media.zlib') : item.userAvatar,
                     message: item.account,
                     group: 'zlibAccount',
-                    checked: __ZlibUser__.accountIndex === index,
+                    checked: __ZlibUser__.accountIndex == index,
                     index: index,
                     onChange: (checked: boolean, itemIndex: number) => {
                       if (checked) {
@@ -135,41 +134,48 @@ export struct ZlibraryAccount {
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", item.account ?? '')
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", item.password ?? '')
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", item.cookie ?? '')
-                        XAnimation.runWithAnimation(() => {
-                          __ZlibUser__.accountIndex = itemIndex
-                        })
+
 
                         __ZlibUser__.account = item.account!
                         __ZlibUser__.password = item.password!
-                        __ZlibUser__.userName=$r('app.string.Tip_GettingBookNow')
+                        __ZlibUser__.userName = $r('app.string.Tip_GettingBookNow')
 
-                      __ZlibUser__.zlibClient.login(__ZlibUser__.account,__ZlibUser__.password,(user)=>{
-                        __ZlibUser__.localChooseAccount = user
-                        item.userName = user.name
-                        item.userDownloadLimitNumber = `${user.todayDownloadNum}/${user.downloadLimit}`
-                        item.userAvatar = ''
-                        __ZlibUser__.cookie = item.cookie!
-                        __ZlibUser__.avatar = item.userAvatar!
-                        __ZlibUser__.userName = item.userName!
-                      },(error)=>{
-                        XContext.toast(error)
-                      })
-
-                        zlibClient.refreshUrl().then(()=>{
-                          let req = http.createHttp();
-                          zlibClient.getRecommendBook(req).then((res)  => {
-                            __Home__.canGetMore = true
-                            if (res[0] == 1) {
-                              __Home__.recommendBookArray.clearData
-                              __Home__.errorText = '';
-                              (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-                              //  __Home__.recommendBookArray.pushData(item)
-                              });
-                            }else {
-                              __Home__.errorText = res[1];
-                            }
+                        __ZlibUser__.zlibClient.login(__ZlibUser__.account, __ZlibUser__.password, (user) => {
+                          __ZlibUser__.localChooseAccount = user
+                          item.userName = user.name
+                          item.userDownloadLimitNumber = `${user.todayDownloadNum}/${user.downloadLimit}`
+                          item.userAvatar = ''
+                          __ZlibUser__.cookie = item.cookie!
+                          __ZlibUser__.avatar = item.userAvatar!
+                          __ZlibUser__.userName = item.userName!
+                          XAnimation.runWithAnimation(()=>{
+                            __ZlibUser__.accountIndex = itemIndex
+                          })
+                        }, (error) => {
+                          XContext.toast(error)
+                          XAnimation.runWithAnimation(()=>{
+                            __ZlibUser__.accountIndex = itemIndex
                           })
                         })
+
+
+
+
+                        // zlibClient.refreshUrl().then(()=>{
+                        //   let req = http.createHttp();
+                        //   zlibClient.getRecommendBook(req).then((res)  => {
+                        //     __Home__.canGetMore = true
+                        //     if (res[0] == 1) {
+                        //       __Home__.recommendBookArray.clearData
+                        //       __Home__.errorText = '';
+                        //       (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
+                        //         //__Home__.recommendBookArray.pushData(item)
+                        //       });
+                        //     }else {
+                        //       __Home__.errorText = res[1];
+                        //     }
+                        //   })
+                        // })
 
                       }
                     }
@@ -243,12 +249,14 @@ export struct ZlibraryAccount {
                       }.size({ width: '100%', height: 120 })
                     }
                   }
-                } .backgroundColor($r('sys.color.comp_background_list_card'))
+                }.backgroundColor($r('sys.color.comp_background_list_card'))
                 .borderRadius(20)
               }
               .swipeAction({
                 end: {
-                  builder: () => { this.editCustom(item, index) },
+                  builder: () => {
+                    this.editCustom(item, index)
+                  },
                 }
               })
 
@@ -264,13 +272,13 @@ export struct ZlibraryAccount {
           .padding({ left: 16, right: 16 })
         }
 
-        Column(){
+        Column() {
           Blank()
             .bindSheet($$this.showZlibSetting, this.ZlibSettingBuilder(), {
-              height:SheetSize.MEDIUM,
-              preferType:SheetType.CENTER,
-              title:{title:$r('app.string.Title_Setting_zlib')},
-              backgroundColor:$r('sys.color.background_tertiary')
+              height: SheetSize.MEDIUM,
+              preferType: SheetType.CENTER,
+              title: { title: $r('app.string.Title_Setting_zlib') },
+              backgroundColor: $r('sys.color.background_tertiary')
             })
         }
       }

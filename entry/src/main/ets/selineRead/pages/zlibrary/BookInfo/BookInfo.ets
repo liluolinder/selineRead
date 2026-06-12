@@ -265,10 +265,8 @@ export struct BookInfo {
                       async (res) => {
                         let bookName = url.URL.parseURL(res).params.get('filename')
                         let id = __ZlibUser__.notificationID++
-
                         let time = new Date()
                         let downloadItem: DownloadInfo = new DownloadInfo()
-
                         downloadItem.fileName = bookName!
                         downloadItem.fileImage = this.bookInfo?.cover!
                         downloadItem.status = DownloadStatus.Idle
@@ -277,10 +275,8 @@ export struct BookInfo {
                         downloadItem.bookId = this.bookInfo?.id!
                         downloadItem.downloadTime = time.toISOString()
                         downloadItem.downLoadTask = undefined
-
                         //写入下载管理器
                         __Download__.downloadArray.pushUnshiftData(downloadItem)
-
                         //插入数据库
                         await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
                           BookID: this.bookInfo?.id!,

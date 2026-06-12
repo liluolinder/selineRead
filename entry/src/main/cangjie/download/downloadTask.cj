@@ -98,13 +98,17 @@ public class DownloadTaskArk {
 
     public func start(): Unit {
         if (let Some(_task) <- task) {
-            _task.start()
+            spawn {
+            	_task.start()
+            }
         }
     }
 
     public func cancel(): Unit {
         if (let Some(_task) <- task) {
-            _task.cancel()
+            spawn {
+            	_task.cancel()
+            }
         }
     }
 
