@@ -87,8 +87,7 @@ public class ZlibBookInfoArk {
     }
 
     public func getDownloadInfo(cookie: String, returnFunc: (String) -> Unit, errorFunc: (String) -> Unit): Unit {
-        if (let Some(context) <- globalcontext) {
-            spawn {
+        spawn {
                 try {
                     let reqs = cjValue.getDownloadInfo(cookie: cookie)
                     if (reqs.success == 1) {
@@ -108,7 +107,6 @@ public class ZlibBookInfoArk {
                     }
                 }
             }
-        }
     }
 
     public ZlibBookInfoArk() {}

@@ -13,9 +13,6 @@ import std.collection.ArrayList
 import selineWebdav.WebDavUser
 import selineWebdav.WebDavConfig
 
-var globalcontext: Option<JSContext> = None
-
-let _ = JSModule.registerModule {context, _ => globalcontext = context}
 
 @Interop[ArkTS]
 public class webdavArk {

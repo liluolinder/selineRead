@@ -13,17 +13,12 @@ import zlibraryAPI4CJ.common.zlibEAPI
 import ohos_app_cangjie_entry.run2JS
 import ohos.hilog.Hilog
 
-var globalcontext: Option<JSContext> = None
-
-let _ = JSModule.registerModule {context, _ => globalcontext = context}
-
 @Interop[ArkTS]
 public class ZlibClientArk {
     let client: ZlibClient = ZlibClient()
 
     public func checkAccess(autoRedirect: Bool, returnFunc: (Bool) -> Unit, errorFunc: (String) -> Unit): Unit {
-        if (let Some(context) <- globalcontext) {
-            spawn {
+       spawn {
                 try {
                     let res = canAccessZlib(autoRedirect: autoRedirect)
                     run2JS {
@@ -35,12 +30,10 @@ public class ZlibClientArk {
                     }
                 }
             }
-        }
     }
 
     public func getRecommendBook(returnFunc: (JSArrayEx<ZlibBookInfoBriefArk>) -> Unit, errorFunc: (String) -> Unit): Unit {
-        if (let Some(context) <- globalcontext) {
-            spawn {
+        spawn {
                 try {
                     let reqs = client.getRecommendBook()
                     if (reqs.success == 1) {
@@ -63,13 +56,11 @@ public class ZlibClientArk {
                     }
                 }
             }
-        }
     }
 
     public func login(email: String, password: String, returnFunc: (ZlibUserInfoArk) -> Unit,
         errorFunc: (String) -> Unit): Unit {
-        if (let Some(context) <- globalcontext) {
-            spawn {
+        spawn {
                 try {
                     let reqs = client.login(email: email, password: password)
 
@@ -91,18 +82,17 @@ public class ZlibClientArk {
                     }
                 }
             }
-        }
     }
 
     public func search(bookName: String, page: UInt16, returnFunc: (JSArrayEx<ZlibBookInfoBriefArk>) -> Unit,
         errorFunc: (String) -> Unit): Unit {
-        if (let Some(context) <- globalcontext) {
-            spawn {
+       spawn {
                 try {
                     let reqs = client.search(message: bookName, page: page)
                     if (reqs.success == 1) {
                         let temp = reqs
                             .books
+                            .getOrThrow()
                             .map(
                                 {
                                     bookinfo: BookInfo =>
@@ -118,12 +108,8 @@ public class ZlibClientArk {
                                 }
                             )
 
-                        for (i in temp){
-                            Hilog.info(1145,'14',i.title)
-                        }
-
                         let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
-                        
+
                         run2JS{
                             returnFunc(res)
                         }
@@ -138,17 +124,14 @@ public class ZlibClientArk {
                       }
                 }
             }
-        }
     }
 
     public func getZlibUrl(returnFunc: (String) -> Unit): Unit {
-        if (let Some(context) <- globalcontext) {
-            spawn {
+        spawn {
                 run2JS {
                     returnFunc(zlibBaseUrl)
                 }
             }
-        }
     }
 
     public func setZlibUrl(url: String): Unit {

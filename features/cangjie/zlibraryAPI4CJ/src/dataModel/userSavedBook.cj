@@ -2,14 +2,16 @@ package zlibraryAPI4CJ.dataModel
 
 public struct GetBookWithInfoAndPaginationRes <: Serializable<GetBookWithInfoAndPaginationRes> {
     public var success: UInt8 = 0
-    public var books: Array<BookInfo> = []
-    public var pagination: Pagination = Pagination()
+    public var books: ?Array<BookInfo> = []
+    public var pagination: ?Pagination = Pagination()
+    public var errorInfo: ?String = ''
 
     public func serialize(): DataModel {
         return DataModelStruct()
             .add(field<UInt8>("success", success))
-            .add(field<Array<BookInfo>>("books", books))
-            .add(field<Pagination>("pagination", pagination))
+            .add(field<?Array<BookInfo>>("books", books))
+            .add(field<?Pagination>("pagination", pagination))
+            .add(field<?String>("errorInfo", errorInfo))
     }
     public static func deserialize(dm: DataModel): GetBookWithInfoAndPaginationRes {
         var dms = match (dm) {
@@ -18,8 +20,9 @@ public struct GetBookWithInfoAndPaginationRes <: Serializable<GetBookWithInfoAnd
         }
         var result = GetBookWithInfoAndPaginationRes()
         result.success = UInt8.deserialize(dms.get("success"))
-        result.books = Array<BookInfo>.deserialize(dms.get("books"))
-        result.pagination = Pagination.deserialize(dms.get("pagination"))
+        result.books = Option<Array<BookInfo>>.deserialize(dms.get("books"))
+        result.pagination = Option<Pagination>.deserialize(dms.get("pagination"))
+        result.errorInfo = Option<String>.deserialize(dms.get('error'))
         return result
     }
 }

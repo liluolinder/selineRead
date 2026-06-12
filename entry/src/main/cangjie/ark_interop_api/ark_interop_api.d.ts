@@ -1,43 +1,8 @@
-export declare class ZlibBookInfoArk {
-    id: number
-    contentType: string
-    title: string
-    author: string | undefined
-    volume: string
-    year: number
-    edition: string | undefined
-    publisher: string | undefined
-    identifier: string | undefined
-    language: string
-    pages: number
-    series: string
-    cover: string
-    termsHash: string
-    active: number
-    deleted: number
-    filesize: number
-    filesizeString: string
-    extension: string
-    md5: string
-    sha256: string
-    href: string
-    hash: string
-    kindleAvailable: boolean
-    sendToEmailAvailable: boolean
-    interestScore: string
-    qualityScore: string
-    description: string
-    dl: string
-    readOnlineUrl: string | undefined
-    isUserSavedBook: boolean | undefined
-    dataSaved: string | undefined
-    readOnlineAvailable: boolean
-    getDownloadInfo(cookie: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
-}
-
-export declare class webdavArk {
-    start(): void
-    stop(): void
+export declare class PaginationArk {
+    limit: number
+    current: number
+    totalItems: number
+    totalPages: number
 }
 
 export declare class ZlibUserInfoArk {
@@ -49,6 +14,7 @@ export declare class ZlibUserInfoArk {
     todayDownloadNum: number
     downloadLimit: number
     cookie: string
+    getSavedBook(page: number, returnFunc: (funcArg0: Array<ZlibBookInfoArk>, funcArg1: PaginationArk) => void, errorFunc: (funcArg0: string) => void): void
 }
 
 export declare class ZlibClientArk {
@@ -99,7 +65,7 @@ export declare class ZlibBookInfoArk {
     qualityScore: string
     description: string
     dl: string
-    readOnlineUrl: string
+    readOnlineUrl: string | undefined
     isUserSavedBook: boolean | undefined
     dataSaved: string | undefined
     readOnlineAvailable: boolean
@@ -121,12 +87,18 @@ export declare class DownloadManageArk {
     createTask(taskID: string, downloadUrl: string, fileName: string, returnFunc: (funcArg0: DownloadTaskArk) => void, errorFunc: (funcArg0: string) => void): void
 }
 
+export declare class webdavArk {
+    start(): void
+    stop(): void
+}
+
 export declare interface CustomLib {
+    webdavArk: { new (rootPath: string, port: number, account: string, password: string): webdavArk }
     DownloadManageArk: { new (downloadPath: string): DownloadManageArk }
     DownloadTaskArk: { new (): DownloadTaskArk }
     ZlibBookInfoArk: { new (): ZlibBookInfoArk }
     ZlibBookInfoBriefArk: { new (): ZlibBookInfoBriefArk }
     ZlibClientArk: { new (): ZlibClientArk }
     ZlibUserInfoArk: { new (): ZlibUserInfoArk }
-    webdavArk: { new (rootPath: string, port: number, account: string, password: string): webdavArk }
+    PaginationArk: { new (): PaginationArk }
 }

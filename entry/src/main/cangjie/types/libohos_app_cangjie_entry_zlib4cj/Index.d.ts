@@ -1,4 +1,12 @@
 
+export declare class PaginationArk {
+    limit: number
+    current: number
+    totalItems: number
+    totalPages: number
+    constructor()
+}
+
 export declare class ZlibUserInfoArk {
     id: number
     email: string
@@ -8,6 +16,7 @@ export declare class ZlibUserInfoArk {
     todayDownloadNum: number
     downloadLimit: number
     cookie: string
+    getSavedBook(page: number, returnFunc: (funcArg0: Array<ZlibBookInfoArk>, funcArg1: PaginationArk) => void, errorFunc: (funcArg0: string) => void): void
     constructor()
 }
 

@@ -35,69 +35,6 @@ export struct BookInfo {
   @Local isOpening: boolean = false
   @Local isFlashing: boolean = false
   recommendPage: number = 1
-  commitPage: number = 1
-
-  /*  @Builder
-    commentPageBuilder() {
-      Column() {
-        List({ space: 10 }) {
-          LazyForEach(zlibClient.bookCommentArray, (item: I_BookComment) => {
-            ListItem() {
-              Column({ space: 6 }) {
-                Row({ space: 6 }) {
-                  if (item.user.avatar.length == 0) {
-                    Stack() {
-                      SymbolGlyph($r('sys.symbol.person')).fontColor([$r('sys.color.font')]).fontSize(16)
-                    }
-                    .size({ width: 24, height: 24 })
-                    .backgroundColor($r('sys.color.comp_background_gray'))
-                    .borderRadius('50%')
-                    .opacity(0.7)
-                  } else {
-                    Image(item.user.avatar).size({ width: 24, height: 24 }).borderRadius('50%').clip(true)
-                  }
-                  Text(item.user.name).fontSize(18).fontWeight(FontWeight.Medium).opacity(0.8)
-                }
-
-                Text(item.text).fontSize(17)
-                Text(item.date).width('100%').textAlign(TextAlign.End).fontSize(10).opacity(0.5)
-              }.alignItems(HorizontalAlign.Start).width('100%')
-            }
-            .width('100%')
-            .padding({
-              left: 15,
-              right: 15,
-              top: 10,
-              bottom: 10
-            })
-            .transition(TransitionEffect.OPACITY
-              .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
-              .animation({ curve: curves.springMotion(0.5, 0.7) }))
-            .backgroundColor($r('sys.color.comp_background_list_card'))
-            .borderRadius(20)
-          })
-        }
-        .onScrollStart(()=>{
-          setTimeout(()=>{
-            __UI__.hideBars()
-          }, 50)
-        })
-        .layoutWeight(1)
-        .contentEndOffset(16)
-        .chainAnimation(true)
-        .clip(true)
-        .borderRadius({ topLeft: 20, topRight: 20 })
-        .margin({ left: 16, right: 16 })
-        .scrollBar(BarState.Off)
-        .onReachEnd(() => {
-          zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage + 1).then((get) => {
-            if (get) {
-              this.commitPage++
-            }
-          })
-        })
-      }.size({ width: '100%', height: '100%' })
-    }*/
 
   build() {
     NavDestination() {
@@ -427,28 +364,15 @@ export struct BookInfo {
         }
       },
       {
-        value: '评论',
-        symbolIcon: new SymbolGlyphModifier($r('sys.symbol.ellipsis_bubble')),
+        value: '收藏',
+        symbolIcon: new SymbolGlyphModifier(this.bookInfo?.isUserSavedBook||this.bookInfo?.dataSaved ?$r('sys.symbol.heart_fill'):$r('sys.symbol.heart')),
         action: () => {
-          // promptAction.showToast({ message: `尝试获取`, duration: 2000 })
-          // zlibClient.bookCommentArray.clearData()
-          // this.commitPage = 1
-          // zlibClient.getBookCommit(this.bookInfo?.bookID?.toString()!, this.commitPage).then((get) => {
-          //   if (get) {
-          //     this.showComment = true
-          //   } else {
-          //     promptAction.showToast({ message: `获取失败`, duration: 2000 })
-          //   }
-          // })
+          console.log(`meow:${this.bookInfo?.isUserSavedBook}`)
 
         }
       }
     ])
-    // .bindSheet($$this.showComment, this.commentPageBuilder(), {
-    //   preferType: SheetType.CENTER,
-    //   height: SheetSize.LARGE,
-    //   title: { title: '评论' }
-    // })
+
     .size({ width: '100%', height: '100%' })
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
       Color.Transparent : $r('sys.color.comp_background_gray'))

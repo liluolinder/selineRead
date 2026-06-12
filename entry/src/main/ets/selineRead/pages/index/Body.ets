@@ -50,6 +50,7 @@ export struct Body {
                 bookInfo.bookAuthor = itemA.bookAuthor
                 bookInfo.bookHref = itemA.bookHref
                 bookInfo.bookId = itemA.bookId
+                console.log(bookInfo.bookHref)
                 return
               }
             })

@@ -1,26 +1,31 @@
-import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from "commonpackage"
-import { __Download__, __Setting__, __System__, __UI__ } from "../../commons/shareDatas"
-import { __CustomBackgroundData__ } from "../../components/CustomBackground"
-import { ComposeTitleBar, LengthUnit, SymbolGlyphModifier } from "@kit.ArkUI"
-import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo"
-import { shareBook } from "../../models/utils/ShareBook"
-import { fileIo, fileUri } from "@kit.CoreFileKit"
-import { Want, wantConstant } from "@kit.AbilityKit"
-import { BusinessError } from "@kit.BasicServicesKit"
-import { loadingDialog } from "../../components/LoadingNewDialog"
-import { zlibClient } from "../../../zlibrary/zlibClient"
-import { http } from "@kit.NetworkKit"
-import { __Home__ } from "../zlibrary/Home/Home"
-import { I_BookDetailedInfo } from "../../models/interfaces/I_BookInfo"
-import { I_SearchHistory } from "../../models/interfaces/I_SearchHistory"
-import { min_width } from "../../commons/commonItem"
-import { I_ZlibBookInfoRes_Book } from "../../../zlibrary/interface/I_ZlibBookInfo"
+import { BasicDataSource, XAnimation, XContext } from 'commonpackage'
+import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../../commons/shareDatas'
+import { LengthUnit, SegmentButtonV2Items, TabSegmentButtonV2 } from '@kit.ArkUI'
+import { I_BookShelfBookInfo } from '../../models/interfaces/I_BookShelfBookInfo'
+import { shareBook } from '../../models/utils/ShareBook'
+import { fileIo, fileUri } from '@kit.CoreFileKit'
+import { Want, wantConstant } from '@kit.AbilityKit'
+import { BusinessError } from '@kit.BasicServicesKit'
+import { loadingDialog } from '../../components/LoadingNewDialog'
+import { zlibClient } from '../../../zlibrary/zlibClient'
+import { http } from '@kit.NetworkKit'
+import { __Home__ } from '../zlibrary/Home/Home'
+import { I_BookDetailedInfo } from '../../models/interfaces/I_BookInfo'
+import { HdsNavigation } from '@hms.hds.hdsBaseComponent'
+import { hdsMaterial, HdsNavigationTitleMode } from '@kit.UIDesignKit'
+import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
+import { BookInfo } from '../zlibrary/BookInfo/BookInfo'
 
 @ObservedV2
 export class BookShelfData {
   bookList: BasicDataSource<I_BookShelfBookInfo> =
     new BasicDataSource<I_BookShelfBookInfo>()
+
+  zlibSavedBooks: BasicDataSource<ZlibBookInfoArk> =
+    new BasicDataSource<ZlibBookInfoArk>()
+
   @Trace gettingBookNow: boolean = false
+  @Trace errorText:string = ''
 }
 
 export let __BookShelf__: BookShelfData = new BookShelfData()
@@ -30,6 +35,11 @@ export struct BookShelf {
   @Local isOpening: boolean = false
   @Consumer('tabController') tabController: TabsController = new TabsController();
   @Consumer('currentTabIndex') currentTabIndex: number = 0
+  @Local chooseItem: SegmentButtonV2Items = new SegmentButtonV2Items([
+    { text: '本地' },
+    { text: 'zlib收藏' },
+  ]);
+  @Local chooseIndex: number = 0;
 
   @Builder
   draggingPreview(item: I_BookShelfBookInfo) {
@@ -52,7 +62,7 @@ export struct BookShelf {
   }
 
   @Builder
-  BookMenu(item: I_BookShelfBookInfo, index: number) {
+  bookMenu(item: I_BookShelfBookInfo, index: number) {
     Menu() {
       MenuItem({ content: $r('app.string.Text_Share') })
         .onClick(() => {
@@ -101,7 +111,7 @@ export struct BookShelf {
           this.isOpening = true
           let req = http.createHttp()
           let splitBook = item.bookHref.split(`/`)
-          await zlibClient.getBookInfo(req,Number(splitBook[2]),splitBook[3]).then((res) => {
+          await zlibClient.getBookInfo(req, Number(splitBook[2]), splitBook[3]).then((res) => {
             if (res[0] == 1) {
               __Home__.errorText = ''
               let bookInfo: I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
@@ -116,7 +126,7 @@ export struct BookShelf {
         })
         .enabled(item.bookHref != '')
 
-      MenuItem({ content: $r('app.string.Text_Export'), builder: (): void => this.ExportMenu(item) })
+      MenuItem({ content: $r('app.string.Text_Export'), builder: (): void => this.exportMenu(item) })
         .enabled(fileIo.accessSync(item.bookPath))
 
 
@@ -142,7 +152,7 @@ export struct BookShelf {
   }
 
   @Builder
-  ExportMenu(item: I_BookShelfBookInfo) {
+  exportMenu(item: I_BookShelfBookInfo) {
     Menu() {
       MenuItem({ content: '格物阅读' })
         .onClick(async () => {
@@ -189,103 +199,223 @@ export struct BookShelf {
 
   }
 
+  @Builder
+  changeSegButton() {
+    Row() {
+      TabSegmentButtonV2({
+        items: this.chooseItem,
+        selectedIndex: this.chooseIndex!!,
+      }).width(200)
+    }.padding({ left: 16, right: 16 })
+  }
+
+  @Monitor("chooseIndex")
+  changeIndexCallback(){
+    switch (this.chooseIndex){
+      case 0:
+        break
+      case 1:
+        __BookShelf__.zlibSavedBooks.clearData()
+        __BookShelf__.gettingBookNow = true
+        __ZlibUser__.localChooseAccount.getSavedBook(1,(books, pageInfo)=>{
+          __BookShelf__.gettingBookNow = false
+          books.forEach((item)=>{
+            __BookShelf__.zlibSavedBooks.pushData(item)
+          })
+          console.log(`limit:${pageInfo.limit}`)
+          console.log(`current:${pageInfo.current}`)
+          console.log(`totalItems:${pageInfo.totalItems}`)
+          console.log(`totalPages:${pageInfo.totalPages}`)
+
+        },(error)=>{
+          __BookShelf__.errorText = error
+        })
+        break
+    }
+  }
+
   build() {
     Column() {
-      Navigation() {
+      HdsNavigation() {
         Stack() {
-          if (__BookShelf__.bookList.dataArray.length == 0) {
-            if (__BookShelf__.gettingBookNow) {
-              Column() {
-                Text($r('app.string.Tip_GettingBookNow'))
-                  .fontSize(26)
-                  .fontWeight(FontWeight.Bold)
-              }.height('100%')
-              .width('100%')
-              .padding({ left: 16, right: 16 })
-              .justifyContent(FlexAlign.Center)
-            } else {
-              Column() {
-                Text($r('app.string.Tip_ThereAreNotEmptyAnyMore'))
-                  .fontSize(26)
-                  .fontWeight(FontWeight.Bold)
-              }.height('100%')
-              .width('100%')
-              .padding({ left: 16, right: 16 })
-              .justifyContent(FlexAlign.Center)
-            }
-          } else {
-            List({ space: 10 }) {
-              LazyForEach(__BookShelf__.bookList, (item: I_BookShelfBookInfo, index: number) => {
-                ListItem() {
-                  Row({ space: 10 }) {
-                    Image(item.bookImage)
-                      .aspectRatio(2 / 3)
-                      .autoResize(true)
-                      .height('100%')
-                      .shadow({
-                        radius: 25,
-                        color: Color.Gray,
-                        offsetX: 0,
-                        offsetY: 10
-                      })
-                    Column({ space: 5 }) {
-                      Text(item.bookName)
-                        .fontWeight(FontWeight.Medium)
-                        .fontSize(22)
-                        .width('100%')
-                        .maxLines(1)
-                        .textOverflow({ overflow: TextOverflow.MARQUEE })
 
-                      Text(item.bookAuthor)
-                        .fontWeight(FontWeight.Normal)
-                        .fontSize(18)
-                        .width('100%')
-                        .maxLines(1)
-                        .opacity(0.8)
-                        .textOverflow({ overflow: TextOverflow.Ellipsis })
-                    }.height('100%')
-                    .layoutWeight(1)
-                  }.height(120)
-                  .backgroundColor($r('sys.color.comp_background_list_card'))
-                  .borderRadius(20)
-                  .padding(16)
-                }
-                .onClick(() => {
-                  let want: Want = {
-                    bundleName: 'com.huawei.hmsapp.books',
-                    action: 'ohos.want.action.viewData',
-                    uri: fileUri.getUriFromPath(item.bookPath),
-                    flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION | wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
-                  };
-                  switch (__Setting__.bookShelfClickOpenWay) {
-                    case 2:
-                      want.bundleName = 'com.huawei.hmsapp.books'
-                      XContext.getAbilityContext().startAbility(want)
-                      break;
-                    case 3:
-                      want.bundleName = 'com.hm.ultimate.reader'
-                      XContext.getAbilityContext().startAbility(want)
-                      break;
+          if (this.chooseIndex == 0){
+            if (__BookShelf__.bookList.dataArray.length ==0){
+              if (__BookShelf__.gettingBookNow) {
+                Column() {
+                  Text($r('app.string.Tip_GettingBookNow'))
+                    .fontSize(26)
+                    .fontWeight(FontWeight.Bold)
+                }.height('100%')
+                .width('100%')
+                .padding({ left: 16, right: 16 })
+                .justifyContent(FlexAlign.Center)
+              } else {
+                Column() {
+                  Text($r('app.string.Tip_ThereAreNotEmptyAnyMore'))
+                    .fontSize(26)
+                    .fontWeight(FontWeight.Bold)
+                }.height('100%')
+                .width('100%')
+                .padding({ left: 16, right: 16 })
+                .justifyContent(FlexAlign.Center)
+              }
+            }else {
+              List({ space: 10 }) {
+                LazyForEach(__BookShelf__.bookList, (item: I_BookShelfBookInfo, index: number) => {
+                  ListItem() {
+                    Row({ space: 10 }) {
+                      Image(item.bookImage)
+                        .aspectRatio(2 / 3)
+                        .autoResize(true)
+                        .height('100%')
+                        .shadow({
+                          radius: 25,
+                          color: Color.Gray,
+                          offsetX: 0,
+                          offsetY: 10
+                        })
+                      Column({ space: 5 }) {
+                        Text(item.bookName)
+                          .fontWeight(FontWeight.Medium)
+                          .fontSize(22)
+                          .width('100%')
+                          .maxLines(1)
+                          .textOverflow({ overflow: TextOverflow.MARQUEE })
+
+                        Text(item.bookAuthor)
+                          .fontWeight(FontWeight.Normal)
+                          .fontSize(18)
+                          .width('100%')
+                          .maxLines(1)
+                          .opacity(0.8)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      }.height('100%')
+                      .layoutWeight(1)
+                    }.height(120)
+                    .backgroundColor($r('sys.color.comp_background_list_card'))
+                    .borderRadius(20)
+                    .padding(16)
                   }
-                })
-                .transition(XAnimation.getAnimation('bottom'))
-                .bindContextMenu(this.BookMenu(item, index), ResponseType.RightClick)
-                .bindContextMenu(this.BookMenu(item, index), ResponseType.LongPress,
-                  { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
-              }, (item: I_BookShelfBookInfo, index: number) => JSON.stringify(item) + JSON.stringify(index))
+                  .onClick(() => {
+                    let want: Want = {
+                      bundleName: 'com.huawei.hmsapp.books',
+                      action: 'ohos.want.action.viewData',
+                      uri: fileUri.getUriFromPath(item.bookPath),
+                      flags: wantConstant.Flags.FLAG_AUTH_WRITE_URI_PERMISSION |
+                        wantConstant.Flags.FLAG_AUTH_READ_URI_PERMISSION
+                    };
+                    switch (__Setting__.bookShelfClickOpenWay) {
+                      case 2:
+                        want.bundleName = 'com.huawei.hmsapp.books'
+                        XContext.getAbilityContext().startAbility(want)
+                        break;
+                      case 3:
+                        want.bundleName = 'com.hm.ultimate.reader'
+                        XContext.getAbilityContext().startAbility(want)
+                        break;
+                    }
+                  })
+                  .transition(XAnimation.getAnimation('bottom'))
+                  .bindContextMenu(this.bookMenu(item, index), ResponseType.RightClick)
+                  .bindContextMenu(this.bookMenu(item, index), ResponseType.LongPress,
+                    { preview: this.draggingPreview(item), previewAnimationOptions: { hoverScale: [1.0, 0.9] } })
+                }, (item: I_BookShelfBookInfo, index: number) => JSON.stringify(item) + JSON.stringify(index))
+              }
+              .height('100%')
+              .width('100%')
+              .padding({ left: 16, right: 16 })
+              .borderRadius(20)
+              .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 80)
             }
-            .height('100%')
-            .width('100%')
-            .padding({ left: 16, right: 16 })
-            .borderRadius(20)
-            .contentEndOffset(Math.max(__System__.bottomRectHeight,16) + 80)
+          }else {
+            if (__BookShelf__.zlibSavedBooks.dataArray.length ==0){
+              if (__BookShelf__.gettingBookNow) {
+                Column() {
+                  Text($r('app.string.Tip_GettingBookNow'))
+                    .fontSize(26)
+                    .fontWeight(FontWeight.Bold)
+                }.height('100%')
+                .width('100%')
+                .padding({ left: 16, right: 16 })
+                .justifyContent(FlexAlign.Center)
+              } else {
+                Column() {
+                  Text($r('app.string.Tip_ThereAreNotEmptyAnyMore'))
+                    .fontSize(26)
+                    .fontWeight(FontWeight.Bold)
+                }.height('100%')
+                .width('100%')
+                .padding({ left: 16, right: 16 })
+                .justifyContent(FlexAlign.Center)
+              }
+            }else{
+              List({ space: 10 }) {
+                LazyForEach(__BookShelf__.zlibSavedBooks, (item: ZlibBookInfoArk, index: number) => {
+                  ListItem() {
+                    Row({ space: 10 }) {
+                      Image(item.cover)
+                        .aspectRatio(2 / 3)
+                        .autoResize(true)
+                        .height('100%')
+                        .shadow({
+                          radius: 25,
+                          color: Color.Gray,
+                          offsetX: 0,
+                          offsetY: 10
+                        })
+                      Column({ space: 5 }) {
+                        Text(item.title)
+                          .fontWeight(FontWeight.Medium)
+                          .fontSize(22)
+                          .width('100%')
+                          .maxLines(1)
+                          .textOverflow({ overflow: TextOverflow.MARQUEE })
+
+                        Text(item.author)
+                          .fontWeight(FontWeight.Normal)
+                          .fontSize(18)
+                          .width('100%')
+                          .maxLines(1)
+                          .opacity(0.8)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      }.height('100%')
+                      .layoutWeight(1)
+                    }.height(120)
+                    .backgroundColor($r('sys.color.comp_background_list_card'))
+                    .borderRadius(20)
+                    .padding(16)
+                  }
+                  .onClick(() => {
+                    if (!this.isOpening) {
+                      XAnimation.runWithAnimation(() => {
+                        this.isOpening = true
+                      })
+
+                      __UI__.mainPageStack.pushPathByName("bookInfoPage", item)
+
+                      XAnimation.runWithAnimation(() => {
+                        this.isOpening = false
+                      })
+                    }
+                  })
+                  .transition(XAnimation.getAnimation('bottom'))
+                }, (item: ZlibBookInfoArk, index: number) => JSON.stringify(item.cover) + JSON.stringify(index))
+              }
+              .height('100%')
+              .width('100%')
+              .padding({ left: 16, right: 16 })
+              .borderRadius(20)
+              .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 80)
+            }
           }
 
-          if (__Home__.errorText != '' && __Home__.recommendBookArray.dataArray.length != 0) {
+
+          if (__BookShelf__.errorText != '' ) {
             Stack() {
               Column({ space: 10 }) {
                 LoadingProgress().size({ width: 100, height: 100 })
-                Text(XContext.getStringFromResource($r('app.string.Tip_GettingError')) + '\n' + __Home__.errorText)
+                Text(XContext.getStringFromResource($r('app.string.Tip_GettingError')) + '\n' + __BookShelf__.errorText)
                   .fontSize(20)
                   .fontWeight(FontWeight.Medium)
                   .textAlign(TextAlign.Center)
@@ -294,7 +424,7 @@ export struct BookShelf {
                   .fontColor($r('sys.color.font'))
                   .padding({ left: 32, right: 32 })
                   .onClick(() => {
-                    __Home__.errorText = ''
+                    __BookShelf__.errorText = ''
                   })
               }
               .borderRadius(20)
@@ -314,12 +444,30 @@ export struct BookShelf {
           }
 
         }.size({ width: '100%', height: '100%' })
+
       }
       .size({ width: '100%', height: '100%' })
-      .title($r('app.string.Title_BookShelf'))
+      .titleBar({
+        enableComponentSafeArea: true,
+        style: {
+          systemMaterialEffect: {
+            materialType: hdsMaterial.MaterialType.IMMERSIVE,
+            materialLevel: hdsMaterial.MaterialLevel.EXQUISITE
+          },
+          scrollEffectOpts: {
+            enableScrollEffect: false
+          }
+        },
+        content: {
+          title: {
+            mainTitle: $r('app.string.Title_BookShelf'),
+          },
+          stackBuilder: () => this.changeSegButton()
+        }
+      })
       .hideToolBar(true)
       .hideBackButton(true)
-      .mode(NavigationMode.Stack)
+      .titleMode(HdsNavigationTitleMode.MINI)
     }.padding({ top: Math.max(16, __System__.topRectHeight) })
   }
 }

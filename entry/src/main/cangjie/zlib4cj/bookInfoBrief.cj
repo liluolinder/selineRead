@@ -31,8 +31,7 @@ public class ZlibBookInfoBriefArk {
     }
 
     public func getDetailInfo(cookie: String, returnFunc: (ZlibBookInfoArk) -> Unit, errorFunc: (String) -> Unit): Unit {
-        if (let Some(context) <- globalcontext) {
-            spawn {
+         spawn {
                 try {
                     let reqs = cjValue.getBookInfo(cookie: cookie)
                     if (reqs.success == 1) {
@@ -52,7 +51,6 @@ public class ZlibBookInfoBriefArk {
                     }
                 }
             }
-        }
     }
 
     public ZlibBookInfoBriefArk() {}
