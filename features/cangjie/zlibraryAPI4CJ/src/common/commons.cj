@@ -1,13 +1,15 @@
 package zlibraryAPI4CJ.common
 
 import linderHttp.*
+import std.fs.Path
+import stdx.encoding.url.*
 
-public var zlibBaseUrl: String = "https://zh.zlibraryd.ru/"
+public var zlibBaseUrl: String = "https://zh.zlibraryd.ru"
 public var zlibEAPI: String = "${zlibBaseUrl}/eapi"
 
 public func changeUrl(url: String) {
     zlibBaseUrl = url
-    zlibEAPI = "${zlibBaseUrl}/eapi"
+    zlibEAPI = URL.parse(zlibBaseUrl).replace(path:'/eapi').toString()
 }
 
 public func canAccessZlib(autoRedirect!: Bool = false): Bool {

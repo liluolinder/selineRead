@@ -4,36 +4,29 @@ import { __Setting__ } from "../../commons/shareDatas"
 import { motion } from "@kit.MultimodalAwarenessKit"
 import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
 import { pasteboard } from "@kit.BasicServicesKit"
+import { I_ListTitle } from "../../models/interfaces/I_ListTitle"
+import { ListTitle } from "../../components/ListTitle"
 
 @Builder
 export function SettingBuilder() {
   Setting()
 }
 
-interface SettingTitle {
-  title: ResourceStr,
-  needTip: boolean
-  tip?: string
-}
 
 @ComponentV2
 export struct Setting {
-  settingOptionArray: SettingTitle[] = [
+  settingOptionArray: I_ListTitle[] = [
     {
       title: $r('app.string.Title_DisplaySetting'),
-      needTip: false
     },
     {
       title: $r('app.string.Title_DownloadSetting'),
-      needTip: false
     },
     {
       title: $r('app.string.Title_BookShelfSetting'),
-      needTip: false
     },
     {
       title: 'WebDAV服务器',
-      needTip: true,
       tip: '启用内置webdav服务，将下载目录/Seline Read(阅韵心读)挂载,便于导入其他APP，只有在关闭服务器情况下，才可以配置参数'
     }
   ]
@@ -241,9 +234,9 @@ export struct Setting {
     Column() {
       Scroll() {
         Column({ space: 20 }) {
-          ForEach(this.settingOptionArray, (title: SettingTitle, index: number) => {
+          ForEach(this.settingOptionArray, (title: I_ListTitle, index: number) => {
             Column({ space: 10 }) {
-              SettingTitleBuilder({
+              ListTitle({
                 item: title
               })
 
@@ -281,25 +274,3 @@ export struct Setting {
   }
 }
 
-@ComponentV2
-struct SettingTitleBuilder {
-  @Require @Param item: SettingTitle
-  @Local showTip: boolean = false
-
-  build() {
-    Row({ space: 5 }) {
-      Text(this.item.title)
-        .fontWeight(FontWeight.Bold)
-      if (this.item.needTip) {
-        SymbolGlyph($r('sys.symbol.questionmark_circle'))
-          .fontSize(20)
-          .onClick(() => {
-            this.showTip = true
-          })
-          .bindPopup(this.showTip!!, {
-            message: this.item.tip
-          })
-      }
-    }.width('100%')
-  }
-}

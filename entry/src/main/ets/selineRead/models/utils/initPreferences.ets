@@ -7,9 +7,8 @@ import { motion } from "@kit.MultimodalAwarenessKit";
 export async function initPreferences() {
   console.log(`开始读取首选项`)
   __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.tur101.ru') as string
-  __ZlibUser__.baseApi_url = __ZlibUser__.base_url + '/papi'
-  __ZlibUser__.baseEApi_url = __ZlibUser__.base_url + '/eapi'
   __ZlibUser__.zlibClient.setZlibUrl(__ZlibUser__.base_url)
+
   __Setting__.webdavServerEnabled = XPreferencesManager.getPreferencesValue("selineRead","webdavServerEnabled",false) as boolean
 
   __Setting__.webdavPort = XPreferencesManager.getPreferencesValue("selineRead","webdavPort",8088) as number

@@ -12,131 +12,131 @@ import zlibraryAPI4CJ.common.zlibBaseUrl
 import zlibraryAPI4CJ.common.zlibEAPI
 import ohos_app_cangjie_entry.run2JS
 import ohos.hilog.Hilog
+import zlibraryAPI4CJ.common.changeUrl
 
 @Interop[ArkTS]
 public class ZlibClientArk {
     let client: ZlibClient = ZlibClient()
 
     public func checkAccess(autoRedirect: Bool, returnFunc: (Bool) -> Unit, errorFunc: (String) -> Unit): Unit {
-       spawn {
-                try {
-                    let res = canAccessZlib(autoRedirect: autoRedirect)
-                    run2JS {
-                        returnFunc(res)
-                    }
-                } catch (err: Exception) {
-                    run2JS {
-                        errorFunc(err.toString())
-                    }
+        spawn {
+            try {
+                let res = canAccessZlib(autoRedirect: autoRedirect)
+                run2JS {
+                    returnFunc(res)
+                }
+            } catch (err: Exception) {
+                run2JS {
+                    errorFunc(err.toString())
                 }
             }
+        }
     }
 
     public func getRecommendBook(returnFunc: (JSArrayEx<ZlibBookInfoBriefArk>) -> Unit, errorFunc: (String) -> Unit): Unit {
         spawn {
-                try {
-                    let reqs = client.getRecommendBook()
-                    if (reqs.success == 1) {
-                        let temp = reqs
-                            .books
-                            .getOrThrow()
-                            .map({bookInfo => ZlibBookInfoBriefArk.fromCJ(bookInfo)})
-                        let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
-                        run2JS {
-                            returnFunc(res)
-                        }
-                    } else {
-                        run2JS {
-                            errorFunc("获取错误:${reqs.errorInfo.getOrDefault({=> '未知错误'})}")
-                        }
-                    }
-                } catch (error: Exception) {
+            try {
+                let reqs = client.getRecommendBook()
+                if (reqs.success == 1) {
+                    let temp = reqs
+                        .books
+                        .getOrThrow()
+                        .map({bookInfo => ZlibBookInfoBriefArk.fromCJ(bookInfo)})
+                    let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
                     run2JS {
-                        errorFunc(error.toString())
+                        returnFunc(res)
+                    }
+                } else {
+                    run2JS {
+                        errorFunc("获取错误:${reqs.errorInfo.getOrDefault({=> '未知错误'})}")
                     }
                 }
+            } catch (error: Exception) {
+                run2JS {
+                    errorFunc(error.toString())
+                }
             }
+        }
     }
 
     public func login(email: String, password: String, returnFunc: (ZlibUserInfoArk) -> Unit,
         errorFunc: (String) -> Unit): Unit {
         spawn {
-                try {
-                    let reqs = client.login(email: email, password: password)
+            try {
+                let reqs = client.login(email: email, password: password)
 
-                    if (reqs.success == 1) {
-                        if (let Some(info) <- reqs.userInfo) {
-                            let res = ZlibUserInfoArk.fromCJ(info)
-                            run2JS {
-                                returnFunc(res)
-                            }
-                        }
-                    } else {
+                if (reqs.success == 1) {
+                    if (let Some(info) <- reqs.userInfo) {
+                        let res = ZlibUserInfoArk.fromCJ(info)
                         run2JS {
-                            errorFunc("获取错误:${reqs.errorInfo.getOrDefault({=> '未知错误'})}")
+                            returnFunc(res)
                         }
                     }
-                } catch (err: Exception) {
+                } else {
                     run2JS {
-                        errorFunc(err.toString())
+                        errorFunc("获取错误:${reqs.errorInfo.getOrDefault({=> '未知错误'})}")
                     }
                 }
+            } catch (err: Exception) {
+                run2JS {
+                    errorFunc(err.toString())
+                }
             }
+        }
     }
 
     public func search(bookName: String, page: UInt16, returnFunc: (JSArrayEx<ZlibBookInfoBriefArk>) -> Unit,
         errorFunc: (String) -> Unit): Unit {
-       spawn {
-                try {
-                    let reqs = client.search(message: bookName, page: page)
-                    if (reqs.success == 1) {
-                        let temp = reqs
-                            .books
-                            .getOrThrow()
-                            .map(
-                                {
-                                    bookinfo: BookInfo =>
-                                        let book = BookInfoBrief()
-                                        book.title = bookinfo.title
-                                        book.id = bookinfo.id
-                                        book.hash = bookinfo.hash
-                                        book.author = bookinfo
-                                            .author
-                                            .getOrDefault {''}
-                                        book.cover = bookinfo.cover
-                                        ZlibBookInfoBriefArk.fromCJ(book)
-                                }
-                            )
+        spawn {
+            try {
+                let reqs = client.search(message: bookName, page: page)
+                if (reqs.success == 1) {
+                    let temp = reqs
+                        .books
+                        .getOrThrow()
+                        .map(
+                            {
+                                bookinfo: BookInfo =>
+                                    let book = BookInfoBrief()
+                                    book.title = bookinfo.title
+                                    book.id = bookinfo.id
+                                    book.hash = bookinfo.hash
+                                    book.author = bookinfo
+                                        .author
+                                        .getOrDefault {''}
+                                    book.cover = bookinfo.cover
+                                    ZlibBookInfoBriefArk.fromCJ(book)
+                            }
+                        )
 
-                        let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
+                    let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
 
-                        run2JS{
-                            returnFunc(res)
-                        }
-                    } else {
-                        run2JS {
-                            errorFunc("获取错误:搜索错误")
-                        }
+                    run2JS {
+                        returnFunc(res)
                     }
-                } catch (err: Exception) {
-                     run2JS {
-                            errorFunc(err.message)
-                      }
+                } else {
+                    run2JS {
+                        errorFunc("获取错误:搜索错误")
+                    }
+                }
+            } catch (err: Exception) {
+                run2JS {
+                    errorFunc(err.message)
                 }
             }
+        }
     }
 
     public func getZlibUrl(returnFunc: (String) -> Unit): Unit {
         spawn {
-                run2JS {
-                    returnFunc(zlibBaseUrl)
-                }
+            run2JS {
+                returnFunc(zlibBaseUrl)
             }
+        }
     }
 
     public func setZlibUrl(url: String): Unit {
-        zlibBaseUrl = url
-        zlibEAPI = "${zlibBaseUrl}/eapi"
+        changeUrl(url)
     }
 
     public ZlibClientArk() {}

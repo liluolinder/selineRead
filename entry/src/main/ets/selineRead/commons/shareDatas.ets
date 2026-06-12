@@ -107,5 +107,7 @@ export class Setting{
   @Trace webdavAccount:string = 'admin'
   @Trace webdavPassword:string = 'admin'
   @Trace webdavClient?:webdavArk
+
+  @Trace autoRefreshUrl:boolean = true
 }
 export const __Setting__: Setting = new Setting()

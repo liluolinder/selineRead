@@ -100,7 +100,6 @@ export struct Body {
     __ZlibUser__.zlibClient.checkAccess(true, (res) => {
       if (res) {
         __ZlibUser__.zlibClient.getZlibUrl((res) => {
-          console.log(res)
           __ZlibUser__.base_url = res
           XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
         })
@@ -111,6 +110,9 @@ export struct Body {
             __ZlibUser__.cookie = res.cookie
             __ZlibUser__.localChooseAccount.getRecommendBook((books)=>{
               this.putBooks(books)
+              if(books.length == 0 ){
+                this.getCommonRecommend()
+              }
             },(error)=>{
               __Home__.errorText = error
               __Home__.canGetMore = true
@@ -128,38 +130,6 @@ export struct Body {
     }, (err) => {
       __Home__.errorText = err
     })
-
-    /*    zlibClient.refreshUrl().then(() => {
-          console.log(__ZlibUser__.cookie);
-          let req = http.createHttp()
-          zlibClient.getRecommendBook(req).then((res) => {
-            console.log(JSON.stringify(res))
-            __Home__.canGetMore = true
-            if (res[0] == 1) {
-              console.log(JSON.stringify(res[1]));
-              if (JSON.stringify(res[1]) == "\"[]\"" ) {
-                __Home__.errorText = '返回值为空'
-              }else {
-                (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-                  __Home__.recommendBookArray.pushData(item)
-                })
-              }
-            } else {
-              __Home__.errorText = res[1]
-            }
-          })
-
-          if (__ZlibUser__.cookie!='') {
-            zlibClient.getPersonInfo(__ZlibUser__.cookie).then((res) => {
-              if (res[0] == 1) {
-                let basicInfo = JSON.parse(res[1]) as I_loginRes_user
-                __ZlibUser__.avatar = ''
-                __ZlibUser__.userName = basicInfo.name
-              }
-            })
-          }
-
-        })*/
   }
 
   @Builder

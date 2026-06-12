@@ -14,6 +14,7 @@ import { __Home__ } from "../../Home/Home";
 import { I_BookInfo } from "../../../../models/interfaces/I_BookInfo";
 import { I_loginRes_user } from "../../../../../zlibrary/interface/I_loginInfo";
 import { I_ZlibBookInfoRes_Book, I_ZLibRecommendBook_Book } from "../../../../../zlibrary/interface/I_ZlibBookInfo";
+import { ZlibServiceAddress } from "./ZlibServiceAddress";
 
 @Builder
 export function ZlibraryAccountBuilder() {
@@ -79,31 +80,32 @@ export struct ZlibraryAccount {
   @Builder
   ZlibSettingBuilder() {
     Column() {
-      List() {
-        ListItem() {
-          ListItemWithInput({
-            image: $r('app.media.zlib'),
-            message: $r('app.string.Title_ServerAddress'),
-            text: __ZlibUser__.base_url,
-            placeholder: $r('app.string.Tip_TapHereToType'),
-            returnFunc: (returnText: string) => {
-              //保存地址
-              __ZlibUser__.base_url = returnText
-              __ZlibUser__.baseApi_url = returnText + '/papi'
-              __ZlibUser__.baseEApi_url = returnText + '/eapi'
-              XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", returnText)
-
-              __ZlibUser__.zlibClient.setZlibUrl(returnText)
-
-              XContext.toast(`请重启APP以加载数据`, 4000)
-
-            }
-          })
-        }.backgroundColor($r('sys.color.comp_background_list_card'))
-        .borderRadius(20)
-      }.width('100%')
-      .height('100%')
-      .padding({ left: 16, right: 16 })
+      ZlibServiceAddress()
+      // List() {
+      //   ListItem() {
+      //     ListItemWithInput({
+      //       image: $r('app.media.zlib'),
+      //       message: $r('app.string.Title_ServerAddress'),
+      //       text: __ZlibUser__.base_url,
+      //       placeholder: $r('app.string.Tip_TapHereToType'),
+      //       returnFunc: (returnText: string) => {
+      //         //保存地址
+      //         __ZlibUser__.base_url = returnText
+      //         __ZlibUser__.baseApi_url = returnText + '/papi'
+      //         __ZlibUser__.baseEApi_url = returnText + '/eapi'
+      //         XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", returnText)
+      //
+      //         __ZlibUser__.zlibClient.setZlibUrl(returnText)
+      //
+      //         XContext.toast(`请重启APP以加载数据`, 4000)
+      //
+      //       }
+      //     })
+      //   }.backgroundColor($r('sys.color.comp_background_list_card'))
+      //   .borderRadius(20)
+      // }.width('100%')
+      // .height('100%')
+      // .padding({ left: 16, right: 16 })
     }.width('100%')
   }
 
