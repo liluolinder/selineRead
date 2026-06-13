@@ -47,12 +47,14 @@ export struct ZlibSetting {
           value: '确定',
           buttonStyle: ButtonStyleMode.TEXTUAL,
           action: () => {
-            if (__ZlibUser__.zlibServiceAddressArray.filter((address) => address.url.includes(this.newUrl) || this.newUrl.includes(address.url) ).length != 0 ||
-              this.officialAddress.filter((address) => address.url.includes(this.newUrl) || this.newUrl.includes(address.url)).length != 0) {
+            if (__ZlibUser__.zlibServiceAddressArray.filter(
+              (address) => address.url.includes(this.newUrl) || this.newUrl.includes(address.url)).length != 0 ||
+              this.officialAddress.filter(
+                (address) => address.url.includes(this.newUrl) || this.newUrl.includes(address.url)).length != 0) {
               //说明冲突 不给建
               XContext.alterDialogWithTwoButton({
                 title: "提醒",
-                message:"已存在服务地址请不要重复添加",
+                message: "已存在服务地址请不要重复添加",
                 cancelCallBack: (): void => {
                 },
                 confirmCallBack: (): void => {
@@ -104,6 +106,34 @@ export struct ZlibSetting {
     }.width('100%')
   }
 
+  private getStatusString(status: ZlibServiceStatus): string {
+    switch (status) {
+      case ZlibServiceStatus.Trying:
+        return '尝试链接中'
+      case ZlibServiceStatus.Accessible:
+        return `可以链接`
+      case ZlibServiceStatus.UnAccessible:
+        return '无法链接'
+      case ZlibServiceStatus.CanUpdate:
+        return '可以更新地址'
+      default:
+        return ''
+    }
+  }
+
+  private getStatusColor(status: ZlibServiceStatus): Resource | Color {
+    switch (status) {
+      case ZlibServiceStatus.Unknown:
+      case ZlibServiceStatus.Trying:
+        return Color.Gray
+      case ZlibServiceStatus.Accessible:
+      case ZlibServiceStatus.CanUpdate:
+        return Color.Green
+      case ZlibServiceStatus.UnAccessible:
+        return Color.Red
+    }
+  }
+
   build() {
     HdsNavigation() {
       List({ space: 10, scroller: this.scroller }) {
@@ -144,6 +174,8 @@ export struct ZlibSetting {
               ListItemWithRadio({
                 message: address.url,
                 group: 'zlibServiceAddress',
+                subMessage: this.getStatusString(address.status),
+                subMessageColor: this.getStatusColor(address.status),
                 checked: __ZlibUser__.urlType == 0 &&
                   (__ZlibUser__.base_url.includes(address.url) || address.url.includes(__ZlibUser__.base_url)),
                 onChange: (checked: boolean) => {
@@ -153,7 +185,6 @@ export struct ZlibSetting {
                     XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", address.url)
                     XPreferencesManager.putPreferencesValue('selineRead', "urlType", 0)
                     __ZlibUser__.zlibClient.setZlibUrl(address.url)
-                    XContext.toast(`请重启APP以加载数据`, 4000)
                   }
                 }
               })
@@ -172,7 +203,7 @@ export struct ZlibSetting {
         ListItem() {
           ListTitle(
             {
-              item: { title: '自定义地址', tip: '默认提供一个官方镜像地址，其余地址请自行辨别真伪,左滑可以删除' } as
+              item: { title: '自定义地址', tip: '默认提供一个官方镜像地址，其余地址请自行辨别真伪,左滑可以删除。使用时，建议打开自动更新地址功能，以便为您在启动软件时自动更新地址' } as
                 I_ListTitle
             })
         }
@@ -183,6 +214,8 @@ export struct ZlibSetting {
               ListItemWithRadio({
                 message: address.url,
                 group: 'zlibServiceAddress',
+                subMessage: this.getStatusString(address.status),
+                subMessageColor: this.getStatusColor(address.status),
                 checked: __ZlibUser__.urlType == 1 &&
                   (__ZlibUser__.base_url.includes(address.url) || address.url.includes(__ZlibUser__.base_url)),
                 onChange: (checked: boolean) => {
@@ -191,7 +224,6 @@ export struct ZlibSetting {
                   XPreferencesManager.putPreferencesValue('selineRead', "urlType", 1)
                   XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", address.url)
                   __ZlibUser__.zlibClient.setZlibUrl(address.url)
-                  XContext.toast(`请重启APP以加载数据`, 4000)
                 }
               })
             }
@@ -229,6 +261,32 @@ export struct ZlibSetting {
         // 设置HdsNavigation关闭按钮，与半模态按钮规格一致
         menu: {
           value: [
+            {
+              content: {
+                icon: $r('sys.symbol.bolt_circle'),
+                type: IconStyleMode.SMALL,
+                action: () => {
+                  this.officialAddress.forEach((address) => {
+                    address.status = ZlibServiceStatus.Trying
+                    __ZlibUser__.zlibClient.checkAccessByAddress(address.url,false, (canAccess: boolean) => {
+                      address.status = canAccess ? ZlibServiceStatus.Accessible : ZlibServiceStatus.UnAccessible
+                    }, (error) => {
+                      XContext.toast(error, 1000)
+                    })
+                  })
+
+                  __ZlibUser__.zlibServiceAddressArray.forEach((address) => {
+                    address.status = ZlibServiceStatus.Trying
+                    __ZlibUser__.zlibClient.checkAccessByAddress(address.url,true, (canAccess: boolean, location:string) => {
+                      address.status = canAccess ? (location != '' ?ZlibServiceStatus.Accessible:ZlibServiceStatus.CanUpdate) : ZlibServiceStatus.UnAccessible
+                    }, (error) => {
+                      XContext.toast(error, 1000)
+                    })
+                  })
+
+                }
+              }
+            },
             {
               content: {
                 icon: $r('sys.symbol.plus'),

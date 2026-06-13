@@ -11,5 +11,5 @@ export class ZlibServiceAddress{
 }
 
 export enum ZlibServiceStatus{
-  Unknown, Accessible, UnAccessible
+  Unknown, Accessible, UnAccessible, Trying, CanUpdate
 }

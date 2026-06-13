@@ -23,6 +23,7 @@ export declare class ZlibUserInfoArk {
 
 export declare class ZlibClientArk {
     checkAccess(autoRedirect: boolean, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
+    checkAccessByAddress(address: string, autoRedirect: boolean, returnFunc: (funcArg0: boolean, funcArg1: string) => void, errorFunc: (funcArg0: string) => void): void
     getRecommendBook(returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
     login(email: string, password: string, returnFunc: (funcArg0: ZlibUserInfoArk) => void, errorFunc: (funcArg0: string) => void): void
     search(bookName: string, page: number, returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void

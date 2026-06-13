@@ -47,7 +47,6 @@ export struct Home {
           .enableKeyboardOnFocus(__Home__.recommendOrSearch == 1)
           .backdropBlur(100)
           .useEffect(true)
-          //.layoutWeight(1)
           .onSubmit((value: string) => {
             XAnimation.runWithAnimation(() => {
               __Home__.inSearchMode = false

@@ -2,6 +2,9 @@
 export struct ListItemWithRadio {
   @Param image: ResourceStr | undefined = undefined
   @Param message: ResourceStr = ''
+  @Param messageColor:Resource|Color =$r('sys.color.font')
+  @Param subMessage: ResourceStr = ''
+  @Param subMessageColor:Resource|Color =$r('sys.color.font')
   @Param checked: boolean = false
   @Param index:number = -1
   @Param group:string = ''
@@ -19,12 +22,24 @@ export struct ListItemWithRadio {
               .draggable(false)
               .objectFit(ImageFit.Cover)
           }
-            Text(this.message)
-            .fontSize(17)
-            .fontWeight(FontWeight.Medium)
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.MARQUEE })
-            .layoutWeight(1)
+            Column({space:5}){
+              Text(this.message)
+                .fontSize(16)
+                .fontColor(this.messageColor)
+                .fontWeight(FontWeight.Medium)
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.MARQUEE })
+                .width('100%')
+            if (this.subMessage != ''){
+              Text(this.subMessage)
+                .fontSize(12)
+                .maxLines(1)
+                .fontColor(this.subMessageColor)
+                .textOverflow({ overflow: TextOverflow.MARQUEE })
+                .width('100%')
+            }
+            }.layoutWeight(1)
+          .justifyContent(FlexAlign.Start)
         }.layoutWeight(1)
 
         Radio({ value:(this.message??'').toString(), group: this.group, })

@@ -13,6 +13,7 @@ import zlibraryAPI4CJ.common.zlibEAPI
 import ohos_app_cangjie_entry.run2JS
 import ohos.hilog.Hilog
 import zlibraryAPI4CJ.common.changeUrl
+import zlibraryAPI4CJ.common.checkAccessByAddr
 
 @Interop[ArkTS]
 public class ZlibClientArk {
@@ -24,6 +25,22 @@ public class ZlibClientArk {
                 let res = canAccessZlib(autoRedirect: autoRedirect)
                 run2JS {
                     returnFunc(res)
+                }
+            } catch (err: Exception) {
+                run2JS {
+                    errorFunc(err.toString())
+                }
+            }
+        }
+    }
+
+    public func checkAccessByAddress(address: String, autoRedirect: Bool, returnFunc: (Bool, String) -> Unit,
+        errorFunc: (String) -> Unit): Unit {
+        spawn {
+            try {
+                let (canAccess, location) = checkAccessByAddr(address, autoRedirect: autoRedirect)
+                run2JS {
+                    returnFunc(canAccess, location)
                 }
             } catch (err: Exception) {
                 run2JS {

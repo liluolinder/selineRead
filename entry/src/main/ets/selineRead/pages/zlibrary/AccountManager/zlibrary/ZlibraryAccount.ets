@@ -207,7 +207,7 @@ export struct ZlibraryAccount {
         Column() {
           Blank()
             .bindSheet($$this.showZlibSetting, this.ZlibSettingBuilder(), {
-              height: SheetSize.LARGE,
+              height: SheetSize.MEDIUM,
               preferType: SheetType.CENTER,
               showClose:false,
               backgroundColor: $r('sys.color.background_tertiary')
