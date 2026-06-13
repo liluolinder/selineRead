@@ -25,7 +25,7 @@ export function ZlibraryAccountBuilder() {
 export struct ZlibraryAccount {
   @Local showDownloadLimitTips: boolean = false
   @Local showDonationTips: boolean = false
-  @Local showZlibSetting: boolean = false
+  @Provider('showZlibSetting') showZlibSetting: boolean = false
   @Provider('showZlibLoginSheet') showLoginSheet: boolean = false
 
   async aboutToAppear(): Promise<void> {
@@ -207,9 +207,9 @@ export struct ZlibraryAccount {
         Column() {
           Blank()
             .bindSheet($$this.showZlibSetting, this.ZlibSettingBuilder(), {
-              height: SheetSize.MEDIUM,
+              height: SheetSize.LARGE,
               preferType: SheetType.CENTER,
-              title: { title: $r('app.string.Title_Setting_zlib') },
+              showClose:false,
               backgroundColor: $r('sys.color.background_tertiary')
             })
         }

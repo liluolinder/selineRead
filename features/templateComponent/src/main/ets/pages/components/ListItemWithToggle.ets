@@ -34,11 +34,13 @@ export struct ListItemWithToggle {
              .fontWeight(FontWeight.Medium)
              .maxLines(1)
              .textOverflow({ overflow: TextOverflow.MARQUEE })
+             .fontColor($r('sys.color.font'))
          }
 
           if (this.tip) {
             SymbolGlyph($r('sys.symbol.questionmark_circle'))
               .fontSize(20)
+              .fontColor([$r('sys.color.font')])
               .onClick(() => {
                 this.showTip = true
               })

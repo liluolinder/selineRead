@@ -9,9 +9,11 @@ export struct ListTitle {
     Row({ space: 5 }) {
       Text(this.item.title)
         .fontWeight(FontWeight.Bold)
+        .fontColor($r('sys.color.font'))
       if (this.item.tip) {
         SymbolGlyph($r('sys.symbol.questionmark_circle'))
           .fontSize(20)
+          .fontColor([$r('sys.color.font')])
           .onClick(() => {
             this.showTip = true
           })
