@@ -13,6 +13,8 @@ import { SettingBuilder } from "../Setting/Setting";
 import { AboutUsBuilder } from "../AboutUS/AboutUS";
 import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
 import { ZlibBookInfoBriefArk } from "libohos_app_cangjie_entry.zlib4cj.so";
+import { relationalStore } from "@kit.ArkData";
+import { RelationStoreManager } from "../../models/classes/DataBase";
 
 @ComponentV2
 export struct Body {
@@ -124,10 +126,19 @@ export struct Body {
     if (__ZlibUser__.urlType == 1 && __Setting__.autoRefreshUrl) {
       __ZlibUser__.zlibClient.checkAccess(true, (res) => {
         if (res) {
-          //进行本地地址更新
           __ZlibUser__.zlibClient.getZlibUrl((res) => {
-            __ZlibUser__.base_url = res
-            XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
+            if (!(res.includes(__ZlibUser__.base_url) || __ZlibUser__.base_url.includes(res))) {
+              //如果发生Url切换了则更新数据库和暂存数据及首选项
+              let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl');
+              predicates
+                .equalTo('Url', __ZlibUser__.base_url)
+              RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                Url: res,
+              })
+              console.log(`meow:${res}`)
+              __ZlibUser__.base_url = res
+              XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
+            }
           })
           this.loginAndGetRecommend()
         }

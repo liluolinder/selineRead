@@ -6,7 +6,7 @@ import { motion } from "@kit.MultimodalAwarenessKit";
 
 export async function initPreferences() {
   console.log(`开始读取首选项`)
-  __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.zlibraryd.ru') as string
+  __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.zlibraryd.ru/') as string
   __ZlibUser__.urlType = XPreferencesManager.getPreferencesValue("selineRead", "urlType", 1) as number
 
   __ZlibUser__.zlibClient.setZlibUrl(__ZlibUser__.base_url)
@@ -36,7 +36,6 @@ export async function initPreferences() {
     }
   }
 
-  __ZlibUser__.accountIndex = XPreferencesManager.getPreferencesValue("selineRead", "zlibAccountIndex", 0) as number
   __ZlibUser__.account = XPreferencesManager.getPreferencesValue("selineRead", "zlibAccount", '') as string
   __ZlibUser__.password = XPreferencesManager.getPreferencesValue("selineRead", "zlibPassword", '') as string
   __ZlibUser__.cookie = XPreferencesManager.getPreferencesValue("selineRead", "zlibCookie", '') as string

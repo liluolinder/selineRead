@@ -30,23 +30,7 @@ export struct ZlibraryAccount {
 
   async aboutToAppear(): Promise<void> {
     await RelationStoreManager.getZlibAccount(__ZlibUser__.dataBase)
-    if (__ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]) {
-      let nowChooseAccount = __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex]
-      console.log(JSON.stringify(nowChooseAccount))
-      console.log(`喵喵喵`)
-      __ZlibUser__.zlibClient.login(nowChooseAccount.account, nowChooseAccount.password, (res) => {
-        __ZlibUser__.localChooseAccount = res
-        __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userName = res.name
-        __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userDownloadLimitNumber =
-          `${res.todayDownloadNum}/${res.downloadLimit}`
-        __ZlibUser__.zlibAccountArray.dataArray[__ZlibUser__.accountIndex].userAvatar = ''
-        __ZlibUser__.userName = res.name
-        __ZlibUser__.avatar = ''
-      }, (error) => {
-        XContext.toast(error)
-      })
 
-    }
   }
 
   @Builder
@@ -64,15 +48,15 @@ export struct ZlibraryAccount {
         let predicates = new relationalStore.RdbPredicates('ZlibraryAccount')
         predicates.equalTo('Account', item.account).equalTo("Password", item.password)
         RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
-        __ZlibUser__.account = ''
-        __ZlibUser__.password = ''
-        __ZlibUser__.userName = ''
-        __ZlibUser__.cookie = ''
-        __ZlibUser__.accountIndex = -1
-        XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex", __ZlibUser__.accountIndex)
-        XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", '')
-        XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", '')
-        XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", '')
+        if (item.account == __ZlibUser__.account && item.password == __ZlibUser__.password) {
+          __ZlibUser__.account = ''
+          __ZlibUser__.password = ''
+          __ZlibUser__.userName = ''
+          __ZlibUser__.cookie = ''
+          XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", '')
+          XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", '')
+          XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", '')
+        }
       })
     }.padding({ left: 16, right: 16 })
   }
@@ -81,31 +65,6 @@ export struct ZlibraryAccount {
   ZlibSettingBuilder() {
     Column() {
       ZlibSetting()
-      // List() {
-      //   ListItem() {
-      //     ListItemWithInput({
-      //       image: $r('app.media.zlib'),
-      //       message: $r('app.string.Title_ServerAddress'),
-      //       text: __ZlibUser__.base_url,
-      //       placeholder: $r('app.string.Tip_TapHereToType'),
-      //       returnFunc: (returnText: string) => {
-      //         //保存地址
-      //         __ZlibUser__.base_url = returnText
-      //         __ZlibUser__.baseApi_url = returnText + '/papi'
-      //         __ZlibUser__.baseEApi_url = returnText + '/eapi'
-      //         XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", returnText)
-      //
-      //         __ZlibUser__.zlibClient.setZlibUrl(returnText)
-      //
-      //         XContext.toast(`请重启APP以加载数据`, 4000)
-      //
-      //       }
-      //     })
-      //   }.backgroundColor($r('sys.color.comp_background_list_card'))
-      //   .borderRadius(20)
-      // }.width('100%')
-      // .height('100%')
-      // .padding({ left: 16, right: 16 })
     }.width('100%')
   }
 
@@ -128,20 +87,17 @@ export struct ZlibraryAccount {
                     image: item.userAvatar == '' ? $r('app.media.zlib') : item.userAvatar,
                     message: item.account,
                     group: 'zlibAccount',
-                    checked: __ZlibUser__.accountIndex == index,
+                    checked: __ZlibUser__.account == item.account && __ZlibUser__.password == item.password ,
                     index: index,
                     onChange: (checked: boolean, itemIndex: number) => {
                       if (checked) {
+                        __ZlibUser__.account = item.account!
+                        __ZlibUser__.password = item.password!
+                        __ZlibUser__.userName = $r('app.string.Tip_GettingBookNow')
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex", itemIndex)
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", item.account ?? '')
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", item.password ?? '')
                         XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", item.cookie ?? '')
-
-
-                        __ZlibUser__.account = item.account!
-                        __ZlibUser__.password = item.password!
-                        __ZlibUser__.userName = $r('app.string.Tip_GettingBookNow')
-
                         __ZlibUser__.zlibClient.login(__ZlibUser__.account, __ZlibUser__.password, (user) => {
                           __ZlibUser__.localChooseAccount = user
                           item.userName = user.name
@@ -150,40 +106,14 @@ export struct ZlibraryAccount {
                           __ZlibUser__.cookie = item.cookie!
                           __ZlibUser__.avatar = item.userAvatar!
                           __ZlibUser__.userName = item.userName!
-                          XAnimation.runWithAnimation(()=>{
-                            __ZlibUser__.accountIndex = itemIndex
-                          })
                         }, (error) => {
                           XContext.toast(error)
-                          XAnimation.runWithAnimation(()=>{
-                            __ZlibUser__.accountIndex = itemIndex
-                          })
                         })
-
-
-
-
-                        // zlibClient.refreshUrl().then(()=>{
-                        //   let req = http.createHttp();
-                        //   zlibClient.getRecommendBook(req).then((res)  => {
-                        //     __Home__.canGetMore = true
-                        //     if (res[0] == 1) {
-                        //       __Home__.recommendBookArray.clearData
-                        //       __Home__.errorText = '';
-                        //       (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-                        //         //__Home__.recommendBookArray.pushData(item)
-                        //       });
-                        //     }else {
-                        //       __Home__.errorText = res[1];
-                        //     }
-                        //   })
-                        // })
-
                       }
                     }
                   })
 
-                  if (__ZlibUser__.accountIndex == index) {
+                  if (__ZlibUser__.account == item.account && __ZlibUser__.password == item.password) {
                     Column() {
                       Row({ space: 10 }) {
                         Stack() {

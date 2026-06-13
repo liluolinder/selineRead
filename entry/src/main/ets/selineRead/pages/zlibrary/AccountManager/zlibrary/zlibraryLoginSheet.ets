@@ -1,23 +1,13 @@
-import { XAnimation, XContext, XPreferencesManager } from "commonpackage"
-import { I_ZlibUserInfo } from "../../../../../zlibrary/interface/I_ZlibUserInfo"
-import { zlibClient } from "../../../../../zlibrary/zlibClient"
-import { __ZlibUser__ } from "../../../../commons/shareDatas"
-import { RelationStoreManager } from "../../../../models/classes/DataBase"
-import { relationalStore } from "@kit.ArkData"
-import { ZlibUserInfo } from "../../../../../zlibrary/classes/UserInfo"
-import { I_loginRes_user } from "../../../../../zlibrary/interface/I_loginInfo"
-import { http } from "@kit.NetworkKit"
-import { __Home__ } from "../../Home/Home"
-import { I_ZlibBookInfoRes_Book, I_ZLibRecommendBook_Book } from "../../../../../zlibrary/interface/I_ZlibBookInfo"
+import { XContext, XPreferencesManager } from 'commonpackage'
+import { __ZlibUser__ } from '../../../../commons/shareDatas'
+import { RelationStoreManager } from '../../../../models/classes/DataBase'
+import { ZlibUserInfo } from '../../../../../zlibrary/classes/UserInfo'
 
 @Builder
 export function ZlibLoginSheetBuilder() {
   zlibLoginSheet()
 }
 
-enum loginType {
-  Login, Register
-}
 
 enum loginState {
   Idle, Loading, Error, Complete
@@ -139,13 +129,11 @@ export struct zlibLoginSheet {
                 userInfoClass.userDownloadLimitNumber = `${user.todayDownloadNum}/${user.downloadLimit}`
                 userInfoClass.userAvatar = ``
                 __ZlibUser__.zlibAccountArray.pushData(userInfoClass)
-                __ZlibUser__.accountIndex = __ZlibUser__.zlibAccountArray.totalCount()-1
                 __ZlibUser__.account = this.email
                 __ZlibUser__.password = this.password
                 __ZlibUser__.cookie = cookie
                 __ZlibUser__.userName = user.name
                 __ZlibUser__.avatar = ``
-                XPreferencesManager.putPreferencesValue('selineRead', "zlibAccountIndex",  __ZlibUser__.accountIndex)
                 XPreferencesManager.putPreferencesValue('selineRead', "zlibAccount", this.email??'')
                 XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", this.password??'')
                 XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", cookie??'')

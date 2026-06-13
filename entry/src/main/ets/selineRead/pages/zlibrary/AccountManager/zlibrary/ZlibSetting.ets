@@ -1,21 +1,24 @@
 import { add } from "color"
 import { XContext, XPreferencesManager } from "commonpackage"
 import { ListItemWithInput, ListItemWithRadio, ListItemWithToggle } from "templatecomponent"
-import { __ZlibUser__ } from "../../../../commons/shareDatas"
+import { __System__, __ZlibUser__ } from "../../../../commons/shareDatas"
 import { ListTitle } from "../../../../components/ListTitle"
 import { I_ListTitle } from "../../../../models/interfaces/I_ListTitle"
 import { __Setting__ } from "../../../../commons/shareDatas"
+import { ZlibServiceAddress } from "../../../../models/classes/ZlibServiceAddress"
+import { RelationStoreManager } from "../../../../models/classes/DataBase"
+import { relationalStore } from "@kit.ArkData"
 
 @ComponentV2
 export struct ZlibSetting {
   @Local officialAddress: string[] = [
-    "https://zh.z-library.sk",
-    "https://zh.z-lib.sk",
-    "https://zh.1lib.sk"
+    "https://zh.z-library.sk/",
+    "https://zh.z-lib.sk/",
+    "https://zh.1lib.sk/"
   ]
 
   @Builder
-  editCustom( index: number) {
+  editCustom(url: string) {
     Column() {
       Button({ type: ButtonType.Circle }) {
         SymbolGlyph($r('sys.symbol.trash_fill'))
@@ -25,11 +28,25 @@ export struct ZlibSetting {
       }.padding(8)
       .backgroundColor($r('sys.color.warning'))
       .onClick(() => {
-
+        if (url.includes(__ZlibUser__.base_url) || __ZlibUser__.base_url.includes(url)) {
+          __ZlibUser__.base_url = ''
+          __ZlibUser__.zlibClient.setZlibUrl('')
+          XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", '')
+        }
+        //删除数据库数据
+        let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl')
+        predicates.equalTo('Url', url)
+        RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
+        __ZlibUser__.zlibServiceAddressArray =
+          __ZlibUser__.zlibServiceAddressArray.filter((address) => address.url != url)
       })
     }.padding({ left: 16, right: 16 })
   }
 
+  aboutToAppear(): void {
+    __ZlibUser__.zlibServiceAddressArray = []
+    RelationStoreManager.getZlibServerAddress(__ZlibUser__.dataBase)
+  }
 
   build() {
     List({ space: 10 }) {
@@ -44,12 +61,11 @@ export struct ZlibSetting {
             type: ToggleType.Switch,
             checked: __Setting__.autoRefreshUrl,
             message: '启动自动更新地址',
-            tip:'对于镜像地址，可以自动刷新至新的地址，避免旧地址失效，对官方地址不起作用',
+            tip: '对于镜像地址，可以自动刷新至新的地址，避免旧地址失效，对官方地址不起作用',
             onChange: (status: boolean) => {
               __Setting__.autoRefreshUrl = status
               XPreferencesManager.putPreferencesValue('selineRead', "autoRefreshUrl", status)
             }
-
           })
         }
       }.backgroundColor(Color.White)
@@ -66,12 +82,13 @@ export struct ZlibSetting {
       }
 
       ListItemGroup() {
-        ForEach(this.officialAddress, (address: string, index:number) => {
-          ListItem(){
+        ForEach(this.officialAddress, (address: string, index: number) => {
+          ListItem() {
             ListItemWithRadio({
               message: address,
               group: 'zlibServiceAddress',
-              checked:__ZlibUser__.urlType == 0 && (__ZlibUser__.base_url.includes(address) || __ZlibUser__.base_url.includes(address)),
+              checked: __ZlibUser__.urlType == 0 &&
+                (__ZlibUser__.base_url.includes(address) || address.includes(__ZlibUser__.base_url)),
               onChange: (checked: boolean) => {
                 if (checked) {
                   __ZlibUser__.base_url = address
@@ -97,32 +114,38 @@ export struct ZlibSetting {
 
       ListItem() {
         ListTitle(
-          { item: { title: '自定义地址', tip: '默认提供一个官方镜像地址，其余地址请自行辨别真伪,左滑可以删除' } as I_ListTitle })
+          {
+            item: { title: '自定义地址', tip: '默认提供一个官方镜像地址，其余地址请自行辨别真伪,左滑可以删除' } as
+              I_ListTitle
+          })
       }
 
       ListItemGroup() {
-        ListItem() {
-          ListItemWithRadio({
-            message: "https://zh.zlibraryd.ru/",
-            group: 'zlibServiceAddress',
-            //checked:__ZlibUser__.urlType == 1 && (__ZlibUser__.base_url.includes(address) || __ZlibUser__.base_url.includes(address)),
-            onChange: (checked: boolean) => {
-              __ZlibUser__.base_url = "https://zh.zlibraryd.ru/"
-              __ZlibUser__.urlType = 1
-              XPreferencesManager.putPreferencesValue('selineRead', "urlType", 1)
-              XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", "https://zh.zlibraryd.ru/")
-              __ZlibUser__.zlibClient.setZlibUrl("https://zh.zlibraryd.ru/")
-              XContext.toast(`请重启APP以加载数据`, 4000)
+        ForEach(__ZlibUser__.zlibServiceAddressArray, (address: ZlibServiceAddress) => {
+          ListItem() {
+            ListItemWithRadio({
+              message: address.url,
+              group: 'zlibServiceAddress',
+              checked: __ZlibUser__.urlType == 1 &&
+                (__ZlibUser__.base_url.includes(address.url) || address.url.includes(__ZlibUser__.base_url)),
+              onChange: (checked: boolean) => {
+                __ZlibUser__.base_url = address.url
+                __ZlibUser__.urlType = 1
+                XPreferencesManager.putPreferencesValue('selineRead', "urlType", 1)
+                XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", address.url)
+                __ZlibUser__.zlibClient.setZlibUrl(address.url)
+                XContext.toast(`请重启APP以加载数据`, 4000)
+              }
+            })
+          }
+          .swipeAction({
+            end: {
+              builder: () => {
+                this.editCustom(address.url)
+              },
             }
           })
-        }
-        .swipeAction({
-          end: {
-            builder: () => {
-              this.editCustom(0)
-            },
-          }
-        })
+        },(address: ZlibServiceAddress) => JSON.stringify(address))
       }.width('100%')
       .backgroundColor(Color.White)
       .borderRadius(20)
@@ -136,5 +159,6 @@ export struct ZlibSetting {
     }.height('100%')
     .width('100%')
     .padding({ left: 16, right: 16 })
+    .contentEndOffset(Math.max(16, __System__.bottomRectHeight))
   }
 }

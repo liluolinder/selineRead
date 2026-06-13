@@ -10,7 +10,7 @@ import { DownloadInfo } from "../models/classes/DownloadInfo"
 import { DownloadManageArk } from "libohos_app_cangjie_entry.download.so"
 import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
 import { ZlibUserInfoArk, ZlibClientArk } from "libohos_app_cangjie_entry.zlib4cj.so"
-
+import { ZlibServiceAddress } from "../models/classes/ZlibServiceAddress"
 
 
 @ObservedV2
@@ -65,22 +65,22 @@ export const __UI__: UIData = new UIData()
 export class ZlibUser{
   zlibClient:ZlibClientArk = new ZlibClientArk()
   @Trace localChooseAccount:ZlibUserInfoArk = new ZlibUserInfoArk()
-  @Trace accountIndex: number = 1
   @Trace account:string = ''
   @Trace password:string = ''
   @Trace cookie:string = ''
   @Trace avatar:string=''
   @Trace userName:ResourceStr=$r('app.string.Tip_GettingBookNow')
+  @Trace zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
+  @Trace zlibServiceAddressArray:ZlibServiceAddress[] = []
   notificationID:number=0
   dataBase?:relationalStore.RdbStore
   downloadManager?:DownloadManager
 
   downloadManageCJ?:DownloadManageArk
 
-  zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
-  base_url: string = 'https://zh.zlibraryd.ru'
-  urlType:number = 1  //0为官方地址，1为自定义地址 默认提供自定义地址
 
+  base_url: string = 'https://zh.zlibraryd.ru/'
+  urlType:number = 1  //0为官方地址，1为自定义地址 默认提供自定义地址
 
   //启用
   baseApi_url: string = this.base_url+'/papi'

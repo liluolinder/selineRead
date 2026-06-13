@@ -4,6 +4,8 @@ import { common } from "@kit.AbilityKit";
 import { __Download__, __ZlibUser__ } from "../../commons/shareDatas";
 import { ZlibUserInfo } from "../../../zlibrary/classes/UserInfo";
 import { DownloadInfo, DownloadStatus } from "./DownloadInfo";
+import { ZlibServiceAddress, ZlibServiceStatus } from "./ZlibServiceAddress";
+import { XContext } from "commonpackage";
 
 
 export class RelationStoreManager {
@@ -27,15 +29,7 @@ export class RelationStoreManager {
           await store.execute(ZlibraryAccountTable).then((res) => {
             console.log('创建ZlibraryAccountTable结果为' + JSON.stringify(res))
           })
-
-          const DownloadTable =
-            'CREATE TABLE IF NOT EXISTS ZlibDownloadTable (ID INTEGER PRIMARY KEY AUTOINCREMENT, BookID INTEGER, ' +
-              'BookHref TEXT, BookName TEXT, BookAuthor TEXT, BookPublisher TEXT, BookImage TEXT, BookDownLoadTime TEXT, HaveDownload INTEGER)'
-          await store.execute(DownloadTable).then((res) => {
-            console.log("创建ZlibDownloadTable结果为" + JSON.stringify(res))
-
-          })
-          store.version = 3;
+          storeVersion = 1
         } catch (e) {
           const err = e as BusinessError;
           console.error(`Failed to execute sql. Code:${err.code}, message:${err.message}`);
@@ -48,15 +42,33 @@ export class RelationStoreManager {
               'BookHref TEXT, BookName TEXT, BookAuthor TEXT, BookPublisher TEXT, BookImage TEXT, BookDownLoadTime TEXT, HaveDownload INTEGER)'
           //创建表单
           await store.execute(DownloadTable).then((res) => {
-            console.log("二次创建ZlibDownloadTable结果为" + JSON.stringify(res))
+            console.log("创建ZlibDownloadTable结果为" + JSON.stringify(res))
           })
-          store.version = 3
+
+          storeVersion = 3
         } catch (e) {
           const err = e as BusinessError;
           console.error(`Failed to execute sql. Code:${err.code}, message:${err.message}`);
         }
       }
-
+      if (storeVersion == 3) {
+        try {
+          const ZlibServiceUrlTable =
+            'CREATE TABLE IF NOT EXISTS ZlibServiceUrl (ID INTEGER PRIMARY KEY AUTOINCREMENT, Url TEXT)'
+          //创建表单
+          await store.execute(ZlibServiceUrlTable).then(async (res) => {
+            console.log("创建ZlibServiceUrlTable结果为" + JSON.stringify(res))
+            RelationStoreManager.addValue(store, 'ZlibServiceUrl', {
+              Url:'https://zh.zlibraryd.ru/'
+            })
+          })
+          storeVersion = 4
+        } catch (e) {
+          const err = e as BusinessError;
+          console.error(`Failed to execute sql. Code:${err.code}, message:${err.message}`);
+        }
+      }
+      store.version = storeVersion
       return store
     }).catch((err: BusinessError) => {
       console.error(`获取数据库失败. Code:${err.code}, message:${err.message}`);
@@ -75,10 +87,13 @@ export class RelationStoreManager {
         const err = error as BusinessError;
         console.error(`插入数据失败 Code:${err.code}, message:${err.message}`);
       }
+    }else{
+      console.error(`插入数据失败 数据库对象不存在`);
     }
   }
 
-  static async updateValue(store: relationalStore.RdbStore | undefined, predicates:relationalStore.RdbPredicates, value: relationalStore.ValuesBucket){
+  static async updateValue(store: relationalStore.RdbStore | undefined, predicates: relationalStore.RdbPredicates,
+    value: relationalStore.ValuesBucket) {
     if (store !== undefined) {
       (store as relationalStore.RdbStore).update(value, predicates, (err: BusinessError, rows: number) => {
         if (err) {
@@ -90,7 +105,7 @@ export class RelationStoreManager {
     }
   }
 
-  static async deleteValue(store: relationalStore.RdbStore | undefined, predicates:relationalStore.RdbPredicates) {
+  static async deleteValue(store: relationalStore.RdbStore | undefined, predicates: relationalStore.RdbPredicates) {
     if (store !== undefined) {
       (store as relationalStore.RdbStore).delete(predicates, (err: BusinessError, rows: number) => {
         if (err) {
@@ -121,12 +136,27 @@ export class RelationStoreManager {
             userInfo.account = Account
             userInfo.password = Password
             userInfo.cookie = Cookie
+
+            if (userInfo.account == __ZlibUser__.account && userInfo.password == __ZlibUser__.password) {
+              __ZlibUser__.zlibClient.login(userInfo.account, userInfo.password, (res) => {
+                __ZlibUser__.localChooseAccount = res
+                userInfo.userName = res.name
+                userInfo.userDownloadLimitNumber =
+                  `${res.todayDownloadNum}/${res.downloadLimit}`
+                userInfo.userAvatar = ''
+                __ZlibUser__.userName = res.name
+                __ZlibUser__.avatar = ''
+              },(error)=>{
+                XContext.toast(error)
+              })
+            }
+
             __ZlibUser__.zlibAccountArray.pushData(userInfo)
           }
           resultSet.close();
         }
       }).catch((res: BusinessError) => {
-        console.log(`查询失败${JSON.stringify(res)}}`)
+        console.log(`查询失败${JSON.stringify(res)}`)
       })
       )
     }
@@ -135,7 +165,8 @@ export class RelationStoreManager {
   static async getZlibDownload(store: relationalStore.RdbStore | undefined) {
     if (store) {
       await ((store as relationalStore.RdbStore).query(new relationalStore.RdbPredicates('ZlibDownloadTable'),
-        ['ID', 'BookID', 'BookHref', 'BookName','BookAuthor','BookPublisher','BookImage','BookDownLoadTime','HaveDownload']).then((resultSet) => {
+        ['ID', 'BookID', 'BookHref', 'BookName', 'BookAuthor', 'BookPublisher', 'BookImage', 'BookDownLoadTime',
+          'HaveDownload']).then((resultSet) => {
         {
           console.info(`ResultSet column names: ${resultSet.columnNames}, column count: ${resultSet.columnCount}`);
           while (resultSet.goToNextRow()) {
@@ -148,26 +179,50 @@ export class RelationStoreManager {
             const bookDownloadTime = resultSet.getString(resultSet.getColumnIndex('BookDownLoadTime'));
             const haveDownload = resultSet.getLong(resultSet.getColumnIndex('HaveDownload'));
             let item: DownloadInfo = new DownloadInfo()
-
             item.fileName = bookName
             item.fileImage = bookImage
             item.bookAuthor = bookAuthor
             item.bookHref = bookHref
             item.bookId = bookId
             item.downloadTime = bookDownloadTime
-
             item.status = (haveDownload == 1 ? DownloadStatus.Complete : DownloadStatus.Failed)
-            console.log(haveDownload.toString())
             __Download__.downloadArray.pushUnshiftData(item)
           }
           resultSet.close();
         }
       }).catch((res: BusinessError) => {
-        console.log(`查询失败${JSON.stringify(res)}}`)
+        console.log(`查询失败${JSON.stringify(res)}`)
       })
       )
-    }else {
+    } else {
       console.log(`数据库错误`)
     }
   }
+
+  static async getZlibServerAddress(store: relationalStore.RdbStore | undefined) {
+    if (store) {
+      await ((store as relationalStore.RdbStore).query(new relationalStore.RdbPredicates('ZlibServiceUrl'),
+        ['ID', 'Url']).then((resultSet) => {
+        {
+          console.info(`ResultSet column names: ${resultSet.columnNames}, column count: ${resultSet.columnCount}`);
+          while (resultSet.goToNextRow()) {
+            const id = resultSet.getLong(resultSet.getColumnIndex('ID'));
+            const url = resultSet.getString(resultSet.getColumnIndex('Url'));
+            let address:ZlibServiceAddress = new ZlibServiceAddress(url, ZlibServiceStatus.Unknown)
+            console.log(`id:${id}  `+JSON.stringify(address))
+            __ZlibUser__.zlibServiceAddressArray.push(address)
+
+          }
+          resultSet.close();
+        }
+      }).catch((res: BusinessError) => {
+        console.log(`查询失败${JSON.stringify(res)}`)
+      })
+      )
+    } else {
+      console.log(`数据库错误`)
+    }
+
+  }
 }
+
