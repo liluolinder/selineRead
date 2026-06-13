@@ -33,8 +33,7 @@ export struct ListItemWithRadio {
           .onChange((checked: boolean) => {
             this.onChange(checked,this.index)
           })
-          .width(45)
-          .height(27);
+          .height(20);
       }.align(Alignment.Center)
 
     }

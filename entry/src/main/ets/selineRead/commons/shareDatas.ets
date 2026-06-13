@@ -78,7 +78,11 @@ export class ZlibUser{
   downloadManageCJ?:DownloadManageArk
 
   zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
-  base_url: string = 'https://zh.cn101.ru'
+  base_url: string = 'https://zh.zlibraryd.ru'
+  urlType:number = 1  //0为官方地址，1为自定义地址 默认提供自定义地址
+
+
+  //启用
   baseApi_url: string = this.base_url+'/papi'
   baseEApi_url:string = this.base_url+'/eapi'
 

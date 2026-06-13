@@ -14,7 +14,7 @@ import { __Home__ } from "../../Home/Home";
 import { I_BookInfo } from "../../../../models/interfaces/I_BookInfo";
 import { I_loginRes_user } from "../../../../../zlibrary/interface/I_loginInfo";
 import { I_ZlibBookInfoRes_Book, I_ZLibRecommendBook_Book } from "../../../../../zlibrary/interface/I_ZlibBookInfo";
-import { ZlibServiceAddress } from "./ZlibServiceAddress";
+import { ZlibSetting } from "./ZlibSetting";
 
 @Builder
 export function ZlibraryAccountBuilder() {
@@ -80,7 +80,7 @@ export struct ZlibraryAccount {
   @Builder
   ZlibSettingBuilder() {
     Column() {
-      ZlibServiceAddress()
+      ZlibSetting()
       // List() {
       //   ListItem() {
       //     ListItemWithInput({

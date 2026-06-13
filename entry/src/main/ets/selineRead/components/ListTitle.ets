@@ -20,6 +20,5 @@ export struct ListTitle {
           })
       }
     }.width('100%')
-    .margin({bottom:2})
   }
 }

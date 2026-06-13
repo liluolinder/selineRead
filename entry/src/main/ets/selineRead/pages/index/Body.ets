@@ -1,7 +1,7 @@
 import { XAnimation, XContext, XPreferencesManager } from "commonpackage";
 import { zlibClient } from "../../../zlibrary/zlibClient";
 import { min_width } from "../../commons/commonItem";
-import { __Download__, __System__, __UI__, __ZlibUser__ } from "../../commons/shareDatas";
+import { __Download__, __Setting__, __System__, __UI__, __ZlibUser__ } from "../../commons/shareDatas";
 import { Home, __Home__ } from "../zlibrary/Home/Home";
 import { http } from "@kit.NetworkKit";
 import { BookShelf, __BookShelf__ } from "../BookShelf/BookShelf";
@@ -96,40 +96,47 @@ export struct Body {
       })
   }
 
-  aboutToAppear(): void {
-    __ZlibUser__.zlibClient.checkAccess(true, (res) => {
-      if (res) {
-        __ZlibUser__.zlibClient.getZlibUrl((res) => {
-          __ZlibUser__.base_url = res
-          XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
-        })
-
-        if (__ZlibUser__.account != '') {
-          __ZlibUser__.zlibClient.login(__ZlibUser__.account, __ZlibUser__.password, (res) => {
-            __ZlibUser__.localChooseAccount = res
-            __ZlibUser__.cookie = res.cookie
-            __ZlibUser__.localChooseAccount.getRecommendBook((books)=>{
-              this.putBooks(books)
-              if(books.length == 0 ){
-                this.getCommonRecommend()
-              }
-            },(error)=>{
-              __Home__.errorText = error
-              __Home__.canGetMore = true
-            })
-          }, (error) => {
-            __Home__.errorText = error
+  private loginAndGetRecommend(){
+    if (__ZlibUser__.account != '') {
+      __ZlibUser__.zlibClient.login(__ZlibUser__.account, __ZlibUser__.password, (res) => {
+        __ZlibUser__.localChooseAccount = res
+        __ZlibUser__.cookie = res.cookie
+        __ZlibUser__.localChooseAccount.getRecommendBook((books)=>{
+          this.putBooks(books)
+          if(books.length == 0 ){
             this.getCommonRecommend()
+          }
+        },(error)=>{
+          __Home__.errorText = error
+          __Home__.canGetMore = true
+        })
+      }, (error) => {
+        __Home__.errorText = error
+        this.getCommonRecommend()
+      })
+    }else {
+      this.getCommonRecommend()
+    }
+  }
+
+  aboutToAppear(): void {
+    //如果为自定义地址并且设置了自动更新地址则进行地址刷新
+    if (__ZlibUser__.urlType == 1 && __Setting__.autoRefreshUrl) {
+      __ZlibUser__.zlibClient.checkAccess(true, (res) => {
+        if (res) {
+          //进行本地地址更新
+          __ZlibUser__.zlibClient.getZlibUrl((res) => {
+            __ZlibUser__.base_url = res
+            XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
           })
-        }else {
-          this.getCommonRecommend()
+          this.loginAndGetRecommend()
         }
-
-
-      }
-    }, (err) => {
-      __Home__.errorText = err
-    })
+      }, (err) => {
+        __Home__.errorText = err
+      })
+    }else {
+      this.loginAndGetRecommend()
+    }
   }
 
   @Builder

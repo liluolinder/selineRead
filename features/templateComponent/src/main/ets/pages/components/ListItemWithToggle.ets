@@ -8,9 +8,11 @@ export struct ListItemWithToggle {
   @Param toggleMessage: ResourceStr = ''
   @Param checked: boolean = false
   @Param type: ToggleType = ToggleType.Switch
+  @Param tip:string|undefined = undefined
   @Local enable: boolean = this.checked
   @Param ensureMessage: ResourceStr | undefined = undefined
   @Event onChange: (checked: boolean) => void
+  @Local showTip: boolean = false
 
   build() {
     Row({ space: 10 }) {
@@ -32,8 +34,19 @@ export struct ListItemWithToggle {
              .fontWeight(FontWeight.Medium)
              .maxLines(1)
              .textOverflow({ overflow: TextOverflow.MARQUEE })
-             .layoutWeight(1)
          }
+
+          if (this.tip) {
+            SymbolGlyph($r('sys.symbol.questionmark_circle'))
+              .fontSize(20)
+              .onClick(() => {
+                this.showTip = true
+              })
+              .bindPopup(this.showTip!!, {
+                message: this.tip
+              })
+          }
+
         }.layoutWeight(1)
 
         Toggle({ type: this.type, isOn: this.enable }) {
@@ -66,8 +79,8 @@ export struct ListItemWithToggle {
           this.onChange(checked)
         })
         .selectedColor(this.type == ToggleType.Button?$r('sys.color.ohos_toggle_bg'): $r('[color].color.linder_blue'))
-        .width (60)
-        .height(32);
+        .width (50)
+        .height(30);
       }.align(Alignment.Center)
 
     }

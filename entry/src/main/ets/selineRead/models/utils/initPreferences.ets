@@ -6,7 +6,9 @@ import { motion } from "@kit.MultimodalAwarenessKit";
 
 export async function initPreferences() {
   console.log(`开始读取首选项`)
-  __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.tur101.ru') as string
+  __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.zlibraryd.ru') as string
+  __ZlibUser__.urlType = XPreferencesManager.getPreferencesValue("selineRead", "urlType", 1) as number
+
   __ZlibUser__.zlibClient.setZlibUrl(__ZlibUser__.base_url)
 
   __Setting__.webdavServerEnabled = XPreferencesManager.getPreferencesValue("selineRead","webdavServerEnabled",false) as boolean
@@ -20,6 +22,8 @@ export async function initPreferences() {
   __Setting__.overrideConflictFile = XPreferencesManager.getPreferencesValue("selineRead", "overrideConflictFile", true) as boolean
   __Setting__.shareAfterDownload = XPreferencesManager.getPreferencesValue("selineRead", "shareAfterDownload", true) as boolean
   __Setting__.needPerceptiveGrip = XPreferencesManager.getPreferencesValue("selineRead", "needPerceptiveGrip", false) as boolean
+
+  __Setting__.autoRefreshUrl = XPreferencesManager.getPreferencesValue("selineRead", "autoRefreshUrl", true) as boolean
 
   if (__Setting__.needPerceptiveGrip) {
     if(canIUse("SystemCapability.MultimodalAwareness.Motion") ){
