@@ -125,9 +125,10 @@ export struct Body {
     //如果为自定义地址并且设置了自动更新地址则进行地址刷新
     if (__ZlibUser__.urlType == 1 && __Setting__.autoRefreshUrl) {
       __ZlibUser__.zlibClient.checkAccess(true, (res) => {
+        console.log(`meow:${res}`)
         if (res) {
           __ZlibUser__.zlibClient.getZlibUrl((res) => {
-            if (!(res.includes(__ZlibUser__.base_url) || __ZlibUser__.base_url.includes(res))) {
+            if (!(__ZlibUser__.base_url != '' && (res.includes(__ZlibUser__.base_url) || __ZlibUser__.base_url.includes(res)))) {
               //如果发生Url切换了则更新数据库和暂存数据及首选项
               let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl');
               predicates

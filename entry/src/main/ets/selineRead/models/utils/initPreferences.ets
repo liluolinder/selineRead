@@ -1,4 +1,4 @@
-import { XAnimation, XPreferencesManager } from "commonpackage";
+import { XAnimation, XContext, XPreferencesManager } from "commonpackage";
 import { __Setting__, __ZlibUser__ } from "../../commons/shareDatas";
 import { __Home__ } from "../../pages/zlibrary/Home/Home";
 import { I_SearchHistory } from "../interfaces/I_SearchHistory";
@@ -8,6 +8,8 @@ export async function initPreferences() {
   console.log(`开始读取首选项`)
   __ZlibUser__.base_url = XPreferencesManager.getPreferencesValue("selineRead", "zlibBaseUrl", 'https://zh.zlibraryd.ru/') as string
   __ZlibUser__.urlType = XPreferencesManager.getPreferencesValue("selineRead", "urlType", 1) as number
+
+  console.log(__ZlibUser__.base_url)
 
   __ZlibUser__.zlibClient.setZlibUrl(__ZlibUser__.base_url)
 

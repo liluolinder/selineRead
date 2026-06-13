@@ -176,7 +176,7 @@ export struct ZlibSetting {
                 group: 'zlibServiceAddress',
                 subMessage: this.getStatusString(address.status),
                 subMessageColor: this.getStatusColor(address.status),
-                checked: __ZlibUser__.urlType == 0 &&
+                checked: __ZlibUser__.urlType == 0 && __ZlibUser__.base_url != '' &&
                   (__ZlibUser__.base_url.includes(address.url) || address.url.includes(__ZlibUser__.base_url)),
                 onChange: (checked: boolean) => {
                   if (checked) {
@@ -216,7 +216,7 @@ export struct ZlibSetting {
                 group: 'zlibServiceAddress',
                 subMessage: this.getStatusString(address.status),
                 subMessageColor: this.getStatusColor(address.status),
-                checked: __ZlibUser__.urlType == 1 &&
+                checked: __ZlibUser__.urlType == 1 && __ZlibUser__.base_url != '' &&
                   (__ZlibUser__.base_url.includes(address.url) || address.url.includes(__ZlibUser__.base_url)),
                 onChange: (checked: boolean) => {
                   __ZlibUser__.base_url = address.url
@@ -278,7 +278,7 @@ export struct ZlibSetting {
                   __ZlibUser__.zlibServiceAddressArray.forEach((address) => {
                     address.status = ZlibServiceStatus.Trying
                     __ZlibUser__.zlibClient.checkAccessByAddress(address.url,true, (canAccess: boolean, location:string) => {
-                      address.status = canAccess ? (location != '' ?ZlibServiceStatus.Accessible:ZlibServiceStatus.CanUpdate) : ZlibServiceStatus.UnAccessible
+                      address.status = canAccess ? (location != '' ?ZlibServiceStatus.CanUpdate:ZlibServiceStatus.Accessible) : ZlibServiceStatus.UnAccessible
                     }, (error) => {
                       XContext.toast(error, 1000)
                     })

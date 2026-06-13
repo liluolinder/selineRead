@@ -213,8 +213,10 @@ export class RelationStoreManager {
             __ZlibUser__.zlibServiceAddressArray.push(address)
 
           }
+          console.log(JSON.stringify(__ZlibUser__.zlibServiceAddressArray))
           resultSet.close();
         }
+
       }).catch((res: BusinessError) => {
         console.log(`查询失败${JSON.stringify(res)}`)
       })
