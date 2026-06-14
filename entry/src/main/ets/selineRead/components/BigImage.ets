@@ -51,7 +51,7 @@ export struct BigImage {
           .onClick(async (event, result: SaveButtonOnClickResult) => {
             if (result == SaveButtonOnClickResult.SUCCESS) {
               XContext.toast($r('app.string.Tip_SavingNow'))
-              const path = XContext.getTempDir()+ '/SelineRead_' + new Date().getTime().toString() + '.png'
+              const path = XContext.getTempDir()+ '/SelineRead_' + new Date().getTime().toString() + '.jpeg'
               linderPixelMap.requestImage(this.image.toString()).then((res)=>{
                 linderPixelMap.savePixelMapToSandBox(res, path).then(async (res)=>{
                   if (res) {

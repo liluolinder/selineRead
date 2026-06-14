@@ -15,6 +15,7 @@ import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager
 import { ZlibBookInfoBriefArk } from "libohos_app_cangjie_entry.zlib4cj.so";
 import { relationalStore } from "@kit.ArkData";
 import { RelationStoreManager } from "../../models/classes/DataBase";
+import { EventHelper } from "../../models/classes/BaseEvent";
 
 @ComponentV2
 export struct Body {
@@ -121,6 +122,7 @@ export struct Body {
     }
 
     if (__HWShare__.bookFromShare) {
+      console.log(`meow:未收到通知但是更新:${JSON.stringify(__HWShare__.bookFromShare)}`)
       if (!__Home__.isOpenBook) {
         XAnimation.runWithAnimation(() => {
           __Home__.isOpenBook = true
@@ -131,14 +133,43 @@ export struct Body {
           XAnimation.runWithAnimation(() => {
             __Home__.isOpenBook = false
           })
+          __HWShare__.bookFromShare = undefined
         },(error)=>{
           XAnimation.runWithAnimation(() => {
             __Home__.isOpenBook = false
             __Home__.errorText = error
           })
+          __HWShare__.bookFromShare = undefined
         })
       }
     }
+
+    EventHelper.emitterListener('getNewBook', () => {
+      console.log(`meow:收到通知:${JSON.stringify(__HWShare__.bookFromShare)}`)
+      if (__HWShare__.bookFromShare) {
+        if (!__Home__.isOpenBook) {
+          XAnimation.runWithAnimation(() => {
+            __Home__.isOpenBook = true
+          })
+          __HWShare__.bookFromShare.getDetailInfo(__ZlibUser__.cookie,(bookInfo)=>{
+            __Home__.errorText = ''
+            __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
+            XAnimation.runWithAnimation(() => {
+              __Home__.isOpenBook = false
+            })
+            __HWShare__.bookFromShare = undefined
+          },(error)=>{
+            XAnimation.runWithAnimation(() => {
+              __Home__.isOpenBook = false
+              __Home__.errorText = error
+            })
+            __HWShare__.bookFromShare = undefined
+          })
+        }
+      }
+    })
+
+
   }
 
   aboutToAppear(): void {

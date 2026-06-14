@@ -46,7 +46,7 @@ export struct BookInfo {
     shareUrl.params.append("id", this.bookInfo?.id.toString())
     console.log(shareUrl.toString())
     linderPixelMap.requestImage(this.bookInfo?.cover!).then((res) => {
-      const path = XContext.getTempDir() + '/SelineRead_' + new Date().getTime().toString() + '.png'
+      const path = XContext.getTempDir() + '/SelineRead_' + new Date().getTime().toString() + '.jpeg'
       linderPixelMap.savePixelMapToSandBox(res, path).then((res) => {
         if (res) {
           sharableTarget.updateShareData({

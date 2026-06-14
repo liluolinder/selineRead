@@ -31,25 +31,9 @@ export class LPixelMap {
         });
     }
 
-    async requestImageT(url: string): Promise<Uint8Array> {
-        let httpRequest = http.createHttp();
-         return await httpRequest.request(url, {
-            method: http.RequestMethod.GET,
-            expectDataType: http.HttpDataType.ARRAY_BUFFER
-        }).then((data: http.HttpResponse)=>{
-             let imgData: ArrayBuffer = data.result as ArrayBuffer;
-             const uint8Array = new Uint8Array(imgData);
-             return  uint8Array
-         })
-    }
-
     async buffer2pixelMap(imgData: ArrayBuffer): Promise<PixelMap> {
         let imageSource = image.createImageSource(imgData);
-        let options: image.DecodingOptions = {
-            desiredSize: { width: 100, height: 100 }, // 可选：指定目标尺寸
-            desiredPixelFormat: image.PixelMapFormat.RGBA_8888 // 指定像素格式
-        }
-        return await imageSource.createPixelMap(options);
+        return await imageSource.createPixelMap();
     }
 
     async file2pixelMap(url: string): Promise<PixelMap> {
@@ -62,7 +46,7 @@ export class LPixelMap {
     async savePixelMapToSandBox(pixelMap: PixelMap, saveDir: string): Promise<boolean> {
         let file = fs.openSync(saveDir, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE)
         let packer = image.createImagePacker()
-        return await packer.packToFile(pixelMap, file.fd, { format: "image/png", quality: 120 }).then(() => {
+        return await packer.packToFile(pixelMap, file.fd, { format: "image/jpeg", quality: 100 }).then(() => {
             fs.closeSync(file)
             return true
         }).catch((err: BusinessError) => {

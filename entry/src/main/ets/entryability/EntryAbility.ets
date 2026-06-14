@@ -11,6 +11,7 @@ import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
 import { url } from '@kit.ArkTS';
 import { ZlibBookInfoBriefArk } from 'libark_interop_api.so';
+import { EventHelper } from '../selineRead/models/classes/BaseEvent';
 
 const DOMAIN = 0x0000;
 
@@ -18,6 +19,7 @@ function getShareUriFromWant(want: Want) {
   if (want.uri) {
     try {
       let wantURl = url.URL.parseURL(want.uri)
+      console.log(`meow:${wantURl.toString()}`)
       let hash = wantURl.params.get('hash')
       let id = wantURl.params.get('id')
       if (hash && id) {
@@ -25,6 +27,9 @@ function getShareUriFromWant(want: Want) {
         book.id = Number(id)
         book.hash = hash
         __HWShare__.bookFromShare = book
+        console.log(`meow:${JSON.stringify(__HWShare__.bookFromShare)}`)
+        EventHelper.emitterPublish('getNewBook')
+
       }
     } catch (error) {
       console.log(error)
@@ -108,6 +113,9 @@ export default class EntryAbility extends UIAbility {
     } catch (error) {
       console.error(`Liquid:${JSON.stringify(error)}`)
     }
+  }
+  onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    getShareUriFromWant(want)
   }
 
   onWindowStageDestroy(): void {

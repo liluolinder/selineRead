@@ -1,0 +1,49 @@
+import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
+
+export class EventHelper {
+
+  public static commonListener(event: string, callback: (data: commonEventManager.CommonEventData) => void) {
+    let subscribeInfo: commonEventManager.CommonEventSubscribeInfo = {
+      events: [event]
+    };
+    commonEventManager.createSubscriber(subscribeInfo,
+      (err: BusinessError, data: commonEventManager.CommonEventSubscriber) => {
+        if (err) {
+          return;
+        }
+        commonEventManager.subscribe(data, (err, data: commonEventManager.CommonEventData) => {
+          if (err) {
+            return;
+          }
+          callback(data)
+        })
+      })
+  }
+
+  public static commonPublish(event: string) {
+    commonEventManager.publish(event, () => {})
+  }
+
+  public static commonPublishData(event: string, data: string) {
+    commonEventManager.publish(event, {
+      data: data
+    }, () => {
+    })
+  }
+
+  public static commonPublishCallback(event: string, callback: () => void) {
+    commonEventManager.publish(event, callback)
+  }
+
+  public static emitterListener(event: string, callback: Callback<emitter.EventData>) {
+    emitter.on(event, callback)
+  }
+
+  public static emitterPublish(event: string, data: emitter.EventData | undefined = undefined) {
+    emitter.emit(event, data)
+  }
+
+  public static emitterOff(event: string) {
+    emitter.off(event)
+  }
+}
