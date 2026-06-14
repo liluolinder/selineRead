@@ -26,6 +26,8 @@ export class HomeData {
   @Trace searchBookArray: BasicDataSource<ZlibBookInfoBriefArk> =
     new BasicDataSource<ZlibBookInfoBriefArk>()
   @Trace searchHistory: I_SearchHistory[] = []
+  @Trace isOpenBook: boolean = false
+
 }
 
 export const __Home__ = new HomeData()
@@ -34,7 +36,6 @@ export const __Home__ = new HomeData()
 export struct Home {
   @Local TileColumnNumber: number = -1
   @Local columnNumber: number = 0
-  @Local isOpenBook: boolean = false
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
@@ -133,19 +134,19 @@ export struct Home {
                 HomeBookCover({ data: item })
               }
               .onClick(async () => {
-                if (!this.isOpenBook) {
+                if (!__Home__.isOpenBook) {
                   XAnimation.runWithAnimation(() => {
-                    this.isOpenBook = true
+                    __Home__.isOpenBook = true
                   })
                   item.getDetailInfo("",(bookInfo)=>{
                     __Home__.errorText = ''
                     __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
                     XAnimation.runWithAnimation(() => {
-                      this.isOpenBook = false
+                      __Home__.isOpenBook = false
                     })
                   },(error)=>{
                     XAnimation.runWithAnimation(() => {
-                      this.isOpenBook = false
+                      __Home__.isOpenBook = false
                       __Home__.errorText = error
                     })
                   })
@@ -165,20 +166,20 @@ export struct Home {
                 HomeBookCover({ data: item })
               }
               .onClick(async () => {
-                if (!this.isOpenBook) {
+                if (!__Home__.isOpenBook) {
                   XAnimation.runWithAnimation(() => {
-                    this.isOpenBook = true
+                    __Home__.isOpenBook = true
                   })
 
                   item.getDetailInfo("",(bookInfo)=>{
                     __Home__.errorText = ''
                     __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
                     XAnimation.runWithAnimation(() => {
-                      this.isOpenBook = false
+                      __Home__.isOpenBook = false
                     })
                   },(error)=>{
                     XAnimation.runWithAnimation(() => {
-                      this.isOpenBook = false
+                      __Home__.isOpenBook = false
                       __Home__.errorText = error
                     })
                   })
@@ -269,7 +270,7 @@ export struct Home {
         loadingNewDialog()
       }
 
-      if (this.isOpenBook) {
+      if (__Home__.isOpenBook) {
         loadingDialog()
       }
 

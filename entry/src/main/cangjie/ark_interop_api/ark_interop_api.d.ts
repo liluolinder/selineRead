@@ -100,6 +100,7 @@ export declare interface CustomLib {
     DownloadTaskArk: { new (): DownloadTaskArk }
     ZlibBookInfoArk: { new (): ZlibBookInfoArk }
     ZlibBookInfoBriefArk: { new (): ZlibBookInfoBriefArk }
+    ZlibBookInfoBriefArk: { new (id: number, hash: string): ZlibBookInfoBriefArk }
     ZlibClientArk: { new (): ZlibClientArk }
     ZlibUserInfoArk: { new (): ZlibUserInfoArk }
     PaginationArk: { new (): PaginationArk }

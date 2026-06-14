@@ -1,4 +1,4 @@
-import { LNotificationManager, XAnimation, XContext } from 'commonpackage'
+import { linderPixelMap, LNotificationManager, XAnimation, XContext } from 'commonpackage'
 import { __Download__, __Setting__, __System__, __ZlibUser__ } from '../../../commons/shareDatas'
 import { __CustomBackgroundData__ } from '../../../components/CustomBackground'
 import { DividerTmp } from '../../../models/classes/DividerTmp'
@@ -11,9 +11,11 @@ import url from '@ohos.url'
 import { BackgroundUtil } from '../../../models/classes/BackgroundRunningManager'
 import { DownloadInfo, DownloadStatus } from '../../../models/classes/DownloadInfo'
 import { RelationStoreManager } from '../../../models/classes/DataBase'
-import { relationalStore } from '@kit.ArkData'
+import { relationalStore, uniformTypeDescriptor } from '@kit.ArkData'
 import { shareBook } from '../../../models/utils/ShareBook'
 import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
+import { harmonyShare, systemShare } from '@kit.ShareKit'
+import { fileUri } from '@kit.CoreFileKit'
 
 @Builder
 export function BookInfoBuilder() {
@@ -35,6 +37,40 @@ export struct BookInfo {
   @Local isOpening: boolean = false
   @Local isFlashing: boolean = false
   recommendPage: number = 1
+
+  private immersiveCallback = async (sharableTarget: harmonyShare.SharableTarget) => {
+    const shareUrl: url.URL = url.URL.parseURL("linder://seline.book.read")
+    shareUrl.params.append("hash",this.bookInfo?.hash)
+    shareUrl.params.append("id",this.bookInfo?.id.toString())
+    console.log(shareUrl.toString())
+    linderPixelMap.requestImage(this.bookInfo?.cover!).then((res)=>{
+      const path = XContext.getTempDir()+ '/SelineRead_' + new Date().getTime().toString() + '.png'
+      linderPixelMap.savePixelMapToSandBox(res, path).then((res)=>{
+        if (res) {
+          sharableTarget.updateShareData({
+            thumbnailUri:fileUri.getUriFromPath(path)
+          })
+        }
+      })
+    })
+    let shareData: systemShare.SharedData = new systemShare.SharedData({
+      utd: uniformTypeDescriptor.UniformDataType.HYPERLINK,
+      content:shareUrl.toString(),
+      title: this.bookInfo?.title,
+      description: '分享书籍给对方',
+    });
+    sharableTarget.share(shareData);
+  }
+
+  aboutToAppear(): void {
+    harmonyShare.on('gesturesShare', this.immersiveCallback);
+    harmonyShare.on('knockShare', this.immersiveCallback);
+  }
+
+  aboutToDisappear(): void {
+    harmonyShare.off('gesturesShare', this.immersiveCallback);
+    harmonyShare.off('knockShare', this.immersiveCallback);
+  }
 
   build() {
     NavDestination() {

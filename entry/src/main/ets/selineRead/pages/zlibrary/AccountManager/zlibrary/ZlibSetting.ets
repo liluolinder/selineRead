@@ -73,7 +73,7 @@ export struct ZlibSetting {
   });
 
   @Builder
-  editCustom(url: string) {
+  editCustom(url: string, id:number) {
     Column() {
       Button({ type: ButtonType.Circle }) {
         SymbolGlyph($r('sys.symbol.trash_fill'))
@@ -90,7 +90,7 @@ export struct ZlibSetting {
         }
         //删除数据库数据
         let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl')
-        predicates.equalTo('Url', url)
+        predicates.equalTo('Url', url).equalTo('ID',id)
         RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
         __ZlibUser__.zlibServiceAddressArray =
           __ZlibUser__.zlibServiceAddressArray.filter((address) => address.url != url)
@@ -230,11 +230,11 @@ export struct ZlibSetting {
             .swipeAction({
               end: {
                 builder: () => {
-                  this.editCustom(address.url)
+                  this.editCustom(address.url, address.id)
                 },
               }
             })
-          }, (address: ZlibServiceAddress) => JSON.stringify(address))
+          }, (address: ZlibServiceAddress, index:number) => JSON.stringify(address)+index)
         }.width('100%')
         .backgroundColor($r('sys.color.comp_background_list_card'))
         .borderRadius(20)

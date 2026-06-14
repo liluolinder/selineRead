@@ -26,7 +26,7 @@
     },
     {
       "name": "Tip_SaveError",
-      "value": "保存成功"
+      "value": "保存失败"
     },
     {
       "name": "Tip_SaveSuccess",

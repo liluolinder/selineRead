@@ -6,6 +6,7 @@ import { ZlibUserInfo } from "../../../zlibrary/classes/UserInfo";
 import { DownloadInfo, DownloadStatus } from "./DownloadInfo";
 import { ZlibServiceAddress, ZlibServiceStatus } from "./ZlibServiceAddress";
 import { XContext } from "commonpackage";
+import { add } from "color";
 
 
 export class RelationStoreManager {
@@ -209,7 +210,7 @@ export class RelationStoreManager {
             const id = resultSet.getLong(resultSet.getColumnIndex('ID'));
             const url = resultSet.getString(resultSet.getColumnIndex('Url'));
             let address:ZlibServiceAddress = new ZlibServiceAddress(url, ZlibServiceStatus.Unknown)
-            console.log(`id:${id}  `+JSON.stringify(address))
+            address.id = id
             __ZlibUser__.zlibServiceAddressArray.push(address)
 
           }

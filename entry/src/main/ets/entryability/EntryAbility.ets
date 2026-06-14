@@ -3,17 +3,38 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { XContext, XPreferencesManager } from 'commonpackage';
 import WindowsUtil from '../selineRead/models/classes/WindowsUtil';
-import { __Download__, __Setting__, __System__, __ZlibUser__ } from '../selineRead/commons/shareDatas';
+import { __Download__, __Setting__, __System__, __ZlibUser__, __HWShare__ } from '../selineRead/commons/shareDatas';
 import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
 import { initPreferences } from '../selineRead/models/utils/initPreferences';
 import { DownloadManager } from '@hadss/super_fast_file_trans';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
+import { url } from '@kit.ArkTS';
+import { ZlibBookInfoBriefArk } from 'libark_interop_api.so';
 
 const DOMAIN = 0x0000;
 
+function getShareUriFromWant(want: Want) {
+  if (want.uri) {
+    try {
+      let wantURl = url.URL.parseURL(want.uri)
+      let hash = wantURl.params.get('hash')
+      let id = wantURl.params.get('id')
+      if (hash && id) {
+        let book = new ZlibBookInfoBriefArk()
+        book.id = Number(id)
+        book.hash = hash
+        __HWShare__.bookFromShare = book
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+}
+
 export default class EntryAbility extends UIAbility {
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
+    getShareUriFromWant(want)
     try {
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
       XPreferencesManager.localPreferences(this.context, 'selineRead');

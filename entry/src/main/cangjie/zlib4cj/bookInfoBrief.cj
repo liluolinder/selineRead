@@ -18,7 +18,7 @@ public class ZlibBookInfoBriefArk {
 
     var cjValue: BookInfoBrief = BookInfoBrief()
 
-    @Interop[ArkTS, Invisible]
+    @Interop[ArkTS, Invisible] 
     public static func fromCJ(cjValue: BookInfoBrief): ZlibBookInfoBriefArk {
         let r = ZlibBookInfoBriefArk()
         r.id = cjValue.id
@@ -53,5 +53,15 @@ public class ZlibBookInfoBriefArk {
             }
     }
 
-    public ZlibBookInfoBriefArk() {}
+    public init(){}
+
+    public init(id:UInt64, hash:String) {
+        this.id  = id
+        this.hash = hash
+        cjValue = BookInfoBrief()
+        cjValue.id = id
+        cjValue.hash=hash
+    }
+
+
 }

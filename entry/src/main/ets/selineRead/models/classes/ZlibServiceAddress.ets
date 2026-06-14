@@ -1,6 +1,7 @@
 
 @ObservedV2
 export class ZlibServiceAddress{
+  @Trace id:number = 0
   @Trace url:string = ''
   @Trace status:ZlibServiceStatus = ZlibServiceStatus.Unknown
 

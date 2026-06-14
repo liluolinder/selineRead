@@ -31,6 +31,18 @@ export class LPixelMap {
         });
     }
 
+    async requestImageT(url: string): Promise<Uint8Array> {
+        let httpRequest = http.createHttp();
+         return await httpRequest.request(url, {
+            method: http.RequestMethod.GET,
+            expectDataType: http.HttpDataType.ARRAY_BUFFER
+        }).then((data: http.HttpResponse)=>{
+             let imgData: ArrayBuffer = data.result as ArrayBuffer;
+             const uint8Array = new Uint8Array(imgData);
+             return  uint8Array
+         })
+    }
+
     async buffer2pixelMap(imgData: ArrayBuffer): Promise<PixelMap> {
         let imageSource = image.createImageSource(imgData);
         let options: image.DecodingOptions = {

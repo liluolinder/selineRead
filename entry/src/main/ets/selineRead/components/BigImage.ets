@@ -1,4 +1,4 @@
-import { XAnimation, XContext } from "commonpackage"
+import { linderPixelMap, XAnimation, XContext } from "commonpackage"
 import { BookCover } from "../pages/zlibrary/BookInfo/BookInfo"
 import { request } from "@kit.BasicServicesKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
@@ -51,31 +51,25 @@ export struct BigImage {
           .onClick(async (event, result: SaveButtonOnClickResult) => {
             if (result == SaveButtonOnClickResult.SUCCESS) {
               XContext.toast($r('app.string.Tip_SavingNow'))
-              const path = XContext.getCacheDir()+ '/SelineRead_' + new Date().getTime().toString() + '.png'
-              request.downloadFile(XContext.getAbilityContext(), {
-                //替换下载地址
-                url: this.image.toString(),
-                //文件下载后保存的沙箱路径
-                filePath: path,
-                background: true
-              }).then((downloadTask: request.DownloadTask) => {
-                downloadTask.on('complete', async () => {
-                  try {
-                    let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(XContext.getAbilityContext());
-                    // 需要确保fileUri对应的资源存在。
-                    let uri = fileUri.getUriFromPath(path)
-                    let assetChangeRequest: photoAccessHelper.MediaAssetChangeRequest =
-                      photoAccessHelper.MediaAssetChangeRequest.createImageAssetRequest(XContext.getAbilityContext(), uri);
-                    await phAccessHelper.applyChanges(assetChangeRequest);
-                    XContext.toast($r('app.string.Tip_SaveSuccess'))
-                  } catch (err) {
-                    XContext.toast($r('app.string.Tip_SaveError'))
+              const path = XContext.getTempDir()+ '/SelineRead_' + new Date().getTime().toString() + '.png'
+              linderPixelMap.requestImage(this.image.toString()).then((res)=>{
+                linderPixelMap.savePixelMapToSandBox(res, path).then(async (res)=>{
+                  if (res) {
+                    try {
+                      let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(XContext.getAbilityContext());
+                      // 需要确保fileUri对应的资源存在。
+                      let uri = fileUri.getUriFromPath(path)
+                      let assetChangeRequest: photoAccessHelper.MediaAssetChangeRequest =
+                        photoAccessHelper.MediaAssetChangeRequest.createImageAssetRequest(XContext.getAbilityContext(), uri);
+                      await phAccessHelper.applyChanges(assetChangeRequest);
+                      XContext.toast($r('app.string.Tip_SaveSuccess'))
+                    } catch (err) {
+                      XContext.toast($r('app.string.Tip_SaveError'))
+                    }
                   }
                 })
-                downloadTask.on('fail', () => {
-                  XContext.toast($r('app.string.Tip_SaveError'))
-                })
               })
+
 
             } else {
               XContext.toast($r('app.string.Tip_SaveError'))

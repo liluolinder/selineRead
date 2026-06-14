@@ -11,6 +11,7 @@ import { DownloadManageArk } from "libohos_app_cangjie_entry.download.so"
 import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
 import { ZlibUserInfoArk, ZlibClientArk } from "libohos_app_cangjie_entry.zlib4cj.so"
 import { ZlibServiceAddress } from "../models/classes/ZlibServiceAddress"
+import { ZlibBookInfoBriefArk } from "libark_interop_api.so"
 
 
 @ObservedV2
@@ -115,3 +116,10 @@ export class Setting{
   @Trace autoRefreshUrl:boolean = true
 }
 export const __Setting__: Setting = new Setting()
+
+@ObservedV2
+export class hwShareData{
+  @Trace bookFromShare:ZlibBookInfoBriefArk|undefined = undefined
+}
+
+export let __HWShare__:hwShareData= new hwShareData()

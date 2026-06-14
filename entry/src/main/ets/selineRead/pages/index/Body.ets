@@ -1,7 +1,7 @@
 import { XAnimation, XContext, XPreferencesManager } from "commonpackage";
 import { zlibClient } from "../../../zlibrary/zlibClient";
 import { min_width } from "../../commons/commonItem";
-import { __Download__, __Setting__, __System__, __UI__, __ZlibUser__ } from "../../commons/shareDatas";
+import { __Download__, __HWShare__, __Setting__, __System__, __UI__, __ZlibUser__ } from "../../commons/shareDatas";
 import { Home, __Home__ } from "../zlibrary/Home/Home";
 import { http } from "@kit.NetworkKit";
 import { BookShelf, __BookShelf__ } from "../BookShelf/BookShelf";
@@ -118,6 +118,26 @@ export struct Body {
       })
     }else {
       this.getCommonRecommend()
+    }
+
+    if (__HWShare__.bookFromShare) {
+      if (!__Home__.isOpenBook) {
+        XAnimation.runWithAnimation(() => {
+          __Home__.isOpenBook = true
+        })
+        __HWShare__.bookFromShare.getDetailInfo("",(bookInfo)=>{
+          __Home__.errorText = ''
+          __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
+          XAnimation.runWithAnimation(() => {
+            __Home__.isOpenBook = false
+          })
+        },(error)=>{
+          XAnimation.runWithAnimation(() => {
+            __Home__.isOpenBook = false
+            __Home__.errorText = error
+          })
+        })
+      }
     }
   }
 

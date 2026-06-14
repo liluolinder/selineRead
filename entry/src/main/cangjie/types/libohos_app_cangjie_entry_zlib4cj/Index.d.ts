@@ -40,6 +40,7 @@ export declare class ZlibBookInfoBriefArk {
     hash: string
     getDetailInfo(cookie: string, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
     constructor()
+    constructor(id: number, hash: string)
 }
 
 export declare class ZlibBookInfoArk {

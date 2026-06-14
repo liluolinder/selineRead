@@ -34,6 +34,18 @@
             "actions": [
               "ohos.want.action.home"
             ]
+          },
+          {
+            "actions": [
+              // actions不能为空，actions为空会造成目标方匹配失败。
+              "ohos.want.action.viewData"
+            ],
+            "uris": [
+              {
+                "scheme": "linder",
+                "host": "seline.book.read"
+              }
+            ]
           }
         ]
       }

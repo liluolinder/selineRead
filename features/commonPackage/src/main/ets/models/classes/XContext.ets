@@ -59,8 +59,14 @@ export class XContext {
         return XContext.UIAbilityContext.filesDir;
     }
 
+    //系统不定时清理
     public static getCacheDir() {
         return XContext.UIAbilityContext.cacheDir;
+    }
+
+    //应用退出后清理
+    public static getTempDir() {
+        return XContext.UIAbilityContext.tempDir;
     }
 
     public static getPromptAction() {
