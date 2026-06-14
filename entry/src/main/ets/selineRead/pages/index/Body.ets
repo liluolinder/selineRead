@@ -150,15 +150,24 @@ export struct Body {
           __ZlibUser__.zlibClient.getZlibUrl((res) => {
             if (!(__ZlibUser__.base_url != '' && (res.includes(__ZlibUser__.base_url) || __ZlibUser__.base_url.includes(res)))) {
               //如果发生Url切换了则更新数据库和暂存数据及首选项
-              let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl');
-              predicates
-                .equalTo('Url', __ZlibUser__.base_url)
-              RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                Url: res,
-              })
-              console.log(`meow:${res}`)
+              let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl').equalTo('Url', __ZlibUser__.base_url)
+              let predicatesNewUrl = new relationalStore.RdbPredicates('ZlibServiceUrl').equalTo('Url', res)
+              let flag = RelationStoreManager.checkIsAlive(__ZlibUser__.dataBase,predicatesNewUrl)
+              console.log(`存在新地址${flag}`)
+              //表示更新后的地址已经存在则删除原有地址，不增加新地址
+              if (flag) {
+                console.log(`更新后的地址已存在，不更新，删除更新前地址`)
+                RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
+              }else {
+                console.log(`更新后的地址不存在，更新地址`)
+                RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                  Url: res,
+                })
+              }
               __ZlibUser__.base_url = res
               XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
+            }else {
+              console.log(`无需更新地址`)
             }
           })
           this.loginAndGetRecommend()

@@ -105,6 +105,16 @@ export class RelationStoreManager {
       })
     }
   }
+  static checkIsAlive(store: relationalStore.RdbStore | undefined, predicates: relationalStore.RdbPredicates): boolean{
+    if (store) {
+      let set = ((store as relationalStore.RdbStore).querySync(predicates, ['ID']))
+      let count = set.rowCount
+      set.close()
+      return count==0?false:true
+    } else {
+      throw Error('数据库错误')
+    }
+  }
 
   static async deleteValue(store: relationalStore.RdbStore | undefined, predicates: relationalStore.RdbPredicates) {
     if (store !== undefined) {

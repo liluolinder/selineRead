@@ -93,7 +93,7 @@ export struct ZlibSetting {
         predicates.equalTo('Url', url).equalTo('ID',id)
         RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
         __ZlibUser__.zlibServiceAddressArray =
-          __ZlibUser__.zlibServiceAddressArray.filter((address) => address.url != url)
+          __ZlibUser__.zlibServiceAddressArray.filter((address) => address.url != url && address.id !=id)
       })
     }.padding({ left: 16, right: 16 })
   }
@@ -203,7 +203,7 @@ export struct ZlibSetting {
         ListItem() {
           ListTitle(
             {
-              item: { title: '自定义地址', tip: '默认提供一个官方镜像地址，其余地址请自行辨别真伪,左滑可以删除。使用时，建议打开自动更新地址功能，以便为您在启动软件时自动更新地址' } as
+              item: { title: '自定义地址', tip: '默认提供一个官方镜像地址，其余地址请自行辨别真伪,左滑可以删除。使用时，建议打开自动更新地址功能，以便为您在启动软件时自动更新地址, 如果自动更新后与现有的重复，则会自动删除重复项' } as
                 I_ListTitle
             })
         }
