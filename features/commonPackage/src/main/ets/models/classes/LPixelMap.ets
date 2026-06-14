@@ -62,7 +62,7 @@ export class LPixelMap {
     async savePixelMapToSandBox(pixelMap: PixelMap, saveDir: string): Promise<boolean> {
         let file = fs.openSync(saveDir, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE)
         let packer = image.createImagePacker()
-        return await packer.packToFile(pixelMap, file.fd, { format: "image/png", quality: 98 }).then(() => {
+        return await packer.packToFile(pixelMap, file.fd, { format: "image/png", quality: 120 }).then(() => {
             fs.closeSync(file)
             return true
         }).catch((err: BusinessError) => {

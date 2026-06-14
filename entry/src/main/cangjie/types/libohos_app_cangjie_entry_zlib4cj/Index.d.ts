@@ -43,6 +43,7 @@ export declare class ZlibBookInfoBriefArk {
     constructor(id: number, hash: string)
 }
 
+
 export declare class ZlibBookInfoArk {
     id: number
     contentType: string
@@ -78,5 +79,7 @@ export declare class ZlibBookInfoArk {
     dataSaved: string | undefined
     readOnlineAvailable: boolean
     getDownloadInfo(cookie: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
+    saveBook(cookie: string, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
+    unSaveBook(cookie: string, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
     constructor()
 }

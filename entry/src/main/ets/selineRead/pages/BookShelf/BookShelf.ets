@@ -367,14 +367,14 @@ export struct BookShelf {
                       Column({ space: 5 }) {
                         Text(item.title)
                           .fontWeight(FontWeight.Medium)
-                          .fontSize(22)
+                          .fontSize(16)
                           .width('100%')
                           .maxLines(1)
                           .textOverflow({ overflow: TextOverflow.MARQUEE })
 
                         Text(item.author)
                           .fontWeight(FontWeight.Normal)
-                          .fontSize(18)
+                          .fontSize(14)
                           .width('100%')
                           .maxLines(1)
                           .opacity(0.8)

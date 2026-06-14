@@ -16,6 +16,7 @@ import { shareBook } from '../../../models/utils/ShareBook'
 import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 import { harmonyShare, systemShare } from '@kit.ShareKit'
 import { fileUri } from '@kit.CoreFileKit'
+import { webview } from '@kit.ArkWeb'
 
 @Builder
 export function BookInfoBuilder() {
@@ -36,26 +37,27 @@ export struct BookInfo {
   @Local showOnlineRead: boolean = false
   @Local isOpening: boolean = false
   @Local isFlashing: boolean = false
+  @Local isSaved: boolean = false
   recommendPage: number = 1
-
+  webController: webview.WebviewController = new webview.WebviewController()
   private immersiveCallback = async (sharableTarget: harmonyShare.SharableTarget) => {
     const shareUrl: url.URL = url.URL.parseURL("linder://seline.book.read")
-    shareUrl.params.append("hash",this.bookInfo?.hash)
-    shareUrl.params.append("id",this.bookInfo?.id.toString())
+    shareUrl.params.append("hash", this.bookInfo?.hash)
+    shareUrl.params.append("id", this.bookInfo?.id.toString())
     console.log(shareUrl.toString())
-    linderPixelMap.requestImage(this.bookInfo?.cover!).then((res)=>{
-      const path = XContext.getTempDir()+ '/SelineRead_' + new Date().getTime().toString() + '.png'
-      linderPixelMap.savePixelMapToSandBox(res, path).then((res)=>{
+    linderPixelMap.requestImage(this.bookInfo?.cover!).then((res) => {
+      const path = XContext.getTempDir() + '/SelineRead_' + new Date().getTime().toString() + '.png'
+      linderPixelMap.savePixelMapToSandBox(res, path).then((res) => {
         if (res) {
           sharableTarget.updateShareData({
-            thumbnailUri:fileUri.getUriFromPath(path)
+            thumbnailUri: fileUri.getUriFromPath(path)
           })
         }
       })
     })
     let shareData: systemShare.SharedData = new systemShare.SharedData({
       utd: uniformTypeDescriptor.UniformDataType.HYPERLINK,
-      content:shareUrl.toString(),
+      content: shareUrl.toString(),
       title: this.bookInfo?.title,
       description: '分享书籍给对方',
     });
@@ -123,23 +125,28 @@ export struct BookInfo {
 
                 ListItem() {
                   Stack({ alignContent: Alignment.Top }) {
-                    Scroll() {
-                      Row() {
-                        Text(this.bookInfo?.description == '' ? '暂无简介' :
-                          this.bookInfo?.description
-                            .replaceAll("&lt;br&gt;", "")
-                            .replaceAll("&lt;p&gt;", "")
-                            .replaceAll("&lt;/p&gt;", "")
-                        )
-                          .fontWeight(FontWeight.Normal)
+                    Row() {
+                      if (this.bookInfo?.description == '' || this.bookInfo?.description == undefined) {
+                        Text('暂无简介')
                           .fontSize(16)
-                          .size({ width: '100%' })
-                      }.size({ width: '100%' })
+                      } else {
+                        Web({
+                          src: `data:text/html;charset=utf-8,${encodeURIComponent(this.bookInfo?.description)}`,
+                          controller: this.webController
+                        })
+                          .forceEnableZoom(false)
+                          .nestedScroll({
+                            scrollForward: NestedScrollMode.SELF_ONLY,
+                            scrollBackward: NestedScrollMode.SELF_ONLY,
+                          })
+                          .defaultFontSize(16)
+                          .minFontSize(16)
+                          .defaultFixedFontSize(16)
+                          .minLogicalFontSize(16)
+                          .textAutosizing(true)
 
-                    }
-                    .edgeEffect(EdgeEffect.Spring)
-                    .scrollBar(BarState.Off)
-                    .fadingEdge(true)
+                      }
+                    }.size({ width: '100%' })
                   }.constraintSize({ maxHeight: 200, minHeight: this.pageWidth > min_width ? 200 : 0 }).padding(16)
                 }
                 .borderRadius(20)
@@ -283,12 +290,12 @@ export struct BookInfo {
                                   BookDownLoadTime: time.toISOString(),
                                   HaveDownload: 2
                                 })
-                                console.log(`下载失败${error}`,2000)
+                                console.log(`下载失败${error}`, 2000)
                                 downloadItem.status = DownloadStatus.Failed
                                 this.errorText = error
                                 LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', bookName!)
                               })
-                              .setCompleteCallback(async ()=>{
+                              .setCompleteCallback(async () => {
                                 downloadItem.progress = 100
                                 let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
                                 predicates.equalTo('BookName', bookName)
@@ -318,7 +325,7 @@ export struct BookInfo {
                                 console.log(`已下载${hasDownload},共${total},当前速度${speed}`)
                                 let progress = Math.trunc(hasDownload / total * 10000) / 100
                                 downloadItem.progress = progress
-                                  LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`,
+                                LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`,
                                   bookName!)
                               })
                             task.start()
@@ -401,10 +408,38 @@ export struct BookInfo {
       },
       {
         value: '收藏',
-        symbolIcon: new SymbolGlyphModifier(this.bookInfo?.isUserSavedBook||this.bookInfo?.dataSaved ?$r('sys.symbol.heart_fill'):$r('sys.symbol.heart')),
+        symbolIcon: new SymbolGlyphModifier(this.isSaved ?
+          $r('sys.symbol.heart_fill') : $r('sys.symbol.heart')),
         action: () => {
-          console.log(`meow:${this.bookInfo?.isUserSavedBook}`)
-
+          if (__ZlibUser__.cookie != '') {
+            XContext.toast('正在请求中，请稍后')
+            if (this.isSaved) {
+              this.bookInfo!.unSaveBook(__ZlibUser__.cookie, (res) => {
+                if (res) {
+                  this.bookInfo!.isUserSavedBook = false
+                  this.bookInfo!.dataSaved = undefined
+                  this.isSaved = false
+                }
+                XContext.toast(`取消收藏${res ? "成功" : "失败"}`)
+              }, (error) => {
+                this.errorText = error
+                XContext.toast(`取消收藏失败`)
+              })
+            } else {
+              this.bookInfo?.saveBook(__ZlibUser__.cookie, (res) => {
+                if (res) {
+                  this.bookInfo!.isUserSavedBook = true
+                  this.isSaved = true
+                  XContext.toast(`收藏${res ? "成功" : "失败"}`)
+                }
+              }, (error) => {
+                this.errorText = error
+                XContext.toast(`收藏失败`)
+              })
+            }
+          } else {
+            this.errorText = '登录到您的账户'
+          }
         }
       }
     ])
@@ -417,6 +452,7 @@ export struct BookInfo {
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
       this.bookInfo = context.pathInfo.param as ZlibBookInfoArk
+      this.isSaved = (this.bookInfo?.isUserSavedBook || this.bookInfo?.dataSaved) ? true : false
     })
     .opacity(this.pageOpacity)
     .onShown(() => {
@@ -429,7 +465,6 @@ export struct BookInfo {
         this.pageOpacity = 0
       })
     })
-
     .onBackPressed(() => {
       if (this.isViewingBigImage) {
         XAnimation.runWithAnimation(() => this.isViewingBigImage = false, true, 0.4, 0.85)

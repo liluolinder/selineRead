@@ -125,7 +125,7 @@ export struct Body {
         XAnimation.runWithAnimation(() => {
           __Home__.isOpenBook = true
         })
-        __HWShare__.bookFromShare.getDetailInfo("",(bookInfo)=>{
+        __HWShare__.bookFromShare.getDetailInfo(__ZlibUser__.cookie,(bookInfo)=>{
           __Home__.errorText = ''
           __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
           XAnimation.runWithAnimation(() => {

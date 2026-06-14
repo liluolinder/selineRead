@@ -27,19 +27,72 @@ export class HomeData {
     new BasicDataSource<ZlibBookInfoBriefArk>()
   @Trace searchHistory: I_SearchHistory[] = []
   @Trace isOpenBook: boolean = false
+  @Trace showType:number = 0  //0为瀑布 1为列表
 
+  @Trace TileColumnNumber: number = -1
+  
+  listWidth:Length = 0
+  
+  @Monitor("showType")
+  changeColumnNumber(){
+    XAnimation.runWithAnimation(() => {
+      if (__Home__.showType == 0) {
+        __Home__.TileColumnNumber = Math.max(Math.ceil(new Number(this.listWidth).valueOf() / 240), 2)
+      }else {
+        __Home__.TileColumnNumber = Math.max(Math.ceil(new Number(this.listWidth).valueOf() / 380), 1)
+      }
+
+    }, __Home__.TileColumnNumber > 0)
+  }
 }
 
 export const __Home__ = new HomeData()
 
 @ComponentV2
 export struct Home {
-  @Local TileColumnNumber: number = -1
-  @Local columnNumber: number = 0
+ 
+
+  private openBook(item:ZlibBookInfoBriefArk){
+    if (!__Home__.isOpenBook) {
+      XAnimation.runWithAnimation(() => {
+        __Home__.isOpenBook = true
+      })
+      item.getDetailInfo(__ZlibUser__.cookie,(bookInfo)=>{
+        __Home__.errorText = ''
+        __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
+        XAnimation.runWithAnimation(() => {
+          __Home__.isOpenBook = false
+        })
+      },(error)=>{
+        XAnimation.runWithAnimation(() => {
+          __Home__.isOpenBook = false
+          __Home__.errorText = error
+        })
+      })
+    }
+  }
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
       Row({ space: 10 }) {
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph(__Home__.showType == 0 ? $r('sys.symbol.square_grid_2x2') : $r('sys.symbol.list_bullet_square'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .backdropBlur(100)
+        .useEffect(true)
+        .onClick(() => {
+          XAnimation.runWithAnimation(()=>{
+            __Home__.showType = __Home__.showType == 0 ? 1 :0
+            XPreferencesManager.putPreferencesValue('selineRead', "showType", __Home__.showType)
+          })
+        })
+        .visibility(__Home__.inSearchMode ? Visibility.None : Visibility.Visible)
+
         Search({ value: __Home__.searchWord, })
           .searchButton(__Home__.inSearchMode ? $r('app.string.search') : undefined)
           .width(__Home__.inSearchMode ? '100%' : "45%")
@@ -131,31 +184,16 @@ export struct Home {
           if (__Home__.recommendOrSearch == 0) {
             LazyForEach(__Home__.recommendBookArray, (item: ZlibBookInfoBriefArk) => {
               ListItem() {
-                HomeBookCover({ data: item })
+                if (__Home__.showType == 0) {
+                  HomeBookCover({ data: item })
+                }else {
+                  HomeListBookCover({ data: item })
+                }
               }
               .onClick(async () => {
-                if (!__Home__.isOpenBook) {
-                  XAnimation.runWithAnimation(() => {
-                    __Home__.isOpenBook = true
-                  })
-                  item.getDetailInfo("",(bookInfo)=>{
-                    __Home__.errorText = ''
-                    __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
-                    XAnimation.runWithAnimation(() => {
-                      __Home__.isOpenBook = false
-                    })
-                  },(error)=>{
-                    XAnimation.runWithAnimation(() => {
-                      __Home__.isOpenBook = false
-                      __Home__.errorText = error
-                    })
-                  })
-                }
+                  this.openBook(item)
               })
               .width('100%')
-              .borderRadius(20)
-              .padding(16)
-              .backgroundColor($r('sys.color.comp_background_list_card'))
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
@@ -163,32 +201,16 @@ export struct Home {
           } else {
             LazyForEach(__Home__.searchBookArray, (item: ZlibBookInfoBriefArk) => {
               ListItem() {
-                HomeBookCover({ data: item })
+                if (__Home__.showType == 0) {
+                  HomeBookCover({ data: item })
+                }else {
+                  HomeListBookCover({ data: item })
+                }
               }
               .onClick(async () => {
-                if (!__Home__.isOpenBook) {
-                  XAnimation.runWithAnimation(() => {
-                    __Home__.isOpenBook = true
-                  })
-
-                  item.getDetailInfo("",(bookInfo)=>{
-                    __Home__.errorText = ''
-                    __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
-                    XAnimation.runWithAnimation(() => {
-                      __Home__.isOpenBook = false
-                    })
-                  },(error)=>{
-                    XAnimation.runWithAnimation(() => {
-                      __Home__.isOpenBook = false
-                      __Home__.errorText = error
-                    })
-                  })
-                }
+                this.openBook(item)
               })
               .width('100%')
-              .borderRadius(20)
-              .padding(16)
-              .backgroundColor($r('sys.color.comp_background_list_card'))
               .transition(TransitionEffect.OPACITY
                 .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
@@ -196,15 +218,20 @@ export struct Home {
           }
         }
         .onAreaChange((_, newValue) => {
+          __Home__.listWidth = newValue.width
           XAnimation.runWithAnimation(() => {
-            this.TileColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
-          }, this.TileColumnNumber > 0)
+            if (__Home__.showType == 0) {
+              __Home__.TileColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
+            }else {
+              __Home__.TileColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 380), 1)
+            }
+
+          }, __Home__.TileColumnNumber > 0)
         })
         .onReachEnd(() => {
           __Home__.req = http.createHttp()
           if (__Home__.canGetMore) {
-            if (__Home__.recommendOrSearch == 0) {
-            } else {
+            if (__Home__.recommendOrSearch == 1) {
               XAnimation.runWithAnimation(() => {
                 __Home__.canGetMore = false
               })
@@ -236,7 +263,7 @@ export struct Home {
         .alignSelf(ItemAlign.Center)
         .align(Alignment.Center)
         .edgeEffect(EdgeEffect.Spring)
-        .lanes(this.TileColumnNumber, 20)
+        .lanes(__Home__.TileColumnNumber, 20)
         .height('100%')
         .width('100%')
         .padding({ left: 16, right: 16 })
@@ -432,7 +459,73 @@ export struct HomeBookCover {
           .opacity(0.6)
           .width('100%')
       }.alignItems(HorizontalAlign.Start)
-    }
+    } .borderRadius(20)
+    .padding(16)
+    .backgroundColor($r('sys.color.comp_background_list_card'))
 
+  }
+}
+
+@ComponentV2
+export struct HomeListBookCover{
+  @Param @Require data: ZlibBookInfoBriefArk | I_ZlibBookInfoRes_Book
+  @Param defaultImg: ResourceStr = $r('app.media.default_cover')
+  @Param haveShadow: boolean = true
+  @Param imageFit: ImageFit = ImageFit.Auto
+  @Local private isFinish: boolean = false
+
+  build() {
+    Row({ space: 10 }){
+      Stack() {
+        Image(this.data.cover ?? this.defaultImg)
+          .transition(TransitionEffect.OPACITY)
+          .objectFit(this.imageFit)
+          .aspectRatio(2 / 3)
+          .autoResize(true)
+          .draggable(false)
+          .onComplete((res) => {
+            if (res?.width && res?.width > 0 && res?.height && res?.height > 0) {
+              this.isFinish = true
+            }
+          })
+        if (!this.isFinish) {
+          Image(this.defaultImg)
+            .transition(TransitionEffect.OPACITY.animation({ duration: 150, curve: Curve.Ease }))
+            .objectFit(this.imageFit)
+            .aspectRatio(2 / 3)
+            .autoResize(true)
+            .draggable(false)
+        }
+      }.aspectRatio(2 / 3)
+      .clip(true)
+      .shadow({
+        radius: 25,
+        color: Color.Gray,
+        offsetX: 0,
+        offsetY: 10
+      })
+
+      Column({ space: 5 }) {
+        Text(this.data.title)
+          .fontWeight(FontWeight.Medium)
+          .fontSize(16)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.MARQUEE })
+
+        Text(this.data.author)
+          .fontWeight(FontWeight.Normal)
+          .fontSize(14)
+          .width('100%')
+          .maxLines(1)
+          .opacity(0.8)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }.height('100%')
+      .layoutWeight(1)
+    }.height(120)
+    .width('100%')
+    .borderRadius(20)
+    .padding(16)
+    .backgroundColor($r('sys.color.comp_background_list_card'))
   }
 }

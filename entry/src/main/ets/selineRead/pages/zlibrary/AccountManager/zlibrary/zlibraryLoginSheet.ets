@@ -138,23 +138,6 @@ export struct zlibLoginSheet {
                 XPreferencesManager.putPreferencesValue('selineRead', "zlibPassword", this.password??'')
                 XPreferencesManager.putPreferencesValue('selineRead', "zlibCookie", cookie??'')
 
-                // zlibClient.refreshUrl().then(()=>{
-                //   let req = http.createHttp();
-                //   zlibClient.getRecommendBook(req).then((res)  => {
-                //     __Home__.canGetMore = true
-                //     if (res[0] == 1) {
-                //       __Home__.recommendBookArray.clearData;
-                //       __Home__.errorText = '';
-                //       (JSON.parse(res[1]) as I_ZLibRecommendBook_Book[]).forEach((item) => {
-                //         //__Home__.recommendBookArray.pushData(item)
-                //       });
-                //       __Home__.recommendBookIndex++;
-                //     }else {
-                //       __Home__.errorText = res[1];
-                //     }
-                //   })
-                // })
-
                 this.showLoginSheet = false
 
               },(error)=>{

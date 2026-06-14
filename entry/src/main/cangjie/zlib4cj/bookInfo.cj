@@ -109,5 +109,35 @@ public class ZlibBookInfoArk {
             }
     }
 
+    public func saveBook(cookie: String, returnFunc: (Bool) -> Unit, errorFunc: (String) -> Unit):Unit{
+          spawn {
+                try {
+                    let reqs = cjValue.saveBook(cookie: cookie)
+                    run2JS{
+                        returnFunc(reqs)
+                    }
+                } catch (err: Exception) {
+                    run2JS {
+                        errorFunc(err.toString())
+                    }
+                }
+            }
+    }
+
+    public func unSaveBook(cookie: String, returnFunc: (Bool) -> Unit, errorFunc: (String) -> Unit):Unit{
+          spawn {
+                try {
+                    let reqs = cjValue.unSaveBook(cookie: cookie)
+                    run2JS{
+                        returnFunc(reqs)
+                    }
+                } catch (err: Exception) {
+                    run2JS {
+                        errorFunc(err.toString())
+                    }
+                }
+            }
+    }
+
     public ZlibBookInfoArk() {}
 }
