@@ -11,7 +11,7 @@ import { DownloadManageArk } from "libohos_app_cangjie_entry.download.so"
 import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
 import { ZlibUserInfoArk, ZlibClientArk } from "libohos_app_cangjie_entry.zlib4cj.so"
 import { ZlibServiceAddress } from "../models/classes/ZlibServiceAddress"
-import { ZlibBookInfoBriefArk } from "libark_interop_api.so"
+import { ZlibBookInfoBriefArk } from "libohos_app_cangjie_entry.zlib4cj.so"
 
 
 @ObservedV2

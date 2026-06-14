@@ -44,7 +44,6 @@ export struct BookInfo {
     const shareUrl: url.URL = url.URL.parseURL("linder://seline.book.read")
     shareUrl.params.append("hash", this.bookInfo?.hash)
     shareUrl.params.append("id", this.bookInfo?.id.toString())
-    console.log(shareUrl.toString())
     linderPixelMap.requestImage(this.bookInfo?.cover!).then((res) => {
       const path = XContext.getTempDir() + '/SelineRead_' + new Date().getTime().toString() + '.jpeg'
       linderPixelMap.savePixelMapToSandBox(res, path).then((res) => {
@@ -134,6 +133,8 @@ export struct BookInfo {
                           src: `data:text/html;charset=utf-8,${encodeURIComponent(this.bookInfo?.description)}`,
                           controller: this.webController
                         })
+                          .darkMode(WebDarkMode.Auto)
+                          .forceDarkAccess(true)
                           .forceEnableZoom(false)
                           .nestedScroll({
                             scrollForward: NestedScrollMode.SELF_ONLY,

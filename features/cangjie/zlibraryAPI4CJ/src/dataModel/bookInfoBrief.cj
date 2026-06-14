@@ -30,6 +30,10 @@ public class BookInfoBrief <: Serializable<BookInfoBrief> {
     public var cover: String = ''
     public var hash: String = ''
 
+    public func getUrl():String{
+        "${zlibEAPI}/book/${id}/${hash}"
+    }
+
     public func getBookInfo(cookie!: String = ''): GetBookInfoRes {
         var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
         let response = httpClient

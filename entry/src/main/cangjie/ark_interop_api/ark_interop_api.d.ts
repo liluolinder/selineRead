@@ -34,6 +34,7 @@ export declare class ZlibBookInfoBriefArk {
     author: string
     cover: string
     hash: string
+    toCJ(): void
     getDetailInfo(cookie: string, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
 }
 

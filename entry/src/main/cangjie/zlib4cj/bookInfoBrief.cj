@@ -7,6 +7,7 @@ import ohos.ark_interop.*
 import ohos.ark_interop_macro.*
 import zlibraryAPI4CJ.dataModel.BookInfoBrief
 import ohos_app_cangjie_entry.run2JS
+import ohos.hilog.Hilog
 
 @Interop[ArkTS]
 public class ZlibBookInfoBriefArk {
@@ -30,10 +31,22 @@ public class ZlibBookInfoBriefArk {
         r
     }
 
+    public func toCJ():Unit{
+        cjValue.id = id
+        cjValue.hash = hash
+        cjValue.title = title
+        cjValue.author = author
+        cjValue.cover = cover
+    }
+
     public func getDetailInfo(cookie: String, returnFunc: (ZlibBookInfoArk) -> Unit, errorFunc: (String) -> Unit): Unit {
          spawn {
                 try {
                     let reqs = cjValue.getBookInfo(cookie: cookie)
+
+                    let requ = cjValue.getUrl()
+                    Hilog.info(1145,'meow',"meow:${requ}")
+
                     if (reqs.success == 1) {
                         run2JS{
                             returnFunc(ZlibBookInfoArk.fromCJ(reqs

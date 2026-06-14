@@ -10,8 +10,8 @@ import { DownloadManager } from '@hadss/super_fast_file_trans';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
 import { url } from '@kit.ArkTS';
-import { ZlibBookInfoBriefArk } from 'libark_interop_api.so';
 import { EventHelper } from '../selineRead/models/classes/BaseEvent';
+import { ZlibBookInfoBriefArk } from 'libohos_app_cangjie_entry.zlib4cj.so';
 
 const DOMAIN = 0x0000;
 
@@ -22,14 +22,17 @@ function getShareUriFromWant(want: Want) {
       console.log(`meow:${wantURl.toString()}`)
       let hash = wantURl.params.get('hash')
       let id = wantURl.params.get('id')
-      if (hash && id) {
+      console.log(`meow:  hash:${hash}  id:${id}`)
+      if (hash != null && id != null) {
+        console.log(`存在hash 和 id`)
         let book = new ZlibBookInfoBriefArk()
         book.id = Number(id)
         book.hash = hash
+        book.toCJ()
         __HWShare__.bookFromShare = book
+        console.log(`meowmeow:  hash:${book.hash}  id:${book.id}`)
         console.log(`meow:${JSON.stringify(__HWShare__.bookFromShare)}`)
         EventHelper.emitterPublish('getNewBook')
-
       }
     } catch (error) {
       console.log(error)
