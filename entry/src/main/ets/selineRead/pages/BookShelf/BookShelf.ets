@@ -13,7 +13,7 @@ import { __Home__ } from '../zlibrary/Home/Home'
 import { I_BookDetailedInfo } from '../../models/interfaces/I_BookInfo'
 import { HdsNavigation } from '@hms.hds.hdsBaseComponent'
 import { hdsMaterial, HdsNavigationTitleMode } from '@kit.UIDesignKit'
-import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
+import { PaginationArk, ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 import { BookInfo } from '../zlibrary/BookInfo/BookInfo'
 
 @ObservedV2
@@ -23,6 +23,9 @@ export class BookShelfData {
 
   zlibSavedBooks: BasicDataSource<ZlibBookInfoArk> =
     new BasicDataSource<ZlibBookInfoArk>()
+
+  pageIndex:number = 1
+  pageInfo:PaginationArk = new PaginationArk()
 
   @Trace gettingBookNow: boolean = false
   @Trace errorText:string = ''
@@ -217,8 +220,11 @@ export struct BookShelf {
       case 1:
         __BookShelf__.zlibSavedBooks.clearData()
         __BookShelf__.gettingBookNow = true
-        __ZlibUser__.localChooseAccount.getSavedBook(1,(books, pageInfo)=>{
+        __BookShelf__.pageIndex = 1
+        __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex,(books, pageInfo)=>{
           __BookShelf__.gettingBookNow = false
+          __BookShelf__.pageIndex = pageInfo.current + 1
+          __BookShelf__.pageInfo = pageInfo
           books.forEach((item)=>{
             __BookShelf__.zlibSavedBooks.pushData(item)
           })
@@ -238,7 +244,6 @@ export struct BookShelf {
     Column() {
       HdsNavigation() {
         Stack() {
-
           if (this.chooseIndex == 0){
             if (__BookShelf__.bookList.dataArray.length ==0){
               if (__BookShelf__.gettingBookNow) {
@@ -407,6 +412,30 @@ export struct BookShelf {
               .padding({ left: 16, right: 16 })
               .borderRadius(20)
               .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 80)
+              .onReachEnd(()=>{
+                if (__BookShelf__.pageIndex <= __BookShelf__.pageInfo.totalPages) {
+                  XAnimation.runWithAnimation(()=>{
+                    __BookShelf__.gettingBookNow = true
+                  })
+                  __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex,(books, pageInfo)=>{
+                    XAnimation.runWithAnimation(()=>{
+                      __BookShelf__.gettingBookNow = false
+                    })
+                    __BookShelf__.pageIndex = pageInfo.current + 1
+                    __BookShelf__.pageInfo = pageInfo
+                    books.forEach((item)=>{
+                      __BookShelf__.zlibSavedBooks.pushData(item)
+                    })
+                    console.log(`limit:${pageInfo.limit}`)
+                    console.log(`current:${pageInfo.current}`)
+                    console.log(`totalItems:${pageInfo.totalItems}`)
+                    console.log(`totalPages:${pageInfo.totalPages}`)
+
+                  },(error)=>{
+                    __BookShelf__.errorText = error
+                  })
+                }
+              })
             }
           }
 
