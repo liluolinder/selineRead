@@ -447,6 +447,7 @@ export struct BookShelf {
 
       }
       .size({ width: '100%', height: '100%' })
+      .mode(NavigationMode.Stack)
       .titleBar({
         enableComponentSafeArea: true,
         style: {
