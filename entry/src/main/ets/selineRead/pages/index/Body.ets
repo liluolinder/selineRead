@@ -306,7 +306,7 @@ export struct Body {
       .height('100%')
       .backgroundColor($r('sys.color.comp_background_gray'))
       .barFloatingStyle({
-        barWidth: { smallWidth: 250, mediumWidth: 300, largeWidth: 320 },
+        barWidth: { smallWidth: 230, mediumWidth: 260, largeWidth: 300 },
         barBottomMargin: 28,
         systemMaterialEffect: {
           materialType: hdsMaterial.MaterialType.IMMERSIVE,
@@ -314,7 +314,7 @@ export struct Body {
         },
         miniBar: {
           miniBarBuilder: () => this.miniBarBuilder(),
-          miniBarWidth:{smallWidth: 250,mediumWidth: 300,largeWidth:320}
+          miniBarWidth:{smallWidth: 230,mediumWidth: 250,largeWidth:250}
         }
       })
       .onContentWillChange((currentIndex: number, comingIndex: number)=>{
