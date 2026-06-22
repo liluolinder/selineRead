@@ -25,9 +25,7 @@ function getShareUriFromWant(want: Want) {
       console.log(`meow:  hash:${hash}  id:${id}`)
       if (hash != null && id != null) {
         console.log(`存在hash 和 id`)
-        let book = new ZlibBookInfoBriefArk()
-        book.id = Number(id)
-        book.hash = hash
+        let book = new ZlibBookInfoBriefArk(Number(id), hash)
         book.toCJ()
         __HWShare__.bookFromShare = book
         console.log(`meowmeow:  hash:${book.hash}  id:${book.id}`)

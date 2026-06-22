@@ -5,7 +5,7 @@
         "name": "default",
         "signingConfig": "default",
         "targetSdkVersion": "6.1.1(24)",
-        "compatibleSdkVersion": "6.1.1(24)",
+        "compatibleSdkVersion": "6.0.2(22)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {
@@ -28,13 +28,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "C:/Project/Harmony/SelineRead/证书/res/通用证书.p12",
-          "storePassword": "00000020CC3AB33504B92611BAAA9E3B6575F87201F25461428C16CA487B93B1E3C5E62376154537DA461AD191991008",
+          "storeFile": "C:/Project/Harmony/SelineRead/证书/debug/通用调试证书.p12",
+          "storePassword": "00000020B43C33B948BD69CE21E5863D421CB893646146932A1909B6203F2B2CF43E2433E90ECE8767EFB656F603547D",
           "keyAlias": "key",
-          "keyPassword": "00000020948765A05C1A4E37DE61F24F2E014FD3B774D66DDD42AE35861B79824DC95F5D27BA25D6BF0F1312A076E717",
+          "keyPassword": "0000002079FF0D80E4227056A689D2BD43CBF41F286005AEB206F7BDDADEBC4B3A80264424121F0C5705897F9BFA72A8",
           "signAlg": "SHA256withECDSA",
-          "profile": "C:/Project/Harmony/SelineRead/证书/res/SR发布Release.p7b",
-          "certpath": "C:/Project/Harmony/SelineRead/证书/res/通用发布证书.cer"
+          "profile": "C:/Project/Harmony/SelineRead/证书/debug/SR调试Debug.p7b",
+          "certpath": "C:/Project/Harmony/SelineRead/证书/debug/通用调试证书.cer"
         }
       }
     ]

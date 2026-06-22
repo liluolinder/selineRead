@@ -7,6 +7,7 @@ import ohos.ark_interop.*
 import ohos.ark_interop_macro.*
 import zlibraryAPI4CJ.dataModel.BookInfo
 import ohos_app_cangjie_entry.run2JS
+import ohos_app_cangjie_entry.globalcontext
 
 @Interop[ArkTS]
 public class ZlibBookInfoArk {

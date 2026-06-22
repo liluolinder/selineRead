@@ -1,4 +1,3 @@
-
 export declare class DownloadTaskArk {
     setStartCallback(event: () => void): DownloadTaskArk
     setProgressCallback(event: (funcArg0: number, funcArg1: number, funcArg2: string) => void): DownloadTaskArk
@@ -8,10 +7,11 @@ export declare class DownloadTaskArk {
     setCompleteCallback(event: () => void): DownloadTaskArk
     start(): void
     cancel(): void
-    constructor()
+    constructor ()
 }
 
 export declare class DownloadManageArk {
     createTask(taskID: string, downloadUrl: string, fileName: string, returnFunc: (funcArg0: DownloadTaskArk) => void, errorFunc: (funcArg0: string) => void): void
-    constructor(downloadPath: string)
+    constructor (downloadPath: string)
 }
+

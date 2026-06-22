@@ -21,7 +21,7 @@ public class ZlibBookInfoBriefArk {
 
     @Interop[ArkTS, Invisible] 
     public static func fromCJ(cjValue: BookInfoBrief): ZlibBookInfoBriefArk {
-        let r = ZlibBookInfoBriefArk()
+        let r = ZlibBookInfoBriefArk(cjValue.id, cjValue.hash)
         r.id = cjValue.id
         r.title = cjValue.title
         r.author = cjValue.author
@@ -65,8 +65,6 @@ public class ZlibBookInfoBriefArk {
                 }
             }
     }
-
-    public init(){}
 
     public init(id:UInt64, hash:String) {
         this.id  = id

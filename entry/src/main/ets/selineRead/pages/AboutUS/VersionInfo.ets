@@ -12,6 +12,12 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: '1.2.0.3',
+      date: '2026/6/22',
+      fixBugsArray:['修复隔空投送和碰一碰互传失效问题'],
+      optimizeArray:['降低兼容API至22']
+    },
+    {
       version: '1.2.0.0',
       date: '2026/6/14',
       addNewFunArray:['zlibrary地址管理器','地址管理器支持检测服务地址是否可用','碰一碰分享书籍','一抓一放分享书籍','书架新增zlib收藏夹','书籍详细页新增收藏书籍按钮（右上角）','新增首页列表视图','webdav服务器支持局域网/串流，组网访问'],
