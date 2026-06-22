@@ -70,11 +70,13 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
     public func getSaved(page!: UInt64 = 1): GetBookWithInfoAndPaginationRes {
         let param = Form()
         param.add("page", "${page}")
+        var url = URL.parse("${zlibEAPI}/user/book/saved")
+        url = url.replace(query:param.toEncodeString())
         var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
         let response = httpClient
             .destroy()
             .setHeader(header)
-            .setUrl("${zlibEAPI}/user/book/saved")
+            .setUrl(url)
             .setMethod(RequestMethod.GET)
             .setBody(param)
             .send()

@@ -6,7 +6,7 @@ import { shareBook } from '../../models/utils/ShareBook'
 import { fileIo, fileUri } from '@kit.CoreFileKit'
 import { Want, wantConstant } from '@kit.AbilityKit'
 import { BusinessError } from '@kit.BasicServicesKit'
-import { loadingDialog } from '../../components/LoadingNewDialog'
+import { loadingDialog, loadingNewDialog } from '../../components/LoadingNewDialog'
 import { zlibClient } from '../../../zlibrary/zlibClient'
 import { http } from '@kit.NetworkKit'
 import { __Home__ } from '../zlibrary/Home/Home'
@@ -43,6 +43,7 @@ export struct BookShelf {
     { text: 'zlib收藏' },
   ]);
   @Local chooseIndex: number = 0;
+  @Local canGetMore:boolean = true
 
   @Builder
   draggingPreview(item: I_BookShelfBookInfo) {
@@ -218,11 +219,19 @@ export struct BookShelf {
       case 0:
         break
       case 1:
+        XAnimation.runWithAnimation(()=>{
+          this.canGetMore = false
+          __BookShelf__.gettingBookNow = true
+        })
+
         __BookShelf__.zlibSavedBooks.clearData()
-        __BookShelf__.gettingBookNow = true
+
         __BookShelf__.pageIndex = 1
         __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex,(books, pageInfo)=>{
-          __BookShelf__.gettingBookNow = false
+          XAnimation.runWithAnimation(()=>{
+            __BookShelf__.gettingBookNow = false
+            this.canGetMore = true
+          })
           __BookShelf__.pageIndex = pageInfo.current + 1
           __BookShelf__.pageInfo = pageInfo
           books.forEach((item)=>{
@@ -404,7 +413,6 @@ export struct BookShelf {
                       })
                     }
                   })
-                  .transition(XAnimation.getAnimation('bottom'))
                 }, (item: ZlibBookInfoArk, index: number) => JSON.stringify(item.cover) + JSON.stringify(index))
               }
               .height('100%')
@@ -413,13 +421,13 @@ export struct BookShelf {
               .borderRadius(20)
               .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 80)
               .onReachEnd(()=>{
-                if (__BookShelf__.pageIndex <= __BookShelf__.pageInfo.totalPages) {
+                if (__BookShelf__.pageIndex <= __BookShelf__.pageInfo.totalPages && !__BookShelf__.gettingBookNow) {
                   XAnimation.runWithAnimation(()=>{
-                    __BookShelf__.gettingBookNow = true
+                    this.canGetMore = false
                   })
                   __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex,(books, pageInfo)=>{
                     XAnimation.runWithAnimation(()=>{
-                      __BookShelf__.gettingBookNow = false
+                      this.canGetMore = true
                     })
                     __BookShelf__.pageIndex = pageInfo.current + 1
                     __BookShelf__.pageInfo = pageInfo
@@ -470,6 +478,10 @@ export struct BookShelf {
 
           if (this.isOpening) {
             loadingDialog()
+          }
+
+          if (!this.canGetMore && __BookShelf__.zlibSavedBooks.dataArray.length == 1) {
+            loadingNewDialog()
           }
 
         }.size({ width: '100%', height: '100%' })

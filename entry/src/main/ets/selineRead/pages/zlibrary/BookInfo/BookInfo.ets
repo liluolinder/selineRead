@@ -17,6 +17,7 @@ import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 import { harmonyShare, systemShare } from '@kit.ShareKit'
 import { fileUri } from '@kit.CoreFileKit'
 import { webview } from '@kit.ArkWeb'
+import { __BookShelf__ } from '../../BookShelf/BookShelf'
 
 @Builder
 export function BookInfoBuilder() {
