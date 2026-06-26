@@ -2,7 +2,7 @@
 export struct ListItemWithRadio {
   @Param image: ResourceStr | undefined = undefined
   @Param message: ResourceStr = ''
-  @Param messageColor:Resource|Color =$r('sys.color.font')
+  @Param messageColor:Resource|Color = $r('sys.color.font')
   @Param subMessage: ResourceStr = ''
   @Param subMessageColor:Resource|Color =$r('sys.color.font')
   @Param checked: boolean = false
@@ -25,7 +25,6 @@ export struct ListItemWithRadio {
             Column({space:5}){
               Text(this.message)
                 .fontSize(16)
-                .fontColor(this.messageColor)
                 .fontWeight(FontWeight.Medium)
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.MARQUEE })
@@ -34,7 +33,6 @@ export struct ListItemWithRadio {
               Text(this.subMessage)
                 .fontSize(12)
                 .maxLines(1)
-                .fontColor(this.subMessageColor)
                 .textOverflow({ overflow: TextOverflow.MARQUEE })
                 .width('100%')
             }

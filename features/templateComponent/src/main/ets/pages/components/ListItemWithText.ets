@@ -13,7 +13,6 @@ export struct ListItemWithText {
         if (this.symbol) {
           SymbolGlyph(this.symbol)
             .fontSize(22)
-            .fontColor([$r('sys.color.font')])
         }
         if (this.image) {
 

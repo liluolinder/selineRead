@@ -17,7 +17,6 @@ export struct SettingsClickItem {
                     if (this.symbol) {
                         SymbolGlyph(this.symbol)
                             .fontSize(22)
-                            .fontColor([$r('sys.color.font')])
                     }
                     if (this.image) {
 
@@ -38,7 +37,6 @@ export struct SettingsClickItem {
                 if (this.showArrow) {
                     SymbolGlyph($r('sys.symbol.chevron_right'))
                         .fontSize(22)
-                        .fontColor([$r('sys.color.font')])
                         .margin(5)
                         .fontWeight(FontWeight.Medium)
                 }
@@ -83,7 +81,6 @@ export struct SettingsToggleItem {
                 Row({ space: 10 }) {
                     SymbolGlyph(this.enable && this.symbol1 ? this.symbol1 : this.symbol)
                         .fontSize(22)
-                        .fontColor([$r('sys.color.font')])
                         .symbolEffect(new ReplaceSymbolEffect(EffectScope.WHOLE), Number(this.enable))
                     Text(this.message)
                         .fontSize(17)

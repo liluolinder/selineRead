@@ -247,12 +247,7 @@ export struct Body {
       .onClick(() => {
         this.showSetting = true
       })
-      .bindSheet($$this.showSetting,SettingBuilder(),{
-        preferType:SheetType.CENTER,
-        height:SheetSize.LARGE,
-        title:{title:$r('app.string.Title_Setting')},
-        backgroundColor:$r('sys.color.background_tertiary')
-      })
+
 
       Button({ type: ButtonType.Circle }) {
         SymbolGlyph($r('sys.symbol.info_circle'))
@@ -342,6 +337,17 @@ export struct Body {
           XAnimation.runWithAnimation(() => __UI__.isShowSideBar = false)
         })
       }
+
+      Column(){
+        Blank()
+          .bindSheet($$this.showSetting,SettingBuilder(),{
+          preferType:SheetType.CENTER,
+          height:SheetSize.LARGE,
+          title:{title:$r('app.string.Title_Setting')},
+          backgroundColor:$r('sys.color.background_tertiary')
+        })
+      }
+
 
     }.size({ width: '100%', height: '100%' })
     .transition(TransitionEffect.OPACITY)

@@ -42,10 +42,24 @@ export default class EntryAbility extends UIAbility {
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     getShareUriFromWant(want)
     try {
-      this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
       XPreferencesManager.localPreferences(this.context, 'selineRead');
-
       initPreferences()
+
+      __Setting__.darkModeIndex =  XPreferencesManager.getPreferencesValue('selineRead', "ColorMode", 0) as number
+      let mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+      switch (__Setting__.darkModeIndex){
+        case 0:
+          mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+          break
+        case 1:
+          mode = ConfigurationConstant.ColorMode.COLOR_MODE_DARK
+          break
+        case 2:
+          mode = ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
+          break
+      }
+      this.context.getApplicationContext().setColorMode(mode);
+
       RelationStoreManager.CreateDataBase(this.context).then((store)=>{
         __ZlibUser__.dataBase = store
         try {

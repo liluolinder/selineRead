@@ -1,4 +1,4 @@
-import { bundleManager, common, Want } from "@kit.AbilityKit";
+import { bundleManager, common, ConfigurationConstant, Want } from "@kit.AbilityKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { WindowMode } from "@ohos.UiTest";
 import { fileUri, picker } from "@kit.CoreFileKit";
@@ -31,6 +31,18 @@ export class XContext {
 
     public static getStringFromResource(resource: Resource) {
         return XContext.getAbilityContext().resourceManager.getStringSync(resource.id)
+    }
+
+    public static setColorMode(colorMode:ConfigurationConstant.ColorMode){
+        try {
+            XContext.getAbilityContext().setColorMode(colorMode)
+        } catch (error) {
+            console.log(`切换颜色模式失败:${JSON.stringify(error)}`)
+        }
+    }
+
+    public static getColorMode():ConfigurationConstant.ColorMode{
+        return XContext.getAbilityContext().config.colorMode ?? ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
     }
 
     public static mergeResourceStrings(...rest: ResourceStr[]): string {
@@ -120,7 +132,6 @@ export class XContext {
            )
        }catch (e){}
     }
-
 
     public static async getDownloadFolderPath(): Promise<string> {
         const documentViewPicker = new picker.DocumentViewPicker()

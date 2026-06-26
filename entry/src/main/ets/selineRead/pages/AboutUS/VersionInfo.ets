@@ -12,6 +12,12 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: '1.2.0.4',
+      date: '2026/6/25',
+      fixBugsArray:['修复zlib收藏页面不会自动获取下一页的问题'],
+      optimizeArray:['优化底部悬浮菜单栏重叠问题']
+    },
+    {
       version: '1.2.0.3',
       date: '2026/6/22',
       fixBugsArray:['修复隔空投送和碰一碰互传失效问题'],

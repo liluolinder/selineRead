@@ -24,7 +24,6 @@ export struct ListItemWithInput {
           if (this.symbol) {
             SymbolGlyph(this.symbol)
               .fontSize(22)
-              .fontColor([$r('sys.color.font')])
           }
           if (this.image) {
             Image(this.image)

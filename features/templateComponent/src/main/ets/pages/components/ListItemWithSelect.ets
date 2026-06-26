@@ -17,7 +17,6 @@ export struct ListItemWithSelect {
          {
            SymbolGlyph( this.symbol)
              .fontSize(22)
-             .fontColor([$r('sys.color.font')])
              .symbolEffect(new ReplaceSymbolEffect(EffectScope.WHOLE))
          }
 

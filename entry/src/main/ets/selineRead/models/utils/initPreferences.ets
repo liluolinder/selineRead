@@ -47,5 +47,7 @@ export async function initPreferences() {
     __Home__.searchHistory = JSON.parse(searchHistoryStr) as I_SearchHistory[]
   }
 
+
+
   console.log(`读取首选项结束`)
 }

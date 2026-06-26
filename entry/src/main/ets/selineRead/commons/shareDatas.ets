@@ -114,6 +114,8 @@ export class Setting{
   @Trace webdavClient?:webdavArk
 
   @Trace autoRefreshUrl:boolean = true
+  @Trace darkModeIndex: number = 0;
+
 }
 export const __Setting__: Setting = new Setting()
 

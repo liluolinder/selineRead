@@ -480,7 +480,7 @@ export struct BookShelf {
             loadingDialog()
           }
 
-          if (!this.canGetMore && __BookShelf__.zlibSavedBooks.dataArray.length == 1) {
+          if (!this.canGetMore && this.chooseIndex == 1) {
             loadingNewDialog()
           }
 

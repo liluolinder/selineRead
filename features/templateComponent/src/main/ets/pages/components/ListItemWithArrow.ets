@@ -66,7 +66,6 @@ export struct ListItemWithArrow {
           if (this.showArrow) {
             SymbolGlyph(this.changeArrowDir())
               .fontSize(22)
-              .fontColor([$r('sys.color.font')])
               .margin(5)
               .fontWeight(FontWeight.Medium)
           }

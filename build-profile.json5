@@ -29,9 +29,9 @@
         "type": "HarmonyOS",
         "material": {
           "storeFile": "C:/Project/Harmony/SelineRead/证书/debug/通用调试证书.p12",
-          "storePassword": "00000020CD79F1459CC60B28E701B87D425F08F59EAB661ADD00C041D9E2DD50B3F3C9D5D6D0D4304C0A368DBFF5DF50",
+          "storePassword": "0000002089F7F4C33B70A81B5D4BCE8C4F06F051124AD8D01FCE7ACE4DB2B9141F663C8EC76736E10E94F7A359ED9AED",
           "keyAlias": "key",
-          "keyPassword": "00000020ADF18DE639A704C07CD1C842348CF4A87ADF841AEA3BCB0616BF831B4F828D0B72414A4AD0AFE7298B06564A",
+          "keyPassword": "00000020C7B0921525099587907984D81FF796A3557EFBB8B913C7B950C0BCE9F74CEF63C2B0DFD52DE9A967AEFF3B6D",
           "signAlg": "SHA256withECDSA",
           "profile": "C:/Project/Harmony/SelineRead/证书/debug/SR调试Debug.p7b",
           "certpath": "C:/Project/Harmony/SelineRead/证书/debug/通用调试证书.cer"

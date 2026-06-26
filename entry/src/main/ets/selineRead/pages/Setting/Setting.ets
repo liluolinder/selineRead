@@ -1,11 +1,13 @@
 import { XAnimation, XContext, XPreferencesManager } from "commonpackage"
-import { ListItemWithInput, ListItemWithSelect, ListItemWithToggle } from "templatecomponent"
+import { ListItemWithInput, ListItemWithSelect, ListItemWithText, ListItemWithToggle } from "templatecomponent"
 import { __Setting__ } from "../../commons/shareDatas"
 import { motion } from "@kit.MultimodalAwarenessKit"
 import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
 import { pasteboard } from "@kit.BasicServicesKit"
 import { I_ListTitle } from "../../models/interfaces/I_ListTitle"
 import { ListTitle } from "../../components/ListTitle"
+import { SegmentButtonV2Items, TabSegmentButtonV2 } from "@kit.ArkUI"
+import { ConfigurationConstant } from "@kit.AbilityKit"
 
 @Builder
 export function SettingBuilder() {
@@ -15,6 +17,34 @@ export function SettingBuilder() {
 
 @ComponentV2
 export struct Setting {
+  @Local darkModeSegButtonItems: SegmentButtonV2Items = new SegmentButtonV2Items([
+    { text: '跟随系统' },
+    { text: '开启' },
+    { text: '关闭' },
+  ]);
+  @Local darkModeIndex: number = __Setting__.darkModeIndex;
+
+  @Monitor("darkModeIndex")
+  darkModeIndexChangeCallback(){
+    __Setting__.darkModeIndex = this.darkModeIndex
+    let mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+    switch (this.darkModeIndex){
+      case 0:
+        mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+        console.log(`MEOW:${XContext.getColorMode()}`)
+        XContext.setColorMode(XContext.getColorMode())
+        break
+      case 1:
+        mode = ConfigurationConstant.ColorMode.COLOR_MODE_DARK
+        break
+      case 2:
+        mode = ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
+        break
+    }
+    XPreferencesManager.putPreferencesValue('selineRead', "ColorMode", this.darkModeIndex)
+    XContext.setColorMode(mode)
+  }
+
   settingOptionArray: I_ListTitle[] = [
     {
       title: $r('app.string.Title_DisplaySetting'),
@@ -33,8 +63,8 @@ export struct Setting {
 
   @Builder
   displaySetting() {
-    ListItem() {
-      if (canIUse("SystemCapability.MultimodalAwareness.Motion")) {
+    if (canIUse("SystemCapability.MultimodalAwareness.Motion")) {
+      ListItem() {
         ListItemWithToggle({
           type: ToggleType.Switch,
           checked: __Setting__.needPerceptiveGrip,
@@ -60,11 +90,22 @@ export struct Setting {
             }
           }
         })
-      } else {
-        Column() {
-          Text('Coming Soon')
-        }.height(50)
-        .padding(16)
+      }
+    }
+
+    ListItem(){
+      Column(){
+        ListItemWithText({
+          leftMessage:'深色模式'
+        })
+        Row(){
+          TabSegmentButtonV2({
+            items: this.darkModeSegButtonItems,
+            selectedIndex: this.darkModeIndex!!,
+            enableStateAnimation:true
+          }).width('100%')
+        }.width('100%')
+        .padding({left:16, right:16, bottom:16})
       }
     }
   }
