@@ -218,12 +218,11 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(async () => {
-                    /* this.pageInfos.pop(true)*/
-                    // if (__User__.isLoginZlib && (zlibClient.cookie!='' || zlibClient.cookie!= undefined )) {
-                    //   __UI__.HomePageStack.pushPathByName('onlineReaderPage', this.bookInfo?.readUrl, true)
-                    // }else {
-                    //   promptAction.showToast({ message: `请先登录`, duration: 2000 })
-                    // }
+                    this.bookInfo?.send2QQGroup(__ZlibUser__.cookie,(res)=>{
+                      XContext.toast(res)
+                    },(error)=>{
+                      XContext.toast(error)
+                    })
                   })
                 }
                 .transition(XAnimation.getAnimation('bottom', 200))

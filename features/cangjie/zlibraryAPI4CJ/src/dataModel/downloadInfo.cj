@@ -22,22 +22,22 @@ public struct GetDownloadInfoRes <: Serializable<GetDownloadInfoRes> {
 }
 
 public struct DownloadInfo <: Serializable<DownloadInfo> {
-    public var downloadLink: String = ''
-    public var description: String = ''
-    public var author: String = ''
-    public var extension: String = ''
+    public var downloadLink: ?String = ''
+    public var description: ?String = ''
+    public var author: ?String = ''
+    public var extension: ?String = ''
     public var allowDownload: Bool = true
 
     public prop fileName: String {
         get() {
-            URL.parse(downloadLink).queryForm.get("filename") ?? ""
+            URL.parse(downloadLink.getOrThrow()).queryForm.get("filename") ?? ""
         }
     }
 
     public func download(path!: Path, conflictMethod!: ConflictMethod = ConflictMethod.Harmony) {
         let savePath = path.join(fileName)
         let response = LinderHttpClient(
-            url: RequestUrl.from(downloadLink.replace("%", "")),
+            url: RequestUrl.from(downloadLink.getOrThrow().replace("%", "")),
             writeTimeout: Duration.Max,
             readTimeout: Duration.Max,
         ).send()
@@ -47,10 +47,10 @@ public struct DownloadInfo <: Serializable<DownloadInfo> {
 
     public func serialize(): DataModel {
         return DataModelStruct()
-            .add(field<String>("downloadLink", downloadLink))
-            .add(field<String>("description", description))
-            .add(field<String>("author", author))
-            .add(field<String>("extension", extension))
+            .add(field<?String>("downloadLink", downloadLink))
+            .add(field<?String>("description", description))
+            .add(field<?String>("author", author))
+            .add(field<?String>("extension", extension))
             .add(field<Bool>("allowDownload", allowDownload))
     }
     public static func deserialize(dm: DataModel): DownloadInfo {
@@ -59,10 +59,10 @@ public struct DownloadInfo <: Serializable<DownloadInfo> {
             case _ => throw Exception("this data is not DataModelStruct")
         }
         var result = DownloadInfo()
-        result.downloadLink = String.deserialize(dms.get("downloadLink"))
-        result.description = String.deserialize(dms.get("description"))
-        result.author = String.deserialize(dms.get("author"))
-        result.extension = String.deserialize(dms.get("extension"))
+        result.downloadLink = Option<String>.deserialize(dms.get("downloadLink"))
+        result.description = Option<String>.deserialize(dms.get("description"))
+        result.author = Option<String>.deserialize(dms.get("author"))
+        result.extension = Option<String>.deserialize(dms.get("extension"))
         result.allowDownload = Bool.deserialize(dms.get("allowDownload"))
         return result
     }

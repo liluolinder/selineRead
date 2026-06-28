@@ -1,0 +1,13 @@
+# Build outputs
+target/
+**/target/
+
+# Editor and local tooling
+.vscode/
+.idea/
+.cache/
+.atomcode/
+
+# OS files
+.DS_Store
+

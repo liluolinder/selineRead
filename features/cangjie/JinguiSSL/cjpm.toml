@@ -1,0 +1,13 @@
+[package]
+  cjc-version = "1.0.0"
+  version = "0.7.5"
+  name = "jinguissl"
+  output-type = "static"
+  src-dir = "src"
+  compile-option = "-Woff unused"
+  description = "Stable Cangjie facade for cryptography, X.509, TLS, and SSH startup contracts"
+  include = ["src"]
+
+[dependencies]
+[dependencies.jinguissl_core]
+path = "../jinguissl_core"

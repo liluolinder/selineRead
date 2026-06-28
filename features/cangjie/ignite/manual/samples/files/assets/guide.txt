@@ -1,0 +1,12 @@
+Ignite file sample
+==================
+
+This file exists to demonstrate:
+- ctx.sendFile(...)
+- ctx.download(...)
+- ctx.sendFileRange(...)
+
+Try a range request such as:
+Range: bytes=0-63
+
+If you can read this line through /range, the sample is working.

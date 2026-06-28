@@ -1,0 +1,32 @@
+target
+.DS_Store
+.cursorrules
+.git/
+.vscode/
+.idea/
+.cache/
+.atomcode/
+
+# cangjie
+build/
+target/
+output/
+module-resolve.json
+module-lock.json
+cjpm.lock
+cangjie-repo.toml
+.cjpm-history
+*.macrocall
+*.gcda
+*.gcno
+
+# 其他
+# log
+# report
+# tmp
+
+# 自定义
+_helper/
+datalog/
+stress_test_dir/
+AGENTS.md

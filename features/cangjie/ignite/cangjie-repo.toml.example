@@ -1,0 +1,9 @@
+# 仓颉包仓库配置示例
+# 复制为 cangjie-repo.toml 并填入你的 path / token，勿将 cangjie-repo.toml 提交到版本库
+
+[repository.cache]
+  path = "~/your-cache-path"
+
+[repository.home]
+  registry = "https://pkg.cangjie-lang.cn/registry"
+  token = "your-token-here"

@@ -16,8 +16,7 @@ release = "--fast-math -O2 -s -Woff all -Won apilevel-check"
 
 [dependencies]
 [dependencies.ignite]
-git = "https://gitcode.com/cinyu/ignite-cangjie.git"
-branch = "main"
+path = "../ignite"
 
 [target]
 [target.aarch64-linux-ohos]

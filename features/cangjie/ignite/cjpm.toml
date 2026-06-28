@@ -1,0 +1,66 @@
+[package]
+  cjc-version = "1.0.0"
+  version = "0.7.7"
+  name = "ignite"
+  output-type = "static"
+  src-dir = "src"
+  compile-option = "-Woff unused"
+  description = "Ignite - A high-performance web framework for Cangjie, inspired by Fiber"
+  include = ["src","LICENSE"]
+
+[package.package-configuration."ignite.middleware"]
+  output-type = "static"
+
+[package.package-configuration."ignite.client"]
+  output-type = "static"
+
+[package.package-configuration."ignite.governance"]
+  output-type = "static"
+
+[package.package-configuration."ignite.security"]
+  output-type = "static"
+
+[package.package-configuration."ignite.binary"]
+  output-type = "static"
+
+[dependencies]
+[dependencies.jinguissl]
+path = "../jinguissl"
+[dependencies.jinguissl_core]
+path = "../jinguissl_core"
+[dependencies.seajson]
+path = "../seajson"
+
+[target.x86_64-w64-mingw32]
+  link-option = "-lcrypt32"
+  compile-option = "--cfg \"ohos=false\""
+  [target.x86_64-w64-mingw32.bin-dependencies]
+    path-option = ["${CANGJIE_STDX_PATH}/windows_x86_64_cjnative/static/stdx"]
+  [target.x86_64-w64-mingw32-Deprecated.bin-dependencies]
+    path-option = ["${CANGJIE_STDX_PATH}/cj_stdx_x86_64-w64-mingw32/static/stdx"]
+
+[target.aarch64-apple-darwin]
+  [target.aarch64-apple-darwin.bin-dependencies]
+    path-option = ["${CANGJIE_STDX_PATH}/cj_stdx_darwin_aarch64_llvm/static/stdx"]
+
+[target.x86_64-apple-darwin]
+  [target.x86_64-apple-darwin.bin-dependencies]
+    path-option = ["${CANGJIE_STDX_PATH}/cj_stdx_darwin_x86_64_llvm/static/stdx"]
+
+[target.x86_64-unknown-linux-gnu]
+  [target.x86_64-unknown-linux-gnu.bin-dependencies]
+    path-option = ["${CANGJIE_STDX_PATH}/linux_x86_64_llvm/static/stdx"]
+
+[target.aarch64-unknown-linux-gnu]
+  [target.aarch64-unknown-linux-gnu.bin-dependencies]
+    path-option = ["${CANGJIE_STDX_PATH}/linux_aarch64_llvm/static/stdx"]
+
+[target.aarch64-linux-ohos]
+  compile-option = "-B \"${DEVECO_CANGJIE_HOME}/compiler/third_party/llvm/bin\" -B \"${DEVECO_CANGJIE_HOME}/musl/usr/lib/aarch64-linux-ohos\" -L \"${DEVECO_CANGJIE_HOME}/musl/usr/lib/aarch64-linux-ohos\" --sysroot \"${DEVECO_CANGJIE_HOME}/musl\""
+
+[target.aarch64-linux-ohos.bin-dependencies]
+  path-option = ["${CANGJIE_STDX_PATH}/linux_ohos_aarch64_cjnative/dynamic/stdx"]
+
+[target.aarch64-linux-ohos-cjnative]
+  [target.aarch64-linux-ohos-cjnative.bin-dependencies]
+    path-option = ["${CANGJIE_STDX_PATH}/linux_ohos_aarch64_cjnative/dynamic/stdx"]

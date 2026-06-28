@@ -31,8 +31,6 @@ export struct Setting {
     switch (this.darkModeIndex){
       case 0:
         mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
-        console.log(`MEOW:${XContext.getColorMode()}`)
-        XContext.setColorMode(XContext.getColorMode())
         break
       case 1:
         mode = ConfigurationConstant.ColorMode.COLOR_MODE_DARK
@@ -309,6 +307,7 @@ export struct Setting {
       }.layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .edgeEffect(EdgeEffect.Spring)
     }.size({ width: '100%', height: '100&' })
     .padding({ left: 16, right: 16, bottom: 16 })
     .backgroundColor($r('sys.color.background_tertiary'))

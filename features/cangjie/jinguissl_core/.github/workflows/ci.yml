@@ -1,0 +1,43 @@
+# JinguiSSL-core CI
+#
+# Haomo 工程流 — 每次提交自动构建 + 测试
+
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Cangku toolchain (cjc + cjpm)
+        run: |
+          curl -sSf https://cangku-lang.github.io/install.sh | bash -s -- -y
+          echo "$HOME/.cangku/bin" >> "$GITHUB_PATH"
+
+      - name: Cache Cangku packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cangku/packages
+            ~/.cache/cangku
+          key: ${{ runner.os }}-cangku-${{ hashFiles('**/cjpm.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cangku-
+
+      - name: Build
+        run: cjpm build
+
+      - name: Run tests
+        run: cjpm test

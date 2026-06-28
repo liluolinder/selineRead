@@ -1,0 +1,10 @@
+[package]
+  cjc-version = "1.0.0"
+  version = "0.7.5"
+  name = "jinguissl_core"
+  output-type = "static"
+  src-dir = "src/jinguissl_core"
+  compile-option = "-Woff unused"
+  license = "LGPL-3.0-only"
+  description = "Cangjie cryptography core with X.509, TLS, and SSH protocol primitives"
+  include = ["src"]

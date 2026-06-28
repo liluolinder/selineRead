@@ -42,7 +42,7 @@ export class XContext {
     }
 
     public static getColorMode():ConfigurationConstant.ColorMode{
-        return XContext.getAbilityContext().config.colorMode ?? ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+        return XContext.getAbilityContext().config.colorMode ?? ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
     }
 
     public static mergeResourceStrings(...rest: ResourceStr[]): string {
