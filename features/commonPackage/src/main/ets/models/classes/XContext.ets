@@ -29,13 +29,17 @@ export class XContext {
         return XContext.UIAbilityContext;
     }
 
+    public static getApplicationContext(){
+        return XContext.UIAbilityContext.getApplicationContext();
+    }
+
     public static getStringFromResource(resource: Resource) {
         return XContext.getAbilityContext().resourceManager.getStringSync(resource.id)
     }
 
     public static setColorMode(colorMode:ConfigurationConstant.ColorMode){
         try {
-            XContext.getAbilityContext().setColorMode(colorMode)
+            XContext.getApplicationContext().setColorMode(colorMode)
         } catch (error) {
             console.log(`切换颜色模式失败:${JSON.stringify(error)}`)
         }

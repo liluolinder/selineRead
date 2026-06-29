@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "seline.book.read",
     "vendor": "liquid",
-    "versionCode": 10020004,
-    "versionName": "1.2.0.4",
+    "versionCode": 10020006,
+    "versionName": "1.2.0.6",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
   }

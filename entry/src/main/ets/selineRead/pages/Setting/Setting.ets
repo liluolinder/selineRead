@@ -42,7 +42,7 @@ export struct Setting {
     }
     XPreferencesManager.putPreferencesValue('selineRead', "ColorMode", this.darkModeIndex)
     console.log(`me欧文：${JSON.stringify(mode)}`)
-    XContext.setColorMode(mode)
+    XContext.getAbilityContext().getApplicationContext().setColorMode(mode)
   }
 
   settingOptionArray: I_ListTitle[] = [

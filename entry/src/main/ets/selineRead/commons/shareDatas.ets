@@ -12,6 +12,7 @@ import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
 import { ZlibUserInfoArk, ZlibClientArk } from "libohos_app_cangjie_entry.zlib4cj.so"
 import { ZlibServiceAddress } from "../models/classes/ZlibServiceAddress"
 import { ZlibBookInfoBriefArk } from "libohos_app_cangjie_entry.zlib4cj.so"
+import { QQbot } from "libohos_app_cangjie_entry.qqbot.so"
 
 
 @ObservedV2
@@ -74,6 +75,9 @@ export class ZlibUser{
   @Trace userName:ResourceStr=$r('app.string.Tip_GettingBookNow')
   @Trace zlibAccountArray:BasicDataSource<ZlibUserInfo> = new BasicDataSource<ZlibUserInfo>()
   @Trace zlibServiceAddressArray:ZlibServiceAddress[] = []
+  @Trace canSend2QQ:boolean = true
+  qqbot = new QQbot()
+
   notificationID:number=0
   dataBase?:relationalStore.RdbStore
   downloadManager?:DownloadManager

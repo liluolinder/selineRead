@@ -12,6 +12,12 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: '1.2.0.6',
+      date: '2026/6/30',
+      addNewFunArray:['新增防窥保护（请在系统设置里面添加本应用）', '新增系统任务视图中本应用模糊处理','新增设置-开启神色模式','预留功能：推送书籍至QQ群'],
+      fixBugsArray:['修复依赖', '修复不会检测账户下载超额', '修复bugs'],
+    },
+    {
       version: '1.2.0.4',
       date: '2026/6/25',
       fixBugsArray:['修复zlib收藏页面不会自动获取下一页的问题'],

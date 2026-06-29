@@ -86,7 +86,28 @@ public class QQbot {
                 }
             } catch (error: Exception) {
                 run2JS {
-                    "无法获取共有QQ群" |> errorFunc
+                    "无法获取共有QQ群${error.message}" |> errorFunc
+                }
+            }
+        }
+    }
+
+    public func  getConfig(returnFunc: (BotConfig) -> Unit,
+        errorFunc: (String) -> Unit):Unit{
+        spawn {
+            try {
+
+                let res = HttpQuick
+                    .get("http://118.195.130.110:8800/notify_config")
+                    .getBodyJsonObject()
+                let config = BotConfig.fromJson(res)
+                run2JS{
+                    config |> returnFunc
+                }
+
+            } catch (error: Exception) {
+                run2JS {
+                    "无法获取设置:${error.message}" |> errorFunc
                 }
             }
         }
