@@ -19,12 +19,11 @@ import WindowsUtil from '../models/classes/WindowsUtil';
 struct Index {
   @Provider('tabController') tabController: TabsController = new TabsController();
   @Provider('currentTabIndex') currentTabIndex: number = 0
-
   private onStatusChange = async (status: dlpAntiPeep.DlpAntiPeepStatus): Promise<void> => {
     if (status === dlpAntiPeep.DlpAntiPeepStatus.PASS) { // 表示当前状态为无人窥视
     } else if (status === dlpAntiPeep.DlpAntiPeepStatus.HIDE) { // 表示有人在窥屏，应用可以进行隐私保护操作。
       try {
-        const windowId =  WindowsUtil.windowClass?.getWindowProperties().id
+        const windowId = WindowsUtil.windowClass?.getWindowProperties().id
         await dlpAntiPeep.setAntiPeepMaskLayer(windowId);
       } catch (error) {
         console.error(`Failed to set AntiPeep MaskLayer. Code: ${error.code}, message: ${error.message}`);
@@ -119,7 +118,10 @@ struct Index {
         }
       })
 
-    }
+    }.foregroundBlurStyle(__System__.isInBackGround ? BlurStyle.Thick : BlurStyle.NONE, {
+      colorMode: ThemeColorMode.LIGHT,
+      adaptiveColor: AdaptiveColor.DEFAULT
+    });
   }
 }
 

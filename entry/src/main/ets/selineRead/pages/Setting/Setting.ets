@@ -1,6 +1,6 @@
 import { XAnimation, XContext, XPreferencesManager } from "commonpackage"
 import { ListItemWithInput, ListItemWithSelect, ListItemWithText, ListItemWithToggle } from "templatecomponent"
-import { __Setting__ } from "../../commons/shareDatas"
+import { __Setting__, __System__ } from "../../commons/shareDatas"
 import { motion } from "@kit.MultimodalAwarenessKit"
 import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
 import { pasteboard } from "@kit.BasicServicesKit"
@@ -31,6 +31,7 @@ export struct Setting {
     switch (this.darkModeIndex){
       case 0:
         mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+        //XContext.setColorMode(__System__.currentColorMode)
         break
       case 1:
         mode = ConfigurationConstant.ColorMode.COLOR_MODE_DARK
@@ -40,6 +41,7 @@ export struct Setting {
         break
     }
     XPreferencesManager.putPreferencesValue('selineRead', "ColorMode", this.darkModeIndex)
+    console.log(`me欧文：${JSON.stringify(mode)}`)
     XContext.setColorMode(mode)
   }
 

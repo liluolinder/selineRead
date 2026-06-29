@@ -6,7 +6,6 @@ import WindowsUtil from '../selineRead/models/classes/WindowsUtil';
 import { __Download__, __Setting__, __System__, __ZlibUser__, __HWShare__ } from '../selineRead/commons/shareDatas';
 import { RelationStoreManager } from '../selineRead/models/classes/DataBase';
 import { initPreferences } from '../selineRead/models/utils/initPreferences';
-import { DownloadManager } from '@hadss/super_fast_file_trans';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
 import { url } from '@kit.ArkTS';
@@ -44,22 +43,6 @@ export default class EntryAbility extends UIAbility {
     try {
       XPreferencesManager.localPreferences(this.context, 'selineRead');
       initPreferences()
-
-      __Setting__.darkModeIndex =  XPreferencesManager.getPreferencesValue('selineRead', "ColorMode", 0) as number
-      let mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
-      switch (__Setting__.darkModeIndex){
-        case 0:
-          mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
-          break
-        case 1:
-          mode = ConfigurationConstant.ColorMode.COLOR_MODE_DARK
-          break
-        case 2:
-          mode = ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
-          break
-      }
-      this.context.getApplicationContext().setColorMode(mode);
-
       RelationStoreManager.CreateDataBase(this.context).then((store)=>{
         __ZlibUser__.dataBase = store
         try {
@@ -69,9 +52,6 @@ export default class EntryAbility extends UIAbility {
           console.log(`读取数据库失败${JSON.stringify(e)}`)
         }
       })
-      __ZlibUser__.downloadManager = DownloadManager.getInstance();
-      __ZlibUser__.downloadManager.init(this.context);
-
     } catch (err) {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
     }
@@ -114,39 +94,43 @@ export default class EntryAbility extends UIAbility {
           console.log(`isNotificationEnabled fail, code is ${err.code}, message is ${err.message}`);
         });
         XContext.init(windowStage.getMainWindowSync().getUIContext())
-        WindowsUtil.initWindow(this.context)
+        WindowsUtil.initWindow(this.context, windowStage)
       } catch (error) {
         console.error(`Liquid:${JSON.stringify(error)}`)
       }
+
+      __Setting__.darkModeIndex =  XPreferencesManager.getPreferencesValue('selineRead', "ColorMode", 0) as number
+      let mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+      switch (__Setting__.darkModeIndex){
+        case 0:
+          mode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+          break
+        case 1:
+          mode = ConfigurationConstant.ColorMode.COLOR_MODE_DARK
+          break
+        case 2:
+          mode = ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
+          break
+      }
+      console.log(`meow:${JSON.stringify(mode)}}`)
+      this.context.getApplicationContext().setColorMode(mode);
+
     });
   }
 
   onWindowStageRestore(windowStage: window.WindowStage): void {
     try {
       XContext.init(windowStage.getMainWindowSync().getUIContext())
-      WindowsUtil.initWindow(this.context)
+      WindowsUtil.initWindow(this.context, windowStage)
     } catch (error) {
       console.error(`Liquid:${JSON.stringify(error)}`)
     }
   }
+
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     getShareUriFromWant(want)
   }
 
-  onWindowStageDestroy(): void {
-    // Main window is destroyed, release UI related resources
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageDestroy');
-  }
-
-  onForeground(): void {
-    // Ability has brought to foreground
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
-  }
-
-  onBackground(): void {
-    // Ability has back to background
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
-  }
 
   onConfigurationUpdate(newConfig: Configuration): void {
     __System__.currentColorMode = newConfig.colorMode ?? ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET

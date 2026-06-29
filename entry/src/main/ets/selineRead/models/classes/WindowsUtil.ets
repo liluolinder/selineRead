@@ -7,8 +7,8 @@ import { XAnimation, XContext } from 'commonpackage'
 
 class Windows {
     windowClass: window.Window | undefined = undefined
-
-    async initWindow(context: common.UIAbilityContext) {
+    windowStage: window.WindowStage| undefined = undefined
+    async initWindow(context: common.UIAbilityContext, windowStage: window.WindowStage) {
         this.windowClass = await context.windowStage.getMainWindow()
         this.windowClass.setWindowLayoutFullScreen(true)
         try {
@@ -29,6 +29,14 @@ class Windows {
         this.windowClass.on('avoidAreaChange', () => {
             this.updateAvoidArea(this.windowClass!)
         })
+
+        windowStage.on('windowStageEvent', (data) => {
+            if (data === window.WindowStageEventType.PAUSED) {
+                __System__.isInBackGround = true
+            } else {
+                __System__.isInBackGround = false;
+            }
+        });
         //this.updateDecorHeight()
     }
 

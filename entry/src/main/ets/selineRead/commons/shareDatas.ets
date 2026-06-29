@@ -26,6 +26,7 @@ export class SysShareData {
   @Trace pcMode: boolean = false
   @Trace DecorHeight: number = 50
   @Trace currentColorMode: ConfigurationConstant.ColorMode = ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+  @Trace isInBackGround:boolean = false
 
   @Monitor('currentColorMode')
   changeColorMode() {
