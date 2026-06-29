@@ -114,7 +114,7 @@ public class ZlibBookInfoArk {
                 }
             } catch (err: Exception) {
                 run2JS {
-                    errorFunc(err.toString())
+                     err.toString() |> errorFunc
                 }
             }
         }
@@ -129,7 +129,7 @@ public class ZlibBookInfoArk {
                 }
             } catch (err: Exception) {
                 run2JS {
-                    errorFunc(err.toString())
+                     err.toString() |> errorFunc
                 }
             }
         }
@@ -144,24 +144,24 @@ public class ZlibBookInfoArk {
                 }
             } catch (err: Exception) {
                 run2JS {
-                    errorFunc(err.toString())
+                     err.toString() |> errorFunc
                 }
             }
         }
     }
 
-    public func send2QQGroup(cookie: String, returnFunc: (String) -> Unit, errorFunc: (String) -> Unit): Unit {
+    public func send2QQGroup(cookie: String,qqNumber:String, qqGroup:String, returnFunc: (String) -> Unit, errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
                 let body = JsonObject()
-                body.put("qqGroup", JsonInt(718559395))
-                body.put("qqNumber", JsonInt(3268931779))
+                body.put("qqGroup", JsonString(qqGroup))
+                body.put("qqNumber", JsonString(qqNumber))
                 body.put("bookID", JsonInt(Int64(id)))
                 body.put("bookHash", JsonString(hash))
                 body.put("cookie", JsonString(cookie))
                 body.put("downloadUrl", JsonString("${zlibEAPI}/book/${id}/${hash}/file"))
                 let clinet = LinderHttpClient()
-                    .setUrl("http://172.29.241.79:8800/notify")
+                    .setUrl("http://118.195.130.110:8800/notify")
                     .setMethod(RequestMethod.POST)
                     .setBody(body)
                 let res = clinet.send()
@@ -171,7 +171,7 @@ public class ZlibBookInfoArk {
                 }
             } catch (err: Exception) {
                 run2JS {
-                    errorFunc(err.toString())
+                   err.toString() |> errorFunc
                 }
             }
         }

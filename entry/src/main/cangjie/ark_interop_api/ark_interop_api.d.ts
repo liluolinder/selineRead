@@ -75,7 +75,17 @@ export declare class ZlibBookInfoArk {
     getDownloadInfo(cookie: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
     saveBook(cookie: string, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
     unSaveBook(cookie: string, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
-    send2QQGroup(cookie: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
+    send2QQGroup(cookie: string, qqNumber: string, qqGroup: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
+}
+
+export declare class QQbot {
+    getBotQQGroup(): void
+    getCommonGroup(qqNum: string, returnFunc: (funcArg0: Array<QQGroupInfoArk>) => void, errorFunc: (funcArg0: string) => void): void
+}
+
+export declare class QQGroupInfoArk {
+    id: string
+    name: string
 }
 
 export declare class DownloadTaskArk {
@@ -102,6 +112,8 @@ export declare interface CustomLib {
     webdavArk: {new (rootPath: string, port: number, account: string, password: string): webdavArk}
     DownloadManageArk: {new (downloadPath: string): DownloadManageArk}
     DownloadTaskArk: {new (): DownloadTaskArk}
+    QQGroupInfoArk: {new (): QQGroupInfoArk}
+    QQbot: {new (): QQbot}
     ZlibBookInfoArk: {new (): ZlibBookInfoArk}
     ZlibBookInfoBriefArk: {new (id: number, hash: string): ZlibBookInfoBriefArk}
     ZlibClientArk: {new (): ZlibClientArk}

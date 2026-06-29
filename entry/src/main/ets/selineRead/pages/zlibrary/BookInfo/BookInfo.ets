@@ -2,11 +2,10 @@ import { linderPixelMap, LNotificationManager, XAnimation, XContext } from 'comm
 import { __Download__, __Setting__, __System__, __ZlibUser__ } from '../../../commons/shareDatas'
 import { __CustomBackgroundData__ } from '../../../components/CustomBackground'
 import { DividerTmp } from '../../../models/classes/DividerTmp'
-import { SymbolGlyphModifier } from '@kit.ArkUI'
+import { CustomContentDialog, SelectOptions, SymbolGlyphModifier } from '@kit.ArkUI'
 import { min_width } from '../../../commons/commonItem'
 import { BigImage } from '../../../components/BigImage'
 import { ListItemWithText } from 'templatecomponent'
-
 import url from '@ohos.url'
 import { BackgroundUtil } from '../../../models/classes/BackgroundRunningManager'
 import { DownloadInfo, DownloadStatus } from '../../../models/classes/DownloadInfo'
@@ -18,6 +17,7 @@ import { harmonyShare, systemShare } from '@kit.ShareKit'
 import { fileUri } from '@kit.CoreFileKit'
 import { webview } from '@kit.ArkWeb'
 import { __BookShelf__ } from '../../BookShelf/BookShelf'
+import { QQbot, QQGroupInfoArk } from 'libohos_app_cangjie_entry.qqbot.so'
 
 @Builder
 export function BookInfoBuilder() {
@@ -39,6 +39,11 @@ export struct BookInfo {
   @Local isOpening: boolean = false
   @Local isFlashing: boolean = false
   @Local isSaved: boolean = false
+  @Local qqGroup : QQGroupInfoArk[] = []
+  @Local qqNumber : string = ''
+  @Local selectedGroupIndex: number = 0
+  @Local qqIndex:number = 0
+
   recommendPage: number = 1
   webController: webview.WebviewController = new webview.WebviewController()
   private immersiveCallback = async (sharableTarget: harmonyShare.SharableTarget) => {
@@ -63,6 +68,112 @@ export struct BookInfo {
     });
     sharableTarget.share(shareData);
   }
+
+  send2QQDialog: CustomDialogController = new CustomDialogController({
+    builder: CustomContentDialog({
+      primaryTitle: '发送至QQ群',
+      contentBuilder: () => {
+        this.send2QQDialogBuilder();
+      },
+      buttons: [
+        {
+          value: '取消',
+          buttonStyle: ButtonStyleMode.TEXTUAL,
+          role: ButtonRole.ERROR,
+        },
+        {
+          value: '确定',
+          buttonStyle: ButtonStyleMode.TEXTUAL,
+          action: () => {
+            if (this.qqNumber != '' && this.qqGroup[this.selectedGroupIndex] ) {
+              this.bookInfo?.send2QQGroup(__ZlibUser__.cookie,this.qqNumber, this.qqGroup[this.selectedGroupIndex].id,(res)=>{
+                XContext.toast(res)
+              },(error)=>{
+                XContext.toast(error)
+              })
+
+            }else {
+              XContext.toast('参数不合法')
+            }
+          }
+        }
+      ],
+    }),
+  });
+
+  @Builder
+  send2QQDialogBuilder(){
+    Scroll(){
+      Column({ space: 12 }){
+        Text('请输入您的QQ号以查询共同群组')
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .opacity(0.6)
+          .width('100%')
+
+        TextInput({ placeholder: '例如：123456789' })
+          .height(48)
+          .borderRadius(12)
+          .padding({ left: 12, right: 12 })
+          .backgroundColor($r('sys.color.comp_background_tertiary'))
+          .onSubmit((_, event) => {
+            if (event.text.trim() == '') {
+              XContext.toast('请输入QQ号')
+              return
+            }
+            this.qqNumber = event.text
+            this.selectedGroupIndex = 0
+            let qqBot:QQbot = new QQbot()
+            qqBot.getCommonGroup(event.text,(items)=>{
+              this.qqGroup = items
+              if (items.length == 0) {
+                this.qqGroup = []
+                XContext.toast('未找到共同群组')
+              }
+            },(error)=>{
+              this.qqGroup = []
+              XContext.toast(error)
+            })
+          })
+
+        if (this.qqGroup.length > 0) {
+          Text('请选择要发送到的群组')
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .opacity(0.6)
+            .width('100%')
+
+          Select(this.qqGroup.map((item:QQGroupInfoArk, index:number) =>
+            ({value: item.name} as SelectOption)) as SelectOption[])
+            .selected(this.selectedGroupIndex)
+            .value(this.qqGroup[this.selectedGroupIndex]?.name ?? '选择群组')
+            .height(48)
+            .borderRadius(12)
+            .padding({ left: 12, right: 12 })
+            .backgroundColor($r('sys.color.comp_background_tertiary'))
+            .onSelect((index: number) => {
+              this.selectedGroupIndex = index
+            })
+        } else {
+          Column({ space: 6 }){
+            Text('暂无共同群组')
+              .fontSize(14)
+              .opacity(0.4)
+            Text('请在上方输入QQ号后按回车查询')
+              .fontSize(12)
+              .opacity(0.3)
+          }
+          .padding({ top: 16, bottom: 16 })
+          .width('100%')
+          .alignItems(HorizontalAlign.Center)
+        }
+      }
+      .width('100%')
+      .padding({left:16, right:16, top: 8, bottom: 8})
+    }
+    .contentEndOffset(16)
+  }
+
 
   aboutToAppear(): void {
     harmonyShare.on('gesturesShare', this.immersiveCallback);
@@ -206,7 +317,7 @@ export struct BookInfo {
 
                 ListItem() {
                   Button({ type: ButtonType.Normal, stateEffect: true }) {
-                    Text('在线阅读')
+                    Text('发送至QQ群')
                   }
                   .height(55)
                   .borderRadius(20)
@@ -218,11 +329,10 @@ export struct BookInfo {
                   .width('100%')
                   .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                   .onClick(async () => {
-                    this.bookInfo?.send2QQGroup(__ZlibUser__.cookie,(res)=>{
-                      XContext.toast(res)
-                    },(error)=>{
-                      XContext.toast(error)
-                    })
+                    this.selectedGroupIndex = 0
+                    this.qqNumber = ''
+                    this.qqGroup = []
+                    this.send2QQDialog.open()
                   })
                 }
                 .transition(XAnimation.getAnimation('bottom', 200))
@@ -444,7 +554,6 @@ export struct BookInfo {
         }
       }
     ])
-
     .size({ width: '100%', height: '100%' })
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
       Color.Transparent : $r('sys.color.comp_background_gray'))

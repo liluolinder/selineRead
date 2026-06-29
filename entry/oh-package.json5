@@ -14,5 +14,6 @@
     "libohos_app_cangjie_entry.zlib4cj.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry_zlib4cj",
     "libohos_app_cangjie_entry.download.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry_download",
     "libohos_app_cangjie_entry.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry",
+    "libohos_app_cangjie_entry.qqbot.so": "file:src/main/cangjie/types/libohos_app_cangjie_entry_qqbot",
   }
 }

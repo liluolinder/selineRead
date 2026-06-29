@@ -11,6 +11,7 @@ import { __Home__ } from './zlibrary/Home/Home';
 import { dlpAntiPeep } from '@kit.DeviceSecurityKit';
 import { window } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
+import WindowsUtil from '../models/classes/WindowsUtil';
 
 
 @Entry
@@ -19,28 +20,15 @@ struct Index {
   @Provider('tabController') tabController: TabsController = new TabsController();
   @Provider('currentTabIndex') currentTabIndex: number = 0
 
-  private hasShownMask: boolean = false;
-
   private onStatusChange = async (status: dlpAntiPeep.DlpAntiPeepStatus): Promise<void> => {
     if (status === dlpAntiPeep.DlpAntiPeepStatus.PASS) { // 表示当前状态为无人窥视
-      console.info('DlpAntiPeepStatus is PASS.');
     } else if (status === dlpAntiPeep.DlpAntiPeepStatus.HIDE) { // 表示有人在窥屏，应用可以进行隐私保护操作。
-      console.info('DlpAntiPeepStatus is HIDE.');
-      if (!this.hasShownMask) {
-        await this.setMaskLayer(); // 拉起系统蒙层
+      try {
+        const windowId =  WindowsUtil.windowClass?.getWindowProperties().id
+        await dlpAntiPeep.setAntiPeepMaskLayer(windowId);
+      } catch (error) {
+        console.error(`Failed to set AntiPeep MaskLayer. Code: ${error.code}, message: ${error.message}`);
       }
-    }
-  }
-
-  private async setMaskLayer(): Promise<void> {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-      const windowClass = await window.getLastWindow(context);
-      const windowId = windowClass.getWindowProperties().id;
-      await dlpAntiPeep.setAntiPeepMaskLayer(windowId);
-      this.hasShownMask = true; // 避免窥视状态时频繁拉起蒙层
-    } catch (error) {
-      console.error(`Failed to set AntiPeep MaskLayer. Code: ${error.code}, message: ${error.message}`);
     }
   }
 
@@ -57,6 +45,7 @@ struct Index {
     try {
       const isOpen = await dlpAntiPeep.isDlpAntiPeepSwitchOn();
       if (isOpen) {
+        //开启防窥检测
         dlpAntiPeep.on('dlpAntiPeep', this.onStatusChange);
       } else {
         // 开关未开启，引导用户设置

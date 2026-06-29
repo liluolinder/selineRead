@@ -87,6 +87,9 @@
       },
       {
         "name" : "ohos.permission.DETECT_GESTURE"
+      },
+      {
+        "name" : "ohos.permission.DLP_GET_HIDE_STATUS"
       }
     ]
   }
