@@ -104,6 +104,7 @@ export struct Body {
       __ZlibUser__.zlibClient.login(__ZlibUser__.account, __ZlibUser__.password, (res) => {
         __ZlibUser__.localChooseAccount = res
         __ZlibUser__.cookie = res.cookie
+        __ZlibUser__.userName = res.name
         __ZlibUser__.localChooseAccount.getRecommendBook((books)=>{
           this.putBooks(books)
           if(books.length == 0 ){
@@ -114,6 +115,7 @@ export struct Body {
           __Home__.canGetMore = true
         })
       }, (error) => {
+        __ZlibUser__.userName = "登录失败"
         __Home__.errorText = error
         this.getCommonRecommend()
       })
@@ -291,7 +293,7 @@ export struct Body {
 
         }.tabBar(new BottomTabBarStyle({
           normal: new SymbolGlyphModifier($r('sys.symbol.person')),
-        },__ZlibUser__.account != ''?__ZlibUser__.localChooseAccount.name??'未命名':'请先登录' ))
+        },__ZlibUser__.account != ''?__ZlibUser__.userName:'请先登录' ))
 
       }
       .barOverlap(true)

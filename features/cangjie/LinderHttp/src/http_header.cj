@@ -31,7 +31,6 @@ public class HttpHeader {
     public init() {
         this
             .add(key: "Sec-ch-ua", value: #""Chromium";v="142", "Microsoft Edge";v="142", "Not_A Brand";v="99""#)
-            .add(key: "Sec-ch-ua-platform", value: "Windows")
             .add(key: "User-agent",
                 value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0")
     }

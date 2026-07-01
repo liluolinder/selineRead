@@ -1,7 +1,7 @@
 import { XAnimation, XContext } from 'commonpackage';
 import { DownloadManageArk } from 'libohos_app_cangjie_entry.download.so';
 import { webdavArk } from 'libohos_app_cangjie_entry.webdav.so';
-import { min_width } from '../commons/commonItem';
+import { DlpAntiPeepCallback, min_width } from '../commons/commonItem';
 import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../commons/shareDatas';
 import { DecorBar } from '../components/DecorBar';
 import { deleteDownloadCache } from '../models/utils/ClearDownloadCache';
@@ -19,17 +19,6 @@ import WindowsUtil from '../models/classes/WindowsUtil';
 struct Index {
   @Provider('tabController') tabController: TabsController = new TabsController();
   @Provider('currentTabIndex') currentTabIndex: number = 0
-  private onStatusChange = async (status: dlpAntiPeep.DlpAntiPeepStatus): Promise<void> => {
-    if (status === dlpAntiPeep.DlpAntiPeepStatus.PASS) { // 表示当前状态为无人窥视
-    } else if (status === dlpAntiPeep.DlpAntiPeepStatus.HIDE) { // 表示有人在窥屏，应用可以进行隐私保护操作。
-      try {
-        const windowId = WindowsUtil.windowClass?.getWindowProperties().id
-        await dlpAntiPeep.setAntiPeepMaskLayer(windowId);
-      } catch (error) {
-        console.error(`Failed to set AntiPeep MaskLayer. Code: ${error.code}, message: ${error.message}`);
-      }
-    }
-  }
 
   async aboutToAppear(): Promise<void> {
     deleteDownloadCache()
@@ -41,28 +30,34 @@ struct Index {
       __Setting__.webdavClient?.start()
     }
 
-    try {
-      const isOpen = await dlpAntiPeep.isDlpAntiPeepSwitchOn();
-      if (isOpen) {
-        //开启防窥检测
-        dlpAntiPeep.on('dlpAntiPeep', this.onStatusChange);
-      } else {
-        // 开关未开启，引导用户设置
-        const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-        const result = await dlpAntiPeep.requestAntiPeepOptions(context);
-        if (result === dlpAntiPeep.AntiPeepOptionsResult.SUCCESS ||
-          result === dlpAntiPeep.AntiPeepOptionsResult.ALREADY_ON) { // 表示防窥保护开关开启成功或已开启
-          dlpAntiPeep.on('dlpAntiPeep', this.onStatusChange);
+    if (canIUse("SystemCapability.Security.DlpAntiPeep") && __Setting__.needDlpAntiPeep) {
+      try {
+        const isOpen = await dlpAntiPeep.isDlpAntiPeepSwitchOn();
+        if (isOpen) {
+          //开启防窥检测
+          dlpAntiPeep.on('dlpAntiPeep', DlpAntiPeepCallback);
+        } else {
+          // 开关未开启，引导用户设置
+          const result = await dlpAntiPeep.requestAntiPeepOptions(XContext.getAbilityContext());
+          if (result === dlpAntiPeep.AntiPeepOptionsResult.SUCCESS ||
+            result === dlpAntiPeep.AntiPeepOptionsResult.ALREADY_ON) { // 表示防窥保护开关开启成功或已开启
+            dlpAntiPeep.on('dlpAntiPeep', DlpAntiPeepCallback);
+          }else{
+            __Setting__.needDlpAntiPeep = false
+          }
         }
+      } catch (error) {
+        console.error(`Failed to init DlpAntiPeep. Code: ${error.code}, message: ${error.message}`);
       }
-    } catch (error) {
-      console.error(`Failed to init DlpAntiPeep. Code: ${error.code}, message: ${error.message}`);
     }
+
+
   }
 
   aboutToDisappear() {
+    //关闭隐私防窥
     try {
-      dlpAntiPeep.off('dlpAntiPeep', this.onStatusChange);
+      dlpAntiPeep.off('dlpAntiPeep', DlpAntiPeepCallback);
     } catch (error) {
       console.error(`Failed to off DlpAntiPeep. Code: ${error.code}, message: ${error.message}`);
     }

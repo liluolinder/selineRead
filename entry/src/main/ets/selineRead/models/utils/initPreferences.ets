@@ -25,6 +25,7 @@ export async function initPreferences() {
   __Setting__.overrideConflictFile = XPreferencesManager.getPreferencesValue("selineRead", "overrideConflictFile", true) as boolean
   __Setting__.shareAfterDownload = XPreferencesManager.getPreferencesValue("selineRead", "shareAfterDownload", true) as boolean
   __Setting__.needPerceptiveGrip = XPreferencesManager.getPreferencesValue("selineRead", "needPerceptiveGrip", false) as boolean
+  __Setting__.needDlpAntiPeep = XPreferencesManager.getPreferencesValue("selineRead", "needDlpAntiPeep", false) as boolean
 
   __Setting__.autoRefreshUrl = XPreferencesManager.getPreferencesValue("selineRead", "autoRefreshUrl", true) as boolean
 

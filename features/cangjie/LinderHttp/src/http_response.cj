@@ -93,6 +93,78 @@ public class LinderHttpResponse {
     }
 
     /**
+     * 获取解析后的Set-Cookie键值对Map
+     * 从`Set-Cookie`头部提取每个Cookie的name和value，
+     * 以HashMap<String, String>形式返回（name → value）。
+     * 
+     * @return 解析后的Cookie键值对Map，无Set-Cookie时返回空HashMap
+     * 
+     * 示例：Set-Cookie值为["sessionId=abc123; Path=/; HttpOnly"] 
+     *       返回 {"sessionId": "abc123"}
+     */
+    public func getSetCookieHashMap(): HashMap<String, String> {
+        let result = HashMap<String, String>()
+        let tempRes = headers.get('set-cookie')
+        if (tempRes.isEmpty()) {
+            return result
+        }
+        for (cookieStr in tempRes) {
+            let semiIdx = cookieStr.indexOf(';')
+            let nameValuePart = if (!semiIdx.isNone()) {
+                cookieStr[0..semiIdx.getOrThrow()]
+            } else {
+                cookieStr
+            }
+            let eqIdx = nameValuePart.indexOf('=')
+            if (!eqIdx.isNone() && eqIdx.getOrThrow() > 0) {
+                let pos = eqIdx.getOrThrow()
+                let name = nameValuePart[0..pos]
+                let value = nameValuePart[(pos + 1)..]
+                result[name] = value
+            }
+        }
+        result
+    }
+
+    /**
+     * 获取Set-Cookie字符串
+     * 将所有Set-Cookie头的name=value部分用"; "拼接为一个字符串
+     * 
+     * @return Cookie字符串，格式："name1=value1; name2=value2"
+     *         无Set-Cookie时返回空字符串
+     */
+    public func getSetCookieString(): String {
+        var result = ''
+        var first = true
+        let tempRes = headers.get('set-cookie')
+        for (cookieStr in tempRes) {
+            let semiIdx = cookieStr.indexOf(';')
+            let nameValuePart = if (!semiIdx.isNone()) {
+                cookieStr[0..semiIdx.getOrThrow()]
+            } else {
+                cookieStr
+            }
+            if (!first) {
+                result = result + '; '
+            }
+            result = result + nameValuePart
+            first = false
+        }
+        result
+    }
+
+    /**
+     * 获取LinderHttpCookie对象
+     * 将Set-Cookie头解析并填充到LinderHttpCookie中
+     * 
+     * @return LinderHttpCookie对象，包含所有解析后的Cookie
+     */
+    public func getSetCookieObject(): LinderHttpCookie {
+        let cookie = LinderHttpCookie.fromString(getSetCookieString())
+        cookie
+    }
+
+    /**
      * 获取指定响应头的值
      *
      * @param header 头部字段名

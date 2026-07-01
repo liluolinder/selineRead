@@ -9,7 +9,6 @@ export struct ListItemWithToggle {
   @Param checked: boolean = false
   @Param type: ToggleType = ToggleType.Switch
   @Param tip:string|undefined = undefined
-  @Local enable: boolean = this.checked
   @Param ensureMessage: ResourceStr | undefined = undefined
   @Event onChange: (checked: boolean) => void
   @Local showTip: boolean = false
@@ -25,7 +24,7 @@ export struct ListItemWithToggle {
          if (this.symbol){
            SymbolGlyph(this.symbol)
              .fontSize(22)
-             .symbolEffect(new ReplaceSymbolEffect(EffectScope.WHOLE), Number(this.enable))
+             .symbolEffect(new ReplaceSymbolEffect(EffectScope.WHOLE), Number(this.checked))
          }
          if (this.message){
            Text(this.message)
@@ -48,7 +47,7 @@ export struct ListItemWithToggle {
 
         }.layoutWeight(1)
 
-        Toggle({ type: this.type, isOn: this.enable }) {
+        Toggle({ type: this.type, isOn: this.checked!! }) {
           if (this.type == ToggleType.Button) {
             Text(this.toggleMessage)
               .width('94%')
@@ -74,7 +73,6 @@ export struct ListItemWithToggle {
               backgroundBlurStyle: BlurStyle.COMPONENT_THIN,
             })
           }
-          this.enable = checked
           this.onChange(checked)
         })
         .selectedColor(this.type == ToggleType.Button?$r('sys.color.ohos_toggle_bg'): $r('[color].color.linder_blue'))

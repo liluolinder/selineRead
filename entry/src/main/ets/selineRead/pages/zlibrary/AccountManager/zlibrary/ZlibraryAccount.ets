@@ -30,7 +30,6 @@ export struct ZlibraryAccount {
 
   async aboutToAppear(): Promise<void> {
     await RelationStoreManager.getZlibAccount(__ZlibUser__.dataBase)
-
   }
 
   @Builder

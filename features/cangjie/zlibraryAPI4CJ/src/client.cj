@@ -11,12 +11,18 @@ public class ZlibClient {
         let body = Form()
         body.add("email", email)
         body.add("password", password)
-        let response = httpClient
+        var response = httpClient
             .setDefaultHeader()
             .setUrl("${zlibEAPI}/user/login")
             .setMethod(RequestMethod.POST)
             .setBody(body)
             .send()
+
+        let headers = HttpHeader()
+
+        headers.add(key: "Cookie", value: response.getSetCookieString())
+        response = httpClient.setHeader(headers).send()
+
         let res = GetUserInfoOrLoginRes.deserialize(response.getBodyDataModel())
         res
     }
@@ -55,8 +61,6 @@ public class ZlibClient {
             .setUrl("${zlibEAPI}/book/search")
             .setBody(body)
             .send()
-
-
         let res = GetBookWithInfoAndPaginationRes.deserialize(response.getBodyDataModel())
         res
     }

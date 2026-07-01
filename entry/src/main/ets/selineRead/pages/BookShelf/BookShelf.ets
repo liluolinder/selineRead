@@ -228,10 +228,7 @@ export struct BookShelf {
 
         __BookShelf__.pageIndex = 1
         __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex,(books, pageInfo)=>{
-          XAnimation.runWithAnimation(()=>{
-            __BookShelf__.gettingBookNow = false
-            this.canGetMore = true
-          })
+
           __BookShelf__.pageIndex = pageInfo.current + 1
           __BookShelf__.pageInfo = pageInfo
           books.forEach((item)=>{
@@ -241,7 +238,10 @@ export struct BookShelf {
           console.log(`current:${pageInfo.current}`)
           console.log(`totalItems:${pageInfo.totalItems}`)
           console.log(`totalPages:${pageInfo.totalPages}`)
-
+          XAnimation.runWithAnimation(()=>{
+            __BookShelf__.gettingBookNow = false
+            this.canGetMore = true
+          })
         },(error)=>{
           __BookShelf__.errorText = error
         })

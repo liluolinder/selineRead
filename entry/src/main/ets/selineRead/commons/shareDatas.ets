@@ -9,9 +9,8 @@ import { DownloadManager } from "@hadss/super_fast_file_trans"
 import { DownloadInfo } from "../models/classes/DownloadInfo"
 import { DownloadManageArk } from "libohos_app_cangjie_entry.download.so"
 import { webdavArk } from "libohos_app_cangjie_entry.webdav.so"
-import { ZlibUserInfoArk, ZlibClientArk } from "libohos_app_cangjie_entry.zlib4cj.so"
+import { ZlibUserInfoArk, ZlibClientArk ,ZlibBookInfoBriefArk} from "libohos_app_cangjie_entry.zlib4cj.so"
 import { ZlibServiceAddress } from "../models/classes/ZlibServiceAddress"
-import { ZlibBookInfoBriefArk } from "libohos_app_cangjie_entry.zlib4cj.so"
 import { QQbot } from "libohos_app_cangjie_entry.qqbot.so"
 
 
@@ -111,6 +110,7 @@ export class Setting{
   @Trace shareAfterDownload:boolean = true
   @Trace bookShelfClickOpenWay:number = 0
   @Trace needPerceptiveGrip:boolean = false
+  @Trace needDlpAntiPeep:boolean = false
   @Trace isLeftHand:boolean = false
   @Trace webdavServerEnabled:boolean = false
   @Trace webdavPort:number = 8088

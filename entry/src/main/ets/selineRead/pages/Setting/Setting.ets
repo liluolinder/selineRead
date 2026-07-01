@@ -8,6 +8,8 @@ import { I_ListTitle } from "../../models/interfaces/I_ListTitle"
 import { ListTitle } from "../../components/ListTitle"
 import { SegmentButtonV2Items, TabSegmentButtonV2 } from "@kit.ArkUI"
 import { ConfigurationConstant } from "@kit.AbilityKit"
+import { dlpAntiPeep } from "@kit.DeviceSecurityKit"
+import { DlpAntiPeepCallback } from "../../commons/commonItem"
 
 @Builder
 export function SettingBuilder() {
@@ -86,6 +88,44 @@ export struct Setting {
                 motion.off('holdingHandChanged');
                 XAnimation.runWithAnimation(() => __Setting__.isLeftHand = false)
               } catch {
+              }
+            }
+          }
+        })
+      }
+    }
+
+    if (canIUse("SystemCapability.Security.DlpAntiPeep")){
+      ListItem(){
+        ListItemWithToggle({
+          type: ToggleType.Switch,
+          checked: __Setting__.needDlpAntiPeep,
+          message: "防窥保护",
+          onChange: async (status: boolean) => {
+            XPreferencesManager.putPreferencesValue('selineRead', "needDlpAntiPeep", status)
+            __Setting__.needDlpAntiPeep = status
+            //如果用户尝试开启
+            if (status) {
+              try {
+                //先获取一下系统的开没开
+                const isOpen = await dlpAntiPeep.isDlpAntiPeepSwitchOn();
+                //系统的开了
+                if (isOpen) {
+                  //开启防窥检测
+                  dlpAntiPeep.on('dlpAntiPeep', DlpAntiPeepCallback);
+                  console.log(`开启防窥保护`)
+                } else {
+                  // 开关未开启，引导用户设置
+                  const result = await dlpAntiPeep.requestAntiPeepOptions(XContext.getAbilityContext());
+                  if (result === dlpAntiPeep.AntiPeepOptionsResult.SUCCESS ||
+                    result === dlpAntiPeep.AntiPeepOptionsResult.ALREADY_ON) { // 表示防窥保护开关开启成功或已开启
+                    dlpAntiPeep.on('dlpAntiPeep', DlpAntiPeepCallback);
+                  }else{
+                    __Setting__.needDlpAntiPeep = false
+                  }
+                }
+              } catch (error) {
+                console.error(`Failed to init DlpAntiPeep. Code: ${error.code}, message: ${error.message}`);
               }
             }
           }
