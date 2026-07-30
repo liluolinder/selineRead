@@ -1,4 +1,5 @@
 [package]
+  override-compile-option = "${OVERRIDE_COMPILE_OPTION}"
 cjc-version = "1.1.0"
 compile-option = "--dy-std --cfg=\"${COMPILE_CONDITION_ENTRY}\""
 description = "CangjieUI Application"
@@ -18,6 +19,7 @@ incremental = []
 compile-option = "-g -Woff all -Won apilevel-check"
 [profile.test]
 [profile.customized-option]
+  asan = "--sanitize=address -lclang_rt.asan"
 debug = "-g -Woff all -Won apilevel-check"
 release = "--fast-math -O2 -s -Woff all -Won apilevel-check"
 

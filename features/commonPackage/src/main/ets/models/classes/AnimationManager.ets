@@ -57,6 +57,7 @@ export class XAnimation {
         s1: number = 0.4,
         s2: number = 0.85): void {
         if (animate) {
+
             animateToImmediately({ curve: curves.springMotion(s1, s2) }, () => {
                 fn();
             });

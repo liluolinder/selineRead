@@ -12,49 +12,57 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
-      version: '1.2.0.6',
+      version: '1.2.2.0',
+      date: '2026/7/1',
+      optimizeArray: ['新增部分UI沉浸光感(鸿蒙7)'],
+    },
+    {
+      version: '1.2.1.1',
+      date: '2026/7/1',
+      fixBugsArray: ['修复登录失效问题'],
+    },
+    {
+      version: '1.2.1.0',
       date: '2026/6/30',
-      addNewFunArray:['新增防窥保护（请在系统设置里面添加本应用）', '新增系统任务视图中本应用模糊处理','新增设置-开启深色模式','预留功能：推送书籍至QQ群'],
-      fixBugsArray:['修复依赖', '修复不会检测账户下载超额', '修复bugs'],
-    },
-    {
-      version: '1.2.0.4',
-      date: '2026/6/25',
-      fixBugsArray:['修复zlib收藏页面不会自动获取下一页的问题'],
-      optimizeArray:['优化底部悬浮菜单栏重叠问题']
-    },
-    {
-      version: '1.2.0.3',
-      date: '2026/6/22',
-      fixBugsArray:['修复隔空投送和碰一碰互传失效问题'],
-      optimizeArray:['降低兼容API至22']
+      addNewFunArray: ['新增防窥保护（请在系统设置里面添加本应用）', '新增系统任务视图中本应用模糊处理',
+        '新增设置-开启深色模式', '预留功能：推送书籍至QQ群'],
+      fixBugsArray: ['修复依赖', '修复不会检测账户下载超额', '修复bugs'],
     },
     {
       version: '1.2.0.0',
-      date: '2026/6/14',
-      addNewFunArray:['zlibrary地址管理器','地址管理器支持检测服务地址是否可用','碰一碰分享书籍','一抓一放分享书籍','书架新增zlib收藏夹','书籍详细页新增收藏书籍按钮（右上角）','新增首页列表视图','webdav服务器支持局域网/串流，组网访问'],
-      fixBugsArray:['下载书籍时候软件异常卡顿','修复首页不推荐个性化书籍问题', '部分书籍无法搜索'],
-      optimizeArray:['优化部分UI展示效果','书籍简介切换至web显示']
+      date: '2026/6/25',
+      addNewFunArray: ['zlibrary地址管理器', '地址管理器支持检测服务地址是否可用', '碰一碰分享书籍', '一抓一放分享书籍',
+        '书架新增zlib收藏夹', '书籍详细页新增收藏书籍按钮（右上角）', '新增首页列表视图',
+        'webdav服务器支持局域网/串流，组网访问'],
+      fixBugsArray: ['下载书籍时候软件异常卡顿', '修复首页不推荐个性化书籍问题', '部分书籍无法搜索'],
+      optimizeArray: ['优化部分UI展示效果', '书籍简介切换至web显示']
     },
     {
       version: '1.1.6.0',
-      description:'下个版本更新预告:管理zlibrary地址器(^~^),碰一碰分享书籍,隔空抓取书籍,收藏书籍',
+      description: '下个版本更新预告:管理zlibrary地址器(^~^),碰一碰分享书籍,隔空抓取书籍,收藏书籍',
       date: '2026/6/9',
-      addNewFunArray:['新增内置webdav服务','本地书籍封面绑定','修复搜索，打开侧边栏下使用系统侧滑不再直接退出APP','搜索栏显示搜索Button','使用悬浮tab栏，删除侧边栏'],
-      fixBugsArray:['修复因仓颉导致的软件崩溃问题（API24）','修复无法下载的问题','新增书架书籍响应点击操作，可快捷导入三方阅读器(需在侧边栏设置中手动选择)','主页顶栏新增打开下载管理器按钮','在支持的设备上支持智感握持(适人握持)'],
-      optimizeArray:['在搜索栏/搜索列表界面使用系统返回手势时不再直接退出APP','优化部分场景性能','优化请求稳定性','无法下载txt文件','修复zlib官方策略修改导致无法访问问题','修复部分情况下无法获取书籍消息']
+      addNewFunArray: ['新增内置webdav服务', '本地书籍封面绑定', '修复搜索，打开侧边栏下使用系统侧滑不再直接退出APP',
+        '搜索栏显示搜索Button', '使用悬浮tab栏，删除侧边栏'],
+      fixBugsArray: ['修复因仓颉导致的软件崩溃问题（API24）', '修复无法下载的问题',
+        '新增书架书籍响应点击操作，可快捷导入三方阅读器(需在侧边栏设置中手动选择)', '主页顶栏新增打开下载管理器按钮',
+        '在支持的设备上支持智感握持(适人握持)'],
+      optimizeArray: ['在搜索栏/搜索列表界面使用系统返回手势时不再直接退出APP', '优化部分场景性能', '优化请求稳定性',
+        '无法下载txt文件', '修复zlib官方策略修改导致无法访问问题', '修复部分情况下无法获取书籍消息']
     },
     {
       version: '1.1.4.0',
       date: '2025/12/6',
-      addNewFunArray: ['书架书籍删除(长按/右键菜单)','下载管理删除下载任务(左滑)','账号管理支持删除','添加打开侧边栏按钮(显示宽度较小时)','允许设置下载时，文件冲突处理办法','允许设置是否下载完成后打开华为分享'],
-      optimizeArray:['优化部分界面动画','优化部分界面展示','启动后进行个人信息获取']
+      addNewFunArray: ['书架书籍删除(长按/右键菜单)', '下载管理删除下载任务(左滑)', '账号管理支持删除',
+        '添加打开侧边栏按钮(显示宽度较小时)', '允许设置下载时，文件冲突处理办法', '允许设置是否下载完成后打开华为分享'],
+      optimizeArray: ['优化部分界面动画', '优化部分界面展示', '启动后进行个人信息获取']
     },
     {
       version: '1.1.3.0',
       date: '2025/12/4',
-      addNewFunArray: ['书架', '下载任务持久保存', '书架与下载任务数据绑定', '每次冷启动删除下载文件夹缓存文件', '书架右键/长按菜单', '分享书架书籍', '联网搜索书架书籍','联网查看书架书籍详细信息','导出书架书籍至三方阅读器：格物阅读/华为阅读'],
-      optimizeArray:['优化部分界面动画','优化部分界面展示']
+      addNewFunArray: ['书架', '下载任务持久保存', '书架与下载任务数据绑定', '每次冷启动删除下载文件夹缓存文件',
+        '书架右键/长按菜单', '分享书架书籍', '联网搜索书架书籍', '联网查看书架书籍详细信息',
+        '导出书架书籍至三方阅读器：格物阅读/华为阅读'],
+      optimizeArray: ['优化部分界面动画', '优化部分界面展示']
     },
     {
       version: '1.1.2.0',
@@ -159,6 +167,15 @@ export struct VersionInfo {
   @Local currentIndex: number = -1
   listScroller: Scroller = new Scroller()
 
+  getArrow(idx: number): 'up' | 'down' | 'right' | 'left' {
+    if (idx == this.currentIndex) {
+      return 'up'
+    } else {
+      return 'down'
+    }
+
+  }
+
   build() {
     NavDestination() {
       Column() {
@@ -170,7 +187,7 @@ export struct VersionInfo {
               ListItemWithArrow({
                 message: item.version,
                 subMessage: item.date,
-                arrowDir: index == this.currentIndex ? 'up' : 'down',
+                arrowDir: this.getArrow(index),
                 needButtonEffect: false
               })
                 .onClick(() => {

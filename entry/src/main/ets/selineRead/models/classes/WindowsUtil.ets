@@ -19,7 +19,9 @@ class Windows {
         }
         this.updateAvoidArea(this.windowClass)
         this.pcMode(context)
+
         this.updateScreenSize(undefined, undefined)
+
         this.windowClass.on('windowSizeChange', (size) => {
             this.updateScreenSize(size.width, size.height)
         })
@@ -81,6 +83,7 @@ class Windows {
             __System__.topRectHeight =
                 Math.max(XContext.getContext().px2vp(Math.max(cutOut.topRect.height * 1.5, system.topRect.height)),
                     windowClass.getWindowDecorHeight())
+            console.log(`meow${windowClass.getWindowDecorHeight()}`)
             __System__.bottomRectHeight = XContext.getContext()
                 .px2vp(Math.max(nav.bottomRect.height * 0.8, system.bottomRect.height, cutOut.bottomRect.height * 1.5))
             __System__.leftRectHeight =
@@ -99,15 +102,6 @@ class Windows {
         this.windowClass?.setWindowKeepScreenOn(isOn)
     }
 
-    setWindowTitleButtonVisible(isVisible: boolean) {
-        if (!this.windowClass) {
-            return
-        }
-        try {
-            this.windowClass.setWindowTitleButtonVisible(isVisible, isVisible, isVisible)
-        } catch {
-        }
-    }
 
     async updateScreenSize(width: number | undefined, height: number | undefined) {
         XAnimation.runWithAnimation(() => {

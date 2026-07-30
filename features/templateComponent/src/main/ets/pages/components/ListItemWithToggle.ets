@@ -1,4 +1,4 @@
-import { LengthMetrics } from "@kit.ArkUI"
+import { LengthMetrics, uiMaterial } from "@kit.ArkUI"
 
 @ComponentV2
 export struct ListItemWithToggle {
@@ -56,6 +56,11 @@ export struct ListItemWithToggle {
               .textAlign(TextAlign.Center)
           }
         }
+        .systemMaterial(new uiMaterial.ImmersiveMaterial({
+          style: uiMaterial.ImmersiveStyle.THIN,
+          interactive:true,
+          lightEffect: { color: undefined },
+        }))
         .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
         .onChange((checked: boolean) => {
           if (this.ensureMessage && checked) {

@@ -124,5 +124,16 @@ export declare interface CustomLib {
     ZlibBookInfoBriefArk: {new (id: number, hash: string): ZlibBookInfoBriefArk}
     ZlibClientArk: {new (): ZlibClientArk}
     ZlibUserInfoArk: {new (): ZlibUserInfoArk}
-    PaginationArk: {new (): PaginationArk}
+    PaginationArk: {new (): PaginationArk}    webdavArk: { new (rootPath: string, port: number, account: string, password: string): webdavArk }
+    DownloadManageArk: { new (downloadPath: string): DownloadManageArk }
+    DownloadTaskArk: { new (): DownloadTaskArk }
+    QQGroupInfoArk: { new (): QQGroupInfoArk }
+    BotConfig: { new (): BotConfig }
+    QQbot: { new (): QQbot }
+    ZlibBookInfoArk: { new (): ZlibBookInfoArk }
+    ZlibBookInfoBriefArk: { new (id: number, hash: string): ZlibBookInfoBriefArk }
+    ZlibClientArk: { new (): ZlibClientArk }
+    ZlibUserInfoArk: { new (): ZlibUserInfoArk }
+    PaginationArk: { new (): PaginationArk }
+}    PaginationArk: {new (): PaginationArk}
 }

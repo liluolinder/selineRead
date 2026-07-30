@@ -28,7 +28,6 @@ public class ZlibUserInfoArk {
         r.id = cjValue.id
         r.email = cjValue.email
         r.name = cjValue.name
-        r.kindleEmail = cjValue.kindleEmail
         r.remixUserKey = cjValue.remixUserKey
         r.todayDownloadNum = cjValue.todayDownloadNum
         r.downloadLimit = cjValue.downloadLimit

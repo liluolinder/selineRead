@@ -2,6 +2,7 @@ import { XContext, XPreferencesManager } from 'commonpackage'
 import { __ZlibUser__ } from '../../../../commons/shareDatas'
 import { RelationStoreManager } from '../../../../models/classes/DataBase'
 import { ZlibUserInfo } from '../../../../../zlibrary/classes/UserInfo'
+import { uiMaterial } from '@kit.ArkUI'
 
 @Builder
 export function ZlibLoginSheetBuilder() {
@@ -53,10 +54,20 @@ export struct zlibLoginSheet {
           TextInput({ placeholder: $r('app.string.Text_Account'), text: $$this.email })
             .height(48)
             .type(InputType.Email)
+            .systemMaterial(new uiMaterial.ImmersiveMaterial({
+              style: uiMaterial.ImmersiveStyle.REGULAR,
+              interactive:true,
+              lightEffect: { color: undefined },
+            }))
 
           TextInput({ placeholder: $r('app.string.Text_Password'), text: $$this.password })
             .height(48)
             .type(InputType.Password)
+            .systemMaterial(new uiMaterial.ImmersiveMaterial({
+              style: uiMaterial.ImmersiveStyle.THIN,
+              interactive:true,
+              lightEffect: { color: undefined },
+            }))
 
         }
         .margin({ top: 10 })
@@ -70,6 +81,11 @@ export struct zlibLoginSheet {
           Button($r('app.string.Text_CreateAccount'))
             .backgroundColor($r('sys.color.comp_background_list_card'))
             .fontColor($r('sys.color.font'))
+            .systemMaterial(new uiMaterial.ImmersiveMaterial({
+              style: uiMaterial.ImmersiveStyle.THIN,
+              interactive:true,
+              lightEffect: { color: undefined },
+            }))
             .onClick(()=>{
               XContext.getAbilityContext().startAbility({
                 uri: __ZlibUser__.base_url
@@ -104,6 +120,11 @@ export struct zlibLoginSheet {
             SymbolGlyph($r('sys.symbol.arrow_right'))
           }
         }.size({ width: 80, height: 80 })
+        .systemMaterial(new uiMaterial.ImmersiveMaterial({
+          style: uiMaterial.ImmersiveStyle.REGULAR,
+          interactive:true,
+          lightEffect: { color: undefined },
+        }))
         .onClick(() => {
           if (this.localLoginState != loginState.Loading) {
             this.loginErrorInfo = ''

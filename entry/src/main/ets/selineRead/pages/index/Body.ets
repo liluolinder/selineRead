@@ -297,9 +297,9 @@ export struct Body {
 
       }
       .barOverlap(true)
-      .barPosition(BarPosition.End)
       .animationDuration(300)
       .scrollable(false)
+      .barPosition(BarPosition.End)
       .height('100%')
       .backgroundColor($r('sys.color.comp_background_gray'))
       .barFloatingStyle({

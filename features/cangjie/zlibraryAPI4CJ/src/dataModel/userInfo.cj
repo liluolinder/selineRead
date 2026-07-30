@@ -32,7 +32,6 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
     public var id: UInt64 = 0
     public var email: String = ""
     public var name: String = ""
-    public var kindleEmail: String = ""
     public var remixUserKey: String = ""
     public var todayDownloadNum: UInt64 = 0
     public var downloadLimit: UInt64 = 0
@@ -103,7 +102,6 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
             .add(field<UInt64>("id", id))
             .add(field<String>("email", email))
             .add(field<String>("name", name))
-            .add(field<String>("kindle_email", kindleEmail))
             .add(field<String>("remix_userkey", remixUserKey))
             .add(field<UInt64>("downloads_today", todayDownloadNum))
             .add(field<UInt64>("downloads_limit", downloadLimit))
@@ -117,8 +115,6 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
         result.id = UInt64.deserialize(dms.get("id"))
         result.email = String.deserialize(dms.get("email"))
         result.name = String.deserialize(dms.get("name"))
-
-        result.kindleEmail = String.deserialize(dms.get("kindle_email"))
         result.remixUserKey = String.deserialize(dms.get("remix_userkey"))
         result.todayDownloadNum = UInt64.deserialize(dms.get("downloads_today"))
         result.downloadLimit = UInt64.deserialize(dms.get("downloads_limit"))

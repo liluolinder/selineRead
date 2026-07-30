@@ -18,10 +18,10 @@ public class ZlibClient {
             .setBody(body)
             .send()
 
-        let headers = HttpHeader()
+       // let headers = HttpHeader()
 
-        headers.add(key: "Cookie", value: response.getSetCookieString())
-        response = httpClient.setHeader(headers).send()
+       // headers.add(key: "Cookie", value: response.getSetCookieString())
+        //response = httpClient.setHeader(headers).send()
 
         let res = GetUserInfoOrLoginRes.deserialize(response.getBodyDataModel())
         res

@@ -1,6 +1,6 @@
 import { BasicDataSource, XAnimation, XContext } from 'commonpackage'
 import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../../commons/shareDatas'
-import { LengthUnit, SegmentButtonV2Items, TabSegmentButtonV2 } from '@kit.ArkUI'
+import { LengthUnit, SegmentButtonV2Items, TabSegmentButtonV2, uiMaterial } from '@kit.ArkUI'
 import { I_BookShelfBookInfo } from '../../models/interfaces/I_BookShelfBookInfo'
 import { shareBook } from '../../models/utils/ShareBook'
 import { fileIo, fileUri } from '@kit.CoreFileKit'
@@ -311,6 +311,12 @@ export struct BookShelf {
                     .borderRadius(20)
                     .padding(16)
                   }
+                  .systemMaterial(new uiMaterial.ImmersiveMaterial({
+                    style: uiMaterial.ImmersiveStyle.REGULAR,
+                    interactive:true,
+                    lightEffect: { color: undefined },
+                    applyShadow:false
+                  }))
                   .onClick(() => {
                     let want: Want = {
                       bundleName: 'com.huawei.hmsapp.books',
@@ -400,6 +406,12 @@ export struct BookShelf {
                     .borderRadius(20)
                     .padding(16)
                   }
+                  .systemMaterial(new uiMaterial.ImmersiveMaterial({
+                    style: uiMaterial.ImmersiveStyle.REGULAR,
+                    interactive:true,
+                    lightEffect: { color: undefined },
+                    applyShadow:false
+                  }))
                   .onClick(() => {
                     if (!this.isOpening) {
                       XAnimation.runWithAnimation(() => {
@@ -469,6 +481,12 @@ export struct BookShelf {
               .backgroundColor($r('app.color.start_window_background_blur'))
               .backdropBlur(100)
             }
+            .systemMaterial(new uiMaterial.ImmersiveMaterial({
+              style: uiMaterial.ImmersiveStyle.REGULAR,
+              interactive:true,
+              lightEffect: { color: undefined },
+              applyShadow:false
+            }))
             .size({ width: '100%', height: '100%' })
             .padding(16)
             .backgroundColor($r('sys.color.comp_background_tertiary'))

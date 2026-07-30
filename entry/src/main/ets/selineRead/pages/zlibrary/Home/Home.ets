@@ -1,4 +1,4 @@
-import { curves, LengthMetrics, } from '@kit.ArkUI'
+import { curves, LengthMetrics, uiMaterial, } from '@kit.ArkUI'
 import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from 'commonpackage'
 import { min_width } from '../../../commons/commonItem'
 import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../../../commons/shareDatas'
@@ -83,7 +83,11 @@ export struct Home {
         .width(40)
         .height(40)
         .backgroundColor($r('app.color.start_window_background_blur'))
-        .backdropBlur(100)
+        .systemMaterial(new uiMaterial.ImmersiveMaterial({
+          style: uiMaterial.ImmersiveStyle.REGULAR,
+          interactive:true,
+          lightEffect: { color: undefined },
+        }))
         .useEffect(true)
         .onClick(() => {
           XAnimation.runWithAnimation(()=>{
@@ -95,11 +99,16 @@ export struct Home {
 
         Search({ value: __Home__.searchWord, })
           .searchButton(__Home__.inSearchMode ? $r('app.string.search') : undefined)
-          .width(__Home__.inSearchMode ? '100%' : "45%")
+          // .width(__Home__.inSearchMode ? '100%' : "45%")
+          .layoutWeight(1)
           .focusable(__Home__.inSearchMode)
           .backgroundColor($r('app.color.start_window_background_blur'))
           .enableKeyboardOnFocus(__Home__.recommendOrSearch == 1)
-          .backdropBlur(100)
+          .systemMaterial(new uiMaterial.ImmersiveMaterial({
+            style: uiMaterial.ImmersiveStyle.REGULAR,
+            interactive:true,
+            lightEffect: { color: undefined },
+          }))
           .useEffect(true)
           .onSubmit((value: string) => {
             XAnimation.runWithAnimation(() => {
@@ -374,6 +383,12 @@ export struct Home {
                 XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
                   JSON.stringify(__Home__.searchHistory))
               })
+              .systemMaterial(new uiMaterial.ImmersiveMaterial({
+                style: uiMaterial.ImmersiveStyle.REGULAR,
+                interactive:true,
+                lightEffect: { color: undefined },
+                applyShadow:false
+              }))
             })
 
             if (__Home__.searchHistory.length > 0) {
@@ -382,6 +397,12 @@ export struct Home {
               }
               .padding(9)
               .backgroundColor($r('app.color.start_window_background_blur'))
+              .systemMaterial(new uiMaterial.ImmersiveMaterial({
+                style: uiMaterial.ImmersiveStyle.REGULAR,
+                interactive:true,
+                lightEffect: { color: undefined },
+                applyShadow:false
+              }))
               .onClick(() => {
                 XAnimation.runWithAnimation(() => __Home__.searchHistory = [])
                 XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
@@ -462,7 +483,10 @@ export struct HomeBookCover {
     } .borderRadius(20)
     .padding(16)
     .backgroundColor($r('sys.color.comp_background_list_card'))
-
+    .systemMaterial(new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.REGULAR,
+      applyShadow:false
+    }))
   }
 }
 
@@ -527,5 +551,9 @@ export struct HomeListBookCover{
     .borderRadius(20)
     .padding(16)
     .backgroundColor($r('sys.color.comp_background_list_card'))
+    .systemMaterial(new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.REGULAR,
+      applyShadow:false
+    }))
   }
 }

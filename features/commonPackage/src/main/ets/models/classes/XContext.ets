@@ -126,7 +126,6 @@ export class XContext {
                    secondaryButton: {
                        enabled: true,
                        defaultFocus: true,
-                       style: DialogButtonStyle.HIGHLIGHT,
                        value: '确定',
                        action: () => {
                            param.confirmCallBack()

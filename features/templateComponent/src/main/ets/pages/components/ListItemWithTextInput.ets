@@ -1,4 +1,4 @@
-import { curves, LengthMetrics } from "@kit.ArkUI"
+import { curves, LengthMetrics, uiMaterial } from "@kit.ArkUI"
 
 
 @ComponentV2
@@ -50,6 +50,11 @@ export struct ListItemWithInput {
             this.onchange(value)
           })
           .textAlign(TextAlign.End)
+          .systemMaterial(new uiMaterial.ImmersiveMaterial({
+            style: uiMaterial.ImmersiveStyle.THIN,
+            interactive:true,
+            lightEffect: { color: undefined },
+          }))
       }
       .align(Alignment.Center)
       .enabled(this.isEnabled)
