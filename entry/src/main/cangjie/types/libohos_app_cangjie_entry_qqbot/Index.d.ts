@@ -13,6 +13,8 @@ export declare class QQGroupInfoArk {
 
 export declare class BotConfig {
     canPush2QQ: boolean
+    status: string
+    message: string | undefined
     constructor ()
 }
 

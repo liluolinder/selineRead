@@ -7,13 +7,13 @@ import ohos.ark_interop.*
 import ohos.ark_interop_macro.*
 import zlibraryAPI4CJ.dataModel.BookInfo
 import ohos_app_cangjie_entry.run2JS
-import ohos_app_cangjie_entry.globalcontext
-import linderHttp.LinderHttpClient
 import stdx.encoding.json.JsonObject
 import stdx.encoding.json.JsonInt
 import stdx.encoding.json.JsonString
 import zlibraryAPI4CJ.common.zlibEAPI
-import linderHttp.RequestMethod
+import linderHttp.HttpQuick
+import ohos_app_cangjie_entry.baseUrl
+import ohos_app_cangjie_entry.header
 
 @Interop[ArkTS]
 public class ZlibBookInfoArk {
@@ -153,6 +153,7 @@ public class ZlibBookInfoArk {
     public func send2QQGroup(cookie: String,qqNumber:String, qqGroup:String, returnFunc: (String) -> Unit, errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
+                let url = baseUrl.replace(path: "/notify")
                 let body = JsonObject()
                 body.put("qqGroup", JsonString(qqGroup))
                 body.put("qqNumber", JsonString(qqNumber))
@@ -160,11 +161,7 @@ public class ZlibBookInfoArk {
                 body.put("bookHash", JsonString(hash))
                 body.put("cookie", JsonString(cookie))
                 body.put("downloadUrl", JsonString("${zlibEAPI}/book/${id}/${hash}/file"))
-                let clinet = LinderHttpClient()
-                    .setUrl("http://118.195.130.110:8800/notify")
-                    .setMethod(RequestMethod.POST)
-                    .setBody(body)
-                let res = clinet.send()
+                let res =HttpQuick.post(url, body ,header:header)
                 let resJson = res.getBodyJsonString()
                 run2JS {
                     resJson |> returnFunc

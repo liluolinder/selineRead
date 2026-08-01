@@ -13,6 +13,12 @@ import stdx.encoding.json.JsonArray
 import stdx.encoding.json.JsonString
 import ohos_app_cangjie_entry.run2JS
 import ohos.base.AppLog
+import stdx.encoding.url.URL
+import std.collection.HashMap
+import ohos_app_cangjie_entry.baseUrl
+import ohos_app_cangjie_entry.header
+
+
 
 @Interop[ArkTS]
 public class QQbot {
@@ -24,11 +30,12 @@ public class QQbot {
         errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
+                let url = baseUrl.replace(path: "/check_group")
                 let body = JsonObject()
                 body.put("qqNumber", JsonString(qqNum))
 
                 let res = HttpQuick
-                    .post("http://118.195.130.110:8800/check_group", body)
+                    .post(url, body, header: header)
                     .getBodyJsonObject()
 
                 let status = res
@@ -92,19 +99,25 @@ public class QQbot {
         }
     }
 
-    public func  getConfig(returnFunc: (BotConfig) -> Unit,
-        errorFunc: (String) -> Unit):Unit{
+    public func getConfig(returnFunc: (BotConfig) -> Unit, errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
+                let url = baseUrl.replace(path: "/notify_config")
 
                 let res = HttpQuick
-                    .get("http://118.195.130.110:8800/notify_config")
+                    .get(url, header: header)
                     .getBodyJsonObject()
+                AppLog.info("meow:${res}")
                 let config = BotConfig.fromJson(res)
-                run2JS{
-                    config |> returnFunc
+                if (config.status != 'error') {
+                    run2JS {
+                        config |> returnFunc
+                    }
+                } else {
+                    run2JS {
+                        config.message ?? '' |> errorFunc
+                    }
                 }
-
             } catch (error: Exception) {
                 run2JS {
                     "无法获取设置:${error.message}" |> errorFunc
@@ -112,6 +125,8 @@ public class QQbot {
             }
         }
     }
+
+
 
     public QQbot() {}
 }
