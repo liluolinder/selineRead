@@ -13,9 +13,18 @@ import stdx.encoding.json.JsonArray
 import stdx.encoding.json.JsonString
 import ohos_app_cangjie_entry.run2JS
 import ohos.base.AppLog
+import stdx.encoding.url.URL
+
+
+public var baseUrl: URL = URL.parse("http://39.96.218.120:8800")
 
 @Interop[ArkTS]
 public class QQbot {
+
+    public func changeUrl(newUrl:String):Unit{
+        baseUrl = URL.parse(newUrl)
+    }
+
     public func getBotQQGroup(): Unit {
     }
 
@@ -23,12 +32,13 @@ public class QQbot {
     public func getCommonGroup(qqNum: String, returnFunc: (JSArrayEx<QQGroupInfoArk>) -> Unit,
         errorFunc: (String) -> Unit): Unit {
         spawn {
+            let url = baseUrl.replace(path: "/check_group")
             try {
                 let body = JsonObject()
                 body.put("qqNumber", JsonString(qqNum))
 
                 let res = HttpQuick
-                    .post("http://118.195.130.110:8800/check_group", body)
+                    .post(url, body)
                     .getBodyJsonObject()
 
                 let status = res
@@ -92,19 +102,17 @@ public class QQbot {
         }
     }
 
-    public func  getConfig(returnFunc: (BotConfig) -> Unit,
-        errorFunc: (String) -> Unit):Unit{
+    public func getConfig(returnFunc: (BotConfig) -> Unit, errorFunc: (String) -> Unit): Unit {
         spawn {
+            let url = baseUrl.replace(path: "/notify_config")
             try {
-
                 let res = HttpQuick
-                    .get("http://118.195.130.110:8800/notify_config")
+                    .get(url)
                     .getBodyJsonObject()
                 let config = BotConfig.fromJson(res)
-                run2JS{
+                run2JS {
                     config |> returnFunc
                 }
-
             } catch (error: Exception) {
                 run2JS {
                     "无法获取设置:${error.message}" |> errorFunc
@@ -112,6 +120,17 @@ public class QQbot {
             }
         }
     }
+
+//    @Interop[ArkTS, Invisible]
+//    public static func send2QQ(body: JsonObject): String {
+//        let url = baseUrl.replace(path: "/notify")
+//        let clinet = LinderHttpClient()
+//            .setUrl(url)
+//            .setMethod(RequestMethod.POST)
+//            .setBody(body)
+//        let res = clinet.send()
+//        res.getBodyJsonString()
+//    }
 
     public QQbot() {}
 }

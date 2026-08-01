@@ -253,13 +253,13 @@ export struct BookInfo {
   aboutToAppear(): void {
     harmonyShare.on('gesturesShare', this.immersiveCallback);
     harmonyShare.on('knockShare', this.immersiveCallback);
-    // if (__ZlibUser__.canSend2QQ) {
-    //   __ZlibUser__.qqbot.getConfig((config)=>{
-    //     __ZlibUser__.canSend2QQ = config.canPush2QQ
-    //   },(error)=>{
-    //     XContext.toast(error)
-    //   })
-    // }
+    if (__ZlibUser__.canSend2QQ) {
+      __ZlibUser__.qqbot.getConfig((config)=>{
+        __ZlibUser__.canSend2QQ = config.canPush2QQ
+      },(error)=>{
+        XContext.toast(error)
+      })
+    }
   }
 
   aboutToDisappear(): void {
@@ -403,29 +403,29 @@ export struct BookInfo {
                   .divider(this.egDivider)
 
 
-                  // if (__ZlibUser__.canSend2QQ){
-                  //   ListItem() {
-                  //     Button({ type: ButtonType.Normal, stateEffect: true }) {
-                  //       Text('发送至QQ群')
-                  //     }
-                  //     .height(55)
-                  //     .borderRadius(20)
-                  //     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                  //       $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-                  //     .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
-                  //       undefined)
-                  //     .useEffect(true)
-                  //     .width('100%')
-                  //     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-                  //     .onClick(async () => {
-                  //       this.selectedGroupIndex = 0
-                  //       this.qqNumber = ''
-                  //       this.qqGroup = []
-                  //       this.send2QQDialog.open()
-                  //     })
-                  //   }
-                  //   .transition(XAnimation.getAnimation('bottom', 200))
-                  // }
+                  if (__ZlibUser__.canSend2QQ){
+                    ListItem() {
+                      Button({ type: ButtonType.Normal, stateEffect: true }) {
+                        Text('发送至QQ群')
+                      }
+                      .height(55)
+                      .borderRadius(20)
+                      .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
+                        $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                      .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
+                        undefined)
+                      .useEffect(true)
+                      .width('100%')
+                      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                      .onClick(async () => {
+                        this.selectedGroupIndex = 0
+                        this.qqNumber = ''
+                        this.qqGroup = []
+                        this.send2QQDialog.open()
+                      })
+                    }
+                    .transition(XAnimation.getAnimation('bottom', 200))
+                  }
 
                   if (this.bookInfo?.readOnlineAvailable && this.bookInfo?.readOnlineUrl){
                     ListItem() {
