@@ -177,5 +177,28 @@ public class ZlibBookInfoArk {
         }
     }
 
+    public func getSimilarBook(returnFunc:  (JSArrayEx<ZlibBookInfoBriefArk>) -> Unit, errorFunc: (String) -> Unit):Unit{
+       spawn {
+            try {
+                let reqs = cjValue.getSimilarBook()
+                if (let Some(books)<-reqs.books){
+                    let temp = books.map({bookInfo => ZlibBookInfoBriefArk.fromCJ(bookInfo)})
+                    let res = JSArrayEx<ZlibBookInfoBriefArk>(temp)
+                    run2JS {
+                        returnFunc(res)
+                    }
+                }else{
+                     run2JS {
+                        errorFunc("获取错误:${reqs.errorInfo.getOrDefault({=> '未知错误'})}")
+                    }
+                }
+            } catch (err: Exception) {
+                run2JS {
+                     err.toString() |> errorFunc
+                }
+            }
+       }
+    }
+
     public ZlibBookInfoArk() {}
 }

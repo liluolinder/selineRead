@@ -1,8 +1,8 @@
 import { linderPixelMap, LNotificationManager, XAnimation, XContext } from 'commonpackage'
-import { __Download__, __Setting__, __System__, __ZlibUser__ } from '../../../commons/shareDatas'
+import { __Download__, __Setting__, __System__, __UI__, __ZlibUser__ } from '../../../commons/shareDatas'
 import { __CustomBackgroundData__ } from '../../../components/CustomBackground'
 import { DividerTmp } from '../../../models/classes/DividerTmp'
-import { CustomContentDialog, SelectOptions, SymbolGlyphModifier, uiMaterial } from '@kit.ArkUI'
+import { curves, CustomContentDialog, SelectOptions, SymbolGlyphModifier, uiMaterial } from '@kit.ArkUI'
 import { min_width } from '../../../commons/commonItem'
 import { BigImage } from '../../../components/BigImage'
 import { ListItemWithText } from 'templatecomponent'
@@ -12,12 +12,18 @@ import { DownloadInfo, DownloadStatus } from '../../../models/classes/DownloadIn
 import { RelationStoreManager } from '../../../models/classes/DataBase'
 import { relationalStore, uniformTypeDescriptor } from '@kit.ArkData'
 import { shareBook } from '../../../models/utils/ShareBook'
-import { ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
+import { ZlibBookInfoArk, ZlibBookInfoBriefArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 import { harmonyShare, systemShare } from '@kit.ShareKit'
 import { fileUri } from '@kit.CoreFileKit'
 import { webview } from '@kit.ArkWeb'
 import { __BookShelf__ } from '../../BookShelf/BookShelf'
 import { QQbot, QQGroupInfoArk } from 'libohos_app_cangjie_entry.qqbot.so'
+import { BookInfoSkeleton } from './BookInfoSkeleton'
+import { SimilarBookSkeleton } from './SimilarBookSkeleton'
+import { I_BookInfoParam } from '../../../models/interfaces/I_BookInfoParam'
+import { HomeBookCover } from '../Home/Home'
+import { HdsNavDestination, HdsNavigation } from '@hms.hds.hdsBaseComponent'
+import { hdsMaterial } from '@kit.UIDesignKit'
 
 @Builder
 export function BookInfoBuilder() {
@@ -39,27 +45,18 @@ export struct BookInfo {
   @Local isOpening: boolean = false
   @Local isFlashing: boolean = false
   @Local isSaved: boolean = false
-  @Local qqGroup : QQGroupInfoArk[] = []
-  @Local qqNumber : string = ''
+  @Local qqGroup: QQGroupInfoArk[] = []
+  @Local qqNumber: string = ''
   @Local selectedGroupIndex: number = 0
-  @Local qqIndex:number = 0
-
+  @Local qqIndex: number = 0
+  @Local similarBook: ZlibBookInfoBriefArk[] = []
+  @Local tileColumnNumber:number = 2
   recommendPage: number = 1
   webController: webview.WebviewController = new webview.WebviewController()
   private immersiveCallback = async (sharableTarget: harmonyShare.SharableTarget) => {
     const shareUrl: url.URL = url.URL.parseURL("linder://seline.book.read")
     shareUrl.params.append("hash", this.bookInfo?.hash)
     shareUrl.params.append("id", this.bookInfo?.id.toString())
-    linderPixelMap.requestImage(this.bookInfo?.cover!).then((res) => {
-      const path = XContext.getTempDir() + '/SelineRead_' + new Date().getTime().toString() + '.jpeg'
-      linderPixelMap.savePixelMapToSandBox(res, path).then((res) => {
-        if (res) {
-          sharableTarget.updateShareData({
-            thumbnailUri: fileUri.getUriFromPath(path)
-          })
-        }
-      })
-    })
     let shareData: systemShare.SharedData = new systemShare.SharedData({
       utd: uniformTypeDescriptor.UniformDataType.HYPERLINK,
       content: shareUrl.toString(),
@@ -67,8 +64,20 @@ export struct BookInfo {
       description: '分享书籍给对方',
     });
     sharableTarget.share(shareData);
+    // linderPixelMap.requestImage(this.bookInfo?.cover!).then((res) => {
+    //   const path = XContext.getTempDir() + '/SelineRead_' + new Date().getTime().toString() + '.jpeg'
+    //   linderPixelMap.savePixelMapToSandBox(res, path).then((res) => {
+    //     if (res) {
+    //       console.log(`meow:1231224451`)
+    //       sharableTarget.updateShareData({
+    //         thumbnailUri: fileUri.getUriFromPath(path)
+    //       }).catch((error:BusinessError)=>{
+    //         console.log(`meow:${error}`)
+    //       })
+    //     }
+    //   })
+    // })
   }
-
   send2QQDialog: CustomDialogController = new CustomDialogController({
     builder: CustomContentDialog({
       primaryTitle: '发送至QQ群',
@@ -85,13 +94,14 @@ export struct BookInfo {
           value: '确定',
           buttonStyle: ButtonStyleMode.TEXTUAL,
           action: () => {
-            if (this.qqNumber != '' && this.qqGroup[this.selectedGroupIndex] ) {
-              this.bookInfo?.send2QQGroup(__ZlibUser__.cookie,this.qqNumber, this.qqGroup[this.selectedGroupIndex].id,(res)=>{
-                XContext.toast(res)
-              },(error)=>{
-                XContext.toast(error)
-              })
-            }else {
+            if (this.qqNumber != '' && this.qqGroup[this.selectedGroupIndex]) {
+              this.bookInfo?.send2QQGroup(__ZlibUser__.cookie, this.qqNumber, this.qqGroup[this.selectedGroupIndex].id,
+                (res) => {
+                  XContext.toast(res)
+                }, (error) => {
+                  XContext.toast(error)
+                })
+            } else {
               XContext.toast('参数不合法')
             }
           }
@@ -101,9 +111,9 @@ export struct BookInfo {
   });
 
   @Builder
-  send2QQDialogBuilder(){
-    Scroll(){
-      Column({ space: 12 }){
+  send2QQDialogBuilder() {
+    Scroll() {
+      Column({ space: 12 }) {
         Text('请输入您的QQ号以查询共同群组')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
@@ -122,14 +132,14 @@ export struct BookInfo {
             }
             this.qqNumber = event.text
             this.selectedGroupIndex = 0
-            let qqBot:QQbot = new QQbot()
-            __ZlibUser__.qqbot.getCommonGroup(event.text,(items)=>{
+            let qqBot: QQbot = new QQbot()
+            __ZlibUser__.qqbot.getCommonGroup(event.text, (items) => {
               this.qqGroup = items
               if (items.length == 0) {
                 this.qqGroup = []
                 XContext.toast('未找到共同群组')
               }
-            },(error)=>{
+            }, (error) => {
               this.qqGroup = []
               XContext.toast(error)
             })
@@ -142,8 +152,8 @@ export struct BookInfo {
             .opacity(0.6)
             .width('100%')
 
-          Select(this.qqGroup.map((item:QQGroupInfoArk, index:number) =>
-            ({value: item.name} as SelectOption)) as SelectOption[])
+          Select(this.qqGroup.map((item: QQGroupInfoArk, index: number) =>
+          ({ value: item.name } as SelectOption)) as SelectOption[])
             .selected(this.selectedGroupIndex)
             .value(this.qqGroup[this.selectedGroupIndex]?.name ?? '选择群组')
             .height(48)
@@ -154,7 +164,7 @@ export struct BookInfo {
               this.selectedGroupIndex = index
             })
         } else {
-          Column({ space: 6 }){
+          Column({ space: 6 }) {
             Text('暂无共同群组')
               .fontSize(14)
               .opacity(0.4)
@@ -168,11 +178,15 @@ export struct BookInfo {
         }
       }
       .width('100%')
-      .padding({left:16, right:16, top: 8, bottom: 8})
+      .padding({
+        left: 16,
+        right: 16,
+        top: 8,
+        bottom: 8
+      })
     }
     .contentEndOffset(16)
   }
-
 
   aboutToAppear(): void {
     harmonyShare.on('gesturesShare', this.immersiveCallback);
@@ -192,7 +206,7 @@ export struct BookInfo {
   }
 
   build() {
-    NavDestination() {
+    HdsNavDestination() {
       if (this.isViewingBigImage) {
         BigImage({
           image: this.bookInfo?.cover
@@ -200,156 +214,79 @@ export struct BookInfo {
           .zIndex(114514)
       } else {
         Stack() {
-          Scroll() {
-            Column() {
-              List({ space: 10 }) {
-                ListItem() {
-                  Row({ space: 20 }) {
-                    BookCover({ data: this.bookInfo?.cover })
-                      .transition(TransitionEffect.OPACITY)
-                      .geometryTransition('image')
-                      .size({ height: 160, width: 116 })
-                      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-                      .onClick(() => {
-                        XAnimation.runWithAnimation(() => this.isViewingBigImage = true, true, 0.4, 0.85)
-                      })
 
-                    Column({ space: 5 }) {
-                      Text(this.bookInfo?.title)
-                        .fontWeight(FontWeight.Bold)
-                        .fontSize(24)
-                        .maxLines(3)
-                        .textOverflow({ overflow: TextOverflow.Ellipsis })
-                      Text(this.bookInfo?.author)
-                        .maxLines(3)
-                        .fontSize(18)
-                        .opacity(0.6)
-                        .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-                    }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-
-                  }.padding(16).justifyContent(FlexAlign.SpaceBetween).width('100%')
-
-                }
-                .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-                .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
-                  undefined)
-                .useEffect(true)
-                .size({ width: '100%', height: 200 })
-                .borderRadius(20)
-                .transition(XAnimation.getAnimation('bottom', 50))
-
-                ListItem() {
-                  Stack({ alignContent: Alignment.Top }) {
-                    Row() {
-                      if (this.bookInfo?.description == '' || this.bookInfo?.description == undefined) {
-                        Text('暂无简介')
-                          .fontSize(16)
-                      } else {
-                        Web({
-                          src: `data:text/html;charset=utf-8,${encodeURIComponent(this.bookInfo?.description)}`,
-                          controller: this.webController
+          if (this.bookInfo == undefined && this.errorText == '') {
+            BookInfoSkeleton()
+              .transition(TransitionEffect.OPACITY.animation({ curve: Curve.Ease, duration: 300 }))
+          } else {
+            Scroll() {
+              Column({space:20}) {
+                List({ space: 10 }) {
+                  ListItem() {
+                    Row({ space: 20 }) {
+                      BookCover({ data: this.bookInfo?.cover })
+                        .transition(TransitionEffect.OPACITY)
+                        .geometryTransition('image')
+                        .size({ height: 160, width: 116 })
+                        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                        .onClick(() => {
+                          XAnimation.runWithAnimation(() => this.isViewingBigImage = true, true, 0.4, 0.85)
                         })
-                          .darkMode(WebDarkMode.Auto)
-                          .forceDarkAccess(true)
-                          .forceEnableZoom(false)
-                          .nestedScroll({
-                            scrollForward: NestedScrollMode.SELF_ONLY,
-                            scrollBackward: NestedScrollMode.SELF_ONLY,
-                          })
-                          .defaultFontSize(16)
-                          .minFontSize(16)
-                          .defaultFixedFontSize(16)
-                          .minLogicalFontSize(16)
-                          .textAutosizing(true)
 
-                      }
-                    }.size({ width: '100%' })
-                  }.constraintSize({ maxHeight: 200, minHeight: this.pageWidth > min_width ? 200 : 0 }).padding(16)
-                }
-                .borderRadius(20)
-                .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-                .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
-                  undefined)
-                .useEffect(true)
-                .width('100%')
-                .transition(XAnimation.getAnimation('bottom', 100))
+                      Column({ space: 5 }) {
+                        Text(this.bookInfo?.title)
+                          .fontWeight(FontWeight.Bold)
+                          .fontSize(24)
+                          .maxLines(3)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+                        Text(this.bookInfo?.author)
+                          .maxLines(3)
+                          .fontSize(18)
+                          .opacity(0.6)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-                ListItemGroup() {
-                  ListItemWithText({
-                    leftMessage: $r('app.string.Text_Rate'),
-                    rightMessage: this.bookInfo?.interestScore
-                  })
+                      }.alignItems(HorizontalAlign.Start).layoutWeight(1)
 
-                  ListItemWithText({
-                    leftMessage: $r('app.string.Text_Language'),
-                    rightMessage: this.bookInfo?.language
-                  })
+                    }.padding(16).justifyContent(FlexAlign.SpaceBetween).width('100%')
 
-                  ListItemWithText({
-                    leftMessage: 'ISBN',
-                    rightMessage: this.bookInfo?.identifier == '' ? '???' : this.bookInfo?.identifier
-                  })
-
-                  ListItemWithText({
-                    leftMessage: $r('app.string.Text_Publisher'),
-                    rightMessage: this.bookInfo?.publisher == '' ? '???' : this.bookInfo?.publisher
-                  })
-
-                  ListItemWithText({
-                    leftMessage: $r('app.string.Text_PublishYear'),
-                    rightMessage: this.bookInfo?.year?.toString() ?? '???'
-                  })
-
-                  ListItemWithText({
-                    leftMessage: $r('app.string.Text_TotalPage'),
-                    rightMessage: this.bookInfo?.pages! <= 0 ? '???' : this.bookInfo?.pages.toString()
-                  })
-
-
-                }
-                .transition(XAnimation.getAnimation('bottom', 150))
-                .borderRadius(20)
-                .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-                  $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-                .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
-                  undefined)
-                .useEffect(true)
-                .size({ height: '48', width: '100%' })
-                .divider(this.egDivider)
-
-
-               // if (__ZlibUser__.canSend2QQ){
-               //   ListItem() {
-               //     Button({ type: ButtonType.Normal, stateEffect: true }) {
-               //       Text('发送至QQ群')
-               //     }
-               //     .height(55)
-               //     .borderRadius(20)
-               //     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
-               //       $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
-               //     .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
-               //       undefined)
-               //     .useEffect(true)
-               //     .width('100%')
-               //     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-               //     .onClick(async () => {
-               //       this.selectedGroupIndex = 0
-               //       this.qqNumber = ''
-               //       this.qqGroup = []
-               //       this.send2QQDialog.open()
-               //     })
-               //   }
-               //   .transition(XAnimation.getAnimation('bottom', 200))
-               // }
-
-                ListItem() {
-                  Button({ type: ButtonType.Normal, stateEffect: true }) {
-                    Text(this.bookInfo?.extension + '   ' + this.bookInfo?.filesizeString)
                   }
-                  .height(55)
+                  .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
+                    $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
+                    undefined)
+                  .useEffect(true)
+                  .size({ width: '100%', height: 200 })
+                  .borderRadius(20)
+                  .transition(XAnimation.getAnimation('bottom', 50))
+
+                  ListItem() {
+                    Stack({ alignContent: Alignment.Top }) {
+                      Row() {
+                        if (this.bookInfo?.description == '' || this.bookInfo?.description == undefined) {
+                          Text('暂无简介')
+                            .fontSize(16)
+                        } else {
+                          Web({
+                            src: `data:text/html;charset=utf-8,${encodeURIComponent(this.bookInfo?.description)}`,
+                            controller: this.webController
+                          })
+                            .darkMode(WebDarkMode.Auto)
+                            .forceDarkAccess(true)
+                            .forceEnableZoom(false)
+                            .nestedScroll({
+                              scrollForward: NestedScrollMode.SELF_ONLY,
+                              scrollBackward: NestedScrollMode.SELF_ONLY,
+                            })
+                            .defaultFontSize(16)
+                            .minFontSize(16)
+                            .defaultFixedFontSize(16)
+                            .minLogicalFontSize(16)
+                            .textAutosizing(true)
+
+                        }
+                      }.size({ width: '100%' })
+                    }.constraintSize({ maxHeight: 200, minHeight: this.pageWidth > min_width ? 200 : 0 }).padding(16)
+                  }
                   .borderRadius(20)
                   .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
                     $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
@@ -357,134 +294,258 @@ export struct BookInfo {
                     undefined)
                   .useEffect(true)
                   .width('100%')
-                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-                  .onClick(() => {
-                    BackgroundUtil.startContinuousTask()
-                    this.bookInfo?.getDownloadInfo(__ZlibUser__.cookie,
-                      async (res) => {
-                        let bookName = url.URL.parseURL(res).params.get('filename')
-                        let id = __ZlibUser__.notificationID++
-                        let time = new Date()
-                        let downloadItem: DownloadInfo = new DownloadInfo()
-                        downloadItem.fileName = bookName!
-                        downloadItem.fileImage = this.bookInfo?.cover!
-                        downloadItem.status = DownloadStatus.Idle
-                        downloadItem.bookAuthor = this.bookInfo?.author!
-                        downloadItem.bookHref = this.bookInfo?.href ?? ''
-                        downloadItem.bookId = this.bookInfo?.id!
-                        downloadItem.downloadTime = time.toISOString()
-                        downloadItem.downLoadTask = undefined
-                        //写入下载管理器
-                        __Download__.downloadArray.pushUnshiftData(downloadItem)
-                        //插入数据库
-                        await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
-                          BookID: this.bookInfo?.id!,
-                          BookHref: this.bookInfo?.href ?? '',
-                          BookName: bookName!,
-                          BookAuthor: this.bookInfo?.author!,
-                          BookPublisher: this.bookInfo?.publisher!,
-                          BookImage: this.bookInfo?.cover!,
-                          BookDownLoadTime: time.toISOString(),
-                          HaveDownload: 0
-                        })
-                        __ZlibUser__.downloadManageCJ?.createTask(bookName, encodeURI(res), bookName,
-                          (task) => {
-                            downloadItem.downLoadTask = task
-                            task.setStartCallback(() => {
-                              XContext.toast(`开始下载喵(^~^)`)
-                              downloadItem.status = DownloadStatus.Starting
-                            })
-                              .setErrorCallback((error) => {
-                                let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
-                                predicates.equalTo('BookName', bookName)
-                                  .equalTo("BookID", this.bookInfo?.id ?? 0)
-                                  .equalTo("BookDownLoadTime", time.toISOString())
-                                RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                                  BookID: this.bookInfo?.id!,
-                                  BookHref: this.bookInfo?.href ?? '',
-                                  BookName: bookName!,
-                                  BookAuthor: this.bookInfo?.author!,
-                                  BookPublisher: this.bookInfo?.publisher!,
-                                  BookImage: this.bookInfo?.cover!,
-                                  BookDownLoadTime: time.toISOString(),
-                                  HaveDownload: 2
-                                })
-                                console.log(`下载失败${error}`, 2000)
-                                downloadItem.status = DownloadStatus.Failed
-                                this.errorText = error
-                                LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', bookName!)
-                              })
-                              .setCompleteCallback(async () => {
-                                downloadItem.progress = 100
-                                let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
-                                predicates.equalTo('BookName', bookName)
-                                  .equalTo("BookID", this.bookInfo?.id ?? 0)
-                                  .equalTo("BookDownLoadTime", time.toISOString())
-                                RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                                  BookID: this.bookInfo?.id!,
-                                  BookHref: this.bookInfo?.href ?? '',
-                                  BookName: bookName!,
-                                  BookAuthor: this.bookInfo?.author!,
-                                  BookPublisher: this.bookInfo?.publisher!,
-                                  BookImage: this.bookInfo?.cover!,
-                                  BookDownLoadTime: time.toISOString(),
-                                  HaveDownload: 1
-                                })
-                                downloadItem.status = DownloadStatus.Complete
-                                LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', bookName!)
-                                console.log(`下载完成`)
-                                if (__Setting__.shareAfterDownload) {
-                                  shareBook(`${await XContext.getDownloadFolderPath()}/${bookName}`)
-                                }
-                              })
-                              .setProgressCallback((hasDownload, total, speed) => {
-                                if (downloadItem.status != DownloadStatus.Downloading) {
-                                  downloadItem.status = DownloadStatus.Downloading
-                                }
-                                console.log(`已下载${hasDownload},共${total},当前速度${speed}`)
-                                let progress = Math.trunc(hasDownload / total * 10000) / 100
-                                downloadItem.progress = progress
-                                LNotificationManager.pushNotificationWithProgress(id, progress, `正在下载${progress}%`,
-                                  bookName!)
-                              })
-                            task.start()
-                          }, (error) => {
-                            this.errorText = error
-                            console.log(error)
+                  .transition(XAnimation.getAnimation('bottom', 100))
+
+                  ListItemGroup() {
+                    ListItemWithText({
+                      leftMessage: $r('app.string.Text_Rate'),
+                      rightMessage: this.bookInfo?.interestScore
+                    })
+
+                    ListItemWithText({
+                      leftMessage: $r('app.string.Text_Language'),
+                      rightMessage: this.bookInfo?.language
+                    })
+
+                    ListItemWithText({
+                      leftMessage: 'ISBN',
+                      rightMessage: this.bookInfo?.identifier == '' ? '???' : this.bookInfo?.identifier
+                    })
+
+                    ListItemWithText({
+                      leftMessage: $r('app.string.Text_Publisher'),
+                      rightMessage: this.bookInfo?.publisher == '' ? '???' : this.bookInfo?.publisher
+                    })
+
+                    ListItemWithText({
+                      leftMessage: $r('app.string.Text_PublishYear'),
+                      rightMessage: this.bookInfo?.year?.toString() ?? '???'
+                    })
+
+                    ListItemWithText({
+                      leftMessage: $r('app.string.Text_TotalPage'),
+                      rightMessage: this.bookInfo?.pages! <= 0 ? '???' : this.bookInfo?.pages.toString()
+                    })
+
+
+                  }
+                  .transition(XAnimation.getAnimation('bottom', 150))
+                  .borderRadius(20)
+                  .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
+                    $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
+                    undefined)
+                  .useEffect(true)
+                  .size({ height: '48', width: '100%' })
+                  .divider(this.egDivider)
+
+
+                  // if (__ZlibUser__.canSend2QQ){
+                  //   ListItem() {
+                  //     Button({ type: ButtonType.Normal, stateEffect: true }) {
+                  //       Text('发送至QQ群')
+                  //     }
+                  //     .height(55)
+                  //     .borderRadius(20)
+                  //     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
+                  //       $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                  //     .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
+                  //       undefined)
+                  //     .useEffect(true)
+                  //     .width('100%')
+                  //     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                  //     .onClick(async () => {
+                  //       this.selectedGroupIndex = 0
+                  //       this.qqNumber = ''
+                  //       this.qqGroup = []
+                  //       this.send2QQDialog.open()
+                  //     })
+                  //   }
+                  //   .transition(XAnimation.getAnimation('bottom', 200))
+                  // }
+
+                  ListItem() {
+                    Button({ type: ButtonType.Normal, stateEffect: true }) {
+                      Text(this.bookInfo?.extension + '   ' + this.bookInfo?.filesizeString)
+                    }
+                    .height(55)
+                    .borderRadius(20)
+                    .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
+                      $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                    .backdropBlur(
+                      __CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
+                        undefined)
+                    .useEffect(true)
+                    .width('100%')
+                    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                    .onClick(() => {
+                      BackgroundUtil.startContinuousTask()
+                      this.bookInfo?.getDownloadInfo(__ZlibUser__.cookie,
+                        async (res) => {
+                          let bookName = url.URL.parseURL(res).params.get('filename')
+                          let id = __ZlibUser__.notificationID++
+                          let time = new Date()
+                          let downloadItem: DownloadInfo = new DownloadInfo()
+                          downloadItem.fileName = bookName!
+                          downloadItem.fileImage = this.bookInfo?.cover!
+                          downloadItem.status = DownloadStatus.Idle
+                          downloadItem.bookAuthor = this.bookInfo?.author!
+                          downloadItem.bookHref = this.bookInfo?.href ?? ''
+                          downloadItem.bookId = this.bookInfo?.id!
+                          downloadItem.downloadTime = time.toISOString()
+                          downloadItem.downLoadTask = undefined
+                          //写入下载管理器
+                          __Download__.downloadArray.pushUnshiftData(downloadItem)
+                          //插入数据库
+                          await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
+                            BookID: this.bookInfo?.id!,
+                            BookHref: this.bookInfo?.href ?? '',
+                            BookName: bookName!,
+                            BookAuthor: this.bookInfo?.author!,
+                            BookPublisher: this.bookInfo?.publisher!,
+                            BookImage: this.bookInfo?.cover!,
+                            BookDownLoadTime: time.toISOString(),
+                            HaveDownload: 0
                           })
-                      }, (error) => {
-                        this.errorText = error
-                        XContext.toast(error)
-                      })
+                          __ZlibUser__.downloadManageCJ?.createTask(bookName, encodeURI(res), bookName,
+                            (task) => {
+                              downloadItem.downLoadTask = task
+                              task.setStartCallback(() => {
+                                XContext.toast(`开始下载喵(^~^)`)
+                                downloadItem.status = DownloadStatus.Starting
+                              })
+                                .setErrorCallback((error) => {
+                                  let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+                                  predicates.equalTo('BookName', bookName)
+                                    .equalTo("BookID", this.bookInfo?.id ?? 0)
+                                    .equalTo("BookDownLoadTime", time.toISOString())
+                                  RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                                    BookID: this.bookInfo?.id!,
+                                    BookHref: this.bookInfo?.href ?? '',
+                                    BookName: bookName!,
+                                    BookAuthor: this.bookInfo?.author!,
+                                    BookPublisher: this.bookInfo?.publisher!,
+                                    BookImage: this.bookInfo?.cover!,
+                                    BookDownLoadTime: time.toISOString(),
+                                    HaveDownload: 2
+                                  })
+                                  console.log(`下载失败${error}`, 2000)
+                                  downloadItem.status = DownloadStatus.Failed
+                                  this.errorText = error
+                                  LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', bookName!)
+                                })
+                                .setCompleteCallback(async () => {
+                                  downloadItem.progress = 100
+                                  let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+                                  predicates.equalTo('BookName', bookName)
+                                    .equalTo("BookID", this.bookInfo?.id ?? 0)
+                                    .equalTo("BookDownLoadTime", time.toISOString())
+                                  RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                                    BookID: this.bookInfo?.id!,
+                                    BookHref: this.bookInfo?.href ?? '',
+                                    BookName: bookName!,
+                                    BookAuthor: this.bookInfo?.author!,
+                                    BookPublisher: this.bookInfo?.publisher!,
+                                    BookImage: this.bookInfo?.cover!,
+                                    BookDownLoadTime: time.toISOString(),
+                                    HaveDownload: 1
+                                  })
+                                  downloadItem.status = DownloadStatus.Complete
+                                  LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', bookName!)
+                                  console.log(`下载完成`)
+                                  if (__Setting__.shareAfterDownload) {
+                                    shareBook(`${await XContext.getDownloadFolderPath()}/${bookName}`)
+                                  }
+                                })
+                                .setProgressCallback((hasDownload, total, speed) => {
+                                  if (downloadItem.status != DownloadStatus.Downloading) {
+                                    downloadItem.status = DownloadStatus.Downloading
+                                  }
+                                  console.log(`已下载${hasDownload},共${total},当前速度${speed}`)
+                                  let progress = Math.trunc(hasDownload / total * 10000) / 100
+                                  downloadItem.progress = progress
+                                  LNotificationManager.pushNotificationWithProgress(id, progress,
+                                    `正在下载${progress}%`,
+                                    bookName!)
+                                })
+                              task.start()
+                            }, (error) => {
+                              this.errorText = error
+                              console.log(error)
+                            })
+                        }, (error) => {
+                          this.errorText = error
+                          XContext.toast(error)
+                        })
 
 
-                  })
+                    })
+                  }
+                  .transition(XAnimation.getAnimation('bottom', 250))
                 }
-                .transition(XAnimation.getAnimation('bottom', 250))
+                .scrollBar(BarState.Off)
+                .lanes(this.pageWidth > min_width ? 2 : 1, 10)
+                .borderRadius({ topLeft: 20, topRight: 20 })
+                .clip(true)
+                .margin({
+                  left: Math.max(16, __System__.leftRectHeight),
+                  right: Math.max(16, __System__.rightRectHeight)
+                })
+                .chainAnimation(true)
+                .nestedScroll({
+                  scrollForward: NestedScrollMode.PARALLEL,
+                  scrollBackward: NestedScrollMode.PARALLEL
+                })
+
+                Row(){
+                  Text("相似推荐")
+                    .width('100%')
+                    .fontSize(18)
+                    .fontWeight(FontWeight.Medium)
+                }.width('100%')
+                .padding({left:16, right:16})
+
+                if (this.similarBook.length > 0) {
+                  List({ space: 10 }) {
+                    ForEach(this.similarBook, (item: ZlibBookInfoBriefArk) => {
+                      ListItem() {
+                        HomeBookCover({ data: item })
+                      }
+                      .onClick(async () => {
+                        let param:I_BookInfoParam = {
+                          type: 0,
+                          data:item
+                        }
+                       this.pageInfos.pushPathByName("bookInfoPage", param )
+                      })
+                      .width('100%')
+                      .transition(TransitionEffect.OPACITY
+                        .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+                        .animation({ curve: curves.springMotion(0.5, 0.7) }))
+                    }, (item: ZlibBookInfoBriefArk, index: number) => JSON.stringify(item) + JSON.stringify(index))
+                  } .nestedScroll({
+                    scrollForward: NestedScrollMode.PARALLEL,
+                    scrollBackward: NestedScrollMode.PARALLEL
+                  })
+                  .padding({left:16, right:16})
+                  .contentEndOffset(Math.max(__System__.bottomRectHeight,16))
+                  .width('100%')
+                  .alignSelf(ItemAlign.Center)
+                  .align(Alignment.Center)
+                  .lanes(this.tileColumnNumber, 20)
+                  .onAreaChange((_, newValue) => {
+                    XAnimation.runWithAnimation(() => {
+                      this.tileColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
+
+                    },  this.tileColumnNumber > 0)
+                  })
+                } else {
+                  SimilarBookSkeleton()
+                    .transition(TransitionEffect.OPACITY.animation({ curve: Curve.Ease, duration: 300 }))
+                }
               }
-              .scrollBar(BarState.Off)
-              .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
-              .lanes(this.pageWidth > min_width ? 2 : 1, 10)
-              .borderRadius({ topLeft: 20, topRight: 20 })
-              .clip(true)
-              .margin({
-                left: Math.max(16, __System__.leftRectHeight),
-                right: Math.max(16, __System__.rightRectHeight)
-              })
-              .chainAnimation(true)
-              .nestedScroll({
-                scrollForward: NestedScrollMode.SELF_FIRST,
-                scrollBackward: NestedScrollMode.PARENT_FIRST
-              })
             }
           }
-          .height('100%')
-          .align(Alignment.Top)
-          .scrollBar(BarState.Off)
-          .edgeEffect(EdgeEffect.Spring)
-          .borderRadius({ topLeft: 20, topRight: 20 })
-          .clip(true)
-
 
           if (this.errorText != '') {
             Stack() {
@@ -517,61 +578,116 @@ export struct BookInfo {
         }
       }
     }
-    .menus([
-      {
-        value: '分享',
-        symbolIcon: new SymbolGlyphModifier($r('sys.symbol.share')),
-        action: () => {
-
-        }
-      },
-      {
-        value: '收藏',
-        symbolIcon: new SymbolGlyphModifier(this.isSaved ?
-          $r('sys.symbol.heart_fill') : $r('sys.symbol.heart')),
-        action: () => {
-          if (__ZlibUser__.cookie != '') {
-            XContext.toast('正在请求中，请稍后')
-            if (this.isSaved) {
-              this.bookInfo!.unSaveBook(__ZlibUser__.cookie, (res) => {
-                if (res) {
-                  this.bookInfo!.isUserSavedBook = false
-                  this.bookInfo!.dataSaved = undefined
-                  this.isSaved = false
-                }
-                XContext.toast(`取消收藏${res ? "成功" : "失败"}`)
-              }, (error) => {
-                this.errorText = error
-                XContext.toast(`取消收藏失败`)
-              })
-            } else {
-              this.bookInfo?.saveBook(__ZlibUser__.cookie, (res) => {
-                if (res) {
-                  this.bookInfo!.isUserSavedBook = true
-                  this.isSaved = true
-                  XContext.toast(`收藏${res ? "成功" : "失败"}`)
-                }
-              }, (error) => {
-                this.errorText = error
-                XContext.toast(`收藏失败`)
-              })
-            }
-          } else {
-            this.errorText = '登录到您的账户'
-          }
-        }
-      }
-    ])
-
     .size({ width: '100%', height: '100%' })
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
       Color.Transparent : $r('sys.color.comp_background_gray'))
     .padding({ top: __System__.topRectHeight })
-    .title(this.bookInfo?.title)
+    .onAreaChange((_, newValue) => {
+      XAnimation.runWithAnimation(() => {
+      this.pageWidth = newValue.width.valueOf() as number
+      })
+    })
+    .titleBar({
+      enableComponentSafeArea: true,
+      content:{
+        title:{
+          mainTitle:this.bookInfo?.title ?? ''
+        },
+        menu:{
+          value:[
+            {
+              content: {
+                label: '分享',
+                icon: new SymbolGlyphModifier($r('sys.symbol.share')).fontColor([$r('sys.color.font')]),
+                isEnabled: true,
+                action: () => {
+                  console.info('HdsNavDestination menu1');
+                }
+              }
+            },
+            {
+              content: {
+                label: '收藏',
+                icon: new SymbolGlyphModifier(this.isSaved ?
+                  $r('sys.symbol.heart_fill') : $r('sys.symbol.heart')).fontColor([$r('sys.color.font')]),
+                action: () => {
+                  if (__ZlibUser__.cookie != '') {
+                    XContext.toast('正在请求中，请稍后')
+                    if (this.isSaved) {
+                      this.bookInfo!.unSaveBook(__ZlibUser__.cookie, (res) => {
+                        if (res) {
+                          this.bookInfo!.isUserSavedBook = false
+                          this.bookInfo!.dataSaved = undefined
+                          this.isSaved = false
+                        }
+                        XContext.toast(`取消收藏${res ? "成功" : "失败"}`)
+                      }, (error) => {
+                        this.errorText = error
+                        XContext.toast(`取消收藏失败`)
+                      })
+                    } else {
+                      this.bookInfo?.saveBook(__ZlibUser__.cookie, (res) => {
+                        if (res) {
+                          this.bookInfo!.isUserSavedBook = true
+                          this.isSaved = true
+                          XContext.toast(`收藏${res ? "成功" : "失败"}`)
+                        }
+                      }, (error) => {
+                        this.errorText = error
+                        XContext.toast(`收藏失败`)
+                      })
+                    }
+                  } else {
+                    this.errorText = '登录到您的账户'
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      style: {
+        systemMaterialEffect: {
+          materialType:hdsMaterial.MaterialType.IMMERSIVE,
+          materialLevel: hdsMaterial.MaterialLevel.EXQUISITE
+        },
+        scrollEffectOpts: {
+          enableScrollEffect: false,
+        },
+      }
+    })
     .onReady((context: NavDestinationContext) => {
       this.pageInfos = context.pathStack
-      this.bookInfo = context.pathInfo.param as ZlibBookInfoArk
-      this.isSaved = (this.bookInfo?.isUserSavedBook || this.bookInfo?.dataSaved) ? true : false
+      let param = context.pathInfo.param as I_BookInfoParam
+      if (param.type == 0) {
+        let item = param.data as ZlibBookInfoBriefArk
+        item.getDetailInfo(__ZlibUser__.cookie, (bookInfo) => {
+          this.errorText = ''
+          this.bookInfo = bookInfo
+          this.isSaved = (this.bookInfo?.isUserSavedBook || this.bookInfo?.dataSaved) ? true : false
+          this.bookInfo.getSimilarBook((books: ZlibBookInfoBriefArk[]) => {
+            this.similarBook.push(...books)
+          }, (error) => {
+            XAnimation.runWithAnimation(() => {
+              this.errorText = error
+            })
+          })
+        }, (error) => {
+          XAnimation.runWithAnimation(() => {
+            this.errorText = error
+          })
+        })
+      } else {
+        this.bookInfo = param.data as ZlibBookInfoArk
+        this.isSaved = (this.bookInfo?.isUserSavedBook || this.bookInfo?.dataSaved) ? true : false
+        this.bookInfo.getSimilarBook((books: ZlibBookInfoBriefArk[]) => {
+          this.similarBook.push(...books)
+        }, (error) => {
+          XAnimation.runWithAnimation(() => {
+            this.errorText = error
+          })
+        })
+      }
     })
     .opacity(this.pageOpacity)
     .onShown(() => {

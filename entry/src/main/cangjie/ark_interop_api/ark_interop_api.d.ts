@@ -38,12 +38,6 @@ export declare class ZlibBookInfoBriefArk {
     getDetailInfo(cookie: string, returnFunc: (funcArg0: ZlibBookInfoArk) => void, errorFunc: (funcArg0: string) => void): void
 }
 
-export declare class QQbot {
-    getBotQQGroup(): void
-    getCommonGroup(qqNum: string, returnFunc: (funcArg0: Array<QQGroupInfoArk>) => void, errorFunc: (funcArg0: string) => void): void
-    getConfig(returnFunc: (funcArg0: BotConfig) => void, errorFunc: (funcArg0: string) => void): void
-}
-
 export declare class ZlibBookInfoArk {
     id: number
     contentType: string
@@ -82,6 +76,13 @@ export declare class ZlibBookInfoArk {
     saveBook(cookie: string, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
     unSaveBook(cookie: string, returnFunc: (funcArg0: boolean) => void, errorFunc: (funcArg0: string) => void): void
     send2QQGroup(cookie: string, qqNumber: string, qqGroup: string, returnFunc: (funcArg0: string) => void, errorFunc: (funcArg0: string) => void): void
+    getSimilarBook(returnFunc: (funcArg0: Array<ZlibBookInfoBriefArk>) => void, errorFunc: (funcArg0: string) => void): void
+}
+
+export declare class QQbot {
+    getBotQQGroup(): void
+    getCommonGroup(qqNum: string, returnFunc: (funcArg0: Array<QQGroupInfoArk>) => void, errorFunc: (funcArg0: string) => void): void
+    getConfig(returnFunc: (funcArg0: BotConfig) => void, errorFunc: (funcArg0: string) => void): void
 }
 
 export declare class QQGroupInfoArk {
@@ -119,21 +120,10 @@ export declare interface CustomLib {
     DownloadTaskArk: {new (): DownloadTaskArk}
     BotConfig: {new (): BotConfig}
     QQGroupInfoArk: {new (): QQGroupInfoArk}
-    ZlibBookInfoArk: {new (): ZlibBookInfoArk}
     QQbot: {new (): QQbot}
+    ZlibBookInfoArk: {new (): ZlibBookInfoArk}
     ZlibBookInfoBriefArk: {new (id: number, hash: string): ZlibBookInfoBriefArk}
     ZlibClientArk: {new (): ZlibClientArk}
     ZlibUserInfoArk: {new (): ZlibUserInfoArk}
-    PaginationArk: {new (): PaginationArk}    webdavArk: { new (rootPath: string, port: number, account: string, password: string): webdavArk }
-    DownloadManageArk: { new (downloadPath: string): DownloadManageArk }
-    DownloadTaskArk: { new (): DownloadTaskArk }
-    QQGroupInfoArk: { new (): QQGroupInfoArk }
-    BotConfig: { new (): BotConfig }
-    QQbot: { new (): QQbot }
-    ZlibBookInfoArk: { new (): ZlibBookInfoArk }
-    ZlibBookInfoBriefArk: { new (id: number, hash: string): ZlibBookInfoBriefArk }
-    ZlibClientArk: { new (): ZlibClientArk }
-    ZlibUserInfoArk: { new (): ZlibUserInfoArk }
-    PaginationArk: { new (): PaginationArk }
-}    PaginationArk: {new (): PaginationArk}
+    PaginationArk: {new (): PaginationArk}
 }

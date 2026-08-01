@@ -9,6 +9,7 @@ import { loadingDialog, loadingNewDialog } from '../../../components/LoadingNewD
 import { I_SearchHistory } from '../../../models/interfaces/I_SearchHistory'
 import { I_ZlibBookInfoRes_Book } from '../../../../zlibrary/interface/I_ZlibBookInfo'
 import { ZlibBookInfoBriefArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
+import { I_BookInfoParam } from '../../../models/interfaces/I_BookInfoParam'
 
 
 @ObservedV2
@@ -26,7 +27,6 @@ export class HomeData {
   @Trace searchBookArray: BasicDataSource<ZlibBookInfoBriefArk> =
     new BasicDataSource<ZlibBookInfoBriefArk>()
   @Trace searchHistory: I_SearchHistory[] = []
-  @Trace isOpenBook: boolean = false
   @Trace showType:number = 0  //0为瀑布 1为列表
 
   @Trace TileColumnNumber: number = -1
@@ -53,23 +53,12 @@ export struct Home {
  
 
   private openBook(item:ZlibBookInfoBriefArk){
-    if (!__Home__.isOpenBook) {
-      XAnimation.runWithAnimation(() => {
-        __Home__.isOpenBook = true
-      })
-      item.getDetailInfo(__ZlibUser__.cookie,(bookInfo)=>{
-        __Home__.errorText = ''
-        __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
-        XAnimation.runWithAnimation(() => {
-          __Home__.isOpenBook = false
-        })
-      },(error)=>{
-        XAnimation.runWithAnimation(() => {
-          __Home__.isOpenBook = false
-          __Home__.errorText = error
-        })
-      })
+    console.log(`meow   id:${item.id}   hash:${item.hash}`)
+    let param:I_BookInfoParam = {
+      type: 0,
+      data:item
     }
+    __UI__.mainPageStack.pushPathByName("bookInfoPage", param )
   }
 
   build() {
@@ -306,9 +295,6 @@ export struct Home {
         loadingNewDialog()
       }
 
-      if (__Home__.isOpenBook) {
-        loadingDialog()
-      }
 
       if (__Home__.inSearchMode) {
         Column()
@@ -320,7 +306,6 @@ export struct Home {
             })
           })
       }
-
 
       if (__Home__.inSearchMode) {
         Scroll() {

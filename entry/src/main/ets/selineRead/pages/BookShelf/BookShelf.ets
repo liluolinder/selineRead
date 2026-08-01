@@ -15,6 +15,7 @@ import { HdsNavigation } from '@hms.hds.hdsBaseComponent'
 import { hdsMaterial, HdsNavigationTitleMode } from '@kit.UIDesignKit'
 import { PaginationArk, ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 import { BookInfo } from '../zlibrary/BookInfo/BookInfo'
+import { I_BookInfoParam } from '../../models/interfaces/I_BookInfoParam'
 
 @ObservedV2
 export class BookShelfData {
@@ -310,13 +311,13 @@ export struct BookShelf {
                     .backgroundColor($r('sys.color.comp_background_list_card'))
                     .borderRadius(20)
                     .padding(16)
+                    .systemMaterial(new uiMaterial.ImmersiveMaterial({
+                      style: uiMaterial.ImmersiveStyle.REGULAR,
+                      interactive:true,
+                      lightEffect: { color: undefined },
+                      applyShadow:false
+                    }))
                   }
-                  .systemMaterial(new uiMaterial.ImmersiveMaterial({
-                    style: uiMaterial.ImmersiveStyle.REGULAR,
-                    interactive:true,
-                    lightEffect: { color: undefined },
-                    applyShadow:false
-                  }))
                   .onClick(() => {
                     let want: Want = {
                       bundleName: 'com.huawei.hmsapp.books',
@@ -405,20 +406,24 @@ export struct BookShelf {
                     .backgroundColor($r('sys.color.comp_background_list_card'))
                     .borderRadius(20)
                     .padding(16)
+                    .systemMaterial(new uiMaterial.ImmersiveMaterial({
+                      style: uiMaterial.ImmersiveStyle.REGULAR,
+                      interactive:true,
+                      lightEffect: { color: undefined },
+                      applyShadow:false
+                    }))
                   }
-                  .systemMaterial(new uiMaterial.ImmersiveMaterial({
-                    style: uiMaterial.ImmersiveStyle.REGULAR,
-                    interactive:true,
-                    lightEffect: { color: undefined },
-                    applyShadow:false
-                  }))
                   .onClick(() => {
                     if (!this.isOpening) {
                       XAnimation.runWithAnimation(() => {
                         this.isOpening = true
                       })
 
-                      __UI__.mainPageStack.pushPathByName("bookInfoPage", item)
+                      let param:I_BookInfoParam = {
+                        type: 1,
+                        data:item
+                      }
+                      __UI__.mainPageStack.pushPathByName("bookInfoPage", param )
 
                       XAnimation.runWithAnimation(() => {
                         this.isOpening = false

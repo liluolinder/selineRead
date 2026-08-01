@@ -16,6 +16,7 @@ import { ZlibBookInfoBriefArk } from "libohos_app_cangjie_entry.zlib4cj.so";
 import { relationalStore } from "@kit.ArkData";
 import { RelationStoreManager } from "../../models/classes/DataBase";
 import { EventHelper } from "../../models/classes/BaseEvent";
+import { I_BookInfoParam } from "../../models/interfaces/I_BookInfoParam";
 
 @ComponentV2
 export struct Body {
@@ -125,49 +126,25 @@ export struct Body {
 
     if (__HWShare__.bookFromShare) {
       console.log(`meow:未收到通知但是更新:${JSON.stringify(__HWShare__.bookFromShare)}`)
-      if (!__Home__.isOpenBook) {
-        XAnimation.runWithAnimation(() => {
-          __Home__.isOpenBook = true
-        })
-        __HWShare__.bookFromShare.getDetailInfo(__ZlibUser__.cookie,(bookInfo)=>{
-          __Home__.errorText = ''
-          __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
-          XAnimation.runWithAnimation(() => {
-            __Home__.isOpenBook = false
-          })
-          __HWShare__.bookFromShare = undefined
-        },(error)=>{
-          XAnimation.runWithAnimation(() => {
-            __Home__.isOpenBook = false
-            __Home__.errorText = error
-          })
-          __HWShare__.bookFromShare = undefined
-        })
+      if (__HWShare__.bookFromShare) {
+        let param:I_BookInfoParam = {
+          type: 0,
+          data:__HWShare__.bookFromShare
+        }
+        __UI__.mainPageStack.pushPathByName("bookInfoPage", param )
+        __HWShare__.bookFromShare = undefined
       }
     }
 
     EventHelper.emitterListener('getNewBook', () => {
       console.log(`meow:收到通知:${JSON.stringify(__HWShare__.bookFromShare)}`)
       if (__HWShare__.bookFromShare) {
-        if (!__Home__.isOpenBook) {
-          XAnimation.runWithAnimation(() => {
-            __Home__.isOpenBook = true
-          })
-          __HWShare__.bookFromShare.getDetailInfo(__ZlibUser__.cookie,(bookInfo)=>{
-            __Home__.errorText = ''
-            __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
-            XAnimation.runWithAnimation(() => {
-              __Home__.isOpenBook = false
-            })
-            __HWShare__.bookFromShare = undefined
-          },(error)=>{
-            XAnimation.runWithAnimation(() => {
-              __Home__.isOpenBook = false
-              __Home__.errorText = error
-            })
-            __HWShare__.bookFromShare = undefined
-          })
+        let param:I_BookInfoParam = {
+          type: 0,
+          data:__HWShare__.bookFromShare
         }
+        __UI__.mainPageStack.pushPathByName("bookInfoPage", param )
+        __HWShare__.bookFromShare = undefined
       }
     })
 
@@ -330,9 +307,8 @@ export struct Body {
         title:{title:$r('app.string.Title_AccountManager')},
         preferType:SheetType.CENTER,
         height:SheetSize.LARGE,
-        backgroundColor:$r('sys.color.background_tertiary')
+        backgroundColor:$r('sys.color.comp_background_gray')
       })
-
 
       if (__System__.windowWidth < min_width && __UI__.isShowSideBar) {
         Stack().height('100%').width('100%').onClick(() => {
