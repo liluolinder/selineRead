@@ -12,14 +12,10 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
-      version: '1.2.2.0',
-      date: '2026/7/1',
-      optimizeArray: ['新增部分UI沉浸光感(鸿蒙7)'],
-    },
-    {
-      version: '1.2.1.1',
-      date: '2026/7/1',
-      fixBugsArray: ['修复登录失效问题'],
+      version: '1.2.2.2',
+      date: '2026/8/1',
+      addNewFunArray:['书籍详细页面新增相似书籍推荐'],
+      optimizeArray: ['新增部分UI沉浸光感(鸿蒙7)','优化书籍详细页面在大屏下的体验'],
     },
     {
       version: '1.2.1.0',

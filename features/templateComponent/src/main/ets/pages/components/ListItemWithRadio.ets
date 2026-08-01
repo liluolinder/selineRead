@@ -35,6 +35,7 @@ export struct ListItemWithRadio {
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.MARQUEE })
                 .width('100%')
+                .fontColor(this.subMessageColor)
             }
             }.layoutWeight(1)
           .justifyContent(FlexAlign.Start)

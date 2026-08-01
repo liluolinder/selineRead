@@ -4,7 +4,7 @@ import linderHttp.*
 import std.fs.Path
 import stdx.encoding.url.*
 
-public var zlibBaseUrl: String = "https://zh.zlibraryd.ru/"
+public var zlibBaseUrl: String = "https://zh.ssl101.ru/"
 public var zlibEAPI: String = "${zlibBaseUrl}/eapi"
 
 public func changeUrl(url: String) {

@@ -127,8 +127,9 @@ export struct ZlibSetting {
       case ZlibServiceStatus.Trying:
         return Color.Gray
       case ZlibServiceStatus.Accessible:
-      case ZlibServiceStatus.CanUpdate:
         return Color.Green
+      case ZlibServiceStatus.CanUpdate:
+        return Color.Yellow
       case ZlibServiceStatus.UnAccessible:
         return Color.Red
     }

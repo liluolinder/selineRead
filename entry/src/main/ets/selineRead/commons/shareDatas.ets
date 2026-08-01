@@ -84,7 +84,7 @@ export class ZlibUser{
   downloadManageCJ?:DownloadManageArk
 
 
-  base_url: string = 'https://zh.zlibraryd.ru/'
+  base_url: string = 'https://zh.ssl101.ru/'
   urlType:number = 1  //0为官方地址，1为自定义地址 默认提供自定义地址
 
   //启用
