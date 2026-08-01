@@ -307,7 +307,7 @@ export struct Body {
         title:{title:$r('app.string.Title_AccountManager')},
         preferType:SheetType.CENTER,
         height:SheetSize.LARGE,
-        backgroundColor:$r('sys.color.comp_background_gray')
+        backgroundColor:$r('sys.color.background_tertiary')
       })
 
       if (__System__.windowWidth < min_width && __UI__.isShowSideBar) {

@@ -29,7 +29,7 @@ export struct AccountManager{
         .padding({left:16, right:16})
       }.size({width:'100%', height:'100%'})
     }.size({width:'100%', height:'100%'})
-    .backgroundColor($r('sys.color.comp_background_gray'))
+    .backgroundColor($r('sys.color.background_tertiary'))
     .hideTitleBar(true)
     .hideToolBar(true)
   }

@@ -60,7 +60,7 @@ export class RelationStoreManager {
           await store.execute(ZlibServiceUrlTable).then(async (res) => {
             console.log("创建ZlibServiceUrlTable结果为" + JSON.stringify(res))
             RelationStoreManager.addValue(store, 'ZlibServiceUrl', {
-              Url:'https://zh.zlibraryd.ru/'
+              Url:'https://zh.ssl101.ru/'
             })
           })
           storeVersion = 4

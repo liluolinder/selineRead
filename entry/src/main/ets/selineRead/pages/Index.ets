@@ -12,6 +12,7 @@ import { dlpAntiPeep } from '@kit.DeviceSecurityKit';
 import { window } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import WindowsUtil from '../models/classes/WindowsUtil';
+import { BackgroundUtil } from '../models/classes/BackgroundRunningManager';
 
 
 @Entry
@@ -24,6 +25,7 @@ struct Index {
     deleteDownloadCache()
     __ZlibUser__.downloadManageCJ = new DownloadManageArk(await XContext.getDownloadFolderPath())
     if (__Setting__.webdavServerEnabled) {
+      BackgroundUtil.startContinuousTask()
       __Setting__.webdavClient =
         new webdavArk(await XContext.getDownloadFolderPath(), __Setting__.webdavPort, __Setting__.webdavAccount,
           __Setting__.webdavPassword)

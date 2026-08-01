@@ -10,6 +10,7 @@ import { SegmentButtonV2Items, TabSegmentButtonV2 } from "@kit.ArkUI"
 import { ConfigurationConstant } from "@kit.AbilityKit"
 import { dlpAntiPeep } from "@kit.DeviceSecurityKit"
 import { DlpAntiPeepCallback } from "../../commons/commonItem"
+import { BackgroundUtil } from "../../models/classes/BackgroundRunningManager"
 
 @Builder
 export function SettingBuilder() {
@@ -223,6 +224,7 @@ export struct Setting {
               new webdavArk(await XContext.getDownloadFolderPath(), __Setting__.webdavPort, __Setting__.webdavAccount,
                 __Setting__.webdavPassword)
             __Setting__.webdavClient?.start()
+            BackgroundUtil.startContinuousTask()
           } else {
             __Setting__.webdavClient?.stop()
           }

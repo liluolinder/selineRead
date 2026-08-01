@@ -8,7 +8,7 @@ const TAG = 'BackgroundUtil';
 export class BackgroundUtil {
   public static startContinuousTask(): void {
     if (!XContext.getAbilityContext()) {
-      console.error(TAG, 'startContinuousTask failed', `context undefined`);
+      console.error(TAG, 'meow startContinuousTask failed', `context undefined`);
       return;
     }
     let wantAgentInfo: wantAgent.WantAgentInfo = {
@@ -27,12 +27,12 @@ export class BackgroundUtil {
       try {
         backgroundTaskManager.startBackgroundRunning(XContext.getAbilityContext(),
           backgroundTaskManager.BackgroundMode.DATA_TRANSFER, wantAgentObj).then(() => {
-          console.info('startBackgroundRunning succeeded');
+          console.info('meow startBackgroundRunning succeeded');
         }).catch((error: BusinessError) => {
-          console.error(`startBackgroundRunning failed Cause: code ${error.code}`);
+          console.error(`meow startBackgroundRunning failed Cause: code ${error.code}`);
         });
       } catch (error) {
-        console.error(TAG, `startBackgroundRunning failed.message ${(error as BusinessError).message}`);
+        console.error(TAG, `meow startBackgroundRunning failed.message ${(error as BusinessError).message}`);
       }
     });
   }

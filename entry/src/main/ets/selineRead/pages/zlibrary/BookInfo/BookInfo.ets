@@ -109,7 +109,6 @@ export struct BookInfo {
       ],
     }),
   });
-
   @Builder
   send2QQDialogBuilder() {
     Scroll() {
@@ -188,6 +187,69 @@ export struct BookInfo {
     .contentEndOffset(16)
   }
 
+  @Builder
+  readOnline(){
+    Column(){
+
+      Row({space:10}){
+
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph($r('sys.symbol.share'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .systemMaterial(new uiMaterial.ImmersiveMaterial({
+          style: uiMaterial.ImmersiveStyle.REGULAR,
+          interactive:true,
+          lightEffect: { color: undefined },
+        }))
+        .useEffect(true)
+        .onClick(() => {
+          XContext.getAbilityContext().startAbility({
+            uri: this.bookInfo?.readOnlineUrl
+          })
+        })
+
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph($r('sys.symbol.xmark'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_secondary')])
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .systemMaterial(new uiMaterial.ImmersiveMaterial({
+          style: uiMaterial.ImmersiveStyle.REGULAR,
+          interactive:true,
+          lightEffect: { color: undefined },
+        }))
+        .useEffect(true)
+        .onClick(() => {
+          this.showOnlineRead = false
+        })
+      }.justifyContent(FlexAlign.End)
+      .width('100%')
+
+      Web({ src: this.bookInfo?.readOnlineUrl, controller: this.webController })
+        .size({width:'100%', height:'100%'})
+        .domStorageAccess(true)
+        .darkMode(WebDarkMode.Auto)
+        .javaScriptAccess(true)
+        .allowWindowOpenMethod(true)
+        .onAppear(()=>{
+          webview.WebCookieManager.configCookieSync(this.bookInfo?.readOnlineUrl, __ZlibUser__.cookie,false, false)
+        })
+
+
+
+    }.size({width:'100%', height:'100%'})
+    .padding({ top: __System__.topRectHeight })
+    .backgroundColor($r('sys.color.comp_background_gray'))
+  }
+
   aboutToAppear(): void {
     harmonyShare.on('gesturesShare', this.immersiveCallback);
     harmonyShare.on('knockShare', this.immersiveCallback);
@@ -204,6 +266,7 @@ export struct BookInfo {
     harmonyShare.off('gesturesShare', this.immersiveCallback);
     harmonyShare.off('knockShare', this.immersiveCallback);
   }
+
 
   build() {
     HdsNavDestination() {
@@ -364,6 +427,30 @@ export struct BookInfo {
                   //   .transition(XAnimation.getAnimation('bottom', 200))
                   // }
 
+                  if (this.bookInfo?.readOnlineAvailable && this.bookInfo?.readOnlineUrl){
+                    ListItem() {
+                      Button({ type: ButtonType.Normal, stateEffect: true }) {
+                        Text("在线阅读")
+                      }
+                      .height(55)
+                      .borderRadius(20)
+                      .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
+                        $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card'))
+                      .backdropBlur(
+                        __CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
+                          undefined)
+                      .useEffect(true)
+                      .width('100%')
+                      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+                      .onClick(() => {
+                          this.showOnlineRead = true
+                          console.log(this.bookInfo?.readOnlineUrl)
+                      })
+                      .bindContentCover($$this.showOnlineRead, this.readOnline())
+                    }
+                    .transition(XAnimation.getAnimation('bottom', 200))
+                  }
+
                   ListItem() {
                     Button({ type: ButtonType.Normal, stateEffect: true }) {
                       Text(this.bookInfo?.extension + '   ' + this.bookInfo?.filesizeString)
@@ -477,7 +564,6 @@ export struct BookInfo {
                           this.errorText = error
                           XContext.toast(error)
                         })
-
 
                     })
                   }
@@ -601,7 +687,18 @@ export struct BookInfo {
                 icon: new SymbolGlyphModifier($r('sys.symbol.share')).fontColor([$r('sys.color.font')]),
                 isEnabled: true,
                 action: () => {
-                  console.info('HdsNavDestination menu1');
+                  if (this.bookInfo) {
+                    let data: systemShare.SharedData = new systemShare.SharedData({
+                      utd: uniformTypeDescriptor.UniformDataType.HYPERLINK,
+                      content: this.bookInfo?.href,
+                      title:this.bookInfo?.title??''
+                    });
+                    let controller: systemShare.ShareController = new systemShare.ShareController(data);
+                    controller.show(XContext.getAbilityContext(), {});
+                  }else {
+                    XContext.toast("还在加载中")
+                  }
+
                 }
               }
             },
