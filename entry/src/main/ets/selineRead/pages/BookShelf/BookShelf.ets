@@ -1,5 +1,5 @@
-import { BasicDataSource, XAnimation, XContext } from 'commonpackage'
-import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../../commons/shareDatas'
+import { BasicDataSource, LFileKit, XAnimation, XContext } from 'commonpackage'
+import { __Download__, __Setting__, __System__, __UI__, __ZlibUser__ } from '../../commons/shareDatas'
 import { LengthUnit, SegmentButtonV2Items, TabSegmentButtonV2, uiMaterial } from '@kit.ArkUI'
 import { I_BookShelfBookInfo } from '../../models/interfaces/I_BookShelfBookInfo'
 import { shareBook } from '../../models/utils/ShareBook'
@@ -7,29 +7,30 @@ import { fileIo, fileUri } from '@kit.CoreFileKit'
 import { Want, wantConstant } from '@kit.AbilityKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { loadingDialog, loadingNewDialog } from '../../components/LoadingNewDialog'
-import { zlibClient } from '../../../zlibrary/zlibClient'
 import { http } from '@kit.NetworkKit'
-import { __Home__ } from '../zlibrary/Home/Home'
+import { __ZlibHome__ } from '../zlibrary/Home/Home'
 import { I_BookDetailedInfo } from '../../models/interfaces/I_BookInfo'
 import { HdsNavigation } from '@hms.hds.hdsBaseComponent'
 import { hdsMaterial, HdsNavigationTitleMode } from '@kit.UIDesignKit'
 import { PaginationArk, ZlibBookInfoArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 import { BookInfo } from '../zlibrary/BookInfo/BookInfo'
 import { I_BookInfoParam } from '../../models/interfaces/I_BookInfoParam'
+import { EventHelper } from '../../models/classes/BaseEvent'
 
 @ObservedV2
 export class BookShelfData {
   bookList: BasicDataSource<I_BookShelfBookInfo> =
     new BasicDataSource<I_BookShelfBookInfo>()
-
   zlibSavedBooks: BasicDataSource<ZlibBookInfoArk> =
     new BasicDataSource<ZlibBookInfoArk>()
-
-  pageIndex:number = 1
-  pageInfo:PaginationArk = new PaginationArk()
-
+  pageIndex: number = 1
+  pageInfo: PaginationArk = new PaginationArk()
   @Trace gettingBookNow: boolean = false
-  @Trace errorText:string = ''
+  @Trace errorText: string = ''
+
+  @Trace canGetMore: boolean = true
+
+
 }
 
 export let __BookShelf__: BookShelfData = new BookShelfData()
@@ -43,8 +44,82 @@ export struct BookShelf {
     { text: '本地' },
     { text: 'zlib收藏' },
   ]);
+
   @Local chooseIndex: number = 0;
-  @Local canGetMore:boolean = true
+
+  @Monitor("chooseIndex")
+  async changeIndexCallback() {
+    switch (this.chooseIndex) {
+      case 0:
+        __BookShelf__.gettingBookNow = true
+        __BookShelf__.bookList.clearData()
+        let downloadPath = await XContext.getDownloadFolderPath()
+
+        LFileKit.listDir(downloadPath).then((meow)=>{
+          meow.forEach((item) => {
+            let textFragment: string[] = item.split('.')
+            if (textFragment[textFragment.length - 1] != 'sfftdownload') {
+              let bookInfo: I_BookShelfBookInfo = {
+                bookName: item,
+                bookPath: downloadPath + item,
+                bookImage: $r('app.media.default_cover'),
+                bookAuthor: "",
+                bookHref: "",
+                bookId: 0
+              }
+              __Download__.downloadArray.dataArray.forEach((itemA) => {
+                if (itemA.fileName.includes(item) || itemA.fileName.split('.')[0].includes(item) ||
+                  itemA.fileName.includes(item.split('.')[0]) || item.includes(itemA.fileName) ||
+                  item.includes(itemA.fileName.split('.')[0])) {
+                  bookInfo.bookImage = itemA.fileImage
+                  bookInfo.bookAuthor = itemA.bookAuthor
+                  bookInfo.bookHref = itemA.bookHref
+                  bookInfo.bookId = itemA.bookId
+                  console.log(bookInfo.bookHref)
+                  return
+                }
+              })
+              __BookShelf__.bookList.pushData(bookInfo)
+            } else {
+              try {
+                fileIo.unlinkSync(downloadPath + item)
+                console.log('删除废物文件失成功')
+              } catch (e) {
+                console.log('删除废物文件失败' + JSON.stringify(e))
+              }
+            }
+          })
+        })
+
+        __BookShelf__.gettingBookNow = false
+        break
+      case 1:
+        XAnimation.runWithAnimation(() => {
+          __BookShelf__.canGetMore = false
+          __BookShelf__.gettingBookNow = true
+        })
+        __BookShelf__.zlibSavedBooks.clearData()
+        __BookShelf__.pageIndex = 1
+        __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex, (books, pageInfo) => {
+          __BookShelf__.pageIndex = pageInfo.current + 1
+          __BookShelf__.pageInfo = pageInfo
+          books.forEach((item) => {
+            __BookShelf__.zlibSavedBooks.pushData(item)
+          })
+          console.log(`limit:${pageInfo.limit}`)
+          console.log(`current:${pageInfo.current}`)
+          console.log(`totalItems:${pageInfo.totalItems}`)
+          console.log(`totalPages:${pageInfo.totalPages}`)
+          XAnimation.runWithAnimation(() => {
+            __BookShelf__.gettingBookNow = false
+            __BookShelf__.canGetMore = true
+          })
+        }, (error) => {
+          __BookShelf__.errorText = error
+        })
+        break
+    }
+  }
 
   @Builder
   draggingPreview(item: I_BookShelfBookInfo) {
@@ -111,25 +186,25 @@ export struct BookShelf {
       //     }
       //   })
       //   .enabled(fileIo.accessSync(item.bookPath))
-      MenuItem({ content: $r('app.string.Text_Detail') })
-        .onClick(async () => {
-          this.isOpening = true
-          let req = http.createHttp()
-          let splitBook = item.bookHref.split(`/`)
-          await zlibClient.getBookInfo(req, Number(splitBook[2]), splitBook[3]).then((res) => {
-            if (res[0] == 1) {
-              __Home__.errorText = ''
-              let bookInfo: I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
-              bookInfo.bookID = item.bookId
-              bookInfo.href = item.bookHref
-              __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
-            } else {
-              __Home__.errorText = res[1]
-            }
-          })
-          this.isOpening = false
-        })
-        .enabled(item.bookHref != '')
+      // MenuItem({ content: $r('app.string.Text_Detail') })
+      //   .onClick(async () => {
+      //     this.isOpening = true
+      //     let req = http.createHttp()
+      //     let splitBook = item.bookHref.split(`/`)
+      //     await zlibClient.getBookInfo(req, Number(splitBook[2]), splitBook[3]).then((res) => {
+      //       if (res[0] == 1) {
+      //         __Home__.errorText = ''
+      //         let bookInfo: I_BookDetailedInfo = JSON.parse(res[1]) as I_BookDetailedInfo
+      //         bookInfo.bookID = item.bookId
+      //         bookInfo.href = item.bookHref
+      //         __UI__.mainPageStack.pushPathByName("bookInfoPage", bookInfo)
+      //       } else {
+      //         __Home__.errorText = res[1]
+      //       }
+      //     })
+      //     this.isOpening = false
+      //   })
+      //   .enabled(item.bookHref != '')
 
       MenuItem({ content: $r('app.string.Text_Export'), builder: (): void => this.exportMenu(item) })
         .enabled(fileIo.accessSync(item.bookPath))
@@ -214,48 +289,12 @@ export struct BookShelf {
     }.padding({ left: 16, right: 16 })
   }
 
-  @Monitor("chooseIndex")
-  changeIndexCallback(){
-    switch (this.chooseIndex){
-      case 0:
-        break
-      case 1:
-        XAnimation.runWithAnimation(()=>{
-          this.canGetMore = false
-          __BookShelf__.gettingBookNow = true
-        })
-
-        __BookShelf__.zlibSavedBooks.clearData()
-
-        __BookShelf__.pageIndex = 1
-        __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex,(books, pageInfo)=>{
-
-          __BookShelf__.pageIndex = pageInfo.current + 1
-          __BookShelf__.pageInfo = pageInfo
-          books.forEach((item)=>{
-            __BookShelf__.zlibSavedBooks.pushData(item)
-          })
-          console.log(`limit:${pageInfo.limit}`)
-          console.log(`current:${pageInfo.current}`)
-          console.log(`totalItems:${pageInfo.totalItems}`)
-          console.log(`totalPages:${pageInfo.totalPages}`)
-          XAnimation.runWithAnimation(()=>{
-            __BookShelf__.gettingBookNow = false
-            this.canGetMore = true
-          })
-        },(error)=>{
-          __BookShelf__.errorText = error
-        })
-        break
-    }
-  }
-
   build() {
     Column() {
       HdsNavigation() {
         Stack() {
-          if (this.chooseIndex == 0){
-            if (__BookShelf__.bookList.dataArray.length ==0){
+          if (this.chooseIndex == 0) {
+            if (__BookShelf__.bookList.dataArray.length == 0) {
               if (__BookShelf__.gettingBookNow) {
                 Column() {
                   Text($r('app.string.Tip_GettingBookNow'))
@@ -275,7 +314,7 @@ export struct BookShelf {
                 .padding({ left: 16, right: 16 })
                 .justifyContent(FlexAlign.Center)
               }
-            }else {
+            } else {
               List({ space: 10 }) {
                 LazyForEach(__BookShelf__.bookList, (item: I_BookShelfBookInfo, index: number) => {
                   ListItem() {
@@ -307,15 +346,16 @@ export struct BookShelf {
                           .textOverflow({ overflow: TextOverflow.Ellipsis })
                       }.height('100%')
                       .layoutWeight(1)
-                    }.height(120)
+                    }
+                    .height(120)
                     .backgroundColor($r('sys.color.comp_background_list_card'))
                     .borderRadius(20)
                     .padding(16)
                     .systemMaterial(new uiMaterial.ImmersiveMaterial({
                       style: uiMaterial.ImmersiveStyle.REGULAR,
-                      interactive:true,
+                      interactive: true,
                       lightEffect: { color: undefined },
-                      applyShadow:false
+                      applyShadow: false
                     }))
                   }
                   .onClick(() => {
@@ -349,8 +389,8 @@ export struct BookShelf {
               .borderRadius(20)
               .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 80)
             }
-          }else {
-            if (__BookShelf__.zlibSavedBooks.dataArray.length ==0){
+          } else {
+            if (__BookShelf__.zlibSavedBooks.dataArray.length == 0) {
               if (__BookShelf__.gettingBookNow) {
                 Column() {
                   Text($r('app.string.Tip_GettingBookNow'))
@@ -370,7 +410,7 @@ export struct BookShelf {
                 .padding({ left: 16, right: 16 })
                 .justifyContent(FlexAlign.Center)
               }
-            }else{
+            } else {
               List({ space: 10 }) {
                 LazyForEach(__BookShelf__.zlibSavedBooks, (item: ZlibBookInfoArk, index: number) => {
                   ListItem() {
@@ -402,15 +442,16 @@ export struct BookShelf {
                           .textOverflow({ overflow: TextOverflow.Ellipsis })
                       }.height('100%')
                       .layoutWeight(1)
-                    }.height(120)
+                    }
+                    .height(120)
                     .backgroundColor($r('sys.color.comp_background_list_card'))
                     .borderRadius(20)
                     .padding(16)
                     .systemMaterial(new uiMaterial.ImmersiveMaterial({
                       style: uiMaterial.ImmersiveStyle.REGULAR,
-                      interactive:true,
+                      interactive: true,
                       lightEffect: { color: undefined },
-                      applyShadow:false
+                      applyShadow: false
                     }))
                   }
                   .onClick(() => {
@@ -419,11 +460,11 @@ export struct BookShelf {
                         this.isOpening = true
                       })
 
-                      let param:I_BookInfoParam = {
+                      let param: I_BookInfoParam = {
                         type: 1,
-                        data:item
+                        data: item
                       }
-                      __UI__.mainPageStack.pushPathByName("bookInfoPage", param )
+                      __UI__.mainPageStack.pushPathByName("bookInfoPage", param)
 
                       XAnimation.runWithAnimation(() => {
                         this.isOpening = false
@@ -437,18 +478,18 @@ export struct BookShelf {
               .padding({ left: 16, right: 16 })
               .borderRadius(20)
               .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 80)
-              .onReachEnd(()=>{
+              .onReachEnd(() => {
                 if (__BookShelf__.pageIndex <= __BookShelf__.pageInfo.totalPages && !__BookShelf__.gettingBookNow) {
-                  XAnimation.runWithAnimation(()=>{
-                    this.canGetMore = false
+                  XAnimation.runWithAnimation(() => {
+                    __BookShelf__.canGetMore = false
                   })
-                  __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex,(books, pageInfo)=>{
-                    XAnimation.runWithAnimation(()=>{
-                      this.canGetMore = true
+                  __ZlibUser__.localChooseAccount.getSavedBook(__BookShelf__.pageIndex, (books, pageInfo) => {
+                    XAnimation.runWithAnimation(() => {
+                      __BookShelf__.canGetMore = true
                     })
                     __BookShelf__.pageIndex = pageInfo.current + 1
                     __BookShelf__.pageInfo = pageInfo
-                    books.forEach((item)=>{
+                    books.forEach((item) => {
                       __BookShelf__.zlibSavedBooks.pushData(item)
                     })
                     console.log(`limit:${pageInfo.limit}`)
@@ -456,7 +497,7 @@ export struct BookShelf {
                     console.log(`totalItems:${pageInfo.totalItems}`)
                     console.log(`totalPages:${pageInfo.totalPages}`)
 
-                  },(error)=>{
+                  }, (error) => {
                     __BookShelf__.errorText = error
                   })
                 }
@@ -465,7 +506,7 @@ export struct BookShelf {
           }
 
 
-          if (__BookShelf__.errorText != '' ) {
+          if (__BookShelf__.errorText != '') {
             Stack() {
               Column({ space: 10 }) {
                 LoadingProgress().size({ width: 100, height: 100 })
@@ -488,9 +529,9 @@ export struct BookShelf {
             }
             .systemMaterial(new uiMaterial.ImmersiveMaterial({
               style: uiMaterial.ImmersiveStyle.REGULAR,
-              interactive:true,
+              interactive: true,
               lightEffect: { color: undefined },
-              applyShadow:false
+              applyShadow: false
             }))
             .size({ width: '100%', height: '100%' })
             .padding(16)
@@ -503,7 +544,7 @@ export struct BookShelf {
             loadingDialog()
           }
 
-          if (!this.canGetMore && this.chooseIndex == 1) {
+          if (!__BookShelf__.canGetMore && this.chooseIndex == 1) {
             loadingNewDialog()
           }
 
@@ -527,12 +568,19 @@ export struct BookShelf {
           title: {
             mainTitle: $r('app.string.Title_BookShelf'),
           },
-          stackBuilder: () => this.changeSegButton()
+          stackBuilder: __Setting__.appWorkMode == 0 ? ()=>this.changeSegButton() : undefined
         }
       })
       .hideToolBar(true)
       .hideBackButton(true)
       .titleMode(HdsNavigationTitleMode.MINI)
     }.padding({ top: Math.max(16, __System__.topRectHeight) })
+    .onAppear(()=>{
+      EventHelper.emitterListener("appWorkModeChange",()=>{
+        this.chooseIndex = 0
+      })
+
+
+    })
   }
 }

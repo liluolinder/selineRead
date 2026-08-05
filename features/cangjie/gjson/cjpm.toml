@@ -1,0 +1,19 @@
+[dependencies]
+
+[package]
+  cjc-version = "1.0.0"
+  compile-option = "-O2 -Woff unused"
+  description = "高性能的json路径解析、取值工具"
+  link-option = ""
+  name = "gjson"
+  output-type = "static"
+  override-compile-option = ""
+  src-dir = ""
+  target-dir = ""
+  version = "1.2.0"
+  tag = ["json", "json-path"]
+  include = ["src"]
+  license = ["MulanPSL-2.0"]
+  repository = "https://atomgit.com/ystyle/gjson-cj"
+  package-configuration = {}
+

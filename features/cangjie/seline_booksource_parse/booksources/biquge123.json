@@ -1,0 +1,43 @@
+{
+  "bookSourceUrl": "https://www.biquge123.org",
+  "bookSourceName": "biquge123-在线书源",
+  "bookSourceGroup": "测试",
+  "bookSourceType": 0,
+  "enabled": true,
+  "header": "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+  "ruleSearch": {
+    "searchUrl": "https://www.biquge123.org/user/search.html?q={{key}}",
+    "name": "#.articlename",
+    "author": "#.author",
+    "bookUrl": "#.url_list",
+    "coverUrl": "#.url_img",
+    "intro": "#.intro"
+  },
+  "ruleBookInfo": {
+    "url": "",
+    "name": "h1@text",
+    "author": "div.small span@text",
+    "coverUrl": "",
+    "intro": "dl dd@text",
+    "kind": "",
+    "wordCount": "",
+    "latestChapter": "",
+    "status": ""
+  },
+  "ruleToc": {
+    "url": "",
+    "chapterName": "dl dd a@text",
+    "chapterUrl": "dl dd a@href"
+  },
+  "ruleContent": {
+    "url": "https://apibi.cc/api/chapter?token={{chapterToken}}",
+    "content": "txt",
+    "token": {
+      "algo": "aes-128-cbc",
+      "key": "a3dc22cf70418a51",
+      "iv": "394c2c3202da6270",
+      "input": "{'id':{{bookId}},'chapterid':{{chapterId}}}",
+      "bookIdFrom": "coverUrl"
+    }
+  }
+}

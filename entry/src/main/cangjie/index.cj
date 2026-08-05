@@ -1,11 +1,8 @@
 package ohos_app_cangjie_entry
 
-import ohos.ark_interop.JSContext
-import ohos.ark_interop.JSModule
-import ohos.ark_interop.*
+import ohos.ark_interop_advance.*
 import stdx.encoding.url.URL
 import std.collection.HashMap
-
 
 var globalcontext: Option<JSContext> = None
 
@@ -21,9 +18,7 @@ let _ = JSModule.registerModule {context, _ =>
 public func run2JS(task: () -> Unit) {
     if (let Some(context) <- globalcontext) {
         context.postJSTask {
-            context.newScope {
-                task()
-            }
+            task()
         }
     }
 }

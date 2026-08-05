@@ -3,7 +3,7 @@
  */
 package ohos_app_cangjie_entry.qqbot
 
-import ohos.ark_interop.*
+import ohos.ark_interop_advance.*
 import ohos.ark_interop_macro.*
 
 @Interop[ArkTS]

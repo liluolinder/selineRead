@@ -31,6 +31,8 @@ path = "../features/cangjie/selineWebdav"
 path = "../features/cangjie/selineDownload"
 [dependencies.linderHttp]
 path = "../features/cangjie/linderHttp"
+[dependencies.seline_booksource_parse]
+path = "../features/cangjie/seline_booksource_parse"
 
 [target]
 [target.aarch64-linux-ohos]

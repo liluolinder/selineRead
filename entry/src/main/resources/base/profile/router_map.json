@@ -11,11 +11,6 @@
             "buildFunction": "emptyPageBuilder"
         },
         {
-            "name": "ZlibraryAccount",
-            "pageSourceFile": "src/main/ets/selineRead/pages/zlibrary/AccountManager/zlibrary/ZlibraryAccount.ets",
-            "buildFunction": "ZlibraryAccountBuilder"
-        },
-        {
             "name": "VersionInfo",
             "pageSourceFile": "src/main/ets/selineRead/pages/AboutUS/VersionInfo.ets",
             "buildFunction": "VersionInfoBuilder"
@@ -34,6 +29,16 @@
             "name": "DownloadPage",
             "pageSourceFile": "src/main/ets/selineRead/pages/BookShelf/DownloadPage.ets",
             "buildFunction": "DownloadPageBuilder"
+        },
+        {
+            "name": "BSBookInfo",
+            "pageSourceFile": "src/main/ets/selineRead/pages/booksource/BookInfo.ets",
+            "buildFunction": "BSBookInfoBuilder"
+        },
+        {
+            "name": "Reader",
+            "pageSourceFile": "src/main/ets/selineRead/pages/booksource/Reader.ets",
+            "buildFunction": "ReaderBuilder"
         }
     ]
 }

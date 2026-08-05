@@ -3,7 +3,7 @@
  */
 package ohos_app_cangjie_entry.zlib4cj
 
-import ohos.ark_interop.*
+import ohos.ark_interop_advance.*
 import ohos.ark_interop_macro.*
 import zlibraryAPI4CJ.dataModel.BookInfo
 import ohos_app_cangjie_entry.run2JS

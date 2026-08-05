@@ -96,7 +96,6 @@ export default class EntryAbility extends UIAbility {
         XContext.init(windowStage.getMainWindowSync().getUIContext())
         WindowsUtil.initWindow(this.context, windowStage)
       } catch (error) {
-        console.error(`Liquid:${JSON.stringify(error)}`)
       }
 
       __Setting__.darkModeIndex =  XPreferencesManager.getPreferencesValue('selineRead', "ColorMode", 0) as number
@@ -112,7 +111,6 @@ export default class EntryAbility extends UIAbility {
           mode = ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
           break
       }
-      console.log(`meow:${JSON.stringify(mode)}}`)
       this.context.getApplicationContext().setColorMode(mode);
 
     });

@@ -1,19 +1,15 @@
 import { curves, LengthMetrics, uiMaterial, } from '@kit.ArkUI'
 import { BasicDataSource, XAnimation, XContext, XPreferencesManager } from 'commonpackage'
-import { min_width } from '../../../commons/commonItem'
 import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../../../commons/shareDatas'
-import { I_BookDetailedInfo } from '../../../models/interfaces/I_BookInfo'
 import { http } from '@kit.NetworkKit'
-import { zlibClient } from '../../../../zlibrary/zlibClient'
 import { loadingDialog, loadingNewDialog } from '../../../components/LoadingNewDialog'
 import { I_SearchHistory } from '../../../models/interfaces/I_SearchHistory'
-import { I_ZlibBookInfoRes_Book } from '../../../../zlibrary/interface/I_ZlibBookInfo'
 import { ZlibBookInfoBriefArk } from 'libohos_app_cangjie_entry.zlib4cj.so'
 import { I_BookInfoParam } from '../../../models/interfaces/I_BookInfoParam'
 
 
 @ObservedV2
-export class HomeData {
+export class ZlibHomeData {
   @Trace inSearchMode: boolean = false
   @Trace canGetMore: boolean = false
   @Trace recommendBookIndex: number = 1
@@ -21,7 +17,6 @@ export class HomeData {
   @Trace errorText: string = ''
   @Trace recommendOrSearch: number = 0
   @Trace searchWord: string = ''
-  req = http.createHttp()
   @Trace recommendBookArray: BasicDataSource<ZlibBookInfoBriefArk> =
     new BasicDataSource<ZlibBookInfoBriefArk>()
   @Trace searchBookArray: BasicDataSource<ZlibBookInfoBriefArk> =
@@ -32,26 +27,24 @@ export class HomeData {
   @Trace TileColumnNumber: number = -1
   
   listWidth:Length = 0
-  
+
   @Monitor("showType")
   changeColumnNumber(){
     XAnimation.runWithAnimation(() => {
-      if (__Home__.showType == 0) {
-        __Home__.TileColumnNumber = Math.max(Math.ceil(new Number(this.listWidth).valueOf() / 240), 2)
+      if (__ZlibHome__.showType == 0) {
+        __ZlibHome__.TileColumnNumber = Math.max(Math.ceil(new Number(this.listWidth).valueOf() / 240), 2)
       }else {
-        __Home__.TileColumnNumber = Math.max(Math.ceil(new Number(this.listWidth).valueOf() / 380), 1)
+        __ZlibHome__.TileColumnNumber = Math.max(Math.ceil(new Number(this.listWidth).valueOf() / 380), 1)
       }
 
-    }, __Home__.TileColumnNumber > 0)
+    }, __ZlibHome__.TileColumnNumber > 0)
   }
 }
 
-export const __Home__ = new HomeData()
+export const __ZlibHome__ = new ZlibHomeData()
 
 @ComponentV2
-export struct Home {
- 
-
+export struct ZlibHome {
   private openBook(item:ZlibBookInfoBriefArk){
     console.log(`meow   id:${item.id}   hash:${item.hash}`)
     let param:I_BookInfoParam = {
@@ -65,7 +58,7 @@ export struct Home {
     Stack({ alignContent: Alignment.Top }) {
       Row({ space: 10 }) {
         Button({ type: ButtonType.Circle }) {
-          SymbolGlyph(__Home__.showType == 0 ? $r('sys.symbol.square_grid_2x2') : $r('sys.symbol.list_bullet_square'))
+          SymbolGlyph(__ZlibHome__.showType == 0 ? $r('sys.symbol.square_grid_2x2') : $r('sys.symbol.list_bullet_square'))
             .fontSize(24)
             .fontColor([$r('sys.color.font_secondary')])
         }
@@ -80,19 +73,19 @@ export struct Home {
         .useEffect(true)
         .onClick(() => {
           XAnimation.runWithAnimation(()=>{
-            __Home__.showType = __Home__.showType == 0 ? 1 :0
-            XPreferencesManager.putPreferencesValue('selineRead', "showType", __Home__.showType)
+            __ZlibHome__.showType = __ZlibHome__.showType == 0 ? 1 :0
+            XPreferencesManager.putPreferencesValue('selineRead', "showType", __ZlibHome__.showType)
           })
         })
-        .visibility(__Home__.inSearchMode ? Visibility.None : Visibility.Visible)
+        .visibility(__ZlibHome__.inSearchMode ? Visibility.None : Visibility.Visible)
 
-        Search({ value: __Home__.searchWord, })
-          .searchButton(__Home__.inSearchMode ? $r('app.string.search') : undefined)
+        Search({ value: __ZlibHome__.searchWord, })
+          .searchButton(__ZlibHome__.inSearchMode ? $r('app.string.search') : undefined)
           // .width(__Home__.inSearchMode ? '100%' : "45%")
           .layoutWeight(1)
-          .focusable(__Home__.inSearchMode)
+          .focusable(__ZlibHome__.inSearchMode)
           .backgroundColor($r('app.color.start_window_background_blur'))
-          .enableKeyboardOnFocus(__Home__.recommendOrSearch == 1)
+          .enableKeyboardOnFocus(__ZlibHome__.recommendOrSearch == 1)
           .systemMaterial(new uiMaterial.ImmersiveMaterial({
             style: uiMaterial.ImmersiveStyle.REGULAR,
             interactive:true,
@@ -101,57 +94,53 @@ export struct Home {
           .useEffect(true)
           .onSubmit((value: string) => {
             XAnimation.runWithAnimation(() => {
-              __Home__.inSearchMode = false
+              __ZlibHome__.inSearchMode = false
             })
             if (value != '') {
-              __Home__.recommendOrSearch = 1
-
-              __Home__.req = http.createHttp()
-              __Home__.searchBookArray.clearData()
-              __Home__.searchWord = value
-              __Home__.searchBookIndex = 1
-              __ZlibUser__.zlibClient.search((__Home__.searchWord), __Home__.searchBookIndex,(books)=>{
+              __ZlibHome__.recommendOrSearch = 1
+              __ZlibHome__.searchBookArray.clearData()
+              __ZlibHome__.searchWord = value
+              __ZlibHome__.searchBookIndex = 1
+              __ZlibUser__.zlibClient.search((__ZlibHome__.searchWord), __ZlibHome__.searchBookIndex,(books)=>{
                 console.log(JSON.stringify(books))
                 if (books.length!=0) {
-                  __Home__.searchBookIndex++
+                  __ZlibHome__.searchBookIndex++
                  books.forEach((book)=>{
-                   __Home__.searchBookArray.pushData(book)
+                   __ZlibHome__.searchBookArray.pushData(book)
                  })
 
                 }else {
-                  __Home__.errorText = '返回值空'
+                  __ZlibHome__.errorText = '返回值空'
                 }
 
                 XAnimation.runWithAnimation(() => {
-                  __Home__.canGetMore = true
+                  __ZlibHome__.canGetMore = true
                 })
               },(error)=>{
                 console.log(error)
-                __Home__.errorText = error
+                __ZlibHome__.errorText = error
               })
 
-
-
-              __Home__.searchHistory =
-                __Home__.searchHistory.filter((item: I_SearchHistory) => item.value != value)
-              __Home__.searchHistory.unshift({ value: value, time: Date.parse(new Date().toString()) })
+              __ZlibHome__.searchHistory =
+                __ZlibHome__.searchHistory.filter((item: I_SearchHistory) => item.value != value)
+              __ZlibHome__.searchHistory.unshift({ value: value, time: Date.parse(new Date().toString()) })
               XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
-                JSON.stringify(__Home__.searchHistory))
+                JSON.stringify(__ZlibHome__.searchHistory))
             }
           })
           .onChange((value: string) => {
             if (value == '' || value == undefined) {
               XAnimation.runWithAnimation(() => {
-                __Home__.searchWord = ''
-                __Home__.recommendOrSearch = 0
+                __ZlibHome__.searchWord = ''
+                __ZlibHome__.recommendOrSearch = 0
               })
             } else {
-              __Home__.searchWord = value
+              __ZlibHome__.searchWord = value
             }
           })
           .onTouch(() => {
             XAnimation.runWithAnimation(() => {
-              __Home__.inSearchMode = true
+              __ZlibHome__.inSearchMode = true
             })
           })
 
@@ -164,13 +153,13 @@ export struct Home {
       .transition(XAnimation.getAnimation('up'))
       .zIndex(114514)
 
-      if ((__Home__.recommendOrSearch == 0 && __Home__.recommendBookArray.totalCount() == 0) ||
-        ((__Home__.recommendOrSearch == 1 && __Home__.searchBookArray.totalCount() == 0))) {
+      if ((__ZlibHome__.recommendOrSearch == 0 && __ZlibHome__.recommendBookArray.totalCount() == 0) ||
+        ((__ZlibHome__.recommendOrSearch == 1 && __ZlibHome__.searchBookArray.totalCount() == 0))) {
         Column({ space: 10 }) {
           LoadingProgress()
             .height(75)
-          Text(__Home__.errorText == '' ? $r('app.string.Tip_GettingBookNow') :
-            XContext.getStringFromResource($r('app.string.Tip_GettingError')) + '\n' + __Home__.errorText)
+          Text(__ZlibHome__.errorText == '' ? $r('app.string.Tip_GettingBookNow') :
+            XContext.getStringFromResource($r('app.string.Tip_GettingError')) + '\n' + __ZlibHome__.errorText)
             .fontSize(22)
             .fontWeight(FontWeight.Medium)
             .textAlign(TextAlign.Center)
@@ -179,10 +168,10 @@ export struct Home {
         .width('100%')
       } else {
         List({ space: 20 }) {
-          if (__Home__.recommendOrSearch == 0) {
-            LazyForEach(__Home__.recommendBookArray, (item: ZlibBookInfoBriefArk) => {
+          if (__ZlibHome__.recommendOrSearch == 0) {
+            LazyForEach(__ZlibHome__.recommendBookArray, (item: ZlibBookInfoBriefArk) => {
               ListItem() {
-                if (__Home__.showType == 0) {
+                if (__ZlibHome__.showType == 0) {
                   HomeBookCover({ data: item })
                 }else {
                   HomeListBookCover({ data: item })
@@ -197,9 +186,9 @@ export struct Home {
                 .animation({ curve: curves.springMotion(0.5, 0.7) }))
             }, (item: ZlibBookInfoBriefArk, index: number) => JSON.stringify(item) + JSON.stringify(index))
           } else {
-            LazyForEach(__Home__.searchBookArray, (item: ZlibBookInfoBriefArk) => {
+            LazyForEach(__ZlibHome__.searchBookArray, (item: ZlibBookInfoBriefArk) => {
               ListItem() {
-                if (__Home__.showType == 0) {
+                if (__ZlibHome__.showType == 0) {
                   HomeBookCover({ data: item })
                 }else {
                   HomeListBookCover({ data: item })
@@ -216,41 +205,40 @@ export struct Home {
           }
         }
         .onAreaChange((_, newValue) => {
-          __Home__.listWidth = newValue.width
+          __ZlibHome__.listWidth = newValue.width
           XAnimation.runWithAnimation(() => {
-            if (__Home__.showType == 0) {
-              __Home__.TileColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
+            if (__ZlibHome__.showType == 0) {
+              __ZlibHome__.TileColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 240), 2)
             }else {
-              __Home__.TileColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 380), 1)
+              __ZlibHome__.TileColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 380), 1)
             }
 
-          }, __Home__.TileColumnNumber > 0)
+          }, __ZlibHome__.TileColumnNumber > 0)
         })
         .onReachEnd(() => {
-          __Home__.req = http.createHttp()
-          if (__Home__.canGetMore) {
-            if (__Home__.recommendOrSearch == 1) {
+          if (__ZlibHome__.canGetMore) {
+            if (__ZlibHome__.recommendOrSearch == 1) {
               XAnimation.runWithAnimation(() => {
-                __Home__.canGetMore = false
+                __ZlibHome__.canGetMore = false
               })
 
-              __ZlibUser__.zlibClient.search((__Home__.searchWord), __Home__.searchBookIndex,(books)=>{
+              __ZlibUser__.zlibClient.search((__ZlibHome__.searchWord), __ZlibHome__.searchBookIndex,(books)=>{
 
                 if (books.length!=0) {
-                  __Home__.searchBookIndex ++
+                  __ZlibHome__.searchBookIndex ++
                   books.forEach((book)=>{
-                    __Home__.searchBookArray.pushData(book)
+                    __ZlibHome__.searchBookArray.pushData(book)
                   })
 
                 }else {
-                  __Home__.errorText = '返回值空'
+                  __ZlibHome__.errorText = '返回值空'
                 }
 
                 XAnimation.runWithAnimation(() => {
-                  __Home__.canGetMore = true
+                  __ZlibHome__.canGetMore = true
                 })
               },(error)=>{
-                __Home__.errorText = error
+                __ZlibHome__.errorText = error
               })
 
             }
@@ -261,17 +249,17 @@ export struct Home {
         .alignSelf(ItemAlign.Center)
         .align(Alignment.Center)
         .edgeEffect(EdgeEffect.Spring)
-        .lanes(__Home__.TileColumnNumber, 20)
+        .lanes(__ZlibHome__.TileColumnNumber, 20)
         .height('100%')
         .width('100%')
         .padding({ left: 16, right: 16 })
       }
 
-      if (__Home__.errorText != '' && __Home__.recommendBookArray.dataArray.length != 0) {
+      if (__ZlibHome__.errorText != '' && __ZlibHome__.recommendBookArray.dataArray.length != 0) {
         Stack() {
           Column({ space: 10 }) {
             LoadingProgress().size({ width: 100, height: 100 })
-            Text(XContext.getStringFromResource($r('app.string.Tip_GettingError')) + '\n' + __Home__.errorText)
+            Text(XContext.getStringFromResource($r('app.string.Tip_GettingError')) + '\n' + __ZlibHome__.errorText)
               .fontSize(20)
               .fontWeight(FontWeight.Medium)
               .textAlign(TextAlign.Center)
@@ -280,7 +268,7 @@ export struct Home {
               .fontColor($r('sys.color.font'))
               .padding({ left: 32, right: 32 })
               .onClick(() => {
-                __Home__.errorText = ''
+                __ZlibHome__.errorText = ''
               })
           }.borderRadius(20).padding(20).backgroundColor($r('app.color.start_window_background_blur')).backdropBlur(100)
         }
@@ -291,26 +279,26 @@ export struct Home {
         .zIndex(114514)
       }
 
-      if (!__Home__.canGetMore) {
+      if (!__ZlibHome__.canGetMore) {
         loadingNewDialog()
       }
 
 
-      if (__Home__.inSearchMode) {
+      if (__ZlibHome__.inSearchMode) {
         Column()
           .size({ width: '100%', height: '100%' })
           .blur(50)
           .onClick(() => {
             XAnimation.runWithAnimation(() => {
-              __Home__.inSearchMode = false
+              __ZlibHome__.inSearchMode = false
             })
           })
       }
 
-      if (__Home__.inSearchMode) {
+      if (__ZlibHome__.inSearchMode) {
         Scroll() {
           Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(10), cross: LengthMetrics.vp(10) } }) {
-            ForEach(__Home__.searchHistory, (item: I_SearchHistory) => {
+            ForEach(__ZlibHome__.searchHistory, (item: I_SearchHistory) => {
               Button() {
                 Row({ space: 10 }) {
                   Text(item.value.slice(0, 8) + (item.value.length > 8 ? '...' : '')).maxLines(1).fontSize(14)
@@ -319,10 +307,10 @@ export struct Home {
                   }.padding(5)
                   .backgroundColor(Color.Transparent)
                   .onClick(() => {
-                    XAnimation.runWithAnimation(() => __Home__.searchHistory =
-                      __Home__.searchHistory.filter((itemA: I_SearchHistory) => itemA.value != item.value))
+                    XAnimation.runWithAnimation(() => __ZlibHome__.searchHistory =
+                      __ZlibHome__.searchHistory.filter((itemA: I_SearchHistory) => itemA.value != item.value))
                     XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
-                      JSON.stringify(__Home__.searchHistory))
+                      JSON.stringify(__ZlibHome__.searchHistory))
                   })
                 }
               }
@@ -334,39 +322,38 @@ export struct Home {
               })
               .backgroundColor($r('app.color.start_window_background_blur'))
               .onClick(() => {
-                __Home__.searchWord = item.value
-                __Home__.req = http.createHttp()
-                __Home__.searchBookArray.clearData()
-                __Home__.searchBookIndex = 1
+                __ZlibHome__.searchWord = item.value
+                __ZlibHome__.searchBookArray.clearData()
+                __ZlibHome__.searchBookIndex = 1
 
-                __ZlibUser__.zlibClient.search((__Home__.searchWord), __Home__.searchBookIndex,(books)=>{
+                __ZlibUser__.zlibClient.search((__ZlibHome__.searchWord), __ZlibHome__.searchBookIndex,(books)=>{
 
                   if (books.length!=0) {
-                    __Home__.searchBookIndex++
+                    __ZlibHome__.searchBookIndex++
                     books.forEach((book)=>{
-                      __Home__.searchBookArray.pushData(book)
+                      __ZlibHome__.searchBookArray.pushData(book)
                     })
 
                   }else {
-                    __Home__.errorText = '返回值空'
+                    __ZlibHome__.errorText = '返回值空'
                   }
 
                   XAnimation.runWithAnimation(() => {
-                    __Home__.canGetMore = true
+                    __ZlibHome__.canGetMore = true
                   })
                 },(error)=>{
-                  __Home__.errorText = error
+                  __ZlibHome__.errorText = error
                 })
 
                 XAnimation.runWithAnimation(() => {
-                  __Home__.recommendOrSearch = 1
-                  __Home__.inSearchMode = false
+                  __ZlibHome__.recommendOrSearch = 1
+                  __ZlibHome__.inSearchMode = false
                 })
-                __Home__.searchHistory =
-                  __Home__.searchHistory.filter((itemA: I_SearchHistory) => itemA.value != item.value)
-                __Home__.searchHistory.unshift({ value: item.value, time: Date.parse(new Date().toString()) })
+                __ZlibHome__.searchHistory =
+                  __ZlibHome__.searchHistory.filter((itemA: I_SearchHistory) => itemA.value != item.value)
+                __ZlibHome__.searchHistory.unshift({ value: item.value, time: Date.parse(new Date().toString()) })
                 XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
-                  JSON.stringify(__Home__.searchHistory))
+                  JSON.stringify(__ZlibHome__.searchHistory))
               })
               .systemMaterial(new uiMaterial.ImmersiveMaterial({
                 style: uiMaterial.ImmersiveStyle.REGULAR,
@@ -376,7 +363,7 @@ export struct Home {
               }))
             })
 
-            if (__Home__.searchHistory.length > 0) {
+            if (__ZlibHome__.searchHistory.length > 0) {
               Button() {
                 SymbolGlyph($r('sys.symbol.trash')).fontColor([$r('sys.color.font')]).fontSize(15)
               }
@@ -389,9 +376,9 @@ export struct Home {
                 applyShadow:false
               }))
               .onClick(() => {
-                XAnimation.runWithAnimation(() => __Home__.searchHistory = [])
+                XAnimation.runWithAnimation(() => __ZlibHome__.searchHistory = [])
                 XPreferencesManager.putPreferencesValue("selineRead", 'zlibSearchHistory',
-                  JSON.stringify(__Home__.searchHistory))
+                  JSON.stringify(__ZlibHome__.searchHistory))
               })
             }
           }.padding({ bottom: 10 })
@@ -413,7 +400,7 @@ export struct Home {
 
 @ComponentV2
 export struct HomeBookCover {
-  @Param @Require data: ZlibBookInfoBriefArk | I_ZlibBookInfoRes_Book
+  @Param @Require data: ZlibBookInfoBriefArk
   @Param defaultImg: ResourceStr = $r('app.media.default_cover')
   @Param haveShadow: boolean = true
   @Param imageFit: ImageFit = ImageFit.Auto
@@ -468,16 +455,12 @@ export struct HomeBookCover {
     } .borderRadius(20)
     .padding(16)
     .backgroundColor($r('sys.color.comp_background_list_card'))
-    .systemMaterial(new uiMaterial.ImmersiveMaterial({
-      style: uiMaterial.ImmersiveStyle.REGULAR,
-      applyShadow:false
-    }))
   }
 }
 
 @ComponentV2
 export struct HomeListBookCover{
-  @Param @Require data: ZlibBookInfoBriefArk | I_ZlibBookInfoRes_Book
+  @Param @Require data: ZlibBookInfoBriefArk
   @Param defaultImg: ResourceStr = $r('app.media.default_cover')
   @Param haveShadow: boolean = true
   @Param imageFit: ImageFit = ImageFit.Auto
@@ -536,9 +519,5 @@ export struct HomeListBookCover{
     .borderRadius(20)
     .padding(16)
     .backgroundColor($r('sys.color.comp_background_list_card'))
-    .systemMaterial(new uiMaterial.ImmersiveMaterial({
-      style: uiMaterial.ImmersiveStyle.REGULAR,
-      applyShadow:false
-    }))
   }
 }

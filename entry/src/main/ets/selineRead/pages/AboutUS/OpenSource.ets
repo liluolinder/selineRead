@@ -36,6 +36,21 @@ export struct OpenSource{
       url:'https://gitcode.com/cinyu/ignite-cangjie',
       license:'Apache-2.0'
     },
+    {
+      projectName:'CJson',
+      url:'https://gitcode.com/Cangjie-TPC/CJson',
+      license:'Apache-2.0'
+    },
+    {
+      projectName:'gjson',
+      url:'https://atomgit.com/ystyle/gjson-cj',
+      license:'MulanPSL2'
+    },
+    {
+      projectName:'html4cj',
+      url:'https://atomgit.com/Cangjie-TPC/html4cj',
+      license:'MIT'
+    },
   ]
 
   build() {

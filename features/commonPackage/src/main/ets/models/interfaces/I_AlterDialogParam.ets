@@ -6,7 +6,7 @@ export interface I_AlterDialogParam{
   alignment?:DialogAlignment
   buttonDirection?:DialogButtonDirection
 
-  cancelCallBack:()=>void
-  confirmCallBack:()=>void
+  cancelCallBack?:()=>void
+  confirmCallBack?:()=>void
 
 }

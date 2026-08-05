@@ -28,7 +28,7 @@
         "icon": "$media:layered_image",
         "orientation": "auto_rotation_restricted",
         "label": "$string:EntryAbility_label",
-        "startWindowIcon": "$media:SRIcon",
+        "startWindowIcon": "$media:zlib",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "backgroundModes": [

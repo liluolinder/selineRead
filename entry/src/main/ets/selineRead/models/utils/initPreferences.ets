@@ -1,6 +1,6 @@
 import { XAnimation, XContext, XPreferencesManager } from "commonpackage";
 import { __Setting__, __ZlibUser__ } from "../../commons/shareDatas";
-import { __Home__ } from "../../pages/zlibrary/Home/Home";
+import { __ZlibHome__ } from "../../pages/zlibrary/Home/Home";
 import { I_SearchHistory } from "../interfaces/I_SearchHistory";
 import { motion } from "@kit.MultimodalAwarenessKit";
 
@@ -10,7 +10,7 @@ export async function initPreferences() {
 
   __ZlibUser__.urlType = XPreferencesManager.getPreferencesValue("selineRead", "urlType", 1) as number
 
-  __Home__.showType = XPreferencesManager.getPreferencesValue('selineRead', "showType", 0) as number
+  __ZlibHome__.showType = XPreferencesManager.getPreferencesValue('selineRead', "showType", 0) as number
 
   __ZlibUser__.zlibClient.setZlibUrl(__ZlibUser__.base_url)
 
@@ -29,6 +29,8 @@ export async function initPreferences() {
 
   __Setting__.autoRefreshUrl = XPreferencesManager.getPreferencesValue("selineRead", "autoRefreshUrl", true) as boolean
 
+  __Setting__.appWorkMode = XPreferencesManager.getPreferencesValue("selineRead", "appWorkMode", 0) as number
+
   if (__Setting__.needPerceptiveGrip) {
     if(canIUse("SystemCapability.MultimodalAwareness.Motion") ){
       try {
@@ -45,7 +47,7 @@ export async function initPreferences() {
   __ZlibUser__.cookie = XPreferencesManager.getPreferencesValue("selineRead", "zlibCookie", '') as string
   const searchHistoryStr = XPreferencesManager.getPreferencesValue("selineRead", 'zlibSearchHistory', '') as string
   if (searchHistoryStr != '') {
-    __Home__.searchHistory = JSON.parse(searchHistoryStr) as I_SearchHistory[]
+    __ZlibHome__.searchHistory = JSON.parse(searchHistoryStr) as I_SearchHistory[]
   }
 
 

@@ -2,11 +2,11 @@ import { relationalStore } from "@kit.ArkData";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { common } from "@kit.AbilityKit";
 import { __Download__, __ZlibUser__ } from "../../commons/shareDatas";
-import { ZlibUserInfo } from "../../../zlibrary/classes/UserInfo";
 import { DownloadInfo, DownloadStatus } from "./DownloadInfo";
 import { ZlibServiceAddress, ZlibServiceStatus } from "./ZlibServiceAddress";
 import { XContext } from "commonpackage";
 import { add } from "color";
+import { ZlibUserInfo } from "./UserInfo";
 
 
 export class RelationStoreManager {

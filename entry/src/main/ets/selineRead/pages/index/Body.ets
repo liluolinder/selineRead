@@ -1,28 +1,28 @@
-import { XAnimation, XContext, XPreferencesManager } from "commonpackage";
-import { zlibClient } from "../../../zlibrary/zlibClient";
+import { LFileKit, XAnimation, XContext, XPreferencesManager } from "commonpackage";
 import { min_width } from "../../commons/commonItem";
 import { __Download__, __HWShare__, __Setting__, __System__, __UI__, __ZlibUser__ } from "../../commons/shareDatas";
-import { Home, __Home__ } from "../zlibrary/Home/Home";
-import { http } from "@kit.NetworkKit";
+import { ZlibHome, __ZlibHome__ } from "../zlibrary/Home/Home";
 import { BookShelf, __BookShelf__ } from "../BookShelf/BookShelf";
 import { fileIo } from "@kit.CoreFileKit";
 import { I_BookShelfBookInfo } from "../../models/interfaces/I_BookShelfBookInfo";
 import { hdsMaterial, HdsTabs, HdsTabsController } from "@kit.UIDesignKit";
 import { SymbolGlyphModifier } from "@kit.ArkUI";
-import { SettingBuilder } from "../Setting/Setting";
+import { SettingBuilder } from "../setting/Setting";
 import { AboutUsBuilder } from "../AboutUS/AboutUS";
-import { AccountManagerBuilder } from "../zlibrary/AccountManager/AccountManager";
 import { ZlibBookInfoBriefArk } from "libohos_app_cangjie_entry.zlib4cj.so";
 import { relationalStore } from "@kit.ArkData";
 import { RelationStoreManager } from "../../models/classes/DataBase";
 import { EventHelper } from "../../models/classes/BaseEvent";
 import { I_BookInfoParam } from "../../models/interfaces/I_BookInfoParam";
+import { BookSourceHome } from "../booksource/Home";
+import { SourceManagerSheetBuilder } from "../booksource/SourceManagerSheet";
+import { ZlibraryAccount, ZlibraryAccountBuilder } from "../zlibrary/AccountManager/ZlibraryAccount";
 
 @ComponentV2
 export struct Body {
   @Provider("showSetting") showSetting:boolean = false
   @Provider("showAboutUs") showAboutUs:boolean = false
-
+  @Provider('showAccountSourceSheet') showAccountSourceSheet:boolean = false
   @Consumer('tabController') tabController: HdsTabsController = new HdsTabsController();
   @Consumer('mainPageStack') pageStack: NavPathStack = new NavPathStack()
   @Consumer('currentTabIndex') currentTabIndex: number = 0
@@ -34,59 +34,58 @@ export struct Body {
         __BookShelf__.gettingBookNow = true
         __BookShelf__.bookList.clearData()
         let downloadPath = await XContext.getDownloadFolderPath()
-        fileIo.listFileSync(downloadPath).forEach((item) => {
-          let textFragment: string[] = item.split('.')
-          if (textFragment[textFragment.length - 1] != 'sfftdownload') {
-            let bookInfo: I_BookShelfBookInfo = {
-              bookName: item,
-              bookPath: downloadPath + item,
-              bookImage: $r('app.media.default_cover'),
-              bookAuthor: "",
-              bookHref: "",
-              bookId: 0
-            }
-
-            __Download__.downloadArray.dataArray.forEach((itemA) => {
-
-              if (itemA.fileName.includes(item) || itemA.fileName.split('.')[0].includes(item) ||
-                itemA.fileName.includes(item.split('.')[0]) || item.includes(itemA.fileName) ||
-                item.includes(itemA.fileName.split('.')[0])) {
-                bookInfo.bookImage = itemA.fileImage
-                bookInfo.bookAuthor = itemA.bookAuthor
-                bookInfo.bookHref = itemA.bookHref
-                bookInfo.bookId = itemA.bookId
-                console.log(bookInfo.bookHref)
-                return
+        LFileKit.listDir(downloadPath).then((meow)=>{
+          meow.forEach((item) => {
+            let textFragment: string[] = item.split('.')
+            if (textFragment[textFragment.length - 1] != 'sfftdownload') {
+              let bookInfo: I_BookShelfBookInfo = {
+                bookName: item,
+                bookPath: downloadPath + item,
+                bookImage: $r('app.media.default_cover'),
+                bookAuthor: "",
+                bookHref: "",
+                bookId: 0
               }
-            })
-            __BookShelf__.bookList.pushData(bookInfo)
-          } else {
-            try {
-              fileIo.unlinkSync(downloadPath + item)
-              console.log('删除废物文件失成功')
-            } catch (e) {
-              console.log('删除废物文件失败' + JSON.stringify(e))
+              __Download__.downloadArray.dataArray.forEach((itemA) => {
+                if (itemA.fileName.includes(item) || itemA.fileName.split('.')[0].includes(item) ||
+                  itemA.fileName.includes(item.split('.')[0]) || item.includes(itemA.fileName) ||
+                  item.includes(itemA.fileName.split('.')[0])) {
+                  bookInfo.bookImage = itemA.fileImage
+                  bookInfo.bookAuthor = itemA.bookAuthor
+                  bookInfo.bookHref = itemA.bookHref
+                  bookInfo.bookId = itemA.bookId
+                  console.log(bookInfo.bookHref)
+                  return
+                }
+              })
+              __BookShelf__.bookList.pushData(bookInfo)
+            } else {
+              try {
+                fileIo.unlinkSync(downloadPath + item)
+                console.log('删除废物文件失成功')
+              } catch (e) {
+                console.log('删除废物文件失败' + JSON.stringify(e))
+              }
             }
-          }
+          })
         })
         __BookShelf__.gettingBookNow = false
         break;
-
     }
   }
 
-  @Local showAccountManager:boolean = false
+
 
   private putBooks(books:ZlibBookInfoBriefArk[]){
     if (books.length == 0) {
-      __Home__.errorText = '返回值为空'
+      __ZlibHome__.errorText = '返回值为空'
     } else {
       books.forEach((item) => {
-        __Home__.recommendBookArray.pushData(item)
+        __ZlibHome__.recommendBookArray.pushData(item)
       })
-      __Home__.errorText = ''
+      __ZlibHome__.errorText = ''
     }
-    __Home__.canGetMore = true
+    __ZlibHome__.canGetMore = true
   }
 
   private getCommonRecommend(){
@@ -95,8 +94,8 @@ export struct Body {
         this.putBooks(books)
       },
       (error) => {
-        __Home__.errorText = error
-        __Home__.canGetMore = true
+        __ZlibHome__.errorText = error
+        __ZlibHome__.canGetMore = true
       })
   }
 
@@ -112,12 +111,12 @@ export struct Body {
             this.getCommonRecommend()
           }
         },(error)=>{
-          __Home__.errorText = error
-          __Home__.canGetMore = true
+          __ZlibHome__.errorText = error
+          __ZlibHome__.canGetMore = true
         })
       }, (error) => {
         __ZlibUser__.userName = "登录失败"
-        __Home__.errorText = error
+        __ZlibHome__.errorText = error
         this.getCommonRecommend()
       })
     }else {
@@ -135,7 +134,6 @@ export struct Body {
         __HWShare__.bookFromShare = undefined
       }
     }
-
     EventHelper.emitterListener('getNewBook', () => {
       console.log(`meow:收到通知:${JSON.stringify(__HWShare__.bookFromShare)}`)
       if (__HWShare__.bookFromShare) {
@@ -147,46 +145,103 @@ export struct Body {
         __HWShare__.bookFromShare = undefined
       }
     })
-
-
   }
 
   aboutToAppear(): void {
-    //如果为自定义地址并且设置了自动更新地址则进行地址刷新
-    if (__ZlibUser__.urlType == 1 && __Setting__.autoRefreshUrl) {
-      __ZlibUser__.zlibClient.checkAccess(true, (res) => {
-        console.log(`meow:${res}`)
-        if (res) {
-          __ZlibUser__.zlibClient.getZlibUrl((res) => {
-            if (!(__ZlibUser__.base_url != '' && (res.includes(__ZlibUser__.base_url) || __ZlibUser__.base_url.includes(res)))) {
-              //如果发生Url切换了则更新数据库和暂存数据及首选项
-              let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl').equalTo('Url', __ZlibUser__.base_url)
-              let predicatesNewUrl = new relationalStore.RdbPredicates('ZlibServiceUrl').equalTo('Url', res)
-              let flag = RelationStoreManager.checkIsAlive(__ZlibUser__.dataBase,predicatesNewUrl)
-              console.log(`存在新地址${flag}`)
-              //表示更新后的地址已经存在则删除原有地址，不增加新地址
-              if (flag) {
-                console.log(`更新后的地址已存在，不更新，删除更新前地址`)
-                RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
+    if (__Setting__.appWorkMode == 0) {
+      //如果为自定义地址并且设置了自动更新地址则进行地址刷新
+      if (__ZlibUser__.urlType == 1 && __Setting__.autoRefreshUrl) {
+        __ZlibUser__.zlibClient.checkAccess(true, (res) => {
+          if (res) {
+            __ZlibUser__.zlibClient.getZlibUrl((res) => {
+              if (!(__ZlibUser__.base_url != '' && (res.includes(__ZlibUser__.base_url) || __ZlibUser__.base_url.includes(res)))) {
+                //如果发生Url切换了则更新数据库和暂存数据及首选项
+                let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl').equalTo('Url', __ZlibUser__.base_url)
+                let predicatesNewUrl = new relationalStore.RdbPredicates('ZlibServiceUrl').equalTo('Url', res)
+                let flag = RelationStoreManager.checkIsAlive(__ZlibUser__.dataBase,predicatesNewUrl)
+                console.log(`存在新地址${flag}`)
+                //表示更新后的地址已经存在则删除原有地址，不增加新地址
+                if (flag) {
+                  console.log(`更新后的地址已存在，不更新，删除更新前地址`)
+                  RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
+                }else {
+                  console.log(`更新后的地址不存在，更新地址`)
+                  RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                    Url: res,
+                  })
+                }
+                __ZlibUser__.base_url = res
+                XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
               }else {
-                console.log(`更新后的地址不存在，更新地址`)
-                RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                  Url: res,
-                })
+                console.log(`无需更新地址`)
               }
-              __ZlibUser__.base_url = res
-              XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
+            })
+            this.loginAndGetRecommend()
+          }
+        }, (err) => {
+          __ZlibHome__.errorText = err
+        })
+      }else {
+        this.loginAndGetRecommend()
+      }
+    }
+  }
+
+  @Builder
+  changeModeMenu() {
+    Menu() {
+      MenuItem({  content: "ZLibrary" })
+        .onClick(()=>{
+          if (__Setting__.appWorkMode!=0) {
+            __Setting__.appWorkMode = 0
+            XPreferencesManager.putPreferencesValue('selineRead', "appWorkMode", 0)
+            if (__ZlibUser__.urlType == 1 && __Setting__.autoRefreshUrl) {
+              __ZlibUser__.zlibClient.checkAccess(true, (res) => {
+                console.log(`meow:${res}`)
+                if (res) {
+                  __ZlibUser__.zlibClient.getZlibUrl((res) => {
+                    if (!(__ZlibUser__.base_url != '' && (res.includes(__ZlibUser__.base_url) || __ZlibUser__.base_url.includes(res)))) {
+                      //如果发生Url切换了则更新数据库和暂存数据及首选项
+                      let predicates = new relationalStore.RdbPredicates('ZlibServiceUrl').equalTo('Url', __ZlibUser__.base_url)
+                      let predicatesNewUrl = new relationalStore.RdbPredicates('ZlibServiceUrl').equalTo('Url', res)
+                      let flag = RelationStoreManager.checkIsAlive(__ZlibUser__.dataBase,predicatesNewUrl)
+                      console.log(`存在新地址${flag}`)
+                      //表示更新后的地址已经存在则删除原有地址，不增加新地址
+                      if (flag) {
+                        console.log(`更新后的地址已存在，不更新，删除更新前地址`)
+                        RelationStoreManager.deleteValue(__ZlibUser__.dataBase, predicates)
+                      }else {
+                        console.log(`更新后的地址不存在，更新地址`)
+                        RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                          Url: res,
+                        })
+                      }
+                      __ZlibUser__.base_url = res
+                      XPreferencesManager.putPreferencesValue('selineRead', "zlibBaseUrl", res)
+                    }else {
+                      console.log(`无需更新地址`)
+                    }
+                  })
+                  this.loginAndGetRecommend()
+                }
+              }, (err) => {
+                __ZlibHome__.errorText = err
+              })
             }else {
-              console.log(`无需更新地址`)
+              this.loginAndGetRecommend()
             }
-          })
-          this.loginAndGetRecommend()
-        }
-      }, (err) => {
-        __Home__.errorText = err
-      })
-    }else {
-      this.loginAndGetRecommend()
+
+          }
+        })
+      MenuItem({  content: "书源" })
+        .onClick(()=>{
+          if (__Setting__.appWorkMode!=1) {
+            __Setting__.appWorkMode = 1
+            XPreferencesManager.putPreferencesValue('selineRead', "appWorkMode", 1)
+
+          }
+        })
+
     }
   }
 
@@ -195,10 +250,14 @@ export struct Body {
     Row() {
 
       Column(){
-        Image($r('app.media.SRIcon'))
+        Image($r('app.media.zlib'))
+          .draggable(false)
       }.width(48)
       .height(48)
       .margin({ left: 4, right: 4 })
+      .bindContextMenu(this.changeModeMenu,ResponseType.RightClick | ResponseType.LongPress,{
+        enableArrow:true
+      })
 
       Button({ type: ButtonType.Circle }) {
         SymbolGlyph($r('sys.symbol.download'))
@@ -255,7 +314,11 @@ export struct Body {
     Stack() {
       HdsTabs({ controller: this.tabController }) {
         TabContent() {
-          Home()
+          if (__Setting__.appWorkMode == 0){
+            ZlibHome()
+          }else {
+            BookSourceHome()
+          }
         }.tabBar(new BottomTabBarStyle({
           normal: new SymbolGlyphModifier($r('sys.symbol.house')),
         }, $r('app.string.Title_Home')))
@@ -270,7 +333,7 @@ export struct Body {
 
         }.tabBar(new BottomTabBarStyle({
           normal: new SymbolGlyphModifier($r('sys.symbol.person')),
-        },__ZlibUser__.account != ''?__ZlibUser__.userName:'请先登录' ))
+        },__Setting__.appWorkMode == 0 ? __ZlibUser__.account != '' ?__ZlibUser__.userName:'请先登录' :"书源模式"))
 
       }
       .barOverlap(true)
@@ -293,7 +356,7 @@ export struct Body {
       })
       .onContentWillChange((currentIndex: number, comingIndex: number)=>{
         if (comingIndex == 2) {
-          this.showAccountManager = true
+          this.showAccountSourceSheet = true
         }
         return !(comingIndex == 2)
       })
@@ -303,8 +366,8 @@ export struct Body {
         }
         this.currentTabIndex = index
       })
-      .bindSheet($$this.showAccountManager, AccountManagerBuilder() , {
-        title:{title:$r('app.string.Title_AccountManager')},
+      .bindSheet($$this.showAccountSourceSheet, __Setting__.appWorkMode==0?ZlibraryAccountBuilder(): SourceManagerSheetBuilder(), {
+        showClose:false,
         preferType:SheetType.CENTER,
         height:SheetSize.LARGE,
         backgroundColor:$r('sys.color.background_tertiary')

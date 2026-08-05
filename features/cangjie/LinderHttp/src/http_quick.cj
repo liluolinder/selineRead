@@ -37,6 +37,14 @@ public class HttpQuick {
         client.send()
     }
 
+     public static func get(url: String, header!:Option< HashMap<String, String>>): LinderHttpResponse {
+        let client = LinderHttpClient(url: RequestUrl.from(url), method: RequestMethod.GET)
+        if (let Some(h) <- header) {
+            client.setHeader(h)
+        }
+        client.send()
+    }
+
     /**
      * 发送POST请求
      * @param url 请求URL

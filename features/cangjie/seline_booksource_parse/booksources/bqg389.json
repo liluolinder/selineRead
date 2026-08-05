@@ -1,0 +1,47 @@
+{
+    "bookSourceUrl": "https://www.bqg389.cc",
+    "bookSourceName": "bqg389-在线书源",
+    "bookSourceGroup": "测试",
+    "bookSourceType": 0,
+    "enabled": true,
+    "header": "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "ruleSearch": {
+        "searchUrl": "https://apibi.cc/api/search?q={{key}}",
+        "name": "data.#.title",
+        "author": "data.#.author",
+        "bookUrl": "data.#.id",
+        "coverUrl": "",
+        "intro": "data.#.intro"
+    },
+    "ruleBookInfo": {
+        "url": "https://apibi.cc/api/book?id={{bookId}}",
+        "name": "title",
+        "author": "author",
+        "coverUrl": "",
+        "intro": "intro",
+        "kind": "sortname",
+        "wordCount": "",
+        "latestChapter": "lastchapter",
+        "status": "full"
+    },
+    "ruleToc": {
+        "url": "https://apibi.cc/api/booklist?id={{bookId}}",
+        "chapterList": "list",
+        "chapterName": "",
+        "chapterUrl": ""
+    },
+    "ruleContent": {
+        "url": "https://apibi.cc/api/chapter?token={{chapterToken}}",
+        "content": "txt",
+        "token": {
+            "algo": "aes-128-cbc",
+            "key": "a3dc22cf70418a51",
+            "iv": "394c2c3202da6270",
+            "input": "{'id':{{bookId}},'chapterid':{{chapterId}}}"
+        },
+        "filters": [
+            "支持（）把本站分享那些需要的小伙伴！找不到书请留言！",
+            "欢迎来到网，如果觉得本站内容丰富，请帮忙宣传"
+        ]
+    }
+}

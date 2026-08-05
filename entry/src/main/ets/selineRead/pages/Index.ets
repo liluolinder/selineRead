@@ -6,12 +6,8 @@ import { __Setting__, __System__, __UI__, __ZlibUser__ } from '../commons/shareD
 import { DecorBar } from '../components/DecorBar';
 import { deleteDownloadCache } from '../models/utils/ClearDownloadCache';
 import { Body } from './index/Body';
-import { SideBar } from './index/SideBar';
-import { __Home__ } from './zlibrary/Home/Home';
+import { __ZlibHome__ } from './zlibrary/Home/Home';
 import { dlpAntiPeep } from '@kit.DeviceSecurityKit';
-import { window } from '@kit.ArkUI';
-import { common } from '@kit.AbilityKit';
-import WindowsUtil from '../models/classes/WindowsUtil';
 import { BackgroundUtil } from '../models/classes/BackgroundRunningManager';
 
 
@@ -66,11 +62,11 @@ struct Index {
   }
 
   onBackPress(): boolean | void {
-    if (__Home__.inSearchMode || __Home__.recommendOrSearch == 1) {
+    if (__ZlibHome__.inSearchMode || __ZlibHome__.recommendOrSearch == 1) {
       XAnimation.runWithAnimation(() => {
-        __Home__.inSearchMode = false
-        __Home__.recommendOrSearch = 0
-        __Home__.searchWord = ''
+        __ZlibHome__.inSearchMode = false
+        __ZlibHome__.recommendOrSearch = 0
+        __ZlibHome__.searchWord = ''
       })
       return true
     }

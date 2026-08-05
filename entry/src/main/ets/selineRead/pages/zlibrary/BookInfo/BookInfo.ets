@@ -1,11 +1,9 @@
 import { linderPixelMap, LNotificationManager, XAnimation, XContext } from 'commonpackage'
 import { __Download__, __Setting__, __System__, __UI__, __ZlibUser__ } from '../../../commons/shareDatas'
 import { __CustomBackgroundData__ } from '../../../components/CustomBackground'
-import { DividerTmp } from '../../../models/classes/DividerTmp'
 import { curves, CustomContentDialog, SelectOptions, SymbolGlyphModifier, uiMaterial } from '@kit.ArkUI'
 import { min_width } from '../../../commons/commonItem'
 import { BigImage } from '../../../components/BigImage'
-import { ListItemWithText } from 'templatecomponent'
 import url from '@ohos.url'
 import { BackgroundUtil } from '../../../models/classes/BackgroundRunningManager'
 import { DownloadInfo, DownloadStatus } from '../../../models/classes/DownloadInfo'
@@ -36,7 +34,6 @@ export struct BookInfo {
   @Local errorText: string = ''
   @Local bookInfo: ZlibBookInfoArk | undefined = undefined
   @Local isShowDownloadMenu: boolean = false
-  @Local egDivider: DividerTmp = new DividerTmp(0.5, 10, 10, '#ffd6d4d4')
   @Local pageWidth: number = -1
   @Local isViewingBigImage: boolean = false
   @Local pageOpacity: number = 0
@@ -125,13 +122,13 @@ export struct BookInfo {
           .padding({ left: 12, right: 12 })
           .backgroundColor($r('sys.color.comp_background_tertiary'))
           .onSubmit((_, event) => {
+            this.qqGroup = []
             if (event.text.trim() == '') {
               XContext.toast('请输入QQ号')
               return
             }
             this.qqNumber = event.text
             this.selectedGroupIndex = 0
-            let qqBot: QQbot = new QQbot()
             __ZlibUser__.qqbot.getCommonGroup(event.text, (items) => {
               this.qqGroup = items
               if (items.length == 0) {
@@ -240,7 +237,10 @@ export struct BookInfo {
         .javaScriptAccess(true)
         .allowWindowOpenMethod(true)
         .onAppear(()=>{
-          webview.WebCookieManager.configCookieSync(this.bookInfo?.readOnlineUrl, __ZlibUser__.cookie,false, false)
+         try {
+           webview.WebCookieManager.configCookieSync(this.bookInfo?.readOnlineUrl, __ZlibUser__.cookie,false, false)
+         }catch (e) {
+         }
         })
 
 
@@ -253,7 +253,8 @@ export struct BookInfo {
   aboutToAppear(): void {
     harmonyShare.on('gesturesShare', this.immersiveCallback);
     harmonyShare.on('knockShare', this.immersiveCallback);
-    if (__ZlibUser__.canSend2QQ) {
+    __ZlibUser__.canSend2QQ = false
+/*    if (__ZlibUser__.canSend2QQ) {
       __ZlibUser__.qqbot.getConfig((config)=>{
         console.log(`meow:${config.canPush2QQ}`)
         __ZlibUser__.canSend2QQ = config.canPush2QQ
@@ -261,7 +262,7 @@ export struct BookInfo {
         console.log(`meow:${error}`)
         XContext.toast(error)
       })
-    }
+    }*/
   }
 
   aboutToDisappear(): void {
@@ -361,38 +362,81 @@ export struct BookInfo {
                   .width('100%')
                   .transition(XAnimation.getAnimation('bottom', 100))
 
-                  ListItemGroup() {
-                    ListItemWithText({
-                      leftMessage: $r('app.string.Text_Rate'),
-                      rightMessage: this.bookInfo?.interestScore
-                    })
+                  ListItem() {
+                    Column({ space: 12 }) {
+                      Row({ space: 12 }) {
+                        Text($r('app.string.Text_Rate'))
+                          .fontSize(14)
+                          .opacity(0.6)
+                        Text(this.bookInfo?.interestScore ?? '???')
+                          .fontSize(14)
+                          .layoutWeight(1)
+                          .textAlign(TextAlign.End)
+                      }
+                      .width('100%')
 
-                    ListItemWithText({
-                      leftMessage: $r('app.string.Text_Language'),
-                      rightMessage: this.bookInfo?.language
-                    })
+                      Row({ space: 12 }) {
+                        Text($r('app.string.Text_Language'))
+                          .fontSize(14)
+                          .opacity(0.6)
+                        Text(this.bookInfo?.language ?? '???')
+                          .fontSize(14)
+                          .layoutWeight(1)
+                          .textAlign(TextAlign.End)
+                      }
+                      .width('100%')
 
-                    ListItemWithText({
-                      leftMessage: 'ISBN',
-                      rightMessage: this.bookInfo?.identifier == '' ? '???' : this.bookInfo?.identifier
-                    })
+                      Row({ space: 12 }) {
+                        Text('ISBN')
+                          .fontSize(14)
+                          .opacity(0.6)
+                        Text(this.bookInfo?.identifier == '' || this.bookInfo?.identifier == undefined ? '???' : this.bookInfo?.identifier)
+                          .fontSize(14)
+                          .layoutWeight(1)
+                          .textAlign(TextAlign.End)
+                          .maxLines(2)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      }
+                      .width('100%')
 
-                    ListItemWithText({
-                      leftMessage: $r('app.string.Text_Publisher'),
-                      rightMessage: this.bookInfo?.publisher == '' ? '???' : this.bookInfo?.publisher
-                    })
+                      Row({ space: 12 }) {
+                        Text($r('app.string.Text_Publisher'))
+                          .fontSize(14)
+                          .opacity(0.6)
+                        Text(this.bookInfo?.publisher == '' || this.bookInfo?.publisher == undefined ? '???' : this.bookInfo?.publisher)
+                          .fontSize(14)
+                          .layoutWeight(1)
+                          .textAlign(TextAlign.End)
+                          .maxLines(2)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      }
+                      .width('100%')
 
-                    ListItemWithText({
-                      leftMessage: $r('app.string.Text_PublishYear'),
-                      rightMessage: this.bookInfo?.year?.toString() ?? '???'
-                    })
+                      Row({ space: 12 }) {
+                        Text($r('app.string.Text_PublishYear'))
+                          .fontSize(14)
+                          .opacity(0.6)
+                        Text(this.bookInfo?.year?.toString() ?? '???')
+                          .fontSize(14)
+                          .layoutWeight(1)
+                          .textAlign(TextAlign.End)
+                      }
+                      .width('100%')
 
-                    ListItemWithText({
-                      leftMessage: $r('app.string.Text_TotalPage'),
-                      rightMessage: this.bookInfo?.pages! <= 0 ? '???' : this.bookInfo?.pages.toString()
-                    })
-
-
+                      Row({ space: 12 }) {
+                        Text($r('app.string.Text_TotalPage'))
+                          .fontSize(14)
+                          .opacity(0.6)
+                        Text(this.bookInfo?.pages! <= 0 ? '???' : this.bookInfo?.pages.toString())
+                          .fontSize(14)
+                          .layoutWeight(1)
+                          .textAlign(TextAlign.End)
+                      }
+                      .width('100%')
+                    }
+                    .alignItems(HorizontalAlign.Start)
+                    .width('100%')
+                    .padding(16)
                   }
                   .transition(XAnimation.getAnimation('bottom', 150))
                   .borderRadius(20)
@@ -401,8 +445,7 @@ export struct BookInfo {
                   .backdropBlur(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ? 100 :
                     undefined)
                   .useEffect(true)
-                  .size({ height: '48', width: '100%' })
-                  .divider(this.egDivider)
+                  .width('100%')
 
 
                   if (__ZlibUser__.canSend2QQ){
@@ -444,9 +487,18 @@ export struct BookInfo {
                       .useEffect(true)
                       .width('100%')
                       .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-                      .onClick(() => {
-                        this.showOnlineRead = true
-                        console.log(this.bookInfo?.readOnlineUrl)
+                      .onClick(() =>
+                      {
+                        if (__ZlibUser__.cookie != '' &&  __ZlibUser__.cookie) {
+                          this.showOnlineRead = true
+                          console.log(this.bookInfo?.readOnlineUrl)
+                        }else{
+                          XContext.alterDialogWithTwoButton({
+                            title: 'Tips',
+                            message:"请先登录"
+                          })
+                        }
+
                       })
                       .bindContentCover($$this.showOnlineRead, this.readOnline())
                     }
@@ -468,104 +520,111 @@ export struct BookInfo {
                     .width('100%')
                     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
                     .onClick(() => {
-                      BackgroundUtil.startContinuousTask()
-                      this.bookInfo?.getDownloadInfo(__ZlibUser__.cookie,
-                        async (res) => {
-                          let bookName = url.URL.parseURL(res).params.get('filename')
-                          let id = __ZlibUser__.notificationID++
-                          let time = new Date()
-                          let downloadItem: DownloadInfo = new DownloadInfo()
-                          downloadItem.fileName = bookName!
-                          downloadItem.fileImage = this.bookInfo?.cover!
-                          downloadItem.status = DownloadStatus.Idle
-                          downloadItem.bookAuthor = this.bookInfo?.author!
-                          downloadItem.bookHref = this.bookInfo?.href ?? ''
-                          downloadItem.bookId = this.bookInfo?.id!
-                          downloadItem.downloadTime = time.toISOString()
-                          downloadItem.downLoadTask = undefined
-                          //写入下载管理器
-                          __Download__.downloadArray.pushUnshiftData(downloadItem)
-                          //插入数据库
-                          await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
-                            BookID: this.bookInfo?.id!,
-                            BookHref: this.bookInfo?.href ?? '',
-                            BookName: bookName!,
-                            BookAuthor: this.bookInfo?.author!,
-                            BookPublisher: this.bookInfo?.publisher!,
-                            BookImage: this.bookInfo?.cover!,
-                            BookDownLoadTime: time.toISOString(),
-                            HaveDownload: 0
-                          })
-                          __ZlibUser__.downloadManageCJ?.createTask(bookName, encodeURI(res), bookName,
-                            (task) => {
-                              downloadItem.downLoadTask = task
-                              task.setStartCallback(() => {
-                                XContext.toast(`开始下载喵(^~^)`)
-                                downloadItem.status = DownloadStatus.Starting
-                              })
-                                .setErrorCallback((error) => {
-                                  let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
-                                  predicates.equalTo('BookName', bookName)
-                                    .equalTo("BookID", this.bookInfo?.id ?? 0)
-                                    .equalTo("BookDownLoadTime", time.toISOString())
-                                  RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                                    BookID: this.bookInfo?.id!,
-                                    BookHref: this.bookInfo?.href ?? '',
-                                    BookName: bookName!,
-                                    BookAuthor: this.bookInfo?.author!,
-                                    BookPublisher: this.bookInfo?.publisher!,
-                                    BookImage: this.bookInfo?.cover!,
-                                    BookDownLoadTime: time.toISOString(),
-                                    HaveDownload: 2
-                                  })
-                                  console.log(`下载失败${error}`, 2000)
-                                  downloadItem.status = DownloadStatus.Failed
-                                  this.errorText = error
-                                  LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', bookName!)
-                                })
-                                .setCompleteCallback(async () => {
-                                  downloadItem.progress = 100
-                                  let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
-                                  predicates.equalTo('BookName', bookName)
-                                    .equalTo("BookID", this.bookInfo?.id ?? 0)
-                                    .equalTo("BookDownLoadTime", time.toISOString())
-                                  RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
-                                    BookID: this.bookInfo?.id!,
-                                    BookHref: this.bookInfo?.href ?? '',
-                                    BookName: bookName!,
-                                    BookAuthor: this.bookInfo?.author!,
-                                    BookPublisher: this.bookInfo?.publisher!,
-                                    BookImage: this.bookInfo?.cover!,
-                                    BookDownLoadTime: time.toISOString(),
-                                    HaveDownload: 1
-                                  })
-                                  downloadItem.status = DownloadStatus.Complete
-                                  LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', bookName!)
-                                  console.log(`下载完成`)
-                                  if (__Setting__.shareAfterDownload) {
-                                    shareBook(`${await XContext.getDownloadFolderPath()}/${bookName}`)
-                                  }
-                                })
-                                .setProgressCallback((hasDownload, total, speed) => {
-                                  if (downloadItem.status != DownloadStatus.Downloading) {
-                                    downloadItem.status = DownloadStatus.Downloading
-                                  }
-                                  console.log(`已下载${hasDownload},共${total},当前速度${speed}`)
-                                  let progress = Math.trunc(hasDownload / total * 10000) / 100
-                                  downloadItem.progress = progress
-                                  LNotificationManager.pushNotificationWithProgress(id, progress,
-                                    `正在下载${progress}%`,
-                                    bookName!)
-                                })
-                              task.start()
-                            }, (error) => {
-                              this.errorText = error
-                              console.log(error)
+                      if (__ZlibUser__.cookie != '' &&  __ZlibUser__.cookie) {
+                        BackgroundUtil.startContinuousTask()
+                        this.bookInfo?.getDownloadInfo(__ZlibUser__.cookie,
+                          async (res) => {
+                            let bookName = url.URL.parseURL(res).params.get('filename')
+                            let id = __ZlibUser__.notificationID++
+                            let time = new Date()
+                            let downloadItem: DownloadInfo = new DownloadInfo()
+                            downloadItem.fileName = bookName!
+                            downloadItem.fileImage = this.bookInfo?.cover!
+                            downloadItem.status = DownloadStatus.Idle
+                            downloadItem.bookAuthor = this.bookInfo?.author!
+                            downloadItem.bookHref = this.bookInfo?.href ?? ''
+                            downloadItem.bookId = this.bookInfo?.id!
+                            downloadItem.downloadTime = time.toISOString()
+                            downloadItem.downLoadTask = undefined
+                            //写入下载管理器
+                            __Download__.downloadArray.pushUnshiftData(downloadItem)
+                            //插入数据库
+                            await RelationStoreManager.addValue(__ZlibUser__.dataBase, 'ZlibDownloadTable', {
+                              BookID: this.bookInfo?.id!,
+                              BookHref: this.bookInfo?.href ?? '',
+                              BookName: bookName!,
+                              BookAuthor: this.bookInfo?.author!,
+                              BookPublisher: this.bookInfo?.publisher!,
+                              BookImage: this.bookInfo?.cover!,
+                              BookDownLoadTime: time.toISOString(),
+                              HaveDownload: 0
                             })
-                        }, (error) => {
-                          this.errorText = error
-                          XContext.toast(error)
+                            __ZlibUser__.downloadManageCJ?.createTask(bookName, encodeURI(res), bookName,
+                              (task) => {
+                                downloadItem.downLoadTask = task
+                                task.setStartCallback(() => {
+                                  XContext.toast(`开始下载喵(^~^)`)
+                                  downloadItem.status = DownloadStatus.Starting
+                                })
+                                  .setErrorCallback((error) => {
+                                    let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+                                    predicates.equalTo('BookName', bookName)
+                                      .equalTo("BookID", this.bookInfo?.id ?? 0)
+                                      .equalTo("BookDownLoadTime", time.toISOString())
+                                    RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                                      BookID: this.bookInfo?.id!,
+                                      BookHref: this.bookInfo?.href ?? '',
+                                      BookName: bookName!,
+                                      BookAuthor: this.bookInfo?.author!,
+                                      BookPublisher: this.bookInfo?.publisher!,
+                                      BookImage: this.bookInfo?.cover!,
+                                      BookDownLoadTime: time.toISOString(),
+                                      HaveDownload: 2
+                                    })
+                                    console.log(`下载失败${error}`, 2000)
+                                    downloadItem.status = DownloadStatus.Failed
+                                    this.errorText = error
+                                    LNotificationManager.pushNotificationWithProgress(id, 100, '下载失败', bookName!)
+                                  })
+                                  .setCompleteCallback(async () => {
+                                    downloadItem.progress = 100
+                                    let predicates = new relationalStore.RdbPredicates('ZlibDownloadTable');
+                                    predicates.equalTo('BookName', bookName)
+                                      .equalTo("BookID", this.bookInfo?.id ?? 0)
+                                      .equalTo("BookDownLoadTime", time.toISOString())
+                                    RelationStoreManager.updateValue(__ZlibUser__.dataBase, predicates, {
+                                      BookID: this.bookInfo?.id!,
+                                      BookHref: this.bookInfo?.href ?? '',
+                                      BookName: bookName!,
+                                      BookAuthor: this.bookInfo?.author!,
+                                      BookPublisher: this.bookInfo?.publisher!,
+                                      BookImage: this.bookInfo?.cover!,
+                                      BookDownLoadTime: time.toISOString(),
+                                      HaveDownload: 1
+                                    })
+                                    downloadItem.status = DownloadStatus.Complete
+                                    LNotificationManager.pushNotificationWithProgress(id, 100, '下载完成', bookName!)
+                                    console.log(`下载完成`)
+                                    if (__Setting__.shareAfterDownload) {
+                                      shareBook(`${await XContext.getDownloadFolderPath()}/${bookName}`)
+                                    }
+                                  })
+                                  .setProgressCallback((hasDownload, total, speed) => {
+                                    if (downloadItem.status != DownloadStatus.Downloading) {
+                                      downloadItem.status = DownloadStatus.Downloading
+                                    }
+                                    console.log(`已下载${hasDownload},共${total},当前速度${speed}`)
+                                    let progress = Math.trunc(hasDownload / total * 10000) / 100
+                                    downloadItem.progress = progress
+                                    LNotificationManager.pushNotificationWithProgress(id, progress,
+                                      `正在下载${progress}%`,
+                                      bookName!)
+                                  })
+                                task.start()
+                              }, (error) => {
+                                this.errorText = error
+                                console.log(error)
+                              })
+                          }, (error) => {
+                            this.errorText = error
+                            XContext.toast(error)
+                          })
+                      }else{
+                        XContext.alterDialogWithTwoButton({
+                          title: 'Tips',
+                          message:"请先登录"
                         })
+                      }
 
                     })
                   }

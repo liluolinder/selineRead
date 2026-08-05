@@ -1,4 +1,5 @@
 import { dlpAntiPeep } from "@kit.DeviceSecurityKit"
+import { XContext } from "commonpackage"
 import WindowsUtil from "../models/classes/WindowsUtil"
 
 export const min_width: number = 700
@@ -17,3 +18,5 @@ export const user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
     }
   }
 }
+
+

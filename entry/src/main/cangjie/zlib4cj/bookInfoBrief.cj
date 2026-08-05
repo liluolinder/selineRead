@@ -3,7 +3,7 @@
  */
 package ohos_app_cangjie_entry.zlib4cj
 
-import ohos.ark_interop.*
+import ohos.ark_interop_advance.*
 import ohos.ark_interop_macro.*
 import zlibraryAPI4CJ.dataModel.BookInfoBrief
 import ohos_app_cangjie_entry.run2JS
@@ -45,8 +45,6 @@ public class ZlibBookInfoBriefArk {
                     let reqs = cjValue.getBookInfo(cookie: cookie)
 
                     let requ = cjValue.getUrl()
-                    Hilog.info(1145,'meow',"meow:${requ}")
-
                     if (reqs.success == 1) {
                         run2JS{
                             returnFunc(ZlibBookInfoArk.fromCJ(reqs

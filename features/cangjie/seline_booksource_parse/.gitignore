@@ -1,0 +1,27 @@
+.git/
+.vscode/
+.idea/
+.cache/
+
+# cangjie
+build/
+target/
+output/
+module-resolve.json
+module-lock.json
+cjpm.lock
+.cjpm-history
+*.macrocall
+*.gcda
+*.gcno
+
+
+# 其他
+log
+report
+tmp
+.codeartsdoer
+web/backed/.arts
+web/backed/.cache
+web/fronted/.next
+web/fronted/node_modules

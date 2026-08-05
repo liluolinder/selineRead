@@ -1,0 +1,60 @@
+{
+    "bookSourceUrl": "https://www.qbxs.net",
+    "bookSourceName": "qbxs-全本小说网",
+    "bookSourceGroup": "测试",
+    "bookSourceType": 0,
+    "enabled": true,
+    "header": "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0; Referer=https://www.qbxs.net/; Origin=https://www.qbxs.net; Content-Type=application/x-www-form-urlencoded",
+    "ruleSearch": {
+        "searchUrl": "https://www.qbxs.net/search/",
+        "method": "POST",
+        "postBody": "searchkey={{key}}",
+        "bookList": "table#rankinglist tr",
+        "name": "td:first-child a@text",
+        "author": "td:nth-child(3)@text",
+        "bookUrl": "td:first-child a@href",
+        "coverUrl": "",
+        "intro": ""
+    },
+    "ruleBookInfo": {
+        "url": "",
+        "name": "h1@text",
+        "author": "p.bq a@text",
+        "coverUrl": "",
+        "intro": "p.jj@text",
+        "kind": "",
+        "wordCount": "",
+        "latestChapter": "",
+        "status": ""
+    },
+    "ruleToc": {
+        "url": "",
+        "chapterName": "div.ml_list a@text",
+        "chapterUrl": "div.ml_list a@href"
+    },
+    "ruleContent": {
+        "url": "",
+        "content": "#articlecontent > p",
+        "nextUrl": "#next_url@href",
+        "filters": [
+            "[全本小说]:qbxs. N e t 一秒记住！",
+            "𝕢𝔹𝕏Ⓢ .net",
+            "𝚀Ⓑ𝙓𝙎 .net",
+            "𝑸 𝔹 𝐗 𝕊 . n e t",
+            "𝙌𝙱🅧s .net",
+            "𝐐  🅑  Ⓧ  𝒮 .  n  e  t",
+            "q𝔹🅧𝙎 .net",
+            "q 𝐵 Ⓧ 𝙎 . n e t",
+            "q b x S . n e t",
+            "🅠  🅑  𝕏  𝚂 .  n  e  t",
+            "𝑸 𝐁 𝒳 𝐒 . n e t",
+            "𝕢  b  X  s .  n  e  t",
+            "🅠 𝓑 𝓍 𝚂 . n e t",
+            "𝐐𝔹𝑋𝑆 .net",
+            "/^第\\d+章.+$/",
+            "ⓠ𝔹𝑋S .net",
+            "Ⓠ  Ⓑ  𝐗  s .  n  e  t",
+            "𝑄𝘽𝙓𝙎 .net"
+        ]
+    }
+}

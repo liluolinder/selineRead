@@ -3,7 +3,7 @@
  */
 package ohos_app_cangjie_entry.download
 
-import ohos.ark_interop.*
+import ohos.ark_interop_advance.*
 import ohos.ark_interop_macro.*
 import selineDownload.DownloadManager
 import selineDownload.DownloadConfig

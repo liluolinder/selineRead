@@ -7,7 +7,7 @@ export { XPreferencesManager } from './src/main/ets/models/classes/XPreferences'
 
 export { XContext } from './src/main/ets/models/classes/XContext'
 
-export { File } from './src/main/ets/models/classes/LFileKit'
+export { LFileKit } from './src/main/ets/models/classes/LFileKit'
 
 export { linderPixelMap } from './src/main/ets/models/classes/LPixelMap'
 

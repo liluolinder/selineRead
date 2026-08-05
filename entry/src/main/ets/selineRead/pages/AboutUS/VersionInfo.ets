@@ -13,7 +13,7 @@ export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
       version: '1.2.2.2',
-      date: '2026/8/1',
+      date: '2026/8/4',
       addNewFunArray:['书籍详细页面新增相似书籍推荐', "书籍详细页面 分享按钮","在线阅读（技术问题 无法传入登录信息）"],
       optimizeArray: ['新增部分UI沉浸光感(鸿蒙7)',"加载书籍切换为骨架屏",'优化书籍详细页面在大屏下的体验',"启动webdav服务器的时候 启动长时任务"],
     },

@@ -4,7 +4,6 @@ import { BasicDataSource, XAnimation } from "commonpackage"
 import { min_split_width, min_width } from "./commonItem"
 import { __CustomBackgroundData__ } from "../components/CustomBackground"
 import { relationalStore } from "@kit.ArkData"
-import { ZlibUserInfo } from "../../zlibrary/classes/UserInfo"
 import { DownloadManager } from "@hadss/super_fast_file_trans"
 import { DownloadInfo } from "../models/classes/DownloadInfo"
 import { DownloadManageArk } from "libohos_app_cangjie_entry.download.so"
@@ -13,6 +12,9 @@ import { ZlibUserInfoArk, ZlibClientArk ,ZlibBookInfoBriefArk,
   ZlibBookInfoArk} from "libohos_app_cangjie_entry.zlib4cj.so"
 import { ZlibServiceAddress } from "../models/classes/ZlibServiceAddress"
 import { QQbot } from "libohos_app_cangjie_entry.qqbot.so"
+import { ZlibUserInfo } from "../models/classes/UserInfo"
+import { EventHelper } from "../models/classes/BaseEvent"
+import { BookSourceParserArk } from "libohos_app_cangjie_entry.bookSource.so"
 
 
 @ObservedV2
@@ -97,6 +99,22 @@ export class ZlibUser{
 export const __ZlibUser__: ZlibUser = new ZlibUser()
 
 @ObservedV2
+export class BookSource{
+  @Trace parsers:BookSourceParserArk[]=[]
+  @Trace parsersSelection:SelectOption[] = []
+  @Monitor("parsers")
+  getSelectArray() {
+    this.parsersSelection = this.parsers.map((item) =>
+    ({
+      value: item.bookSource?.bookSourceName ?? ""
+    }) as SelectOption)
+  }
+
+}
+
+export const __BookSource__: BookSource = new BookSource()
+
+@ObservedV2
 export class Download{
   @Trace downloadArray: BasicDataSource<DownloadInfo> =
     new BasicDataSource<DownloadInfo>()
@@ -121,6 +139,13 @@ export class Setting{
 
   @Trace autoRefreshUrl:boolean = true
   @Trace darkModeIndex: number = 0;
+
+  @Trace appWorkMode:number = 0
+
+  @Monitor("appWorkMode")
+  emitterAppWorkMode(){
+    EventHelper.emitterPublish("appWorkModeChange")
+  }
 
 }
 export const __Setting__: Setting = new Setting()

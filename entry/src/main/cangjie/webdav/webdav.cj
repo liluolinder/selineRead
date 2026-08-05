@@ -3,10 +3,8 @@
  */
 package ohos_app_cangjie_entry.webdav
 
-import ohos.ark_interop.JSContext
-import ohos.ark_interop.JSModule
 import ohos.ark_interop_macro.*
-import ohos.ark_interop.*
+import ohos.ark_interop_advance.*
 import selineWebdav.WebDavServer
 import ohos.hilog.Hilog
 import std.collection.ArrayList
