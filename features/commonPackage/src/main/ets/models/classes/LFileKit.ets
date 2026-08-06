@@ -99,7 +99,7 @@ export  class LFileKit {
         return await fs.read(file.fd, arrayBuffer).then((readLen: number) => {
             console.info(`Meow:读取${dir}成功`);
             let buf = buffer.from(arrayBuffer, 0, readLen);
-            console.info(`Meow: ${buf.toString()}`);
+           // console.info(`Meow: ${buf.toString()}`);
             return buf.toString()
         }).catch((err: BusinessError) => {
             console.error("Meow:读取文件" + dir + "失败,失败原因:" + err.message + ",失败码: " + err.code);

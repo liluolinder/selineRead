@@ -74,8 +74,40 @@ public class RuleEngine {
         ""
     }
 
+    /** 按 CSS 选择器取元素列表（供逐条应用相对规则） */
+    public static func selectElements(html: String, selector: String): Elements {
+        Html4cj.parse(html).select(selector)
+    }
+
+    /**
+     * 便捷解析函数：自动识别 HTML / JSON 内容，应用规则提取全部匹配值。
+     * @param content 原始响应内容（HTML 或 JSON）
+     * @param rule 解析规则：HTML 用 CSS 选择器（如 "div.ml_list a@text"），JSON 用 gjson 路径（如 "data.list.#.name"）
+     * @return 提取到的全部值数组；JSON 单值路径（非数组）返回单元素数组
+     */
+    public static func extractAllQuick(content: String, rule: String): ArrayList<String> {
+        if (rule.isEmpty()) {
+            return ArrayList<String>()
+        }
+        if (isJsonContent(content)) {
+            let all = extractJsonAll(content, rule)
+            if (all.size == 0) {
+                // JSON 单值路径（非数组）：取单值作为一条结果
+                let single = extractJson(content, rule)
+                if (!single.isEmpty()) {
+                    let lst = ArrayList<String>()
+                    lst.add(single)
+                    return lst
+                }
+            }
+            all
+        } else {
+            extractAllHtml(content, rule)
+        }
+    }
+
     /** 对整段 HTML 应用规则，取全部匹配值（多值规则用，如目录列表） */
-    public static func extractAll(html: String, rule: String): ArrayList<String> {
+    public static func extractAllHtml(html: String, rule: String): ArrayList<String> {
         let result = ArrayList<String>()
         if (rule.isEmpty()) {
             return result
@@ -90,11 +122,6 @@ public class RuleEngine {
             result.add(extractByAttr(el, attr))
         }
         result
-    }
-
-    /** 按 CSS 选择器取元素列表（供逐条应用相对规则） */
-    public static func selectElements(html: String, selector: String): Elements {
-        Html4cj.parse(html).select(selector)
     }
 
     /** 对 JSON 内容应用 gjson 路径规则，取第一个匹配值 */

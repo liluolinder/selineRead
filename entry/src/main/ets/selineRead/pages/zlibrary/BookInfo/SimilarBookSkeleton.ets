@@ -1,3 +1,5 @@
+import { XAnimation } from 'commonpackage'
+
 /**
  * BookInfo 页"类似书籍"区域骨架屏：与主体骨架屏分离，
  * 仅在主体 bookInfo 加载完成、similarBook 异步拉取期间显示。
@@ -11,12 +13,7 @@ export struct SimilarBookSkeleton {
   @Local private columns: number[] = [0, 1]
 
   aboutToAppear(): void {
-    animateTo({
-      duration: 700,
-      curve: Curve.EaseInOut,
-      iterations: -1,
-      playMode: PlayMode.Alternate
-    }, () => {
+    XAnimation.skeletonAnimation(()=>{
       this.pulse = 1
     })
   }

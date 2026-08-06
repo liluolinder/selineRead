@@ -127,8 +127,6 @@ export class XContext {
             }
           },
           secondaryButton: {
-            enabled: true,
-            defaultFocus: true,
             value: '确定',
             action: () => {
               if (param.confirmCallBack) {

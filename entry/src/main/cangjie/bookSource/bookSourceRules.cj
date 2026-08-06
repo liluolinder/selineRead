@@ -49,16 +49,16 @@ public class BookSourceArk {
         r.enabled = cjValue.enabled
         r.header = cjValue.header
         if (let Some(v) <- cjValue.ruleSearch) {
-            r.ruleSearch = Some(RuleSearchArk.fromCJ(v))
+            r.ruleSearch = RuleSearchArk.fromCJ(v)
         }
         if (let Some(v) <- cjValue.ruleBookInfo) {
-            r.ruleBookInfo = Some(RuleBookInfoArk.fromCJ(v))
+            r.ruleBookInfo = RuleBookInfoArk.fromCJ(v)
         }
         if (let Some(v) <- cjValue.ruleToc) {
-            r.ruleToc = Some(RuleTocArk.fromCJ(v))
+            r.ruleToc = RuleTocArk.fromCJ(v)
         }
         if (let Some(v) <- cjValue.ruleContent) {
-            r.ruleContent = Some(RuleContentArk.fromCJ(v))
+            r.ruleContent = RuleContentArk.fromCJ(v)
         }
         r.cjValue = cjValue
         r
@@ -115,7 +115,6 @@ public class RuleSearchArk {
     public var searchUrl: String = ""
     public var method: String = "GET"
     public var postBody: String = ""
-    public var bookList: String = ""
     public var name: String = ""
     public var author: String = ""
     public var bookUrl: String = ""
@@ -142,7 +141,6 @@ public class RuleSearchArk {
         r.searchUrl = cjValue.searchUrl
         r.method = cjValue.method
         r.postBody = cjValue.postBody
-        r.bookList = cjValue.bookList
         r.name = cjValue.name
         r.author = cjValue.author
         r.bookUrl = cjValue.bookUrl
@@ -199,7 +197,6 @@ public class RuleBookInfoArk {
 @Interop[ArkTS]
 public class RuleTocArk {
     public var url: String = ""
-    public var chapterList: String = ""
     public var chapterName: String = ""
     public var chapterUrl: String = ""
     public var nextTocUrl: String = ""
@@ -218,7 +215,6 @@ public class RuleTocArk {
     public static func fromCJ(cjValue: RuleToc): RuleTocArk {
         let r = RuleTocArk()
         r.url = cjValue.url
-        r.chapterList = cjValue.chapterList
         r.chapterName = cjValue.chapterName
         r.chapterUrl = cjValue.chapterUrl
         r.nextTocUrl = cjValue.nextTocUrl
@@ -229,11 +225,10 @@ public class RuleTocArk {
 
 @Interop[ArkTS]
 public class TokenConfigArk {
-    public var algo: String = "aes-128-cbc"
+    public var algo: String = ""
     public var key: String = ""
     public var iv: String = ""
     public var input: String = ""
-    public var bookIdFrom: String = "bookUrl"
 
     var cjValue: Option<TokenConfig> = None
 
@@ -252,7 +247,6 @@ public class TokenConfigArk {
         r.key = cjValue.key
         r.iv = cjValue.iv
         r.input = cjValue.input
-        r.bookIdFrom = cjValue.bookIdFrom
         r.cjValue = cjValue
         r
     }
@@ -286,7 +280,7 @@ public class RuleContentArk {
             .filters
             .toArray())
         if (let Some(t) <- cjValue.token) {
-            r.token = Some(TokenConfigArk.fromCJ(t))
+            r.token = TokenConfigArk.fromCJ(t)
         }
         r.cjValue = cjValue
         r

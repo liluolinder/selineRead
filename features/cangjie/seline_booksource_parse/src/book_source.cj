@@ -20,7 +20,6 @@ public class RuleSearch {
     public var searchUrl: String = ""
     public var method: String = "GET"
     public var postBody: String = ""
-    public var bookList: String = ""
     public var name: String = ""
     public var author: String = ""
     public var bookUrl: String = ""
@@ -30,6 +29,8 @@ public class RuleSearch {
     public var kind: String = ""
     public var wordCount: String = ""
     public var latestChapter: String = ""
+    /** offset 偏移量（固定数字，如 "20"）：offsetNum 未传时用该值 */
+    public var offset: String = ""
 
     public init() {}
 }
@@ -60,7 +61,6 @@ public class RuleBookInfo {
 @JsonSerializable
 public class RuleToc {
     public var url: String = ""
-    public var chapterList: String = ""
     public var chapterName: String = ""
     public var chapterUrl: String = ""
     public var nextTocUrl: String = ""
@@ -75,16 +75,13 @@ public class RuleToc {
  * - input：明文模板，支持 {{bookId}} / {{chapterId}} 占位符；
  *   因 CJson 不支持 JSON 字符串中的 \" 转义，模板中的单引号 ' 会被转换为双引号
  *   例："{'id':{{bookId}},'chapterid':{{chapterId}}}" → {"id":35814,"chapterid":2}
- * - bookIdFrom：bookId 的提取来源，默认 "bookUrl"（从书籍 URL 尾部提取数字），
- *   可配 "coverUrl"（从封面 URL 提取，适用于正文接口与目录不同 id 体系的站点）
  */
 @JsonSerializable
 public class TokenConfig {
-    public var algo: String = "aes-128-cbc"
+    public var algo: String = ""
     public var key: String = ""
     public var iv: String = ""
     public var input: String = ""
-    public var bookIdFrom: String = "bookUrl"
 
     public init() {}
 }
@@ -108,9 +105,11 @@ public class RuleContent {
     public var content: String = ""
     public var nextUrl: String = ""
     public var filters: ArrayList<String> = ArrayList<String>()
-    public var token: Option<TokenConfig> = TokenConfig()
+    public var token: Option<TokenConfig>
 
-    public init() {}
+    public init() {
+        this.token = None
+    }
 }
 
 /**
@@ -126,7 +125,6 @@ public class RuleContent {
  *   "header": "User-Agent=Mozilla/5.0",
  *   "ruleSearch": {
  *     "searchUrl": "/search?q={{key}}&page={{page}}",
- *     "bookList": "div.result-item",
  *     "name": "h3@text",
  *     "author": ".author@text",
  *     "bookUrl": "a@href",
@@ -147,10 +145,8 @@ public class BookSource {
     public var bookSourceType: Int64 = 0
     public var enabled: Bool = true
     public var header: String = ""
-    public var ruleSearch: Option<RuleSearch> = RuleSearch()
-    public var ruleBookInfo: Option<RuleBookInfo> = RuleBookInfo()
-    public var ruleToc: Option<RuleToc> = RuleToc()
-    public var ruleContent: Option<RuleContent> = RuleContent()
-
-    public init() {}
+    public var ruleSearch: Option<RuleSearch> = None 
+    public var ruleBookInfo: Option<RuleBookInfo> = None
+    public var ruleToc: Option<RuleToc> = None
+    public var ruleContent: Option<RuleContent> = None
 }

@@ -3,11 +3,12 @@ import { BasicDataSource, LFileKit, XAnimation, XContext } from "commonpackage"
 import { BookArk } from "libohos_app_cangjie_entry.bookSource.so"
 import { __BookSource__, __System__, __UI__ } from "../../commons/shareDatas"
 import { FileKit } from "../../models/classes/FileKit"
+import { loadingNewDialog } from "../../components/LoadingNewDialog"
 
 @ObservedV2
 export class BookSourceHomeData {
   @Trace inSearchMode: boolean = false
-  @Trace canGetMore: boolean = false
+  @Trace canGetMore: boolean = true
   @Trace errorText: string = ''
   @Trace bookArray:BasicDataSource<BookArk> =
     new BasicDataSource<BookArk>()
@@ -21,12 +22,20 @@ export const __BSHome__ = new BookSourceHomeData()
 export struct BookSourceHome {
 
   @Local sourceIndex:number = 0
+  @Local searchIndex:number = 1
+
+  @Monitor("sourceIndex")
+  onSourceIndexChange(){
+    __BSHome__.bookArray.clearData()
+    this.searchIndex = 1
+  }
 
   aboutToAppear(): void {
     __BSHome__.bookArray.clearData()
     __BookSource__.parsers=[]
     FileKit.getBookSourceParser()
   }
+
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
@@ -59,13 +68,30 @@ export struct BookSourceHome {
               __BSHome__.bookArray.clearData()
               __BSHome__.searchWord = value
               __BSHome__.canGetMore = false
-              __BookSource__.parsers[this.sourceIndex].search(value, undefined,(books)=>{
-                books.forEach((ii)=>{
-                  __BSHome__.bookArray.pushData(ii)
-                })
+              this.searchIndex = 1
+              let parser = __BookSource__.parsers[this.sourceIndex]
+              console.log(`meow:${parser.supportsPage||parser.supportsOffset}`)
+              parser.search(value, parser.supportsPage||parser.supportsOffset? 1 :undefined,(books)=>{
+                if (parser.supportsPage||parser.supportsOffset) {
+                  this.searchIndex ++
+                }
+                if (books.length==0) {
+                  XContext.alterDialogWithTwoButton({
+                    title:"提示",
+                    message:"返回值为空"
+                  })
+                }else {
+                  books.forEach((ii)=>{
+                    __BSHome__.bookArray.pushData(ii)
+                  })
+                }
                 __BSHome__.canGetMore = true
               }, (err)=>{
-                console.error(`meow:${err}`)
+                __BSHome__.canGetMore = true
+                XContext.alterDialogWithTwoButton({
+                  title:"错误",
+                  message:err
+                })
               })
             }
 
@@ -80,9 +106,16 @@ export struct BookSourceHome {
             }
           })
           .onTouch(() => {
-            XAnimation.runWithAnimation(() => {
-              __BSHome__.inSearchMode = true
-            })
+            if (__BookSource__.parsers.length!=0) {
+              XAnimation.runWithAnimation(() => {
+                __BSHome__.inSearchMode = true
+              })
+            }else{
+              XContext.alterDialogWithTwoButton({
+                title: "Tips",
+                message:"书源为空 不支持搜索"
+              })
+            }
           })
       }
       .zIndex(1)
@@ -93,10 +126,24 @@ export struct BookSourceHome {
       .zIndex(114514)
 
       Column() {
-          if (__BSHome__.bookArray.totalCount()==0 && !__BSHome__.canGetMore){
-            Text("请先搜索")
-              .fontSize(24)
-              .fontWeight(FontWeight.Medium)
+          if (__BSHome__.bookArray.totalCount()==0){
+            if (!__BSHome__.canGetMore) {
+              Column({ space: 10 }) {
+                LoadingProgress()
+                  .height(75)
+                Text($r('app.string.Tip_GettingBookNow'))
+                  .fontSize(22)
+                  .fontWeight(FontWeight.Medium)
+                  .textAlign(TextAlign.Center)
+              }
+              .height('100%')
+              .justifyContent(FlexAlign.Center)
+              .width('100%')
+            } else {
+              Text("请先搜索")
+                .fontSize(24)
+                .fontWeight(FontWeight.Medium)
+            }
           }else{
             List({ space: 20 }) {
               LazyForEach(__BSHome__.bookArray, (item: BookArk) => {
@@ -121,10 +168,37 @@ export struct BookSourceHome {
             .height('100%')
             .width('100%')
             .padding({ left: 16, right: 16 })
+            .onReachEnd(()=>{
+              let parser = __BookSource__.parsers[this.sourceIndex]
+              if (__BSHome__.searchWord != '' && (parser.supportsPage||parser.supportsOffset)) {
+                __BSHome__.canGetMore = false
+                parser.search(__BSHome__.searchWord, parser.supportsPage||parser.supportsOffset?this.searchIndex:undefined,(books)=>{
+                  if (parser.supportsPage||parser.supportsOffset) {
+                    this.searchIndex ++
+                  }
+                  if (books.length==0) {
+                    XContext.alterDialogWithTwoButton({
+                      title:"提示",
+                      message:"返回值为空"
+                    })
+                  }else {
+                    books.forEach((ii)=>{
+                      __BSHome__.bookArray.pushData(ii)
+                    })
+                  }
+                  __BSHome__.canGetMore = true
+                }, (err)=>{
+                  __BSHome__.canGetMore = true
+                  XContext.alterDialogWithTwoButton({
+                    title:"错误",
+                    message:err
+                  })
+                })
+              }
+            })
           }
       }.size({ width: '100%', height: '100%' })
       .justifyContent(FlexAlign.Center)
-
 
       if (__BSHome__.inSearchMode) {
         Column()
@@ -136,7 +210,6 @@ export struct BookSourceHome {
             })
           })
       }
-
 
     }.size({ width: '100%', height: '100%' })
   }

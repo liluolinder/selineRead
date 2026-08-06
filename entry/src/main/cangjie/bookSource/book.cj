@@ -6,7 +6,6 @@ package ohos_app_cangjie_entry.bookSource
 import ohos.ark_interop_advance.*
 import ohos.ark_interop_macro.*
 import seline_booksource_parse.Book
-import ohos.base.AppLog
 import ohos_app_cangjie_entry.run2JS
 
 @Interop[ArkTS]

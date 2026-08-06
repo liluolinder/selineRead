@@ -80,9 +80,10 @@ public class HttpUtil {
     }
 
     /**
-     * 填充模板占位符：{{key}} / {{searchKey}} 替换为搜索关键字，{{page}} / {{pageIndex}} 替换为页码
+     * 填充模板占位符：{{key}} / {{searchKey}} 替换为搜索关键字，{{page}} / {{pageIndex}} 替换为页码，
+     * {{offset}} / {{offsetIndex}} 替换为偏移量（offset = page × offsetNum，由调用方计算传入；未启用时传空）
      */
-    public static func fillTemplate(template: String, key: String, page: String): String {
+    public static func fillTemplate(template: String, key: String, page: String, offset!: String = ""): String {
         if (template.isEmpty()) {
             return ""
         }
@@ -102,6 +103,7 @@ public class HttpUtil {
                     let value = match (name) {
                         case "key" | "searchKey" | "searchkey" | "search_key" => key
                         case "page" | "pageIndex" | "pageindex" | "page_index" => page
+                        case "offset" | "offsetIndex" | "offsetindex" | "offset_index" => offset
                         case _ => ""
                     }
                     sb.append(value)

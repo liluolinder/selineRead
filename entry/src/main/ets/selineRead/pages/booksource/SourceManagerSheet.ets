@@ -47,6 +47,9 @@ export struct SourceManagerSheet {
             .backgroundColor($r('sys.color.background_primary'))
             .borderRadius(16)
           }
+          .onClick(()=>{
+            this.pathStack.pushPathByName("SourceEdit", source)
+          })
         })
       }.height('100%')
       .width('100%')
@@ -105,58 +108,44 @@ function addSourceMenu() {
     MenuItem({ content: '本地导入' }).onClick(() => {
       //创建Picker
       const documentSelectOptions = new picker.DocumentSelectOptions();
-      documentSelectOptions.maxSelectNumber = 1
       documentSelectOptions.selectMode = picker.DocumentSelectMode.FILE;
       documentSelectOptions.fileSuffixFilters = ['书源(.json)|.json'];
       const documentViewPicker = new picker.DocumentViewPicker(XContext.getAbilityContext());
       documentViewPicker.select(documentSelectOptions).then(async (uris: string[]) => {
-        let uri = uris[0]
-        if (uri) {
-          let spilt = uri.split('/')
-          let fileName = spilt[spilt.length -1]
-          let resUri =  fileUri.getUriFromPath(`${FileKit.bookSourcePath}/${fileName}`)
-          //读取导入文件
-          LFileKit.read(uri).then(async (json)=>{
-            console.log(`meow:${json}`)
-            let parser = new BookSourceParserArk(fileName,json)
-            console.log(`meow:${parser.bookSource.bookSourceName}`)
-            let conflict = __BookSource__.parsers.filter((item)=>item.fileName == fileName || item.bookSource.bookSourceName == parser.bookSource.bookSourceName ).length != 0
-            if (conflict) {
-              XContext.toast("请不要重复导入同名json或者重复的源")
-            }else {
-              let canAccess = await FileKit.createSourcePath()
-              if (canAccess) {
-                LFileKit.copy(uri, resUri).then((res)=>{
-                  if (res) {
-                    XContext.toast("导入成功")
-                    __BookSource__.parsers.push(parser)
-                  }else{
-                    XContext.toast("导入失败")
-                  }
+        uris.forEach((uri)=>{
+          if (uri) {
+            let spilt = uri.split('/')
+            let fileName = spilt[spilt.length -1]
+            let resUri =  fileUri.getUriFromPath(`${FileKit.bookSourcePath}/${fileName}`)
+            //读取导入文件
+            LFileKit.read(uri).then(async (json)=>{
+              console.log(`meow:${json}`)
+              let parser = new BookSourceParserArk(fileName,json)
+              console.log(`meow:${parser.bookSource.bookSourceName}`)
+              let conflict = __BookSource__.parsers.filter((item)=>item.fileName == fileName || item.bookSource.bookSourceName == parser.bookSource.bookSourceName ).length != 0
+              if (conflict) {
+                XContext.alterDialogWithTwoButton({
+                  title: "警告",
+                  message:`书源:${parser.bookSource.bookSourceName}, \n 文件名:${parser.fileName}导入失败 \n已存在同名书源/文件名`
                 })
               }else {
-                XContext.toast("导入失败,无法获取存储目录")
+                let canAccess = await FileKit.createSourcePath()
+                if (canAccess) {
+                  LFileKit.copy(uri, resUri).then((res)=>{
+                    if (res) {
+                      XContext.toast("导入成功")
+                      __BookSource__.parsers.push(parser)
+                    }else{
+                      XContext.toast("导入失败")
+                    }
+                  })
+                }else {
+                  XContext.toast("导入失败,无法获取存储目录")
+                }
               }
-            }
-          })
-
-
-
-
-        }
-
-
-        // LFileKit.read(uris[0]).then((meow)=>{
-        //   console.log(`meow:内容为:\n ${meow}`)
-        //   let parser =  new BookSourceParserArk(meow)
-        //   parser.search("我",undefined,(books)=>{
-        //     books.forEach((book)=>{
-        //       console.error("meow:"+book.name)
-        //     })
-        //   },(err)=>{
-        //     console.error("meow:发生错误"+err)
-        //   })
-        // })
+            })
+          }
+        })
 
       }).catch((err: BusinessError) => {
         console.error(`meow 选取文件失败, code is ${err.code}, message is ${err.message}`);

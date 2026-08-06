@@ -12,13 +12,11 @@ export declare class TokenConfigArk {
     key: string
     iv: string
     input: string
-    bookIdFrom: string
     constructor ()
 }
 
 export declare class RuleTocArk {
     url: string
-    chapterList: string
     chapterName: string
     chapterUrl: string
     nextTocUrl: string
@@ -42,7 +40,6 @@ export declare class RuleSearchArk {
     searchUrl: string
     method: string
     postBody: string
-    bookList: string
     name: string
     author: string
     bookUrl: string
@@ -83,7 +80,8 @@ export declare class BookSourceParserArk {
     fileName: string
     bookSource: BookSourceArk
     supportsPage: boolean
-    search(keyWord: string, page: string | undefined, returnFunc: (funcArg0: Array<BookArk>) => void, errorFunc: (funcArg0: string) => void): void
+    supportsOffset: boolean
+    search(keyWord: string, page: number | undefined, returnFunc: (funcArg0: Array<BookArk>) => void, errorFunc: (funcArg0: string) => void): void
     constructor (_fileName: string, bookSourceJson: string)
 }
 

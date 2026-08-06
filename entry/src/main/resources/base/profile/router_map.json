@@ -39,6 +39,11 @@
             "name": "Reader",
             "pageSourceFile": "src/main/ets/selineRead/pages/booksource/Reader.ets",
             "buildFunction": "ReaderBuilder"
+        },
+        {
+            "name": "SourceEdit",
+            "pageSourceFile": "src/main/ets/selineRead/pages/booksource/SourceEdit.ets",
+            "buildFunction": "SourceEditBuilder"
         }
     ]
 }

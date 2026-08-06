@@ -1,5 +1,6 @@
 import curves from '@ohos.curves'
 import Curves from '@ohos.curves'
+import { XContext } from './XContext';
 
 export class XAnimation {
     private static mode: string = 'auto'
@@ -64,5 +65,14 @@ export class XAnimation {
         } else {
             fn()
         }
+    }
+
+    public static skeletonAnimation(func:()=>void){
+        XContext.getContext().animateTo({
+            duration: 700,
+            curve: Curve.EaseInOut,
+            iterations: -1,
+            playMode: PlayMode.Alternate
+        },func)
     }
 }

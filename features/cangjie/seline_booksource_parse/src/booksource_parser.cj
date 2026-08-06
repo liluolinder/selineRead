@@ -1,6 +1,7 @@
 package seline_booksource_parse
 
 import std.collection.{ArrayList, HashMap}
+import std.convert.Parsable
 import std.regex.{Regex, RegexFlag}
 import html4cj.Html4cj
 import gjson.get
@@ -14,7 +15,7 @@ import gjson.Result
  * 离线流程（测试/复用）：parseSearch / parseBookInfo / parseToc / parseContent
  * 直接接收原始响应内容，便于单元测试与数据复用。
  */
-public class BookSourceParser {
+public class BookSourceParser <: Searchable {
     public let bookSource: BookSource
 
     public init(bookSource: BookSource) {
@@ -59,8 +60,18 @@ public class BookSourceParser {
         }
     }
 
+    /** 是否支持 offset 分页（searchUrl 模板含 {{offset}}） */
+    public prop supportsOffset: Bool {
+        get() {
+            if (bookSource.ruleSearch.isNone()) {
+                return false
+            }
+            bookSource.ruleSearch.getOrThrow().searchUrl.contains("{{offset}}")
+        }
+    }
+
     /** 联网搜索：按 ruleSearch.searchUrl 模板发起请求并解析结果 */
-    public func search(keyword: String, page!: Option<String> = None): ArrayList<Book> {
+    public func search(keyword: String, page!: Option<Int64> = None, offsetNum!: Option<Int64> = None): ArrayList<Book> {
         if (bookSource.ruleSearch.isNone()) {
             return ArrayList<Book>()
         }
@@ -69,16 +80,32 @@ public class BookSourceParser {
             return ArrayList<Book>()
         }
         // 分页支持检测：searchUrl 含 {{page}} 才支持分页；
-        // 不含且请求了非默认页（page 有值）时，该书源无更多结果，返回空数组
+        // 不含且请求了非默认页（page > 1）时，该书源无更多结果，返回空数组；
+        // page=1（默认页）不受影响（否则 supportsOffset 的书源传 page=1 会被误拦截）
         let supportsPage = rules.searchUrl.contains("{{page}}")
-        if (!supportsPage && page.isSome()) {
+        if (!supportsPage && page.isSome() && page.getOrThrow() > 1) {
             return ArrayList<Book>()
         }
-        let pageVal = page ?? "1"
-        let url = HttpUtil.resolveUrl(bookSource.bookSourceUrl, HttpUtil.fillTemplate(rules.searchUrl, HttpUtil.urlEncode(keyword), pageVal))
+        let pageNum = if (page.isSome()) { page.getOrThrow() } else { 1 }
+        let pageVal = pageNum.toString()
+        // offsetNum 未传时采用 ruleSearch.offset（固定数字）；再未配置则为 0
+        let baseOffset = if (offsetNum.isSome()) {
+            offsetNum.getOrThrow()
+        } else if (!rules.offset.isEmpty()) {
+            try {
+                Int64.parse(rules.offset)
+            } catch (e: Exception) {
+                0
+            }
+        } else {
+            0
+        }
+        // offset = (page-1) × baseOffset（支持 {{offset}} 占位符的书源用）
+        let offsetVal = ((pageNum - 1) * baseOffset).toString()
+        let url = HttpUtil.resolveUrl(bookSource.bookSourceUrl, HttpUtil.fillTemplate(rules.searchUrl, HttpUtil.urlEncode(keyword), pageVal, offset: offsetVal))
         let content = if (rules.method == "POST") {
             // POST 表单搜索：关键字放 postBody（如 searchkey={{key}}）
-            let body = HttpUtil.fillTemplate(rules.postBody, HttpUtil.urlEncode(keyword), pageVal)
+            let body = HttpUtil.fillTemplate(rules.postBody, HttpUtil.urlEncode(keyword), pageVal, offset: offsetVal)
             HttpUtil.post(url, body, headers())
         } else {
             fetch(url)
@@ -96,11 +123,8 @@ public class BookSourceParser {
             return result
         }
         let rules = bookSource.ruleSearch.getOrThrow()
-        // bookList 为空表示 JSON 顶层数组模式（整个响应即数组），必须按 JSON 解析，
-        // 否则被拦截的异常响应（如数字 "1"）会误走 HTML 分支静默返回空
-        if (rules.bookList.isEmpty()) {
-            parseSearchJson(content, rules, result)
-        } else if (RuleEngine.isJsonContent(content)) {
+        // 字段规则已统一为绝对路径/选择器（无 bookList）：按响应内容类型分发解析
+        if (RuleEngine.isJsonContent(content)) {
             parseSearchJson(content, rules, result)
         } else {
             parseSearchHtml(content, rules, result)
@@ -108,25 +132,39 @@ public class BookSourceParser {
         result
     }
 
+    /**
+     * 解析 HTML 搜索结果（不依赖 bookList 字段）：
+     * 每个字段规则用绝对选择器从整个文档提取数组（如 "div.bookbox .bookname a@text"），
+     * 书名数组决定书籍数量，其余字段按下标对齐取值。
+     */
     private func parseSearchHtml(content: String, rules: RuleSearch, result: ArrayList<Book>): Unit {
-        if (rules.bookList.isEmpty()) {
-            return
+        let names = RuleEngine.extractAllHtml(content, rules.name)
+        if (names.size == 0) {
+            throw Exception("搜索响应异常：规则 '" + rules.name + "' 未提取到内容（可能被反爬拦截或规则错误），响应前 100 字: " + preview(content, 100))
         }
-        let doc = Html4cj.parse(content)
-        let items = doc.select(rules.bookList)
-        if (items.size == 0) {
-            throw Exception("搜索响应异常：选择器 '" + rules.bookList + "' 无匹配（可能被反爬拦截或规则错误），响应前 100 字: " + preview(content, 100))
-        }
-        for (el in items.elementArr) {
+        let authors = RuleEngine.extractAllHtml(content, rules.author)
+        let intros = RuleEngine.extractAllHtml(content, rules.intro)
+        let kinds = RuleEngine.extractAllHtml(content, rules.kind)
+        let wordCounts = RuleEngine.extractAllHtml(content, rules.wordCount)
+        let latestChapters = RuleEngine.extractAllHtml(content, rules.latestChapter)
+        let bookUrls = RuleEngine.extractAllHtml(content, rules.bookUrl)
+        let coverUrls = RuleEngine.extractAllHtml(content, rules.coverUrl)
+        for (i in 0..names.size) {
             let book = Book()
-            book.name = RuleEngine.extractElement(el, rules.name)
-            book.author = RuleEngine.extractElement(el, rules.author)
-            book.coverUrl = HttpUtil.resolveUrl(bookSource.bookSourceUrl, RuleEngine.extractElement(el, rules.coverUrl))
-            book.intro = RuleEngine.extractElement(el, rules.intro)
-            book.kind = RuleEngine.extractElement(el, rules.kind)
-            book.wordCount = RuleEngine.extractElement(el, rules.wordCount)
-            book.latestChapter = RuleEngine.extractElement(el, rules.latestChapter)
-            book.bookUrl = HttpUtil.resolveUrl(bookSource.bookSourceUrl, RuleEngine.extractElement(el, rules.bookUrl))
+            book.name = names[i]
+            book.author = jsonAt(authors, i)
+            book.coverUrl = HttpUtil.resolveUrl(bookSource.bookSourceUrl, jsonAt(coverUrls, i))
+            book.intro = jsonAt(intros, i)
+            book.kind = jsonAt(kinds, i)
+            book.wordCount = jsonAt(wordCounts, i)
+            book.latestChapter = jsonAt(latestChapters, i)
+            let rawUrl = jsonAt(bookUrls, i)
+            book.bookUrl = if (rules.bookUrlTemplate.isEmpty()) {
+                HttpUtil.resolveUrl(bookSource.bookSourceUrl, rawUrl)
+            } else {
+                let filled = HttpUtil.replacePlaceholder(rules.bookUrlTemplate, "bookId", rawUrl)
+                HttpUtil.resolveUrl(bookSource.bookSourceUrl, filled)
+            }
             book.sourceUrl = bookSource.bookSourceUrl
             book.bind(this)
             if (!book.name.isEmpty()) {
@@ -217,17 +255,15 @@ public class BookSourceParser {
 
     /**
      * 按 ruleContent 的 token 配置生成章节正文 URL
-     * 流程：提取 bookId（默认从 bookUrl，可配置 coverUrl）→ 填充明文模板（{{bookId}}/{{chapterId}}）→
+     * 流程：提取 bookId（从 bookUrl 尾部数字）→ 填充明文模板（{{bookId}}/{{chapterId}}）→
      *       单引号转双引号 → 按 algo 加密生成 token → 填入 URL 模板（{{chapterToken}}）
-     * @param book 书籍（含 bookUrl/coverUrl，供 bookId 提取）
+     * @param bookUrl 书籍地址（供 bookId 提取）
      * @param chapterId 章节 id（目录第 N 章即 N）
      */
-    private func buildChapterUrl(book: Book, chapterId: String): String {
+    private func buildChapterUrl(bookUrl: String, chapterId: String): String {
         let rc = bookSource.ruleContent.getOrThrow()
         let cfg = rc.token.getOrThrow()
-        // bookId 提取来源：默认 bookUrl；正文接口与目录 id 体系不同的站点可配 coverUrl
-        let idSource = if (cfg.bookIdFrom == "coverUrl") { book.coverUrl } else { book.bookUrl }
-        let bookId = extractBookId(idSource)
+        let bookId = extractBookId(bookUrl)
         // 填充明文模板占位符，单引号转为双引号（CJson 不支持 \" 转义，约定单引号表达 JSON 引号）
         let input = HttpUtil.replacePlaceholder(HttpUtil.replacePlaceholder(cfg.input, "bookId", bookId), "chapterId", chapterId)
         let plain = input.replace('\'', '"')
@@ -274,9 +310,8 @@ public class BookSourceParser {
 
     // ==================== 目录 ====================
 
-    /** 联网获取章节目录（传入 Book，正文 URL 生成需要书的完整信息） */
-    public func getToc(book: Book): ArrayList<Chapter> {
-        let url = book.bookUrl
+    /** 联网获取章节目录（传入书籍地址；若配置 {{chapterToken}} 模板会为每章生成正文 URL） */
+    public func getToc(url: String): ArrayList<Chapter> {
         let rules = bookSource.ruleToc
         let requestUrl = if (rules.isNone()) { url } else { ruleUrl(rules.getOrThrow().url, url) }
         let content = fetch(requestUrl)
@@ -286,7 +321,7 @@ public class BookSourceParser {
             let rc = bookSource.ruleContent.getOrThrow()
             if (rc.token.isSome() && rc.url.contains("{{chapterToken}}")) {
                 for (c in toc) {
-                    c.url = buildChapterUrl(book, c.index.toString())
+                    c.url = buildChapterUrl(url, c.index.toString())
                 }
             }
         }
@@ -301,87 +336,46 @@ public class BookSourceParser {
         }
         let rules = bookSource.ruleToc.getOrThrow()
         if (RuleEngine.isJsonContent(content)) {
-            if (rules.chapterList.isEmpty() && !rules.chapterName.isEmpty()) {
-                // 无 chapterList 且 chapterName 为绝对通配路径（如 "data.data.chapterListWithVolume.0.#.title"）：
-                // 直接用 extractJsonAll 提取数组决定章节数，按下标对齐
-                let names = RuleEngine.extractJsonAll(content, rules.chapterName)
-                let urls = RuleEngine.extractJsonAll(content, rules.chapterUrl)
-                for (i in 0..names.size) {
-                    let chapter = Chapter()
-                    chapter.index = i + 1
-                    chapter.name = names[i]
-                    chapter.url = HttpUtil.resolveUrl(bookSource.bookSourceUrl, jsonAt(urls, i))
-                    chapter.sourceUrl = bookSource.bookSourceUrl
-                    chapter.bind(this)
-                    if (!chapter.name.isEmpty()) {
-                        result.add(chapter)
+            // chapterName 用绝对通配路径提取数组（如 "data.data.chapterListWithVolume.0.#.title" / "list.#.name"）；
+            // chapterName 为空时整个响应即数组（顶层数组模式）
+            let names = if (rules.chapterName.isEmpty()) {
+                let r = parse(content)
+                let arr = ArrayList<String>()
+                if (r.isArray()) {
+                    for (item in r.array()) {
+                        arr.add(item.toString().trim())
                     }
                 }
+                arr
             } else {
-                // 原逻辑：chapterList 取数组（为空时整个响应即数组）；遍历数组项取值
-                let listResult = if (rules.chapterList.isEmpty()) {
-                    parse(content)
-                } else {
-                    get(content, rules.chapterList)
-                }
-                if (!listResult.exists() || !listResult.isArray()) {
-                    throw Exception("目录响应异常：规则 '" + rules.chapterList + "' 未取到 JSON 数组（可能被反爬拦截或规则错误），响应前 100 字: " + preview(content, 100))
-                }
-                var index: Int64 = 0
-                for (item in listResult.array()) {
-                    index++
-                    let chapter = Chapter()
-                    chapter.index = index
-                    // chapterName 为空时取数组项自身（如章节名纯字符串数组）；
-                    // 否则按绝对通配路径从整个响应提取（如 "list.#.name"），按下标对齐
-                    chapter.name = if (rules.chapterName.isEmpty()) {
-                        item.toString().trim()
-                    } else {
-                        jsonAt(RuleEngine.extractJsonAll(content, rules.chapterName), index - 1)
-                    }
-                    chapter.url = HttpUtil.resolveUrl(bookSource.bookSourceUrl, jsonAt(RuleEngine.extractJsonAll(content, rules.chapterUrl), index - 1))
-                    chapter.sourceUrl = bookSource.bookSourceUrl
-                    chapter.bind(this)
-                    if (!chapter.name.isEmpty()) {
-                        result.add(chapter)
-                    }
+                RuleEngine.extractJsonAll(content, rules.chapterName)
+            }
+            let urls = RuleEngine.extractJsonAll(content, rules.chapterUrl)
+            for (i in 0..names.size) {
+                let chapter = Chapter()
+                chapter.index = i + 1
+                chapter.name = names[i]
+                chapter.url = HttpUtil.resolveUrl(bookSource.bookSourceUrl, jsonAt(urls, i))
+                chapter.sourceUrl = bookSource.bookSourceUrl
+                chapter.bind(this)
+                if (!chapter.name.isEmpty()) {
+                    result.add(chapter)
                 }
             }
         } else {
             let doc = Html4cj.parse(content)
             // 绝对选择器模式：chapterName/chapterUrl 为完整选择器（如 "div.ml_list a@text"），
-            // 从整个文档提取全部匹配数组，按下标对齐；不再依赖 chapterList
+            // 从整个文档提取全部匹配数组，按下标对齐；不依赖 chapterList
             let nameIsAbs = !rules.chapterName.isEmpty() && !rules.chapterName.startsWith("@")
             let urlIsAbs = !rules.chapterUrl.isEmpty() && !rules.chapterUrl.startsWith("@")
             if (nameIsAbs || urlIsAbs) {
-                let names = RuleEngine.extractAll(content, rules.chapterName)
-                let urls = RuleEngine.extractAll(content, rules.chapterUrl)
+                let names = RuleEngine.extractAllHtml(content, rules.chapterName)
+                let urls = RuleEngine.extractAllHtml(content, rules.chapterUrl)
                 for (i in 0..names.size) {
                     let chapter = Chapter()
                     chapter.index = i + 1
                     chapter.name = names[i]
                     chapter.url = HttpUtil.resolveUrl(bookSource.bookSourceUrl, jsonAt(urls, i))
-                    chapter.sourceUrl = bookSource.bookSourceUrl
-                    chapter.bind(this)
-                    // 跳过无效章节：名称为空、URL 为空、或为锚点/JavaScript 链接
-                    if (!chapter.name.isEmpty() && !chapter.url.isEmpty()
-                        && !chapter.url.endsWith("#") && !chapter.url.startsWith("javascript:")) {
-                        result.add(chapter)
-                    }
-                }
-            } else if (!rules.chapterList.isEmpty()) {
-                // 兼容回退：chapterList 选择器 + 相对属性（@text/@href）
-                let items = doc.select(rules.chapterList)
-                if (items.size == 0) {
-                    throw Exception("目录响应异常：选择器 '" + rules.chapterList + "' 无匹配（可能被反爬拦截或规则错误），响应前 100 字: " + preview(content, 100))
-                }
-                var index: Int64 = 0
-                for (el in items.elementArr) {
-                    index++
-                    let chapter = Chapter()
-                    chapter.index = index
-                    chapter.name = RuleEngine.extractElement(el, rules.chapterName)
-                    chapter.url = HttpUtil.resolveUrl(bookSource.bookSourceUrl, RuleEngine.extractElement(el, rules.chapterUrl))
                     chapter.sourceUrl = bookSource.bookSourceUrl
                     chapter.bind(this)
                     // 跳过无效章节：名称为空、URL 为空、或为锚点/JavaScript 链接
@@ -518,9 +512,9 @@ public class BookSourceParser {
         let raw = if (RuleEngine.isJsonContent(content)) {
             RuleEngine.extractJson(content, rules.content)
         } else {
-            // HTML：用 extractAll 提取全部匹配段落（如 "#articlecontent > p" 多个段落），
+            // HTML：用 extractAllHtml 提取全部匹配段落（如 "#articlecontent > p" 多个段落），
             // 兼容容器规则（如 "#articlecontent@text" 单值），多值用换行拼接
-            let all = RuleEngine.extractAll(content, rules.content)
+            let all = RuleEngine.extractAllHtml(content, rules.content)
             if (all.size <= 1) {
                 if (all.size == 1) { all[0] } else { "" }
             } else {

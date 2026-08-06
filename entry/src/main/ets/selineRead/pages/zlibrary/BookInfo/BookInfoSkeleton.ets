@@ -1,6 +1,7 @@
 import { __CustomBackgroundData__ } from '../../../components/CustomBackground'
 import { __System__ } from '../../../commons/shareDatas'
 import { min_width } from '../../../commons/commonItem'
+import { XAnimation } from 'commonpackage'
 
 /**
  * BookInfo 页骨架屏：在书籍详情异步加载完成前展示，
@@ -13,12 +14,7 @@ export struct BookInfoSkeleton {
   @Local private rows: number[] = [0, 1, 2, 3, 4, 5]
 
   aboutToAppear(): void {
-    animateTo({
-      duration: 700,
-      curve: Curve.EaseInOut,
-      iterations: -1,
-      playMode: PlayMode.Alternate
-    }, () => {
+    XAnimation.skeletonAnimation(()=>{
       this.pulse = 1
     })
   }

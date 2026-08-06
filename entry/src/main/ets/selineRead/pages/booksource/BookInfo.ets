@@ -24,18 +24,56 @@ export struct BookInfo{
   @Local isIntroExpanded: boolean = false
   @Local chapters:ChapterArk[] =[]
   @Local showChapter:boolean = false
+  /** 目录是否加载中：getToc 异步回调完成前置为 true，成功后置 false */
+  @Local tocLoading: boolean = false
+  /** 目录骨架屏呼吸闪烁动画值 */
+  @Local private tocPulse: number = 0.5
+  /** 骨架屏占位行数 */
+  @Local private skeletonRows: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
   pathStack:NavPathStack = new NavPathStack()
+
+  aboutToAppear(): void {
+    XAnimation.skeletonAnimation(()=>{this.tocPulse = 1})
+  }
 
   cardBg(): ResourceColor {
     return __CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?
       $r('app.color.start_window_background_blur') : $r('sys.color.comp_background_list_card')
   }
 
+  /** 目录加载中骨架图：布局与真实章节行一致（序号+章节名），带呼吸闪烁动画 */
+  @Builder
+  chapterSkeleton() {
+    Column() {
+      ForEach(this.skeletonRows, (index: number) => {
+        Row({ space: 12 }) {
+          Row()
+            .width(32)
+            .height(16)
+            .borderRadius(6)
+            .backgroundColor($r('sys.color.comp_background_tertiary'))
+          Row()
+            .width(index % 3 == 0 ? '75%' : (index % 3 == 1 ? '55%' : '65%'))
+            .height(16)
+            .borderRadius(6)
+            .backgroundColor($r('sys.color.comp_background_tertiary'))
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+      }, (index: number) => index.toString())
+    }
+    .width('100%')
+    .height(400)
+    .opacity(this.tocPulse)
+  }
+
   @Builder
   chapterSheet() {
     Column() {
-      if (this.chapters.length == 0) {
+      if (this.tocLoading) {
+        this.chapterSkeleton()
+      } else if (this.chapters.length == 0) {
         Column({ space: 8 }) {
           Text('暂无目录')
             .fontSize(16)
@@ -247,9 +285,13 @@ export struct BookInfo{
           this.bookInfo.sourceUrl = newInfo.sourceUrl
         }
       },(error)=>{})
+      this.tocLoading = true
       this.bookInfo.getToc((toc)=>{
         this.chapters.push(...toc)
-      },(error)=>{})
+        this.tocLoading = false
+      },(error)=>{
+        this.tocLoading = false
+      })
     })
     .size({ width: '100%', height: '100%' })
     .backgroundColor(__CustomBackgroundData__.customBackground && __System__.windowWidth > min_width ?

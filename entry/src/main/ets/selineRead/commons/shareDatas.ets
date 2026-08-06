@@ -102,8 +102,11 @@ export const __ZlibUser__: ZlibUser = new ZlibUser()
 export class BookSource{
   @Trace parsers:BookSourceParserArk[]=[]
   @Trace parsersSelection:SelectOption[] = []
-  @Monitor("parsers")
+
+
+  @Monitor("parsers.length")
   getSelectArray() {
+    console.log(`meow:1234124`)
     this.parsersSelection = this.parsers.map((item) =>
     ({
       value: item.bookSource?.bookSourceName ?? ""

@@ -8,6 +8,7 @@ import ohos.ark_interop_macro.*
 import seline_booksource_parse.BookSourceParser
 import ohos.request.agent.search
 import ohos_app_cangjie_entry.run2JS
+import ohos.base.AppLog
 
 @Interop[ArkTS]
 public class BookSourceParserArk {
@@ -19,6 +20,12 @@ public class BookSourceParserArk {
     public prop supportsPage: Bool {
         get() {
             cjv.supportsPage
+        }
+    }
+
+     public prop supportsOffset: Bool {
+        get() {
+            cjv.supportsOffset
         }
     }
 
@@ -34,10 +41,11 @@ public class BookSourceParserArk {
         bookSource = BookSourceArk.fromCJ(cjv.bookSource)
     }
 
-    public func search(keyWord: String, page: Option<String>, returnFunc: (JSArrayEx<BookArk>) -> Unit,
+    public func search(keyWord: String, page: Option<Int64>, returnFunc: (JSArrayEx<BookArk>) -> Unit,
         errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
+                AppLog.info("meow ${keyWord}  ${page}")
                 let reqs = cjv.search(keyWord, page: page)
                 let temp = reqs
                     .toArray()
