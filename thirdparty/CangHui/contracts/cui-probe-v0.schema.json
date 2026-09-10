@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/schemas/cui-probe-v0.schema.json",
+  "title": "CangHui Probe Protocol v0",
+  "oneOf": [
+    { "$ref": "#/$defs/listReport" },
+    { "$ref": "#/$defs/descriptionReport" },
+    { "$ref": "#/$defs/componentReport" },
+    { "$ref": "#/$defs/functionReport" }
+  ],
+  "$defs": {
+    "protocol": {
+      "const": "cui.probe.v0"
+    },
+    "probeDescriptor": {
+      "type": "object",
+      "required": ["name", "kind", "description"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*(\\.[A-Za-z][A-Za-z0-9_-]*)*$" },
+        "kind": { "enum": ["function", "component"] },
+        "description": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "listReport": {
+      "type": "object",
+      "required": ["protocol", "probes"],
+      "properties": {
+        "protocol": { "$ref": "#/$defs/protocol" },
+        "probes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/probeDescriptor" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "descriptionReport": {
+      "type": "object",
+      "required": ["protocol", "name", "kind", "description"],
+      "properties": {
+        "protocol": { "$ref": "#/$defs/protocol" },
+        "name": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*(\\.[A-Za-z][A-Za-z0-9_-]*)*$" },
+        "kind": { "enum": ["function", "component"] },
+        "description": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "rect": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type", "parent", "order", "rect", "state", "properties"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "parent": { "type": "string" },
+        "order": { "type": "integer", "minimum": 0 },
+        "rect": { "$ref": "#/$defs/rect" },
+        "state": {
+          "type": "object",
+          "required": ["focused", "hovered", "pressed"],
+          "properties": {
+            "focused": { "type": "boolean" },
+            "hovered": { "type": "boolean" },
+            "pressed": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "animation": {
+      "type": "object",
+      "required": ["id", "node", "kind", "level", "durationMs", "curve", "logicalTimeMs", "progress", "target"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "node": { "type": "string" },
+        "kind": { "type": "string", "minLength": 1 },
+        "level": { "enum": ["basic", "standard", "full"] },
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "curve": { "type": "string", "minLength": 1 },
+        "logicalTimeMs": { "type": "integer", "minimum": 0 },
+        "progress": { "type": "number" },
+        "target": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "region": {
+      "type": "object",
+      "required": ["id", "type", "parent", "order", "kind", "rect", "properties"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "parent": { "type": "string" },
+        "order": { "type": "integer", "minimum": 0 },
+        "kind": { "enum": ["interactive", "focus", "visual"] },
+        "rect": { "$ref": "#/$defs/rect" },
+        "properties": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "drawCommand": {
+      "type": "object",
+      "required": ["kind", "scope"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "frame": {
+      "type": "object",
+      "required": ["index", "logicalTimeMs", "nodes", "animations", "drawIr"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0 },
+        "logicalTimeMs": { "type": "integer", "minimum": 0 },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "regions": { "type": "array", "items": { "$ref": "#/$defs/region" } },
+        "animations": { "type": "array", "items": { "$ref": "#/$defs/animation" } },
+        "drawIr": { "type": "array", "items": { "$ref": "#/$defs/drawCommand" } }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": ["step", "command", "consumed", "route", "activations"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 0 },
+        "command": { "type": "string", "minLength": 1 },
+        "consumed": { "type": "boolean" },
+        "route": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "consumed"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "consumed": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "activations": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "assertion": {
+      "type": "object",
+      "required": ["expression", "ok", "message"],
+      "properties": {
+        "expression": { "type": "string" },
+        "ok": { "type": "boolean" },
+        "message": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "componentReport": {
+      "type": "object",
+      "required": ["protocol", "probe", "ok", "viewport", "frames", "events", "assertions", "errors"],
+      "properties": {
+        "protocol": { "$ref": "#/$defs/protocol" },
+        "probe": { "type": "string", "minLength": 1 },
+        "ok": { "type": "boolean" },
+        "viewport": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "number", "exclusiveMinimum": 0 },
+            "height": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "frames": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/frame" } },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+        "assertions": { "type": "array", "items": { "$ref": "#/$defs/assertion" } },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "functionReport": {
+      "type": "object",
+      "required": ["protocol", "probe", "ok", "result"],
+      "properties": {
+        "protocol": { "$ref": "#/$defs/protocol" },
+        "probe": { "type": "string", "minLength": 1 },
+        "ok": { "type": "boolean" },
+        "result": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

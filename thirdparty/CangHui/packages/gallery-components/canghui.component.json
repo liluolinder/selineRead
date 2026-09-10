@@ -1,0 +1,11 @@
+{
+  "$schema": "../../contracts/canghui-component-package-v0.schema.json",
+  "id": "canghui.gallery.common",
+  "displayName": "CangHui Gallery Common Components",
+  "version": "0.2.0",
+  "minimumCuiVersion": "0.1.0",
+  "platforms": ["common"],
+  "requiredCapabilities": [],
+  "assets": [],
+  "nativeArtifacts": []
+}

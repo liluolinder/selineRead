@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="dev.canghui.android.probe"
+    android:versionCode="1"
+    android:versionName="adapter-probe">
+
+    <uses-sdk
+        android:minSdkVersion="26"
+        android:targetSdkVersion="35" />
+
+    <application
+        android:allowBackup="false"
+        android:debuggable="true"
+        android:extractNativeLibs="true"
+        android:hasCode="true"
+        android:label="CangHui Android Adapter Probe"
+        android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen">
+        <activity
+            android:name="dev.canghui.android.CangHuiProbeActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:screenOrientation="sensor"
+            android:windowSoftInputMode="stateAlwaysVisible|adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="dev.canghui.android.CangHuiDrawIrDemoActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:screenOrientation="sensor" />
+    </application>
+</manifest>

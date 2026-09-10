@@ -1,0 +1,10 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_liquid_glass_effects"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui bounded native backdrop-effect and Liquid Glass fallback showcase."
+
+[dependencies]
+chui = { path = "../.." }
+canghui_style_liquid_glass = { path = "../../packages/style-liquid-glass" }

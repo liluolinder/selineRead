@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_wizard"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui StepIndicator multi-step wizard example."
+
+[dependencies]
+chui = { path = "../.." }

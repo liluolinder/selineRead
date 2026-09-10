@@ -1,0 +1,43 @@
+{
+  "schema": "canghui-proof-receipt-v1",
+  "id": "20260731-canghui-ios-static-package-bootstrap-v1",
+  "createdAt": "2026-07-31T21:42:43+08:00",
+  "matrixVersion": "CangHui.20260731.8",
+  "baseline": "CangHui@82eac92",
+  "checkpoint": "commit carrying this receipt",
+  "version": "0.9.2",
+  "protocol": "canghui.ios-static-package-bootstrap.v1",
+  "toolchain": {
+    "cangjie": "1.3.0-alpha.20260725010033",
+    "xcode": "16.4",
+    "iosSdk": "18.5",
+    "architectures": [
+      "aarch64-apple-ios",
+      "aarch64-apple-ios-simulator"
+    ]
+  },
+  "verification": {
+    "optimizedStaticLibrary": "pass: device and simulator CangHui host archives compile with -O2",
+    "nativeBootstrap": "pass: reusable Objective-C helper initializes runtime, fixed UI scheduler and executable-named static package without an application-owned C shim",
+    "taskGate": "pass: CangHui ABI is called through RunCJTask and GetTaskRetWithTimeout",
+    "simulator": "pass: runtime=0 scheduler=ready library=0 task=0 abi=1",
+    "physicalDevice": "pass: installed signed app returned runtime=0 scheduler=ready library=0 task=0 abi=1 and remained alive until the verifier terminated it",
+    "linkClosure": "pass: section.o, cjstart.o, CangHui host archive, std-collection, std-math, std-core, runtime, boundscheck-static, cangjie-thread, UIKit, Foundation and libc++",
+    "scriptSafety": "pass: device, bundle id, signing identity and provisioning profile are environment inputs and are not stored in source",
+    "doctorAlignment": "pass: doctor reports bootstrap assets ready and keeps the unimplemented native-surface renderer blocked",
+    "frameworkRegression": "pass: cjpm build and 459/459 tests",
+    "sdlRegression": "pass: 88/88 tests",
+    "integratedCliRegression": "pass: 29/29 tests and complete CLI smoke",
+    "componentRegression": "pass: Gallery package 3/3, Material/Ant/Arco providers 2/2 each, Component Gallery build",
+    "contractAudit": "pass: JSON parse, shell/plist syntax, public disclosure scan and git diff check",
+    "legacyProof": "preserved: 20260725-cangjiegui-ios-bootstrap-device-v0.json remains the historical package-init blocker receipt"
+  },
+  "delivered": [
+    "optimized device and simulator CangHui iOS static packages",
+    "process-wide Objective-C runtime and scheduler bootstrap helper",
+    "bounded N2C task invocation helper",
+    "minimal UIKit ABI probe application",
+    "replayable simulator and physical-device acceptance script"
+  ],
+  "boundary": "This proves Cangjie runtime initialization, fixed scheduler readiness, executable-named static-package initialization, N2C task entry and CangHui ABI return on an Apple Silicon simulator and one physical iPad. It does not prove UIKit lifecycle adapters, CAMetalLayer or MTKView rendering, touch, safe area, IME, accessibility, product-application acceptance, application release, production or LTS readiness."
+}

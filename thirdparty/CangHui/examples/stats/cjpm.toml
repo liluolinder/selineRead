@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_stats"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui RichText per-span font size (metrics dashboard: big value + small unit)."
+
+[dependencies]
+chui = { path = "../.." }

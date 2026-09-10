@@ -1,0 +1,39 @@
+{
+  "schema": "canghui-proof-receipt-v1",
+  "id": "20260819-canghui-mobile-host-replay-v0",
+  "createdAt": "2026-08-19T12:47:13+08:00",
+  "matrixVersion": "CangHui.20260819.15",
+  "baseline": "CangHui@c51733d",
+  "checkpoint": "commit carrying this receipt",
+  "version": "0.10.0",
+  "protocol": "canghui.mobile-host-replay.v0",
+  "verification": {
+    "toolchain": "Cangjie cjc/cjpm 1.1.3 on aarch64-apple-darwin",
+    "rootBuild": "pass: cjpm build",
+    "rootTests": "pass: 564/564",
+    "focusedHostTests": "pass: 24/24",
+    "focusedKModeTests": "pass: 6/6",
+    "integratedCliTests": "pass: 63/63",
+    "consumerBuild": "pass: examples/mobile-host-replay cjpm build",
+    "kmodeDiff": "pass: 1 link across 3 local package roots",
+    "kmodeReplay": "pass: current callback accepted with input-tree, unsigned and deviceProven=false retained",
+    "cliSmoke": "pass: mobile replay included in full tools/cuic/scripts/test-cli.sh",
+    "doctorJson": "pass: replay contract, schema, adapter and consumer fixture reported ready",
+    "jsonContracts": "pass: capability matrix, replay schema and three receipt fixtures parse",
+    "diffCheck": "pass: git diff --check"
+  },
+  "delivered": [
+    "platform-neutral staged receipt and callback semantic replay",
+    "current, stale lifecycle, stale surface and combined stale decisions",
+    "bounded kMode payload adapter for consumer-owned endpoints",
+    "consumer example with build-time duplicate endpoint detection",
+    "unsigned iOS, Android and HarmonyOS input-tree receipt fixtures",
+    "doctor and capability-matrix integration"
+  ],
+  "nonClaims": [
+    "no IPA, APK or HAP generation",
+    "no signing, installation or device replay",
+    "no Windows or Linux native-host execution proof",
+    "no self-contained runtime closure, store publication, production or LTS claim"
+  ]
+}

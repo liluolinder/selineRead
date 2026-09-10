@@ -1,0 +1,11 @@
+[package]
+cjc-version = "1.1.0"
+name = "canghui_scene3d_bgfx_metal_capture"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui Scene3D bgfx Metal capture example"
+license = "Apache-2.0"
+
+[dependencies]
+chui = { path = "../.." }
+canghui_scene3d_bgfx = { path = "../../packages/scene3d-bgfx" }

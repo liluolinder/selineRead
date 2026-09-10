@@ -1,0 +1,36 @@
+{
+  "schema": "canghui.scene3d-bgfx-native-supply-contract.v1",
+  "contractId": "macos-arm64-metal-noop-v1",
+  "platform": "macos",
+  "architecture": "arm64",
+  "bgfx4cjCommit": "149e9d856de361c7c2afb813a68783f7d85fa5c9",
+  "sourceDateEpoch": "1786848448",
+  "minimumOS": "12.0",
+  "sdk": "15.5",
+  "renderers": ["Metal", "Noop"],
+  "buildOptions": [
+    "BX_PLATFORM_OSX=1",
+    "BGFX_CONFIG_RENDERER_METAL=1",
+    "renderer_noop.cpp:included",
+    "renderer_mtl.mm:-fno-objc-msgsend-selector-stubs",
+    "cxx:-fno-rtti,-fno-exceptions",
+    "source:git-archive-pinned-commit",
+    "source-date:SOURCE_DATE_EPOCH=1786848448",
+    "source-path:clang-prefix-map=bgfx4cj",
+    "static-archive:ZERO_AR_DATE=1"
+  ],
+  "archives": [
+    {
+      "name": "libbx.a",
+      "sha256": "f3d1d680f15f64460385784aaaa03d6476506ad24742f34033bcadbfc20b6a61"
+    },
+    {
+      "name": "libbimg.a",
+      "sha256": "c85cb80e2a916c6c11593804f888bc597cc5e70d0b4a0095fb3093391e8acae8"
+    },
+    {
+      "name": "libbgfx.a",
+      "sha256": "e737bf62e2161e266216135d0d0823f8b8ada286e4dee7e6d3e7f26c4e5e7f8e"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "canghui-proof-receipt-v1",
+  "id": "20260802-canghui-android-native-surface-bootstrap-v0",
+  "createdAt": "2026-08-02T14:10:00+08:00",
+  "matrixVersion": "CangHui.20260802.12",
+  "baseline": "CangHui@61c346ac9863e315bdb95cf7a9822e12404b6e69",
+  "checkpoint": "commit carrying this receipt",
+  "version": "0.9.2",
+  "protocol": "canghui.android-native-surface.v0",
+  "toolchain": {
+    "androidNdk": "26.3.11579264",
+    "androidApi": "26 build floor; installed platforms include 30, 33, 34, 35 and 36",
+    "java": "17",
+    "abis": [
+      "arm64-v8a",
+      "x86_64"
+    ]
+  },
+  "verification": {
+    "javaHost": "pass: SurfaceHolder.Callback2 host and generated JNI header compile",
+    "nativeBuild": "pass: arm64-v8a and x86_64 shared libraries",
+    "exports": "pass: seven expected JNI symbols are present",
+    "runtimeClosure": "pass: static C++ runtime; no libc++_shared.so dependency",
+    "generationSafety": "source-reviewed: stale-generation detach cannot release a newer ANativeWindow",
+    "cangjieAndroid": "blocked: current host SDK lacks linux_android_aarch64_cjnative modules and runtime",
+    "deviceRuntime": "not run: no authorized Android device or emulator was used"
+  },
+  "delivered": [
+    "SurfaceView lifecycle adapter with explicit bind, unbind and close",
+    "JNI-owned ANativeWindow reference lifecycle",
+    "monotonic attach and detach generation",
+    "stale-generation detach rejection",
+    "independent NDK and Java build and inspection scripts"
+  ],
+  "boundary": "This receipt proves only the Android Java/JNI/NDK native-surface boundary on the host for arm64-v8a and x86_64. It does not prove Cangjie Android cross-compilation, a Cangjie ABI bridge, SDL or another renderer, Activity lifecycle, input, IME, accessibility, APK packaging, signing, install, launch, device runtime, release, production or LTS readiness."
+}

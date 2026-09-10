@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_wenkai"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui CJK font-file loading — a LXGW WenKai type specimen with weight switching and mono variant."
+
+[dependencies]
+chui = { path = "../.." }

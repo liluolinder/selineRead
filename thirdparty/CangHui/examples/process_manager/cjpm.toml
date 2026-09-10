@@ -1,0 +1,10 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_process_manager"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui process manager example."
+
+[dependencies]
+chui = { path = "../.." }
+

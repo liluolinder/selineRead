@@ -1,0 +1,33 @@
+{
+  "schema": "canghui-proof-receipt-v1",
+  "id": "20260730-canghui-doctor-v0",
+  "createdAt": "2026-07-30T18:00:00+08:00",
+  "matrixVersion": "CangHui.20260730.3",
+  "baseline": "CangHui@66daafd",
+  "checkpoint": "commit carrying this receipt",
+  "version": "0.9.2",
+  "protocol": "canghui.doctor.v0",
+  "verification": {
+    "integratedCliBuild": "pass: cjpm build",
+    "integratedCliTests": "pass: 14/14",
+    "macosHumanVerbose": "pass: requested target exits 0 with grouped evidence",
+    "macosJson": "pass: one parseable JSON document, exits 0",
+    "iosJson": "pass: one parseable JSON document, requested blockers exit 1",
+    "harmonyosJson": "pass: one parseable JSON document, requested blockers exit 1",
+    "androidJson": "pass: one parseable JSON document, unsupported requested target exits 1",
+    "liveProbeBoundary": "pass: signing and device identities are summarized rather than emitted",
+    "cliSmoke": "pass: doctor human and JSON modes plus expected unsupported-target failure",
+    "schemaJson": "pass: JSON schema and receipt parse",
+    "diffCheck": "pass: git diff --check"
+  },
+  "delivered": [
+    "grouped readiness checks for the Cangjie toolchain and integrated repository",
+    "macOS, Windows, Linux, iOS, HarmonyOS/OpenHarmony, and Android target groups",
+    "bundled font, Symbol-provider, kMode, and probe-registry health groups",
+    "ready, degraded, blocked, and unsupported status model",
+    "automatic, manual, unsupported, and no-action repair classifications",
+    "stable canghui.doctor.v0 JSON report and public schema",
+    "target-scoped exit status and bounded live signing/device probes"
+  ],
+  "boundary": "A doctor row reports discoverable readiness only. It does not establish native runtime, packaging, signing, device, release, or production support for a platform."
+}

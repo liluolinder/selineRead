@@ -1,0 +1,20 @@
+# NOTICE
+
+CangHui `sdl` package includes third-party software:
+
+- SDL3 (Simple DirectMedia Layer 3)
+  - Copyright (c) 1997-2025 Sam Lantinga and contributors
+  - Repository: https://github.com/libsdl-org/SDL
+  - License: zlib (see `LICENSE` in this directory)
+  - Reference release line: 3.4.12 (exact bundled Windows binary revision not
+    yet independently verified in Cangku; see `UPSTREAM.md`)
+
+- SDL3_ttf
+  - Copyright (c) 1997-2025 Sam Lantinga and contributors
+  - Repository: https://github.com/libsdl-org/SDL_ttf
+  - License: zlib (see `LICENSE` in this directory)
+  - Reference release line: 3.2.2 (exact bundled Windows binary revision not
+    yet independently verified in Cangku; see `UPSTREAM.md`)
+
+This notice is provided for attribution and does not change the applicable
+upstream licenses.

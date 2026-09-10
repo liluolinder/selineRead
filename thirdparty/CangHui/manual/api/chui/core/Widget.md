@@ -1,0 +1,750 @@
+[chui](../../index.md) › [chui.core](index.md) › Widget
+
+# Widget
+
+`chui.core` 包中的 public interface
+
+所有组件共同实现的立即模式契约：每帧参与测量、布局、绘制与事件处理，并自带尺寸、内边距、表面、排版环境、阴影、弹性、可见性等整套链式修饰器。全部内置容器与控件都实现此接口；自定义组件实现 `measure`/`layout`/`draw`/`handle` 四个必选方法，即可与内置组件平起平坐地参与布局与焦点遍历。
+
+## 声明
+
+```cangjie
+public interface Widget
+```
+
+## 说明
+
+**每帧协议。**组件树每帧从应用代码重建，实例不保留跨帧场景——需要在重建后仍然存活的数据放进 [`State`](State.md)（控件内部经 [`rememberState`](functions.md#rememberstate) 按标识保留）。每个渲染帧，宿主对树依次调用 [`measure`](#measure)（在可用空间内报告首选尺寸）、[`layout`](#layout)（下发最终框架）与 [`draw`](#draw)；每条输入事件调用一次 [`handle`](#handle)，返回 `true` 即事件已消费、不再继续派发。
+
+**声明收集。**具体组件的构造函数调用 [`emit`](functions.md#emit) 把自己登记进最内层打开的构建块——`VStack { Label("标题") }` 因此无需数组便收集到子组件，顺序即声明顺序。在块外构造组件时 `emit` 是无操作，组件保持普通值语义，可先存进变量、再到块内用 `emit(已存组件)` 显式放置。
+
+**修饰器链。**`width`/`padding`/`background` 一类默认方法不改动原组件，而是把它包进一个新的 `Widget` 节点并返回包装结果，同时替换构建块中刚登记的原组件。链有顺序语义——每次调用包住此前的整条链：
+
+```cangjie
+Label("已保存").padding(8.0).background(Color.rgb(223, 240, 216), 6.0) // 背景连同内边距一起着色
+Label("已保存").background(Color.rgb(223, 240, 216), 6.0).padding(8.0) // 背景只垫在文本正后方
+```
+
+**布局、焦点与交互所有权协议。**[`isFlexible`](#isflexible)/[`flexWeight`](#flexweight) 决定组件在 [`VStack`](VStack.md)/[`HStack`](HStack.md) 剩余空间分配中的角色，[`acceptsStretch`](#acceptsstretch) 回答交叉轴可否拉伸，[`participatesInLayout`](#participatesinlayout) 决定是否占位；[`focusableId`](#focusableid)/[`focusableIds`](#focusableids) 把子树的焦点项交给焦点遍历（Tab / Shift+Tab），[`interactionOwnerIds`](#interactionownerids) 则独立报告普通输入或辅助语义动作的所有者。焦点与交互所有权并不等价：无焦点的指针/事件组件必须覆盖后者，容器与包装器必须转发子树列表。
+
+**容器排版环境。**[`typography`](#typography) 及 `fontFamily` / `fontSize` / `fontStyle` / `bold` / `italic` / `underline` / `strikethrough` 把逐字段的排版值传给后代 [`Label`](Label.md)、[`RichText`](../controls/RichText.md) 与 `RichSpan`。最近内层只覆盖自己提供的字段，叶子显式值再逐字段覆盖环境；环境在测量、布局、绘制和事件四阶段一致生效。自绘控件的内部文字尚不自动消费这套环境。
+
+## 示例
+
+```cangjie verify
+package docexample
+
+import chui.*
+
+// 最小自定义组件：固定尺寸的点击计数格
+class TapCounter <: Widget {
+    private let taps: State<Int64>
+    private var frame = Rect.zero()
+
+    init(taps: State<Int64>) {
+        this.taps = taps
+        emit(this) // 登记进外层构建块；块外构造时是无操作
+    }
+
+    public func measure(_: UiContext, _: Size): Size {
+        Size(88.0, 32.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect // 记住框架，供 draw 与命中测试使用
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        ctx.renderer.fill(frame, ctx.theme.accent)
+    }
+
+    public func handle(_: UiContext, event: UiEvent): Bool {
+        match (event) {
+            case UiEvent.MouseDown(MouseButton.Left, x, y) =>
+                if (frame.contains(x, y)) {
+                    taps.value = taps.value + 1
+                    return true
+                }
+            case _ => ()
+        }
+        false
+    }
+
+    public func interactionOwnerIds(): Array<String> {
+        ["TapCounter"] // 该组件消费普通输入，即使它没有键盘焦点
+    }
+}
+
+main(): Unit {
+    // 无头上下文驱动一帧：测量 → 布局 → 绘制 → 事件
+    let ctx = UiContext(Renderer.headless(), Theme.light())
+    let taps = State<Int64>(0)
+    let counter = TapCounter(taps)
+    let size = counter.measure(ctx, Size(400.0, 300.0))
+    counter.layout(ctx, Rect(0.0, 0.0, size.w, size.h))
+    counter.draw(ctx)
+    let consumed = counter.handle(ctx, UiEvent.MouseDown(MouseButton.Left, 10.0, 10.0))
+    println("事件已消费 ${consumed}，累计点击 ${taps.value} 次")
+    // 输出: 事件已消费 true，累计点击 1 次
+}
+```
+
+## 成员概览
+
+**方法**
+
+| 成员 | 说明 |
+|---|---|
+| [`measure(ctx: UiContext, available: Size)`](#measure) | 在 `available` 约束内计算并返回组件的首选尺寸。 |
+| [`layout(ctx: UiContext, rect: Rect)`](#layout) | 把最终布局矩形 `rect` 分配给组件。 |
+| [`draw(ctx: UiContext)`](#draw) | 用 `ctx` 的渲染器绘制组件。 |
+| [`handle(ctx: UiContext, event: UiEvent)`](#handle) | 处理一条输入事件并返回是否已消费。 |
+| [`isFlexible()`](#isflexible) | 报告组件是否参与所在栈的剩余空间分配。 |
+| [`flexWeight()`](#flexweight) | 报告弹性组件分享剩余空间的相对权重。 |
+| [`acceptsStretch(_: Axis)`](#acceptsstretch) | 报告栈可否沿指定轴把组件拉伸到超过测量尺寸。 |
+| [`participatesInLayout()`](#participatesinlayout) | 报告该节点是否在父布局中占据位置。 |
+| [`focusableId()`](#focusableid) | 返回组件构建期注册的键盘焦点 id，不可聚焦时为 `None`。 |
+| [`focusableIds()`](#focusableids) | 返回组件子树按声明顺序注册的全部键盘焦点 id。 |
+| [`interactionOwnerIds()`](#interactionownerids) | 返回组件子树中普通输入或辅助语义动作的所有者 id。 |
+| [`typography(value: TypographyEnvironment)`](#typography) | 给后代语义文本提供逐字段排版环境。 |
+| [`fontFamily(value: String)`](#fontfamily) | 给后代语义文本提供继承字族。 |
+| [`fontSize(...)`](#fontsize) | 给后代语义文本提供继承字号。 |
+| [`fontStyle(value: FontStyle)`](#fontstyle) | 给后代语义文本提供完整样式，可显式清除继承项。 |
+| [`bold(...)`](#bold) | 逐项提供继承粗体值。 |
+| [`italic(...)`](#italic) | 逐项提供继承斜体值。 |
+| [`underline(...)`](#underline) | 逐项提供继承下划线值。 |
+| [`strikethrough(...)`](#strikethrough) | 逐项提供继承删除线值。 |
+| [`width(...)`](#width) | 把组件约束到恰好 `value` 宽。 |
+| [`height(...)`](#height) | 把组件约束到恰好 `value` 高。 |
+| [`minWidth(...)`](#minwidth) | 阻止组件测量得比 `value` 更窄。 |
+| [`maxWidth(...)`](#maxwidth) | 阻止组件测量得比 `value` 更宽。 |
+| [`minHeight(...)`](#minheight) | 阻止组件测量得比 `value` 更矮。 |
+| [`maxHeight(...)`](#maxheight) | 阻止组件测量得比 `value` 更高。 |
+| [`fillWidth()`](#fillwidth) | 让组件占满父容器提供的全部宽度。 |
+| [`fillHeight()`](#fillheight) | 让组件占满父容器提供的全部高度。 |
+| [`padding(...)`](#padding) | 在组件四周添加内边距。 |
+| [`background(...)`](#background) | 在组件身后垫一层实色圆角背景。 |
+| [`surface(style: SurfaceStyle)`](#surface) | 在组件身后绘制一套完整的表面样式。 |
+| [`gradientBackground(...)`](#gradientbackground) | 在组件身后填充两色线性渐变背景。 |
+| [`shadow(...)`](#shadow) | 在组件身后投下柔和阴影。 |
+| [`border(...)`](#border) | 在组件的填充与内容之上描一圈圆角边框。 |
+| [`dashedBorder(...)`](#dashedborder) | 在组件的填充与内容之上描一圈虚线圆角边框。 |
+| [`flex(...)`](#flex) | 让组件按权重分享所在栈的剩余空间。 |
+| [`layoutWeight(...)`](#layoutweight) | `flex` 的 ArkTS 风格别名，常用于 [`Row`](Row.md) 子项。 |
+| [`zIndex(value: Int64)`](#zindex) | 设置同一叠层中的绘制与命中优先级，不改变布局和焦点顺序。 |
+| [`visible(isVisible: Bool)`](#visible) | 控制组件是否参与布局、绘制与事件派发。 |
+| [`enabled(isEnabled: Bool)`](#enabled) | 保留组件的布局与绘制、按 `isEnabled` 屏蔽其输入。 |
+
+## 方法
+
+### measure
+
+在 `available` 约束内计算并返回组件的首选尺寸。每帧由宿主或父容器在布局前调用；容器在此递归测量子组件，文本组件在此量宽与换行。
+
+```cangjie
+func measure(ctx: UiContext, available: Size): Size
+```
+
+**参数**
+
+- `ctx`: [`UiContext`](UiContext.md) — 每帧服务枢纽，提供渲染器、主题与单位解析。
+- `available`: `Size` — 父容器提供的可用空间，逻辑像素。
+
+**返回值** `Size` — 首选尺寸，逻辑像素；惯例上各实现把结果限制在 `available` 之内。
+
+### layout
+
+把最终布局矩形 `rect` 分配给组件。组件在这里记下位置，供 `draw` 绘制和 `handle` 判断指针是否落在控件内；容器也在这里放置子组件。每帧在测量之后调用。
+
+```cangjie
+func layout(ctx: UiContext, rect: Rect): Unit
+```
+
+**参数**
+
+- `ctx`: [`UiContext`](UiContext.md) — 每帧服务枢纽。
+- `rect`: `Rect` — 分配给组件的框架，逻辑像素。
+
+### draw
+
+用 `ctx` 的渲染器绘制组件。每帧在布局之后调用；无头渲染器下所有绘制都是无操作，布局与事件逻辑照常运转。
+
+```cangjie
+func draw(ctx: UiContext): Unit
+```
+
+**参数**
+
+- `ctx`: [`UiContext`](UiContext.md) — 持有渲染器与主题。
+
+### handle
+
+处理一条输入事件并返回是否已消费。容器按声明的逆序派发（后声明、绘制在上层的先收到），一旦有组件返回 `true` 便停止，事件不再传给它身后的组件。帧事件例外：容器会把 `UiEvent.Frame` 发给全部子组件，不计算是否消费。控件在这里判断指针是否落在自身范围内、更新状态并触发回调。
+
+```cangjie
+func handle(ctx: UiContext, event: UiEvent): Bool
+```
+
+**参数**
+
+- `ctx`: [`UiContext`](UiContext.md) — 焦点、悬停、按压、拖拽等交互协议的入口。
+- `event`: `UiEvent` — 本条输入事件。
+
+**返回值** `Bool` — `true` 表示事件已消费，停止继续派发。
+
+### isFlexible
+
+报告组件是否参与所在栈的剩余空间分配。默认 `false`——组件按测量尺寸贴合内容；弹性组件改为分得剩余空间的一份，用 [`Flexible`](Flexible.md) 包装或 [`flex`](#flex) 修饰器开启。
+
+```cangjie
+func isFlexible(): Bool
+```
+
+**返回值** `Bool` — 默认实现返回 `false`。
+
+### flexWeight
+
+报告弹性组件分享剩余空间的相对权重。仅当 `isFlexible()` 为 `true` 时被读取，剩余空间按各弹性子组件的权重占比分配。
+
+```cangjie
+func flexWeight(): Float32
+```
+
+**返回值** `Float32` — 默认实现返回 `1.0`。
+
+### acceptsStretch
+
+报告栈可否沿指定轴把组件拉伸到超过测量尺寸。[`CrossAxisAlignment`](CrossAxisAlignment.md) 的 `Stretch` 与 [`ZStack`](ZStack.md) 据此决定填满还是按测量尺寸放置；`width`/`maxWidth`（及高度对应）修饰器在被约束的轴上代答 `false`。
+
+```cangjie
+func acceptsStretch(_: Axis): Bool
+```
+
+**参数**
+
+- `_`: [`Axis`](Axis.md) — 被询问的轴；默认实现不区分轴。
+
+**返回值** `Bool` — 默认实现返回 `true`。
+
+### participatesInLayout
+
+报告该节点是否在父布局中占据位置。返回 `false` 的节点既不占位也不计入栈的间距——`visible(false)` 的包装节点与 Toast 通知层这类画在树外、不占版面的组件属于此类。
+
+```cangjie
+func participatesInLayout(): Bool
+```
+
+**返回值** `Bool` — 默认实现返回 `true`。
+
+### focusableId
+
+返回组件构建期注册的键盘焦点 id，不可聚焦时为 `None`。单子包装器转发子组件的 id；多控件容器返回 `None`，它们的焦点项经 [`focusableIds`](#focusableids) 汇总。
+
+```cangjie
+func focusableId(): ?String
+```
+
+**返回值** `?String` — 默认实现返回 `None`。
+
+### focusableIds
+
+返回组件子树按声明顺序注册的全部键盘焦点 id。默认实现由 [`focusableId`](#focusableid) 派生（0 或 1 个），容器拼接各子组件的列表；`visible(false)` 与 `enabled(false)` 用它把整棵子树移出焦点遍历。
+
+```cangjie
+func focusableIds(): Array<String>
+```
+
+**返回值** `Array<String>` — 声明顺序的焦点 id 列表，可为空。
+
+### interactionOwnerIds
+
+返回组件子树中能够消费普通输入或发布辅助语义动作的所有者 id，独立于键盘焦点。默认实现返回
+[`focusableIds`](#focusableids)，因此普通可聚焦控件无需重复声明；无焦点事件/指针组件必须覆盖此方法，
+单子包装器转发 child，容器按声明顺序合并 children。`InteractionSurface` 用它拒绝装饰 slot 中的第二个动作所有者。
+
+```cangjie
+func interactionOwnerIds(): Array<String>
+```
+
+**返回值** `Array<String>` — 子树交互所有者 id，可为空。
+
+### typography
+
+给整棵子树提供逐字段排版环境。内层环境只覆盖自己提供的字段；[`Label`](Label.md)、[`RichText`](../controls/RichText.md) 和 `RichSpan` 的显式配置优先。作用域贯穿四个组件阶段，浮层登记会捕获当前位置的有效环境。
+
+```cangjie
+func typography(value: TypographyEnvironment): Widget
+```
+
+**参数**
+
+- `value`: [`TypographyEnvironment`](TypographyEnvironment.md) — 本层提供的可选字族、字号和样式字段。
+
+**返回值** `Widget` — 包装后的新节点。
+
+### fontFamily
+
+给后代语义文本提供继承字族。字体名须先由 `Fonts.register` 注册。
+
+```cangjie
+func fontFamily(value: String): Widget
+```
+
+### fontSize
+
+给后代语义文本提供继承字号；`Float32` 重载按字体像素（fp）解释。
+
+```cangjie
+func fontSize(value: Length): Widget
+func fontSize(value: Float32): Widget
+```
+
+### fontStyle
+
+给后代语义文本提供完整继承样式。传入 `FontStyle.regular` 会显式清除外层继承的四项样式。
+
+```cangjie
+func fontStyle(value: FontStyle): Widget
+```
+
+### bold
+
+只覆盖继承粗体，不替换其他样式字段；无参形式等价于 `bold(value: true)`。
+
+```cangjie
+func bold(): Widget
+func bold(value!: Bool): Widget
+```
+
+### italic
+
+只覆盖继承斜体；无参形式设为 `true`，传 `false` 显式清除外层值。
+
+```cangjie
+func italic(): Widget
+func italic(value!: Bool): Widget
+```
+
+### underline
+
+只覆盖继承下划线；无参形式设为 `true`，传 `false` 显式清除外层值。
+
+```cangjie
+func underline(): Widget
+func underline(value!: Bool): Widget
+```
+
+### strikethrough
+
+只覆盖继承删除线；无参形式设为 `true`，传 `false` 显式清除外层值。
+
+```cangjie
+func strikethrough(): Widget
+func strikethrough(value!: Bool): Widget
+```
+
+### width
+
+把组件约束到恰好 `value` 宽。测量与布局仍受父容器可用宽度限制；被约束的水平轴对栈报告拒绝拉伸。
+
+```cangjie
+func width(value: Length): Widget
+```
+
+```cangjie
+func width(value: Float32): Widget
+```
+
+**参数**
+
+- `value`: [`Length`](Length.md) 或 `Float32` — 目标宽度；`Float32` 重载按虚拟像素解释，解析结果限制在非负。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### height
+
+把组件约束到恰好 `value` 高。测量与布局仍受父容器可用高度限制；被约束的垂直轴对栈报告拒绝拉伸。
+
+```cangjie
+func height(value: Length): Widget
+```
+
+```cangjie
+func height(value: Float32): Widget
+```
+
+**参数**
+
+- `value`: [`Length`](Length.md) 或 `Float32` — 目标高度；`Float32` 重载按虚拟像素解释，解析结果限制在非负。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### minWidth
+
+阻止组件测量得比 `value` 更窄。下限仍不超过可用宽度，组件可以比 `value` 更宽。
+
+```cangjie
+func minWidth(value: Length): Widget
+```
+
+```cangjie
+func minWidth(value: Float32): Widget
+```
+
+**参数**
+
+- `value`: [`Length`](Length.md) 或 `Float32` — 宽度下限；`Float32` 重载按虚拟像素解释。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### maxWidth
+
+阻止组件测量得比 `value` 更宽。上限同时约束子组件的测量输入；被约束的水平轴对栈报告拒绝拉伸。
+
+```cangjie
+func maxWidth(value: Length): Widget
+```
+
+```cangjie
+func maxWidth(value: Float32): Widget
+```
+
+**参数**
+
+- `value`: [`Length`](Length.md) 或 `Float32` — 宽度上限；`Float32` 重载按虚拟像素解释。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### minHeight
+
+阻止组件测量得比 `value` 更矮。下限仍不超过可用高度，组件可以比 `value` 更高。
+
+```cangjie
+func minHeight(value: Length): Widget
+```
+
+```cangjie
+func minHeight(value: Float32): Widget
+```
+
+**参数**
+
+- `value`: [`Length`](Length.md) 或 `Float32` — 高度下限；`Float32` 重载按虚拟像素解释。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### maxHeight
+
+阻止组件测量得比 `value` 更高。上限同时约束子组件的测量输入；被约束的垂直轴对栈报告拒绝拉伸。
+
+```cangjie
+func maxHeight(value: Length): Widget
+```
+
+```cangjie
+func maxHeight(value: Float32): Widget
+```
+
+**参数**
+
+- `value`: [`Length`](Length.md) 或 `Float32` — 高度上限；`Float32` 重载按虚拟像素解释。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### fillWidth
+
+让组件占满父容器提供的全部宽度。测量直接报告可用宽度，水平轴主动接受拉伸。
+
+```cangjie
+func fillWidth(): Widget
+```
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### fillHeight
+
+让组件占满父容器提供的全部高度。测量直接报告可用高度，垂直轴主动接受拉伸。
+
+```cangjie
+func fillHeight(): Widget
+```
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### padding
+
+在组件四周添加内边距。等边、水平/垂直、四边独立三种形态各有 [`Length`](Length.md) 与 `Float32`（虚拟像素）两个重载；内边距计入组件的测量尺寸，解析时每边限制在非负。修饰链顺序敏感：`.background` 写在 `.padding` 之后才会连边距一起着色。
+
+```cangjie
+func padding(all: Length): Widget
+```
+
+```cangjie
+func padding(all: Float32): Widget
+```
+
+```cangjie
+func padding(horizontal: Length, vertical: Length): Widget
+```
+
+```cangjie
+func padding(horizontal: Float32, vertical: Float32): Widget
+```
+
+```cangjie
+func padding(left: Length, top: Length, right: Length, bottom: Length): Widget
+```
+
+```cangjie
+func padding(left: Float32, top: Float32, right: Float32, bottom: Float32): Widget
+```
+
+**参数**
+
+- `all`: `Length` / `Float32` — 同时应用到四边的间距。
+- `horizontal`、`vertical`: `Length` / `Float32` — 左右两边与上下两边的间距。
+- `left`、`top`、`right`、`bottom`: `Length` / `Float32` — 各边间距。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### background
+
+在组件身后垫一层实色圆角背景。单参数重载绘制无圆角的实色面；`radius` 重载指定统一圆角（`Float32` 为虚拟像素，解析后限制在非负）；`corners!` 重载给四角独立半径（见 [`Corners`](Corners.md)），用于聊天气泡、上圆角标签页与贴边面板。背景画在子组件之前，垫在内容底层。
+
+```cangjie
+func background(color: Color): Widget
+```
+
+```cangjie
+func background(color: Color, radius: Length): Widget
+```
+
+```cangjie
+func background(color: Color, radius: Float32): Widget
+```
+
+```cangjie
+func background(color: Color, corners!: Corners): Widget
+```
+
+**参数**
+
+- `color`: `Color` — 背景填充色。
+- `radius`: [`Length`](Length.md) 或 `Float32` — 统一圆角半径，`Float32` 按虚拟像素。
+- `corners!`: [`Corners`](Corners.md) — 四角独立的圆角半径，虚拟像素。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### surface
+
+在组件身后绘制一套完整的表面样式。`SurfaceStyle` 同时包含填充、边框、圆角与阴影，[`Theme`](Theme.md) 的 `panelSurface()`/`buttonSurface(role)` 等预设都返回此类型。需要整套外观时使用它；只需背景色时使用 [`background`](#background)。
+
+```cangjie
+func surface(style: SurfaceStyle): Widget
+```
+
+**参数**
+
+- `style`: `SurfaceStyle` — 要绘制的完整表面描述。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### gradientBackground
+
+在组件身后填充两色线性渐变背景。方向与两端颜色由 [`Gradient`](Gradient.md) 描述；`radius` 重载附加统一圆角（`Float32` 为虚拟像素），无 `radius` 的重载按直角绘制。
+
+```cangjie
+func gradientBackground(gradient: Gradient): Widget
+```
+
+```cangjie
+func gradientBackground(gradient: Gradient, radius: Length): Widget
+```
+
+```cangjie
+func gradientBackground(gradient: Gradient, radius: Float32): Widget
+```
+
+**参数**
+
+- `gradient`: [`Gradient`](Gradient.md) — 两色线性渐变的起止颜色与方向。
+- `radius`: [`Length`](Length.md) 或 `Float32` — 圆角半径，`Float32` 按虚拟像素。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### shadow
+
+在组件身后投下柔和阴影。光晕画在子组件之前（垫在其后），所以要接在圆角 `background` 之后链入，并把 `radius!` 设成相同的圆角让阴影贴角。数组重载按数组顺序绘制多层（先画的最深），[`Shadow`](Shadow.md) 的 `keyAmbient(level)` 提供 Material 式"方向光 + 环境光"双层组合。
+
+```cangjie
+func shadow(value: Shadow): Widget
+```
+
+```cangjie
+func shadow(value: Shadow, radius!: Length): Widget
+```
+
+```cangjie
+func shadow(value: Shadow, radius!: Float32): Widget
+```
+
+```cangjie
+func shadow(layers: Array<Shadow>): Widget
+```
+
+```cangjie
+func shadow(layers: Array<Shadow>, radius!: Length): Widget
+```
+
+```cangjie
+func shadow(layers: Array<Shadow>, radius!: Float32): Widget
+```
+
+**参数**
+
+- `value`: [`Shadow`](Shadow.md) — 单层阴影描述（偏移、模糊、扩散、颜色）。
+- `layers`: `Array<Shadow>` — 多层阴影，按数组顺序绘制，先画的最深。
+- `radius!`: [`Length`](Length.md) 或 `Float32` — 阴影跟随的圆角半径，`Float32` 按虚拟像素；不带 `radius!` 的重载按直角绘制。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### border
+
+在组件的填充与内容之上描一圈圆角边框。单参数重载线宽 1 逻辑像素；`width!` 限制在非负；`radius!` 指定圆角（`Float32` 为虚拟像素）。描边中心线落在框架边缘向内半个线宽处；完全透明的颜色或零线宽直接跳过绘制。
+
+```cangjie
+func border(color: Color): Widget
+```
+
+```cangjie
+func border(color: Color, width!: Float32): Widget
+```
+
+```cangjie
+func border(color: Color, width!: Float32, radius!: Length): Widget
+```
+
+```cangjie
+func border(color: Color, width!: Float32, radius!: Float32): Widget
+```
+
+**参数**
+
+- `color`: `Color` — 边框颜色；完全透明时不绘制。
+- `width!`: `Float32` — 线宽，限制在非负；单参数重载固定为 `1.0`。
+- `radius!`: [`Length`](Length.md) 或 `Float32` — 圆角半径，`Float32` 按虚拟像素；缺省按直角绘制。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### dashedBorder
+
+在组件的填充与内容之上描一圈虚线圆角边框。默认线宽 `1.5`、实段 `6`、间隔 `4`（虚拟像素）；全参数重载逐项配置，线宽、实段与间隔都限制在非负。虚线沿圆角周边等距行进，适合拖放区与占位卡。
+
+```cangjie
+func dashedBorder(color: Color): Widget
+```
+
+```cangjie
+func dashedBorder(color: Color, radius!: Float32): Widget
+```
+
+```cangjie
+func dashedBorder(color: Color, width!: Float32, radius!: Float32, dash!: Float32, gap!: Float32): Widget
+```
+
+**参数**
+
+- `color`: `Color` — 边框颜色；完全透明时不绘制。
+- `radius!`: `Float32` — 圆角半径，虚拟像素；缺省按直角绘制。
+- `width!`: `Float32` — 线宽，限制在非负；前两个重载固定为 `1.5`。
+- `dash!`、`gap!`: `Float32` — 实段与间隔长度，限制在非负；前两个重载固定为 `6.0` 与 `4.0`。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### flex
+
+让组件按权重分享所在栈的剩余空间。无参数重载权重为 1；`weight` 限制在非负，权重越大分得越多。效果与 [`Flexible`](Flexible.md) 包装一致：弹性组件拿到的是分得的空间，而不是自己的测量尺寸。
+
+```cangjie
+func flex(): Widget
+```
+
+```cangjie
+func flex(weight: Float32): Widget
+```
+
+**参数**
+
+- `weight`: `Float32` — 相对权重，限制在非负；无参数重载为 `1.0`。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### layoutWeight
+
+让组件按权重分享所在 `Row`/`HStack` 的剩余空间，是 [`flex`](#flex) 的 ArkTS 风格别名。
+无参数重载使用权重 `1.0`；显式权重限制在非负。
+
+```cangjie
+func layoutWeight(): Widget
+```
+
+```cangjie
+func layoutWeight(weight: Float32): Widget
+```
+
+**参数**
+
+- `weight`: `Float32` — 相对权重；无参数重载为 `1.0`。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### zIndex
+
+设置组件在最近叠层容器中的绘制与命中优先级。高值后绘制并优先接收普通输入；相同值
+保持声明顺序稳定。该修饰器不改变测量、布局、Tab 焦点顺序或 `Frame` 事件广播。
+
+```cangjie
+func zIndex(value: Int64): Widget
+```
+
+**参数**
+
+- `value`: `Int64` — 有符号叠层顺序；默认值为 `0`。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### visible
+
+控制组件是否参与布局、绘制与事件派发。`visible(false)` 的子树测量为零、不占位、不绘制、不收事件，其焦点项同时被移出焦点遍历——留在遍历顺序里的隐藏控件会成为看不见的死角；`visible(true)` 保留子树原有的布局、绘制、事件和焦点行为。
+
+```cangjie
+func visible(isVisible: Bool): Widget
+```
+
+**参数**
+
+- `isVisible`: `Bool` — `false` 时整棵子树从布局、绘制、事件与焦点遍历中移除。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+### enabled
+
+保留组件的布局与绘制、按 `isEnabled` 屏蔽其输入。`enabled(false)` 的子树同时退出焦点遍历（只会忽略 Enter/空格的焦点项是死角），绘制后蒙上半透明背景罩示意禁用；帧事件 `UiEvent.Frame` 仍然放行，内部的帧钩子在禁用期间继续计时。可作用于单个控件，也可作用于整行表单或整块面板。ComponentProbe/Draw IR 会把该状态贯通到自动语义和显式 probe：输出禁用状态并移除不可执行的 action/shortcut，且不受 `.enabled` 与 `.probe` 链接顺序影响。
+
+```cangjie
+func enabled(isEnabled: Bool): Widget
+```
+
+**参数**
+
+- `isEnabled`: `Bool` — `false` 时子树保留版面但不再响应输入。
+
+**返回值** `Widget` — 包装后的新节点，供继续链式调用。
+
+## 另请参阅
+
+- [emit](functions.md#emit) — 构造函数登记子组件的声明收集机制。
+- [UiContext](UiContext.md) — 四个核心方法共同的每帧服务枢纽。
+- [TypographyEnvironment](TypographyEnvironment.md) — 容器与语义文本叶子共享的逐字段排版契约。
+- [State](State.md) — 跨帧存活的状态容器。
+- [Flexible](Flexible.md) — 弹性协议的包装容器。

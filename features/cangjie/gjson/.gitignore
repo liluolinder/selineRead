@@ -1,8 +1,0 @@
-.cache
-.vscode
-target
-*.cj.macrocall
-log.txt
-.claude
-test
-build

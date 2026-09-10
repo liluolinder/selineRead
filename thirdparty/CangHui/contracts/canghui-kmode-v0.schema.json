@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "canghui://schemas/kmode-call-v0",
+  "title": "CangHUI kMode v0 JSON Projection",
+  "oneOf": [
+    { "$ref": "#/$defs/request" },
+    { "$ref": "#/$defs/response" }
+  ],
+  "$defs": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "schemaRef", "kind", "id", "operation"],
+      "properties": {
+        "protocol": { "const": "canghui.kmode.v0" },
+        "schemaRef": { "const": "canghui://schemas/kmode-call-v0" },
+        "kind": { "const": "request" },
+        "id": { "type": "integer", "minimum": 0 },
+        "operation": {
+          "enum": ["health", "list", "describe", "invoke", "shutdown"]
+        },
+        "endpoint": { "type": "string" },
+        "payload": {},
+        "correlationId": { "type": "string" },
+        "replyTo": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "operation": { "enum": ["describe", "invoke"] } } },
+          "then": {
+            "required": ["endpoint"],
+            "properties": { "endpoint": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ]
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "schemaRef", "kind", "id", "ok", "status"],
+      "properties": {
+        "protocol": { "const": "canghui.kmode.v0" },
+        "schemaRef": { "const": "canghui://schemas/kmode-call-v0" },
+        "kind": { "const": "response" },
+        "id": { "type": "integer", "minimum": 0 },
+        "ok": { "type": "boolean" },
+        "status": { "type": "string", "minLength": 1 },
+        "payload": {},
+        "errorCode": { "type": "integer" },
+        "errorMessage": { "type": "string" },
+        "correlationId": { "type": "string" },
+        "replyTo": { "type": "string" }
+      }
+    }
+  }
+}

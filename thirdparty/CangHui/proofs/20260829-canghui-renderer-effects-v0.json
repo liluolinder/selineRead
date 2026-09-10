@@ -1,0 +1,55 @@
+{
+  "schema": "canghui.proof.v0",
+  "id": "20260829-canghui-renderer-effects-v0",
+  "project": "CangHui",
+  "capability": "portable backdrop and optical renderer-effect adapter",
+  "protocol": "canghui.renderer-effects.v0",
+  "baseline": "e3b6b4d42529b993c66b60da8c1f962a8e8d883b",
+  "checkpoint": "atomic member commit containing this proof",
+  "version": {
+    "framework": "0.16.1",
+    "cuic": "0.6.0",
+    "compiler": "Cangjie 1.1.3 cjnative",
+    "host": "aarch64-apple-darwin"
+  },
+  "delivered": {
+    "contract": "public capability, frame, request, status, receipt and adapter types",
+    "lifecycle": "one adapter per renderer with idempotent replacement and teardown",
+    "provider": "bounded synchronous SDL readback provider for the current macOS SDL path",
+    "fallback": "Liquid Glass always paints its SDR layers and exposes the renderer receipt",
+    "budgets": "per-frame effect-count and sampled-pixel limits with stale-frame rejection"
+  },
+  "evidence": {
+    "frameworkTests": "pass: 715/715",
+    "sdlTests": "pass: 108/108, including live SdlWindow readback",
+    "cuicTests": "pass: 71/71",
+    "liquidGlassTests": "pass: 7/7",
+    "packageMatrix": "pass: positive=5 native-skipped=1 negative-fixtures=0",
+    "exampleBuild": "pass: examples/liquid-glass-effects",
+    "semanticProbe": "pass: debug pview at 96x32 with 55 commands and no reported clipping or overlap",
+    "pixelCapture": "pass: CUIC framework capture, 1840x1200 PNG, sha256 aacc19472b921bded769ebdab775a8c9b1cf784de0de1d7987b27e0a09c15a63",
+    "cliSmoke": "pass",
+    "installSmoke": "pass: external consumer build",
+    "publicSurfaceAudit": "pass",
+    "networkControlAudit": "pass",
+    "releaseExclusionAudit": "pass",
+    "diffCheck": "pass",
+    "fullGate": "pass: scripts/ci.sh"
+  },
+  "artifacts": [
+    "sdl/src/renderer_effect.cj",
+    "sdl/src/renderer_effect_test.cj",
+    "src/renderer_effect_export_test.cj",
+    "packages/style-liquid-glass/src/liquid_glass.cj",
+    "examples/liquid-glass-effects",
+    "examples/.images/liquid-glass-effects.png",
+    "manual/reference/renderer-effects.md"
+  ],
+  "nonClaims": [
+    "no cross-frame captured texture retention",
+    "no exact shape-union or path-union clipping",
+    "no native Apple material or pixel-perfect iOS identity",
+    "no Metal, Vulkan, D3D, GLES or WebGPU backend parity",
+    "no release, distribution, version bump or remote push"
+  ]
+}

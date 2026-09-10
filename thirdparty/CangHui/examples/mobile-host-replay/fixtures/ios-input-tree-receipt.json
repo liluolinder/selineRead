@@ -1,0 +1,18 @@
+{
+  "protocol": "canghui.mobile-application-host.v0",
+  "platform": "ios",
+  "packageKind": "ios-application-bundle",
+  "stage": "input-tree",
+  "applicationId": "dev.canghui.mobile.replay",
+  "lifecycleState": "active",
+  "lifecycleEpoch": 4,
+  "surfaceGeneration": 9,
+  "signing": "unsigned",
+  "deviceProof": "not-run",
+  "permissions": [
+    { "capability": "notifications", "state": "permission-required" },
+    { "capability": "touch-input", "state": "granted" }
+  ],
+  "inputFiles": ["Info.plist", "Assets.xcassets/AppIcon.appiconset"],
+  "limitations": ["unsigned consumer fixture", "no IPA or device proof"]
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "canghui.proof.v0",
+  "id": "20260819-canghui-mobile-external-signer-receipt-v0",
+  "project": "CangHui",
+  "capability": "mobile external signer receipt binding",
+  "protocol": "canghui.mobile-external-signer-receipt.v0",
+  "checkpoint": "atomic member commit containing this proof",
+  "evidence": {
+    "frameworkTests": "pass: 573/573",
+    "focusedHostTests": "pass: 33/33",
+    "cuicTests": "pass: 63/63",
+    "consumerBuild": "pass: mobile-host-replay",
+    "kmode": "pass: accepted and stale-binding replays",
+    "binding": "checks output, lifecycle epoch, native-surface generation and bounded source binding",
+    "securityBoundary": "no certificate, key, profile content, password, path or shell command accepted",
+    "stageBoundary": "accepted receipt remains signedPackage=false/installable=false/deviceProven=false"
+  },
+  "artifacts": [
+    "src/host/mobile_external_signer_receipt.cj",
+    "contracts/canghui-mobile-external-signer-receipt-v0.schema.json",
+    "src/host/mobile_signing_preparation.cj",
+    "examples/mobile-host-replay",
+    "docs/mobile-application-host.md",
+    "docs/mobile-application-host.zh-CN.md"
+  ],
+  "nonClaims": [
+    "no cryptographic signature verification",
+    "no signer execution or certificate/key/profile handling",
+    "no signed package, installation or device proof",
+    "no store, release, production or LTS claim"
+  ]
+}

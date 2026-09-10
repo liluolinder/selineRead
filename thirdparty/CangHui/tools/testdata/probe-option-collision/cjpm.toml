@@ -1,0 +1,10 @@
+[package]
+cjc-version = "1.0.5"
+name = "probe_option_collision_fixture"
+version = "0.1.0"
+output-type = "executable"
+description = "Compile fixture for CangHui probe overloads beside SDL None constructors."
+
+[dependencies]
+chui = { path = "../../.." }
+sdl = { path = "../../../sdl" }

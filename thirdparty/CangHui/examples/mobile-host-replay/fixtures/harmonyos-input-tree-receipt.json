@@ -1,0 +1,18 @@
+{
+  "protocol": "canghui.mobile-application-host.v0",
+  "platform": "harmonyos",
+  "packageKind": "harmony-application-package",
+  "stage": "input-tree",
+  "applicationId": "dev.canghui.mobile.replay",
+  "lifecycleState": "active",
+  "lifecycleEpoch": 4,
+  "surfaceGeneration": 9,
+  "signing": "unsigned",
+  "deviceProof": "not-run",
+  "permissions": [
+    { "capability": "notifications", "state": "permission-required" },
+    { "capability": "touch-input", "state": "granted" }
+  ],
+  "inputFiles": ["entry/src/main/module.json5", "entry/src/main/ets/pages/Index.ets"],
+  "limitations": ["unsigned consumer fixture", "no HAP or device proof"]
+}

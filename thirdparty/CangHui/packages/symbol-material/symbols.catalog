@@ -1,0 +1,15 @@
+canghui.symbol.provider.v0
+provider=material
+namespace=canghui_symbol_material
+providerType=MaterialSymbolProvider
+adapterType=MaterialSymbolAdapter
+repository=https://github.com/google/material-design-icons
+revision=528cb964c01fb2b09bc3b9208f82b6d8f8c1c1e2
+version=rolling-2026-07-24
+license=Apache-2.0
+symbol=add|aliases=plus|variants=outlined|directional=false|source=symbols/web/add/materialsymbolsoutlined/add_24px.svg
+symbol=remove|aliases=minus|variants=outlined|directional=false|source=symbols/web/remove/materialsymbolsoutlined/remove_24px.svg
+symbol=close|aliases=cancel|variants=outlined|directional=false|source=symbols/web/close/materialsymbolsoutlined/close_24px.svg
+symbol=check|aliases=done|variants=outlined|directional=false|source=symbols/web/check/materialsymbolsoutlined/check_24px.svg
+symbol=chevron-left|aliases=left|variants=outlined|directional=true|source=symbols/web/chevron_left/materialsymbolsoutlined/chevron_left_24px.svg
+symbol=chevron-right|aliases=right|variants=outlined|directional=true|source=symbols/web/chevron_right/materialsymbolsoutlined/chevron_right_24px.svg

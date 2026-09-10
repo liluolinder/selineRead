@@ -1,0 +1,47 @@
+{
+  "schema": "cangjiegui-proof-receipt-v1",
+  "id": "20260725-cangjiegui-ios-bootstrap-device-v0",
+  "createdAt": "2026-07-25T19:55:56+08:00",
+  "matrixVersion": "CangjieGUI.20260725.5",
+  "frameworkBaseline": "CangjieGUI@1a71145",
+  "toolchain": {
+    "cangjie": "1.3.0-alpha.20260725010033",
+    "cjpm": "1.2.0-beta.rc2",
+    "xcode": "16.4",
+    "iosSdk": "18.5"
+  },
+  "verification": {
+    "frameworkBuild": "pass: Cangjie 1.1.3 cjpm build",
+    "frameworkTests": "pass: 197/197",
+    "galleryBuild": "pass: examples/component-gallery cjpm build",
+    "deviceStaticLibrary": "pass: aarch64-apple-ios",
+    "simulatorStaticLibrary": "pass: aarch64-apple-ios-simulator; includes native-surface proxy contracts",
+    "exportedSymbol": "pass: cangjiegui_ios_host_abi_version",
+    "xcodeDeviceBuild": "pass: automatic development signing",
+    "deviceInstall": "pass: physical iPad",
+    "runtimeInit": "pass: MRT_CjRuntimeInit returned status 0",
+    "uiScheduler": "pass: fixed background host thread received a non-null InitUIScheduler result",
+    "minimalN2CCall": "pass: foreign thread entered a minimal Cangjie static package through InitCJLibraryStub and returned 130",
+    "cangjieGuiAbiCall": "partial: entered the N2C call but did not return from cui.host static-package initialization",
+    "deviceStability": "pass: corrected N2C probe remained alive; the earlier direct C ABI call crashed because no Cangjie thread context was installed"
+  },
+  "abi": {
+    "symbol": "cangjiegui_ios_host_abi_version",
+    "expectedValue": 1,
+    "observedValue": null,
+    "state": "package-init-blocked"
+  },
+  "blocker": {
+    "id": "static-package-initialization",
+    "detail": "The public host path for registering and initializing the Cangjie static package BaseFile has not been established. InitCJLibraryStub is an N2C gate, not package initialization.",
+    "required": "An official RuntimeParam/static-loader initialization contract or upstream toolchain entry point."
+  },
+  "nonClaims": [
+    "no successful return from the CangjieGUI ABI probe",
+    "no UIKit lifecycle, safe-area or touch adapter",
+    "no iOS renderer or native-surface backend",
+    "no simulator launch acceptance",
+    "no product acceptance application on iOS",
+    "no release or LTS claim"
+  ]
+}

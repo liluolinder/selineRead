@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/contracts/canghui-application-settings-v0.schema.json",
+  "title": "CangHui typed application settings contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "storageStates", "migrationStatuses"],
+  "properties": {
+    "protocol": { "const": "canghui.application-settings.v0" },
+    "storageStates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["ordinary", "secure"] }
+    },
+    "migrationStatuses": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["applied", "queued", "unsupported", "failed"] }
+    },
+    "rules": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

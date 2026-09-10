@@ -1,0 +1,51 @@
+{
+  "schema": "canghui.proof.v0",
+  "id": "20260829-canghui-probe-option-disambiguation-v0",
+  "project": "CangHui",
+  "capability": "probe Option None disambiguation",
+  "protocol": "canghui.probe-option-disambiguation.v0",
+  "baseline": "d71b88eae537ecea9766a2daa834b8d3b5380c65",
+  "checkpoint": "atomic member commit containing this proof",
+  "version": {
+    "framework": "0.16.1",
+    "cuic": "0.6.0",
+    "compiler": "Cangjie 1.1.3 cjnative",
+    "host": "aarch64-apple-darwin"
+  },
+  "delivered": {
+    "repair": "all three public probe overloads without a semantic provider use None<ProbeSemanticProvider>",
+    "collisionFixture": "an external consumer imports sdl.TextureFlip.None and compiles every repaired overload",
+    "buildModes": "the collision fixture is rebuilt from clean state and incrementally in the full CI gate"
+  },
+  "evidence": {
+    "languageReference": "bundled Cangjie Option documentation requires None<T> when context cannot disambiguate",
+    "redReproduction": "a package-level SDL None import made 18 historical bare Option expressions ambiguous before the regression was isolated externally",
+    "frameworkTests": "pass: 715/715",
+    "sdlTests": "pass: 108/108",
+    "cuicTests": "pass: 71/71",
+    "collisionFixture": "pass: clean build and incremental build",
+    "consumerBuild": "pass: MineMoStudio incremental build with local chui dependency",
+    "consumerTestBoundary": "MineMoStudio full tests were not accepted as a stable baseline because nine provider/UI source and test files were changing concurrently; the observed 81/90 run failed in provider runtime paths after compilation",
+    "packageMatrix": "pass: positive=5 native-skipped=1 negative-fixtures=0",
+    "cliSmoke": "pass",
+    "installSmoke": "pass: external consumer build",
+    "publicSurfaceAudit": "pass",
+    "networkControlAudit": "pass",
+    "releaseExclusionAudit": "pass",
+    "diffCheck": "pass",
+    "fullGate": "pass: scripts/ci.sh"
+  },
+  "artifacts": [
+    "src/core/widget.cj",
+    "scripts/verify-probe-option-disambiguation.sh",
+    "tools/testdata/probe-option-collision/cjpm.toml",
+    "tools/testdata/probe-option-collision/src/main.cj",
+    "scripts/ci.sh",
+    "manual/CHANGELOG.md"
+  ],
+  "nonClaims": [
+    "no broad rewrite of unrelated Option expressions",
+    "no MineMoStudio source or test modification",
+    "no version bump, release, distribution or remote push"
+  ]
+}

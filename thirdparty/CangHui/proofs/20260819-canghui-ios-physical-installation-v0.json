@@ -1,0 +1,38 @@
+{
+  "schema": "canghui.proof.v0",
+  "id": "20260819-canghui-ios-physical-installation-v0",
+  "project": "CangHui",
+  "capability": "iOS physical-device static-package launch and native-surface acceptance",
+  "checkpoint": "atomic member commit containing this proof",
+  "evidence": {
+    "hostToolchain": "Cangjie cjc/cjpm 1.1.3 and Xcode 16.4 on aarch64-apple-darwin",
+    "iosToolchain": "Cangjie 1.3.0-alpha-ios static runtime inputs",
+    "profileDecoder": "pass: security cms primary with openssl smime compatibility fallback; success, fallback and dual-failure tests",
+    "profileValidity": "pass: fresh time-valid Xcode-managed development profile at installation time",
+    "artifact": "pass: signed arm64 application executable, sha256:6be1fbfd4ff631cd52c12ea26526cf3fa1eec40aa86d30934d2a2ff39605d05c, 5666480 bytes",
+    "installation": "pass: devicectl accepted the application on a paired physical iPad",
+    "launch": "pass: after device developer trust was enabled, devicectl launched the installed CangHui probe and observed runtime=0, scheduler=ready, library=0, task=0 and abi=1",
+    "nativeSurface": "pass: metal=ready, drawable=ready, attached=1, attaches=2, resizes=1, detaches=1, generation=2, frames=31, touches=1, pointers=1 and traits=4",
+    "visualBoundary": "the rendered surface is a Metal clear probe with a high-contrast diagnostic panel; the declarative CUI scene is not mounted",
+    "frameworkTests": "pass: 580/580",
+    "cuicTests": "pass: 63/63"
+  },
+  "stageTruth": {
+    "installationProven": true,
+    "launchProven": true,
+    "renderingProven": true,
+    "deviceProven": true,
+    "scope": "static-package native-surface probe only",
+    "productSceneProven": false
+  },
+  "privacy": [
+    "no device identifier, serial number or device path retained",
+    "no signing identity, team identifier, profile UUID or profile path retained",
+    "no certificate, private key or provisioning profile contents retained"
+  ],
+  "nonClaims": [
+    "no full declarative CUI scene or product workflow rendering",
+    "touch and pointer counts are deterministic synthetic ingress, not physical Pencil or user-gesture proof",
+    "no product application acceptance, store, release, production or LTS claim"
+  ]
+}

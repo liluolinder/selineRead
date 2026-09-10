@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_highlight"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui RichSpan.highlight — live search-term highlighting (<mark>) over a knowledge-base reader."
+
+[dependencies]
+chui = { path = "../.." }

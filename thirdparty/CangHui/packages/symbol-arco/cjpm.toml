@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "canghui_symbol_arco"
+version = "0.1.0"
+output-type = "static"
+description = "Optional Arco Design Icons adapter for CangHui."
+
+[dependencies]
+chui = { path = "../.." }

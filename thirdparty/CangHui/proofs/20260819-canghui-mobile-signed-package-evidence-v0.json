@@ -1,0 +1,32 @@
+{
+  "schema": "canghui.proof.v0",
+  "id": "20260819-canghui-mobile-signed-package-evidence-v0",
+  "project": "CangHui",
+  "capability": "mobile signed package evidence gate",
+  "protocol": "canghui.mobile-signed-package-evidence.v0",
+  "checkpoint": "atomic member commit containing this proof",
+  "evidence": {
+    "frameworkTests": "pass: 577/577",
+    "focusedHostTests": "pass: 37/37",
+    "cuicTests": "pass: 63/63",
+    "consumerBuild": "pass: mobile-host-replay",
+    "kmode": "pass: applied and stale-binding replays across 5 links and 3 package roots",
+    "binding": "checks platform owner, verifier receipt, output, artifact digest and size, exact source input tree, source binding, lifecycle epoch and native-surface generation",
+    "providerGate": "iOS direct input-tree to signed-package apply is refused; applySignedPackageEvidence is required",
+    "stageBoundary": "applied evidence may produce signedPackage/installable candidate while installationProven=false and deviceProven=false"
+  },
+  "artifacts": [
+    "src/host/mobile_signed_package_evidence.cj",
+    "src/host/ios_mobile_application_host.cj",
+    "contracts/canghui-mobile-signed-package-evidence-v0.schema.json",
+    "examples/mobile-host-replay",
+    "docs/mobile-application-host.md",
+    "docs/mobile-application-host.zh-CN.md"
+  ],
+  "nonClaims": [
+    "no signer or verifier execution",
+    "no certificate, key, profile, password, path or command handling",
+    "no installation, launch, rendering or physical-device replay",
+    "no store, release, production or LTS claim"
+  ]
+}

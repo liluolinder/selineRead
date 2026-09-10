@@ -1,0 +1,29 @@
+package chui.kmode.linktest
+
+@When[debug]
+import chui.kmode.{KModeOperation, KModePolicy, KModeRequest, dispatchKModeRequest}
+import chui.kmode.macros.*
+
+/* ===== Emitted by MacroCall @KModeLink in link_test.cj:7:1 ===== */
+/* 7.1 */func linkedEcho(value: String): String {
+/* 7.2 */    "linked:" + value
+/* 7.3 */}
+/* 7.4 */public let __canghui_kmode_link_p_116_101_115_116_115_46_109_97_99_114_111_46_101_99_104_111 = KModeRegistration(
+/* 7.5 */"tests.macro.echo",
+/* 7.6 */"linked function linkedEcho",
+/* 7.7 */KModeCapability.Invoke,
+/* 7.8 */{ value: String => linkedEcho(value) }
+/* 7.9 */)
+/* 7.10 */
+/* ===== End of the Emit ===== */
+
+@When[debug]
+@Test
+func macroLinkedEndpointIsRegisteredAndInvocable(): Unit {
+    let response = dispatchKModeRequest(
+        KModeRequest(11, KModeOperation.Invoke, endpoint: "tests.macro.echo", payload: "value"),
+        policy: KModePolicy(enabled: true)
+    )
+    @Expect(response.ok)
+    @Expect(response.payload, "linked:value")
+}

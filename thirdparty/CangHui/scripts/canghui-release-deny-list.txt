@@ -1,0 +1,14 @@
+# Fixed strings that must not occur in release CUIC or application executables.
+CANGHUI_PRIVILEGED_DEBUG_BUILD=1
+CANGHUI_KMODE_TRANSPORT
+CANGHUI_KMODE=1
+CANGHUI_DEBUG_UI_SCRIPT_HEX
+CANGHUI_DEBUG_UI_RESULT
+canghui.ui-observation.v0
+canghui.ui-diff.v0
+CANGHUI_FRAME_TRACE_PATH
+CANGHUI_FRAME_TRACE_SCENARIO
+CANGHUI_FRAME_TRACE_MAX_FRAMES
+canghui.frame-trace.v0
+canghui.frame-replay.v0
+cui.frame.replay

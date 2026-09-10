@@ -1,0 +1,39 @@
+{
+  "schema": "cangjiegui-proof-receipt-v1",
+  "id": "20260725-cangjiegui-mobile-host-contracts-v0",
+  "createdAt": "2026-07-25T16:28:00+08:00",
+  "matrixVersion": "CangjieGUI.20260725.3",
+  "frameworkBaseline": "CangjieGUI@1489671",
+  "verification": {
+    "frameworkBuild": "pass: cjpm build",
+    "frameworkTests": "pass: 192/192",
+    "galleryBuild": "pass: examples/component-gallery cjpm build",
+    "jsonContracts": "pass: jq parse",
+    "diffCheck": "pass: git diff --check"
+  },
+  "deliveredContracts": [
+    "application lifecycle",
+    "safe-area-aware logical viewport",
+    "touch event boundary",
+    "platform resource and file picker boundary",
+    "application and secure storage SPI",
+    "system theme SPI",
+    "notification SPI",
+    "background task SPI"
+  ],
+  "iosBuildGate": {
+    "cangjieVersion": "1.1.3",
+    "hostTarget": "aarch64-apple-darwin",
+    "requiredDeviceTarget": "aarch64-apple-ios",
+    "requiredSimulatorTarget": "aarch64-apple-ios-simulator",
+    "currentBlocker": "installed SDK has no ios_aarch64_cjnative or ios_simulator_aarch64_cjnative runtime directories"
+  },
+  "nonClaims": [
+    "no UIKit, PhotoKit or Keychain adapter",
+    "no iOS renderer or native-surface backend",
+    "no Xcode or CJMP host project",
+    "no simulator or device proof",
+    "no product acceptance application port completion",
+    "no release or LTS claim"
+  ]
+}

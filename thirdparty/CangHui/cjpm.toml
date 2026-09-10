@@ -1,0 +1,10 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui"
+version = "0.17.0"
+output-type = "static"
+description = "CangHui multiplatform declarative GUI framework for Cangjie"
+license = "Apache-2.0"
+
+[dependencies]
+sdl = { path = "./sdl" }

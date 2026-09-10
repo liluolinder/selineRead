@@ -1,0 +1,52 @@
+{
+  "schema": "canghui-proof-receipt-v1",
+  "id": "20260819-canghui-ios-provider-input-tree-v0",
+  "createdAt": "2026-08-19T15:30:00+08:00",
+  "matrixVersion": "CangHui.20260819.16",
+  "baseline": "CangHui@f9332b2e2751dfa5bddee278229570871ab94efe",
+  "checkpoint": "commit carrying this receipt",
+  "version": "0.10.0",
+  "protocols": [
+    "canghui.mobile-application-host.v0",
+    "canghui.mobile-host-replay.v0"
+  ],
+  "provider": "IOSMobileApplicationHostProvider",
+  "inputTree": {
+    "stage": "input-tree",
+    "signing": "unsigned",
+    "installable": false,
+    "deviceProven": false,
+    "fileCount": 14,
+    "source": "platform/ios probe, bootstrap, runtime and include files"
+  },
+  "verification": {
+    "toolchain": "Cangjie cjc/cjpm 1.1.3 on aarch64-apple-darwin",
+    "rootBuild": "pass: cjpm build",
+    "rootTests": "pass: 567/567",
+    "focusedHostTests": "pass: 27/27",
+    "focusedKModeTests": "pass: 6/6",
+    "integratedCliTests": "pass: 63/63",
+    "consumerBuild": "pass: examples/mobile-host-replay cjpm build",
+    "kmodeDiff": "pass: 2 links across 3 local package roots",
+    "iosProviderReplay": "pass: current callback accepted with input-tree, unsigned and deviceProven=false retained",
+    "staleReceiptRollback": "pass: older lifecycle/surface receipt rejected after provider advancement",
+    "doctorJson": "pass: provider boundary and 14-file unsigned iOS input tree reported ready",
+    "cliSmoke": "pass: local lifecycle, old replay, iOS provider replay and target-gate checks",
+    "jsonContracts": "pass: capability matrix, mobile schemas, fixtures and this receipt parse",
+    "diffCheck": "pass: git diff --check"
+  },
+  "delivered": [
+    "provider-owned iOS application host implementation over the existing native-surface bridge",
+    "monotonic lifecycle epoch and surface-generation receipt binding",
+    "unsigned checked-in iOS UIKit input-tree staging",
+    "stale receipt rollback rejection and provider regression coverage",
+    "consumer-owned iOS provider kMode endpoint and doctor/matrix documentation"
+  ],
+  "nonClaims": [
+    "no IPA generation or code signing",
+    "no installation or current iPad device replay",
+    "no product-scene renderer, IME or accessibility completion",
+    "no Android APK or HarmonyOS HAP claim",
+    "no store publication, production or LTS claim"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "cangjiegui-proof-receipt-v1",
+  "id": "20260725-cangjiegui-kmode-v0",
+  "createdAt": "2026-07-25T11:07:04+08:00",
+  "matrixVersion": "CangjieGUI.20260725.2",
+  "frameworkBaseline": "CangjieGUI@d161ab9",
+  "cliBaseline": "CangUI-CLI@477cb81",
+  "protocol": "canghui.kmode.v0",
+  "verification": {
+    "frameworkBuild": "pass: cjpm build",
+    "frameworkTests": "pass: 189/189",
+    "cliBuild": "pass: cjpm build",
+    "cliTests": "pass: 8/8",
+    "galleryBuild": "pass: cjpm build",
+    "diffUnique": "pass: 2 links across 4 local package roots",
+    "diffDuplicate": "expected failure: fixture.same reports both source locations",
+    "macroDuplicate": "expected compile failure: redefinition of __canghui_kmode_link_fixture__same",
+    "headlessList": "pass: gallery.api.version and gallery.viewport.class",
+    "headlessCall": "pass: gallery.viewport.class(800) -> medium",
+    "jsonContracts": "pass: jq parse",
+    "diffCheck": "pass: git diff --check"
+  },
+  "headlessBoundary": {
+    "entry": "runKModeStdioIfRequested before DesktopApp construction",
+    "activation": ["compiler debug condition", "CANGHUI_KMODE=1 supervised environment"],
+    "transport": "stdio child process managed by cuic",
+    "observed": "no SDL initialization, window creation, or layout execution output during list/call proof"
+  },
+  "duplicateGates": [
+    "cuic recursive local-path source diff",
+    "deterministic macro-generated declaration symbol",
+    "runtime registry duplicate rejection"
+  ],
+  "channelBoundary": {
+    "interface": "KModeChannelModule connect/send/poll/ack/resumeCursor",
+    "test": "fake module proves admin-only override, opaque nested JSON string, cursor and ACK flow",
+    "adapterClaim": "transport-neutral adapter contract only; no checked-in URL, credential, session, or live relay proof",
+    "ackMeaning": "relay consumption only; business result remains KModeResponse"
+  },
+  "nonClaims": [
+    "no production remote administration",
+    "no arbitrary shell or unrestricted filesystem execution",
+    "no live external-relay interoperability acceptance",
+    "no release or LTS claim"
+  ],
+  "knownEnvironmentNote": "Homebrew SDL dylibs and the Cangjie static runtime emit inherited macOS minimum-version linker warnings."
+}

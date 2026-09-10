@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "duplicate_probe_fixture"
+version = "0.1.0"
+output-type = "executable"
+description = "Compile-fail fixture for duplicate CuiProbe names."
+
+[dependencies]
+chui = { path = "../../../.." }

@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/contracts/canghui-mobile-host-package-v0.schema.json",
+  "title": "CangHui mobile application host package receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "platform",
+    "packageKind",
+    "stage",
+    "applicationId",
+    "lifecycleState",
+    "lifecycleEpoch",
+    "surfaceGeneration",
+    "signing",
+    "deviceProof",
+    "permissions",
+    "inputFiles",
+    "limitations"
+  ],
+  "properties": {
+    "protocol": { "const": "canghui.mobile-application-host.v0" },
+    "platform": { "enum": ["ios", "android", "harmonyos"] },
+    "packageKind": {
+      "enum": [
+        "ios-application-bundle",
+        "android-application-package",
+        "harmony-application-package"
+      ]
+    },
+    "stage": {
+      "enum": ["contract-ready", "input-tree", "signed-package", "device-proven"]
+    },
+    "applicationId": { "type": "string", "minLength": 1 },
+    "lifecycleState": {
+      "enum": ["launching", "active", "inactive", "background", "suspended", "terminating"]
+    },
+    "lifecycleEpoch": { "type": "integer", "minimum": 0 },
+    "surfaceGeneration": { "type": "integer", "minimum": 0 },
+    "signing": { "enum": ["not-evaluated", "unsigned", "signed"] },
+    "deviceProof": { "enum": ["not-run", "passed", "failed"] },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["capability", "state"],
+        "properties": {
+          "capability": {
+            "enum": [
+              "file-open", "file-save", "clipboard", "secure-storage", "lifecycle",
+              "window-control", "ime", "accessibility", "media-session", "native-surface",
+              "audio-output", "drag-drop", "notifications", "network", "open-url",
+              "touch-input", "safe-area", "application-storage", "system-theme",
+              "background-tasks", "media-library"
+            ]
+          },
+          "state": {
+            "enum": ["not-declared", "permission-required", "granted", "denied", "unsupported"]
+          }
+        }
+      }
+    },
+    "inputFiles": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "platform": { "const": "ios" } } },
+      "then": { "properties": { "packageKind": { "const": "ios-application-bundle" } } }
+    },
+    {
+      "if": { "properties": { "platform": { "const": "android" } } },
+      "then": { "properties": { "packageKind": { "const": "android-application-package" } } }
+    },
+    {
+      "if": { "properties": { "platform": { "const": "harmonyos" } } },
+      "then": { "properties": { "packageKind": { "const": "harmony-application-package" } } }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["input-tree", "signed-package", "device-proven"] } } },
+      "then": { "properties": { "inputFiles": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["signed-package", "device-proven"] } } },
+      "then": { "properties": { "signing": { "const": "signed" } } }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["contract-ready", "input-tree"] } } },
+      "then": { "properties": { "signing": { "enum": ["not-evaluated", "unsigned"] } } }
+    },
+    {
+      "if": { "properties": { "stage": { "const": "device-proven" } } },
+      "then": { "properties": { "deviceProof": { "const": "passed" } } }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["contract-ready", "input-tree", "signed-package"] } } },
+      "then": { "properties": { "deviceProof": { "enum": ["not-run", "failed"] } } }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+canghui.symbol.provider.v0
+provider=ant
+namespace=canghui_symbol_ant
+providerType=AntSymbolProvider
+adapterType=AntSymbolAdapter
+repository=https://github.com/ant-design/ant-design-icons
+revision=6c18c63fbcfcf71dae09cd6bd6d63a48f8b688f1
+version=rolling-2026-07-06
+license=MIT
+symbol=plus|aliases=add|variants=outlined|directional=false|source=packages/icons-svg/svg/outlined/plus.svg
+symbol=minus|aliases=remove|variants=outlined|directional=false|source=packages/icons-svg/svg/outlined/minus.svg
+symbol=close|aliases=cancel|variants=outlined|directional=false|source=packages/icons-svg/svg/outlined/close.svg
+symbol=check|aliases=done|variants=outlined|directional=false|source=packages/icons-svg/svg/outlined/check.svg
+symbol=left|aliases=chevron-left|variants=outlined|directional=true|source=packages/icons-svg/svg/outlined/left.svg
+symbol=right|aliases=chevron-right|variants=outlined|directional=true|source=packages/icons-svg/svg/outlined/right.svg

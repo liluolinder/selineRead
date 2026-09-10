@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/contracts/canghui-doctor-v0.schema.json",
+  "title": "CangHui doctor report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "cliVersion",
+    "host",
+    "requestedTarget",
+    "status",
+    "requestedBlockers",
+    "exitCode",
+    "groups"
+  ],
+  "properties": {
+    "schema": { "const": "canghui.doctor.v0" },
+    "cliVersion": { "type": "string", "minLength": 1 },
+    "cliProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel", "revision"],
+      "properties": {
+        "channel": { "enum": ["development", "local-source", "release"] },
+        "revision": { "type": "string", "minLength": 1 }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "architecture"],
+      "properties": {
+        "platform": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string" }
+      }
+    },
+    "requestedTarget": {
+      "enum": ["macos", "windows", "linux", "ios", "harmonyos", "android"]
+    },
+    "status": { "$ref": "#/$defs/status" },
+    "requestedBlockers": { "type": "integer", "minimum": 0 },
+    "exitCode": { "enum": [0, 1] },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/group" }
+    }
+  },
+  "$defs": {
+    "status": {
+      "enum": ["ready", "degraded", "blocked", "unsupported"]
+    },
+    "actionKind": {
+      "enum": ["none", "automatic", "manual", "unsupported"]
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "suggestion"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/actionKind" },
+        "suggestion": { "type": "string" }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "status", "reason", "action", "evidence"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/status" },
+        "reason": { "type": "string", "minLength": 1 },
+        "action": { "$ref": "#/$defs/action" },
+        "evidence": { "type": "string" }
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "target", "status", "checks"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "target": {
+          "enum": ["all", "macos", "windows", "linux", "ios", "harmonyos", "android"]
+        },
+        "status": { "$ref": "#/$defs/status" },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/check" }
+        }
+      }
+    }
+  }
+}

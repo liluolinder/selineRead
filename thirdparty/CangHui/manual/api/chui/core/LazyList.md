@@ -1,0 +1,230 @@
+[chui](../../index.md) › [chui.core](index.md) › LazyList
+
+# LazyList
+
+`chui.core` 包中的 public class
+
+行高由 `heightOf` 逐行给定的惰性垂直滚动列表，是 [`LazyColumn`](LazyColumn.md) 的变高对应物。聊天气泡、评论、带折行文本的卡片这类"行高随内容"的列表，构建、布局与绘制同样只花一屏的成本。
+
+## 声明
+
+```cangjie
+public class LazyList <: Widget
+```
+
+## 继承
+
+LazyList <: [`Widget`](Widget.md)
+
+## 说明
+
+行偏移是行高的运行前缀和，可见窗口对它二分查找，因此偏移表是一次对全部行高的轻量累加、构建仍只发生在可见行上。这要求 `heightOf` 为 O(1)——返回存好的或预估的高度，而不是每次重新测量文本；且必须与行实际绘制的高度一致，否则行会重叠或露缝。滚动偏移、`key` 与 `id` 的语义与 [`LazyColumn`](LazyColumn.md) 相同：行内局部状态随滚出销毁、`key` 让状态跟随条目、内容溢出时右缘保留滚动条车道、滚轮一格 72 逻辑像素。
+
+## 示例
+
+```cangjie verify
+package docexample
+
+import chui.*
+
+// 消息行高不一：真实应用把高度存在消息模型上，这里用奇偶模拟
+func rowHeight(index: Int64): Float32 {
+    if (index % 2 == 0) {
+        88.0
+    } else {
+        44.0
+    }
+}
+
+main(): Unit {
+    let app = DesktopApp(WindowSpec("LazyList", 640, 420))
+    app.run {
+        let scroll = rememberState<Float32>("scroll") {0.0}
+        let thread = LazyList(200, rowHeight, spacing: 6.0, scroll: Some(scroll), id: "thread") {
+            index => Label("消息 ${index}")
+        }
+        // 运行时：滚动不同高度的消息列表，行由可见范围按需构建。
+    }
+}
+```
+
+## 成员概览
+
+**构造函数**
+
+| 成员 | 说明 |
+|---|---|
+| [`init(...)`](#init) | 索引形式：`count` 行按索引惰性构建，行高来自 `heightOf(index)`。 |
+
+**方法**
+
+| 成员 | 说明 |
+|---|---|
+| [`static of(...)`](#of) | 数据驱动形式：由 `Array<T>`、每条目的高度提取器与构建器建列表。 |
+| [`scrollOptions(value: ScrollOptions)`](#scrolloptions) | 选择平滑/即时滚轮行为，并配置步长、时长与曲线。 |
+| [`measure(...)`](#measure) | 恒占满全部可用空间：列表填满父容器分配的区域。 |
+| [`layout(...)`](#layout) | 记录视口高度供下一帧构建、把滚动偏移限制在有效范围，并按前缀和偏移逐行摆放已构建行。 |
+| [`draw(...)`](#draw) | 裁剪到视口逐行绘制，内容溢出时在右缘画滚动条。 |
+| [`handle(...)`](#handle) | 滚轮滚动列表、滚动条按下/拖拽优先处理，其余事件从视觉最上层的行开始分发。 |
+| [`isFlexible()`](#isflexible) | 恒返回 `true`：列表吸收所在栈的剩余空间。 |
+| [`focusableIds()`](#focusableids) | 汇总当前已构建行的焦点项，只有可见行进入 Tab 遍历。 |
+
+## 构造函数
+
+### init
+
+索引形式：`count` 行按索引惰性构建，行高来自 `heightOf(index)`。数据驱动的形式见 [`of`](#of)。
+
+```cangjie
+public init(
+    count: Int64,
+    heightOf: (Int64) -> Float32,
+    spacing!: Float32 = 0.0,
+    scroll!: ?State<Float32> = None,
+    key!: ?((Int64) -> String) = None,
+    id!: ?String = None,
+    item!: (Int64) -> Unit
+)
+```
+
+**参数**
+
+- `count`: `Int64` — 行数；负值按 0 处理。
+- `heightOf`: `(Int64) -> Float32` — 行高函数，逻辑像素；须为 O(1) 且与行实际绘制高度一致，负值按 0 处理。构造时对每行调用一次以累加偏移表。
+- `spacing!`: `Float32` — 行间距，只存在于行与行之间；默认 `0.0`，负值按 0 处理。
+- `scroll!`: `?`[`State`](State.md)`<Float32>` — 外部持有的滚动偏移；默认 `None`，由列表按 `id` 自持。
+- `key!`: `?((Int64) -> String)` — 行的稳定标识函数，让行内状态跟随条目跨插入/重排；默认 `None`，按索引键控。
+- `id!`: `?String` — 容器标识，界定保留的滚动与行内状态；默认 `None` 按构建顺序自动推导，显式给出时须非空。
+- `item!`: `(Int64) -> Unit` — 行构建器，收到行索引；只对视口附近的行调用。
+
+**异常**
+
+- `IllegalArgumentException` — `id` 显式给出且为空字符串时。
+
+## 方法
+
+### of
+
+数据驱动形式：由 `Array<T>`、每条目的高度提取器与构建器建列表。`heightOf` 须为 O(1)（存好的或预计算的高度）；`key` 给条目稳定标识，省略则按索引键控。
+
+```cangjie
+public static func of<T>(
+    data: Array<T>,
+    heightOf: (T) -> Float32,
+    spacing!: Float32 = 0.0,
+    scroll!: ?State<Float32> = None,
+    key!: ?((T) -> String) = None,
+    id!: ?String = None,
+    item!: (T) -> Unit
+): LazyList
+```
+
+**参数**
+
+- `data`: `Array<T>` — 数据源；行数即 `data.size`。
+- `heightOf`: `(T) -> Float32` — 每条目的高度提取器，逻辑像素。
+- `spacing!`: `Float32` — 行间距；默认 `0.0`。
+- `scroll!`: `?`[`State`](State.md)`<Float32>` — 外部滚动偏移；默认 `None`。
+- `key!`: `?((T) -> String)` — 条目的稳定标识函数；默认 `None` 按索引键控。
+- `id!`: `?String` — 容器标识；默认 `None` 自动推导。
+- `item!`: `(T) -> Unit` — 行构建器，直接收到条目。
+
+**返回值** `LazyList` — 配置好的列表。
+
+```cangjie
+LazyList.of(model.messages, {m => m.height}, key: {m => m.id}) {
+    msg => bubble(msg)
+}
+```
+
+### scrollOptions
+
+为滚轮输入选择共享策略；默认 `ScrollOptions.web()`，直接跳转可用 `ScrollOptions.immediate()`。
+
+```cangjie
+public func scrollOptions(value: ScrollOptions): LazyList
+```
+
+**参数** `value`: [`ScrollOptions`](ScrollOptions.md) — 行为、步长、时长与曲线。
+
+**返回值** `LazyList` — 本列表自身，用于链式调用。
+
+### measure
+
+恒占满全部可用空间：列表填满父容器分配的区域。
+
+```cangjie
+public func measure(_: UiContext, available: Size): Size
+```
+
+**参数**
+
+- `available`: `Size` — 父级给出的可用尺寸约束。
+
+**返回值** `Size` — 与 `available` 相同。
+
+### layout
+
+记录视口高度供下一帧构建、把滚动偏移限制在有效范围，并按前缀和偏移逐行摆放已构建行。内容溢出时行宽让出右缘的滚动条车道。
+
+```cangjie
+public func layout(ctx: UiContext, rect: Rect): Unit
+```
+
+**参数**
+
+- `ctx`: [`UiContext`](UiContext.md) — 本轮布局使用的 UI 上下文。
+- `rect`: `Rect` — 父级最终分配给组件的矩形。
+
+### draw
+
+裁剪到视口逐行绘制，内容溢出时在右缘画滚动条。每行的裁剪矩形外扩一圈阴影余量，卡片行的柔和投影不会在槽位边界被切成硬边。
+
+```cangjie
+public func draw(ctx: UiContext): Unit
+```
+
+**参数**
+
+- `ctx`: [`UiContext`](UiContext.md) — 本轮绘制使用的 UI 上下文。
+
+### handle
+
+滚轮滚动列表、滚动条按下/拖拽优先处理，其余事件从视觉最上层的行开始分发。帧事件广播给全部已构建行且不消费；内容不足一屏时滚轮不消费、让给外层滚动容器；行拖拽进行中允许指针越出视口继续跟踪。
+
+```cangjie
+public func handle(ctx: UiContext, event: UiEvent): Bool
+```
+
+**参数**
+
+- `ctx`: [`UiContext`](UiContext.md) — 本轮事件处理使用的 UI 上下文。
+- `event`: `UiEvent` — 本轮待处理的 UI 事件。
+
+**返回值** `Bool` — 事件被列表或某个行消费时为 `true`。
+
+### isFlexible
+
+恒返回 `true`：列表吸收所在栈的剩余空间。
+
+```cangjie
+public func isFlexible(): Bool
+```
+
+**返回值** `Bool` — 恒为 `true`。
+
+### focusableIds
+
+汇总当前已构建行的焦点项，只有可见行进入 Tab 遍历。
+
+```cangjie
+public func focusableIds(): Array<String>
+```
+
+**返回值** `Array<String>` — 声明顺序的焦点标识。
+
+## 另请参阅
+
+- [LazyColumn](LazyColumn.md) — 定行高的惰性列表，语义约定的完整说明。
+- [LazyRow](LazyRow.md) — 水平方向的惰性条带。
+- [LazyGrid](functions.md#lazygrid) — 按行虚拟化的网格函数。

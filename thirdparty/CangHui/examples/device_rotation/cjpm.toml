@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_device_rotation"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui normalized device rotation event and adaptive layout demo."
+
+[dependencies]
+chui = { path = "../.." }

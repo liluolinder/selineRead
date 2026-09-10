@@ -1,0 +1,18 @@
+[package]
+cjc-version = "1.1.0"
+name = "canghui_scene3d_bgfx"
+version = "0.1.0"
+output-type = "static"
+description = "Optional bgfx4cj Scene3D driver for CangHui"
+license = "Apache-2.0"
+
+[dependencies]
+chui = { path = "../.." }
+sdl = { path = "../../sdl" }
+bgfx4cj = { git = "https://gitcode.com/Cangjie-TPC/bgfx4cj.git", commitId = "149e9d856de361c7c2afb813a68783f7d85fa5c9" }
+
+[ffi.c]
+canghui_embedded_metal_host = { path = "${CANGHUI_SCENE3D_BGFX_MACOS_NATIVE_DIR}" }
+bgfx = { path = "${CANGHUI_SCENE3D_BGFX_MACOS_NATIVE_DIR}" }
+bimg = { path = "${CANGHUI_SCENE3D_BGFX_MACOS_NATIVE_DIR}" }
+bx = { path = "${CANGHUI_SCENE3D_BGFX_MACOS_NATIVE_DIR}" }

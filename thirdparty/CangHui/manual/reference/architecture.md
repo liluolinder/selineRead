@@ -1,0 +1,438 @@
+# CangHui 架构与设计说明
+
+## 模块关系
+
+```text
+应用
+  │
+  ▼
+chui ──► chui.core / chui.controls / chui.text / chui.media / chui.desktop
+  │
+  ▼
+sdl ──► sdl.dialogs / sdl.displays / sdl.input / sdl.system / sdl.text
+  │
+  ▼
+SDL3 + SDL3_ttf
+```
+
+`chui` 对 `sdl` 是单向依赖。底层模块可以独立使用，不了解 GUI 控件或声明式构建机制。
+
+## CangHui 包职责
+
+| 包 | 职责 |
+|---|---|
+| `chui` | 应用入口门面，重新导出应用所需 API |
+| `chui.core` | Widget 协议、上下文、状态、主题、布局容器和基础控件 |
+| `chui.controls` | 选择、导航和数值控件 |
+| `chui.text` | UTF-8 文本编辑状态、单行输入和多行文本区 |
+| `chui.media` | 画布与图像视图 |
+| `chui.desktop` | 窗口生命周期、事件循环、资源托管和快照 |
+
+## 声明式视图树
+
+控件构造函数会把新实例登记到当前打开的构建块中。容器执行尾随 Lambda，收集其中创建的控件并
+形成树。普通控制流只是在构建块内按顺序执行，因此无需额外模板语言。
+
+链式修饰器不是把属性塞回控件构造参数，而是按调用顺序创建包装节点，并把构建块中刚登记的节点
+替换为包装后的根。这样尺寸、padding、表面、事件开关等行为可组合且顺序可观察，和 SwiftUI 的
+View modifier、Jetpack Compose 的 Modifier tree 采用相同的核心思想。
+
+`DesktopApp.run` 每帧执行视图构建闭包，随后依次完成布局、事件分发、帧事件和绘制。共享状态保存在
+模型或提升后的 `State<T>` 中；局部状态由 `StateStore` 按 `Keyed` scope 与显式 key 保存。成功构建
+后没有再次访问的局部状态会被清理，因此状态生命周期与声明式子树的挂载生命周期一致。
+
+桌面循环把“何时需要渲染”与“渲染帧如何限速”分开：脏帧机制决定是否构建/布局/绘制，
+`FramePacing` 决定渲染器 VSync、固定目标帧率或不封顶。`Device` 模式的 `present()` 已由显示设备同步，
+因此呈现后不再叠加固定 `delay`；未渲染的空闲轮询只短暂让出执行权。kMode 未显式选策略时使用
+`Unbounded`，但仍保留空闲让步，避免无帧请求时占满 CPU。旧的 `vsync: false + frameDelay` 仅作为
+未采用新策略的兼容路径保留。
+
+`State<T>` 的值向下流入视图，用户事件向上修改状态或调用模型方法。该单向数据流避免控件内部状态
+与业务模型形成多个事实源。对于重复或条件子树，身份由 key 决定，而不是由临时 Widget 实例决定；
+`ForEach` 按业务键为每个条目建立 `Keyed` 子树，使局部状态跟随条目而非位置。
+
+### 可观察抽象与派生状态
+
+状态读写分离为 `Observable<T>`（读 + 观察）与 `Bindable<T>`（读写）两个接口，`State` 实现后者。
+`DerivedState` 采用适配逐帧重建的**拉取式缓存**：读取时对比来源 `revision` 快照，变化才重新计算，
+在视图体内派生零订阅、零泄漏；`observe` 仅在被观察期间向上游注册监听。`Binding` 把大状态的一个
+分量投影成独立的 `Bindable`，写入时重建源值，保证事实源唯一。这组设计对应 Compose 的
+`derivedStateOf`、SwiftUI 的 `Binding` 与 SolidJS 的 `createMemo`，但以显式修订号取代依赖追踪，
+与确定性逐帧重建模型保持一致。
+
+### 控件交互身份
+
+焦点与按压以字符串 ID 关联而非以 Widget 实例关联（实例每帧重建）。控件默认身份 =
+`Keyed` 作用域路径 + 默认名 + 构建序号：同名控件按声明顺序自动去重，序号每帧重置，树形不变时
+身份跨帧稳定。这一机制来源于立即模式 GUI 的 ID 栈思想，消除了“两个无标签图标按钮共享按压状态、
+后者吞掉前者松开事件”一类的隐性冲突；`.id(...)` 仅在身份需要跨树形变化保持时显式指定。
+
+### 键盘焦点遍历
+
+可聚焦控件在构建期把自身身份 ID 追加进 `StateStore` 的**焦点环**——与控件身份同源的立即模式
+思想：焦点环随每帧构建重建，因此遍历顺序恒等于当前声明顺序，无需保留任何 Widget 引用，也不受
+条件渲染或列表增删影响。`.id(...)` 覆写身份时同步替换环中对应项（覆写紧随构造，几乎总是环尾，
+替换为 O(1)）。外壳（`DesktopApp`）每帧构建后采纳焦点环，并把 `Tab` / `Shift+Tab` 解释为环形
+前移/后移；遍历在外壳层消费，不下发给聚焦控件，故聚焦文本框中的 `Tab` 也用于移动焦点。将遍历
+建模为构建期副产物而非独立的可聚焦节点树，避免了保留式框架中“焦点顺序与视觉顺序脱节”的经典难点。
+禁用即摘除焦点停靠点：控件经 `Widget.focusableId()` 报告其构造期登记的焦点 id（单控件包装器逐层
+转发）；在其上，`Widget.focusableIds()` 汇总**整棵子树**的停靠点——叶控件默认返回自身，容器拼接
+子级、包装器转发——`.enabled(false)` 据此把被禁子树的全部停靠点移出当帧焦点环，禁用因此可作用于
+任意粒度（单控件、一行表单、整个面板）。`TabView` 用同一协议摘除非活动页面的停靠点：隐藏页收不到
+事件，停靠点留在环里只会成为 Tab 死角；页签切换后由下一帧重建自动恢复。
+
+**键盘专属焦点环（`:focus-visible`）**：焦点圈是给键盘用户的导航线索，鼠标用户点哪儿一目了然、
+不需要它。`UiContext` 因此除 `focusId` 外再记一个 `focusRingVisible` 标志：`focus(id)` 由指针按下
+调用时置假，`Tab` 遍历（`moveFocus`）与 `autofocus`（`focus(id, viaKeyboard: true)`）置真；`clearFocus`
+复位。控件绘制描边时用 `showFocusRing(id)`（= 聚焦且经键盘到达）而非 `hasFocus(id)`，故点击聚焦不留
+描边、`Tab` 到达才显。关键是**只有描边**依赖此标志——选区、光标、方向键导航等行为仍以 `hasFocus`
+为准，与来源无关；`autofocus` 视为键盘意图（打开即待键入），因此自动聚焦的搜索框仍显描边、静态快照不变。
+所有可聚焦控件都通过一个共享的 `drawFocusRing(ctx, rect, radius)` 绘制同一种强调色外扩描边：字段族
+（文本框、列表、表格、下拉、选择器、步进器）用带焦点的 `fieldSurface` 围住整框，按钮/图标按钮/复选框/
+单选/开关则在自身本体外描一圈（分别围按钮框、复选框、圆点、拨轨）。一处定义、各控件复用，保证键盘
+焦点在任何控件上都可见且风格一致——补上了实心的主要/危险按钮此前无焦点提示的缺口。
+
+### 指针悬停与光标
+
+悬停解析复用与焦点“按下即结算”对称的协议：外壳在每次鼠标移动前后调用 `beginHoverTest` /
+`settleHover`，其间指针所在的控件调用 `claimHover(id, shape)`。事件按视觉层级自顶向下分发，
+且一次移动只有首个认领生效，因此重叠层自然解析到最上层控件；认领不消费移动事件，滑块拖动等
+仍能照常收到。**光标形状与悬停高亮共用这一个赢家**：按钮类控件的悬停底色读 `isHovered(id)` 而非
+自行做指针几何判断，因此重叠布局中不会出现多层同时高亮、模态遮罩下的背景控件也不会隔着遮罩泛光。
+控件请求的是语义形状 `CursorShape`（`Default` / `Interactive` / `Text`）而非平台
+光标，外壳再映射为 SDL 系统光标并仅在形状变化时切换。`Default` 回落到应用经 `useBaseCursor`
+设定的静止光标，使画布十字光标与“悬停按钮显示手形”两种诉求叠加而不冲突。光标反馈被视为非关键
+润色：某平台若拒绝某形状，则保持当前光标而不使该帧失败。
+
+### 文本选区
+
+选区语义集中在共享的 `TextEditState`：`anchor` 与 `cursor` 之间的字节区间即选区，二者重合表示无
+选区。这一设计的关键是**向后兼容**——插入、退格、删除在有选区时先删除选区，无选区时退化为原来的
+逐字符行为；普通方向键折叠选区，`extend*` 变体保持锚点扩选。因此从不传入 `anchor`、也从不调用
+`extend*` 的控件（如只读文本区）走的仍是原有代码路径，行为不变。`TextField` 在此模型上接入
+Shift 扩选、鼠标拖选（复用 `beginDrag`/`isDragging`）、`Ctrl+A/C/X/V` 与半透明选区高亮；选区两端
+坐标与光标一样取真实字形前缀宽度，故比例字体与 CJK 均精确对齐。剪贴板访问按最佳努力处理，无桌面
+会话时静默降级而非崩溃。`TextArea` 在同一模型上实现多行选区：`Shift+↑/↓` 由 `extendLineUp/Down`
+按列跨行扩展，逐可见行按其被选中字节绘制高亮带，被选中的换行使该行延伸至视口右缘，从而内部整行
+与空行呈现常见的整行选中效果。只读文本区仍可选择与复制，但不参与剪切、粘贴与编辑。
+
+**输入法（IME）锚定**沿用提示/浮层同款的“每帧上报槽”：聚焦的文本控件在 `draw` 里把光标矩形写入
+`UiContext` 的文本输入锚点槽（与闪烁相位无关——相位只决定是否绘制），外壳在整帧绘制结束后读取，
+仅当矩形发生变化才经 `SdlWindow.setTextInputArea`（内部换算逻辑坐标 → 窗口像素）转发给
+`SDL_SetTextInputArea`——候选窗因此跟随插入光标，且静止时零系统调用。对话框内的文本控件在浮层
+渲染阶段上报，同样生效；平台拒绝该调用只被忽略，不影响帧循环。
+
+双击选词、三击选行建立在两个正交部件之上：一是 `UiContext` 的通用多次点击识别（`recordPress`
+按时间与距离阈值把连续按下归为单/双/三击，存入 `clickCount`），二是 `TextEditState.selectWordAt`
+的字符类归并（读 UTF-8 首字节即可分类：ASCII 字母数字下划线与任意非 ASCII 字符为“词”，连续空白、
+连续标点各自成段，故中文按连续汉字成词、英文按字母数字成词）。点击识别刻意不与文本耦合，任何控件
+都能据 `clickCount` 响应双击。
+
+撤销/重做由随控件保留的 `UndoHistory` 提供，按快照（文本+光标+锚点）记录。合并策略基于**时间与
+光标连续性**：一次编辑记录其“编辑前”状态，若距上次编辑不超过 500ms 则并入同一撤销步，停顿或光标
+跳转（点击、方向键导航调用 `breakGroup`）则另起一步——故一串快速键入整组回退，而一步永远不会横跨
+两个编辑位置。记录采用“先取前态、执行、若文本确有变化才提交”的
+包裹，因此无改动的操作（行首退格等）不产生多余撤销步；`undo`/`redo` 自身不被再记录。控件暴露 `undo()`/
+`redo()` 供 `Ctrl+Z`/`Ctrl+Y`/`Ctrl+Shift+Z` 与应用程序化调用；快照栈有上限，长会话不会无界增长。
+
+### 动画
+
+CangHui 每帧无条件重绘，因此动画不需要独立的定时器或失效追踪：`Spring` 原语（弹簧-阻尼数值）由控件
+在 `draw` 里按帧间隔 `tick` 推进、读取 `value`，渲染循环本身就是动画时钟。积分用半隐式欧拉并钳制
+步长，使一次帧卡顿（长间隔）不会注入巨大冲量导致发散；到达目标后精确停住，故空闲弹簧零开销。
+动画状态必须跨帧保留（`localState`），而 `localState` 仅在构建期可用、`draw` 阶段不可用——因此控件
+在构造函数里取回被保留的 `Spring` 存为字段，绘制时复用（`draw` 里以 `animate(target:, deltaMs:)`
+一步完成“设目标+推进+读值”）。弹簧初始化在控件当前值即“已停住”，只有状态其后改变才动画，故静态首帧
+（快照）不产生过渡、视觉与未加动画时一致。这套模式已铺到多种控件的状态切换：`Switch` 滑块位置与轨道
+颜色共用一根弹簧、`Checkbox` 勾选从中心缩放、`RadioButton` 圆点长出、`ProgressBar` 填充与百分比一起
+滑向目标——都经 `Color.lerp` 让描边/背景色随进度过渡。该原语与具体控件无关，可用于任意平滑过渡。
+
+### 浮层与提示
+
+需要绘制在整棵树之上的内容（当前是提示气泡）通过 `UiContext` 的**单槽浮层**实现：外壳每帧在
+绘制树之前清空该槽，树在绘制期把内容写入，外壳在树之后、`endScene` 之前把槽内容画在最上层。
+这与立即模式逐帧重绘天然契合——无需保留式的 z 序层级，谁最后写入谁在最上（绘制自顶向下，最内层
+控件最后绘制，故最靠上的悬停控件胜出）。`Tooltip` 是首个用户：它是透明包裹层（measure/layout/
+draw/事件全部转发给子控件），仅在 `draw` 里按保留的停留计时判断——指针在其框内停留超过阈值即把
+文本与锚点写入浮层槽。因锚点默认落在窗口内、静止首帧尚未达到停留时长，静态快照不会出现提示。
+该单槽机制可自然扩展到下拉、菜单等其他浮层。
+
+**交互式浮层**在提示浮层之上再进一步：菜单/下拉不仅要绘制在最上层，还要**先于树接收事件**——否则
+弹出列表里的点击会被其下方的控件截走。`UiContext` 因此维护一个**浮层栈**（`Overlay` 携带
+`handleEvent` + `render` 两个闭包和标识注册者的 `owner`）：外壳每帧在树之前清空栈、打开中的控件在
+`draw` 里重新登记（闭包捕获其保留状态与弹出矩形），登记顺序即 z 序。事件分发**自栈顶向下**——外壳先把
+事件交给浮层（某层消费则不再下传，全部拒绝才落到树）；绘制**自栈底向上**，且绘制某层时新登记的浮层会被
+同一遍循环接着画在其上（对话框 `body` 绘制期间打开的下拉列表因此同帧浮出）。开合状态是控件保留的
+`open` 标志，与浮层的一帧延迟登记天然协作：本帧 `draw` 登记的浮层供**下一帧**事件使用；关闭时控件以
+`removeOverlay(owner)` 按 owner 精确撤下自己那一层——控件逐帧重建、闭包引用不稳定，跨帧身份由 owner
+键承担，也保证了关闭弹出列表绝不会连带撤下其下方的对话框。`Dropdown` 与 `ContextMenu` 都建立在这套
+机制上：前者点击展开锚定在控件下方的选择列表，后者右键在指针处弹出动作菜单——两者都借由“事件先于树”
+解决了“弹出内容被下方控件截走点击”这一经典难题。为支持自定义外壳，`dispatchOverlay`/
+`drawActiveOverlay`/`clearActiveOverlay`/`overlayCount` 也对外公开。
+
+`Dropdown` 的开合另由保留 `Animator` 驱动高度揭示与箭头翻转。关闭后的过渡层仍可绘制，但事件闭包在
+`open=false` 时拒绝输入，因此不会出现“视觉正在收起却还能点中旧选项”的幽灵命中。控件本体的打开动作
+仍走统一 press-inside / release-inside 协议，按下后移出会永久取消本次打开。
+
+`Modal` 把这套机制再推进一层：下拉与右键菜单的弹出内容是**手绘**的（`render` 闭包直接画列表），而模态
+对话框的 `render`/`handleEvent` 闭包托管一棵**真实的控件子树**——`body` 里的按钮、文本框等是正常控件，
+在面板内布局（`Modal.layout` 按视口居中，把内容量到面板尺寸），`handleEvent` 把落在面板内的事件转交
+`content.handle`、并整体拦截以隔离背景（上方弹出列表拒绝的事件由它兜底，绝不穿透到背景树），`render`
+先画暗化遮罩再画面板与内容。因此浮层栈既能承载手绘弹层，也能承载带自身状态的控件子树，且二者可以
+嵌套：对话框内的 `Dropdown`/`ComboBox`/`ContextMenu` 在对话框绘制期间把弹出列表压到栈顶，同帧画在
+对话框之上、优先接收事件，`Esc` 与外点逐层关闭（先弹出列表、后对话框）。`Modal` 自身零尺寸、仅在
+呈现时构建 `body`（隐藏对话框不注册可聚焦项、不占布局），置于根部 `ZStack` 即对视口居中——默认隐藏故
+静态快照不变。
+
+### 尺寸单位解析
+
+公共尺寸 API 接受携带单位的 `Length`（`px`/`vp`/`fp`），修饰器与容器仅存储该值，转换推迟到
+测量/布局/绘制阶段由 `UiContext.resolve` 完成：`vp` 即逻辑坐标原值，`px` 除以窗口 `displayScale`，
+`fp` 乘以应用 `fontScale`。因此同一视图代码在不同缩放与字体设置下无需修改，单位错误在类型层
+即被拒绝。字面量后缀通过 `LengthUnits` 接口扩展提供——接口扩展是跨包导出扩展成员的唯一通道，
+这也是它不做成直接扩展的原因。
+
+## 布局模型
+
+布局遵循“约束向下、期望尺寸向上、父级定位”：父容器给子项最大可用尺寸，子项返回期望尺寸，父级
+根据排列和对齐策略确定最终矩形。`VStack` 和 `HStack` 共用同一套轴参数化的布局引擎：先测量
+非弹性子项并累计固定尺寸，再把剩余空间按 `flexWeight` 分配给弹性子项，最后一趟完成放置——
+每个子项每次布局恰好测量一次，深层嵌套不会产生重复测量的指数放大。
+`Flexible(weight: 2.0)` 除获得两份空间外，还会吸收跨越单元之间的间距，因此可与两个普通单元
+精确对齐。`flexible: false` 表示容器按内容尺寸收缩，适合工具栏、标题栏和状态栏。
+
+`Grid` 使用等宽列与内容高度行，`FlowRow` 根据约束自动换行，`ZStack` 共享布局边界并按视觉层级
+反向命中，`ScrollView` 用裁剪约束绘制与指针命中。`visible(false)` 从父级布局参与集合中移除，
+因此不会残留间距或空网格项。
+
+`ScrollView` 的布局采用两段决策：内容先按全宽测量，只有确认溢出时才让出滚动条轨道宽度并
+重测一次——收窄只会让内容更高、不会反向变矮，因此该决策一次收敛、不会振荡。滚动条因此
+拥有专用轨道，不会覆盖内容右缘。滑块的轨道、长度、位置由一组纯函数（`scrollBarTrackRect`、
+`scrollThumbHeight`、`scrollThumbTop`、`scrollThumbRect`）统一给出，绘制与命中测试共用同一几何，
+避免二者错位；`scrollOffsetForThumbTop` 是位置到偏移的逆映射，拖动时记录抓取点使滑块跟随指针
+而不跳变，点击轨道空白按方向翻页。拖动的有状态部分（抓取偏移、拖动 id）封装在可复用的 `ScrollBar`
+控制器里：滚动偏移以 `State<Float32>` 传入，控制器只负责命中判定与偏移计算。`ScrollView`、`ListView`、
+`TextArea`、`Table` 以及 `Dropdown`/`ComboBox` 的弹出列表各持有一个 `ScrollBar` 实例并转发指针事件，
+因此所有滚动表面的滑块拖动、轨道翻页、拖动高亮完全同源，不存在多份各自演化的实现。弹出列表在
+上下两侧都放不下完整列表时按空间较大的一侧定高、在弹层内部滚动：滚轮与滑块沿用上述控制器，方向键
+移动高亮时按“滚动到恰好可见”揭示，命中计算叠加滚动偏移，上下内边距条带不命中任何行。`ListView` 另实现键盘导航：注册进焦点环后可 `Tab` 聚焦，方向键在钳制范围内
+移动选中项。滚动偏移在未传入外部 `State` 时用 `localState` 按控件身份保留——否则每帧重建都新建一个
+归零的 `State`，滚轮/拖动滚动会每帧弹回原处。“把选中行滚入可视区”改由 draw 侧的**选择变化即揭示**驱动。
+
+滚轮输入另由共享 `ScrollMotion` 保留目标偏移。默认 `ScrollOptions.web()` 使用 72 逻辑像素步长、
+220ms 基准时长和 `cubic-bezier(0.22, 1, 0.36, 1)`，自动跟随主题 Basic / Standard / Full 动效档；
+连续滚轮事件在前一目标上累计，布局逐帧推进并请求下一帧，直到精确落在边界内。
+`ScrollOptions.immediate()` 保留直接跳转语义，也可显式给步长、时长与 `Easing`。应用直接写外部滚动
+`State`、拖动/分页滚动条、键盘揭示选择项或内容缩短导致钳位时，当前滚轮动画立即取消，避免旧目标
+覆盖新的业务意图。这份策略由 `ScrollView`、`LazyColumn`、`LazyRow`、`LazyList`、`ListView`、
+`Table`、`TreeView`、`TextArea`、`Dropdown` 与 `ComboBox` 共同消费。
+
+动态折叠内容还有一条单独的锚点协议：Accordion 切换时向最近的 `ScrollView` 请求保留视觉锚点；若内容
+高度在随后的动画帧收缩，ScrollView 临时把减少量保留为尾部空间，避免当前偏移被立即钳制而带动整页跳动。
+下一次用户滚轮或拖动滚动条会释放这段临时空间，并按新的真实内容高度重新钳制偏移。
+记住上次揭示的选中项，仅当选中项发生变化时才滚动到它——因此无论选择来自列表自身按键还是应用层的按键
+路由（如命令面板在根部拦截 `↑/↓`），选中行都会滚入视区，而单纯的滚轮滚动（选择未变）不会被拉回。
+
+`Table` 沿用同一套机制搭出多列数据网格：固定表头之下的表体复用 `ScrollBar` 与窗口化绘制（只绘制可见行），
+键盘导航与 `ListView` 同源。它的两个设计要点是——排序在**显示层**进行：用稳定归并排序算出“显示顺序→
+原始行索引”的映射，绘制与命中都经此映射，故排序只是换一层索引、不触碰底层数据；选择存**原始行索引**而非
+屏幕位置，因此排序后高亮仍落在同一行数据上。稳定排序保证等值行相对次序不变，切换排序列时视觉不跳乱。显示顺序按 (排序列, 方向, 该列单元格) 缓存，
+仅当这些输入变化时才重排——稳定表每帧由 O(n log n) 降为 O(n)，仍反映活值（改动单元格即触发重排）。
+单元格默认按列规则绘制文本，列也可携带自定义绘制回调（`TableColumn.cell`）接管单元格内容——回调在行底
+与选中高亮之后、单元格裁剪之内运行，收到的是原始行索引与字符串值；排序键不变，显示与排序解耦。
+
+## 渲染管线
+
+每帧由 `Renderer.beginScene` 建立绘制目标。设备允许时，场景被绘制到高分辨率离屏纹理，
+`endScene` 再以线性过滤解析到窗口。圆角矩形、圆形和粗线使用 GPU 几何网格与透明边缘实现平滑
+轮廓。文本由 SDL3_ttf 使用系统 UI 字体绘制，且走独立于几何缩放的专用通道：字形按
+“字号 × 有效渲染缩放”光栅化，绘制时把 GPU 缩放临时置回 1:1、坐标对齐到像素网格（超采样下对齐到
+采样倍数，解析后恰落整物理像素）、活动裁剪同步换算到目标像素——若让渲染缩放去拉伸按逻辑字号
+光栅化的小尺寸字形位图，文本会经历两次重采样而明显发虚。布局与光标度量取自同一份缩放光栅化
+结果并换算回逻辑值，保证命中测试、选区与省略号与实际绘制像素一致。
+
+裁剪是栈式的：`pushClip` 把新矩形与当前生效裁剪求交后入栈，`popClip` 恢复外层。SDL 的原生
+裁剪是单值状态，“设置—清除”式的配对在嵌套时会互相破坏——滚动视口内放一个自带裁剪的文本框，
+文本框画完便会把视口的裁剪一并清掉，其后的兄弟内容溢出容器。栈式相交语义保证任意嵌套下
+子级裁剪永不超出父级，且退出后父级裁剪原样恢复；`beginScene` 会清空残留栈防止跨帧泄漏。
+
+`Label` 的截断与换行基于真实度量：单行超宽时以二分查找定位省略号前缀（每行 O(log n) 次测量），
+`maxLines`/`wrap` 优先在空格处断行、CJK 可逐字断行，末行截断。文本永不绘制到分配框之外，
+这是防止界面文字溢出的框架级保证。
+
+### 性能：保留式几何与文本缓存
+
+立即模式每帧重建整棵树，同一形状与字符串被反复提交。渲染层以三层跨帧缓存把这些重复变为查表，
+使内容页、表格、网格的每帧成本由 O(内容) 降为 O(可见)：
+
+- **保留式几何（网格缓存）**：`GeometryBatch` 把圆角矩形、圆形与描边按 (类型, 宽, 高, 半径, 羽化/线宽)
+  量化键缓存已成形的网格（原生顶点/索引缓冲）。命中时只把相对坐标平移到实际位置、发射时上色，索引缓冲
+  逐形状不变、直接交给 `SDL_RenderGeometry`——省去逐帧的弧线成形（cos/sin）与逐顶点法线（sqrt）。滚动时
+  面板、阴影、边框的形状不变、只是平移，故几乎全是命中；量化键经预算校验（截断而非四舍五入）以防不同形状
+  越界碰撞。两代淘汰、有界，淘汰即释放原生缓冲。
+- **成形文本缓存**：每个字体按字符串缓存 SDL3_ttf 的 `TTF_Text` 对象（成形一次、绘制多次）。绘制命中即
+  重画、不重排；同串同色重绘连改色都省。滚动期可见字符串稳定，暖缓存后成形降为零。淘汰时销毁原生对象，
+  提升热键先移出退休代再插入，以免其触发的轮转释放正被返还的对象。
+- **文本度量缓存**：`Renderer.textMetrics` 按字号分桶、字符串作内层键缓存度量，免去重复 `TTF_GetStringSize`；
+  仅缓存非缩放路径，两代淘汰、每字号有界。
+
+这些缓存均有界（不过量以空间换时间）、行为透明（像素不变）。`DesktopApp` 的 `--profile` 帧剖析器把每帧拆到
+构建/布局/事件/绘树/降采样/呈现，用于定位瓶颈——正是据此发现内容页瓶颈在 CPU 几何成形，而非超采样或文本
+重排；`WindowSpec` 的 `vsync`、`supersample` 可配，基准据此测真实每帧成本，而非被刷新率量化成整数倍。
+
+## 事件与线程
+
+事件从最外层视图向内分发，容器通常按逆序把指针和键盘事件交给子项，以符合视觉层叠顺序；
+`UiEvent.Frame` 会广播给整棵树。UI 构建、状态提交和绘制必须由同一个 UI owner 执行。耗时工作可通过
+`spawn` 准备不可变结果，但 worker 不得直接修改 `State`、Widget、Renderer 或其他 live UI 对象。
+
+`UiOwnerQueue` 是 worker 与 owner 之间的提交门：多个 producer 在锁内取得全序 ticket，owner 通过
+`drain` 串行执行一个有界快照。`DesktopApp` 在每个需要渲染的帧首、构建声明式树之前 drain；因此 owner
+任务中的 `State` 写入会被当前帧观察，而任务内部再次投递的工作留到下一帧。队列可用 `baseEpoch` 拒绝
+基于旧 UI 快照准备的结果，用 `surfaceGeneration` 拒绝针对旧 native surface 的结果；取消只有在 owner
+领取任务前才成功。任务失败也推进 epoch，因为异常前可能已经发生部分 live-state 修改，后续基于旧 epoch
+的结果必须失效。
+
+这条合同提供确定性顺序、陈旧结果门和 receipt，不提供回滚、隔离或原子 SceneDiff 事务。不可变输入仍是
+应用和上层协议必须遵守的约定；自定义宿主也必须保证只有同一 UI owner 调用 `drain`。队列关闭后，待处理
+任务完成为 `cancelled`，后续投递立即完成为 `rejected-closed`，避免宿主退出后留下永久悬空 ticket。
+
+## 资源生命周期
+
+`Surface`、`Texture`、`Cursor`、`ImageView` 和 `SdlWindow` 等对象实现 `Resource`。应用可调用
+`DesktopApp.manage` 将长期资源交给应用统一关闭；临时资源应使用 try-with-resources 或显式
+`close`。关闭操作均设计为可重复调用。
+
+图片纹理是例外中的常态：`ImageView` 的解码纹理由**按路径键控、以渲染器为作用域的共享缓存**持有
+（chui.media 模块态），控件本身无状态、可逐帧内联声明——这消除了“提升 + manage”的心智负担。缓存
+不做自动淘汰（桌面应用图片集小而稳定），以 `invalidateImage`/`clearImageCache` 显式失效；加载失败
+按路径负缓存，避免缺失文件被逐帧重试。换用新渲染器（重建窗口）时旧条目直接丢弃而不 `close`——
+纹理已随其渲染器一并销毁，再关闭会触碰悬空句柄。
+
+## 多平台组件边界
+
+CangHui 把跨平台复用拆成三个稳定层次：
+
+1. 公共组件层只依赖 `ComponentContext`、CangHui 控件和应用持有的状态；
+2. 宿主合同层以 `HostProfile` 和 `HostCapability` 描述平台事实，不暴露平台 SDK 类型；
+3. 平台适配层实现窗口、生命周期、IME、无障碍、原生表面、权限、打包和签名。
+
+`ViewportSpec` 采用逻辑尺寸，并通过固定的 Compact、Medium、Expanded 分级选择布局。桌面
+Component Gallery 可以覆盖公共布局和状态连续性，但不能替代移动端或其他宿主的生命周期、输入、
+无障碍、原生表面与发布验证。平台后端应实现公共宿主合同，不应让公共组件反向依赖宿主工程。
+
+组件包可以附带符合 `contracts/canghui-component-package-v0.schema.json` 的元数据，供工具链
+发现资源与原生制品；运行时 API 仍以强类型 Cangjie 接口为准。
+
+移动宿主的第一层合同由 `chui.host` 提供：`AppLifecycleState`、`HostViewportMetrics`、
+`SafeAreaInsets`、`TouchEvent` 以及文件选择、应用存储、安全存储、系统主题、通知和后台任务 SPI。
+文件选择结果使用 `PlatformResourceRef`，其中 locator 由宿主解释，可以对应路径、安全域 URL、bookmark
+或其他不透明令牌。这样公共组件无需知道 UIKit、PhotoKit、Keychain 或 Harmony 平台类型。
+
+iOS 采用静态库嵌入 Xcode 宿主。CangHui 提供可独立交叉编译的 host-contract 源集、稳定的
+`canghui_ios_host_abi_version` C ABI 与 device/simulator 构建脚本；旧的
+`cangjiegui_ios_host_abi_version` 仅作为源兼容别名保留。Xcode 宿主负责运行时静态库链接、
+签名和应用生命周期。框架同时提供 Objective-C bootstrap helper：以最终 executable basename
+调用 `InitCJLibrary` 完成静态包初始化，并通过 `RunCJTask` 进入 `@C` 函数；应用不再需要自行
+编写 C shim，也不应把 `InitCJLibraryStub` 当作包初始化器。当前 Apple Silicon simulator 与物理
+iPad 均返回 `runtime=0 / scheduler=ready / library=0 / task=0 / abi=1`。这只证明 runtime、固定
+scheduler、静态包和 N2C ABI 门，不证明 UIKit 生命周期、触摸、safe area、IME、无障碍、
+native-surface renderer 或产品应用验收。
+
+### XComponent-like 原生表面代理
+
+iOS 后端不复制一套 UIKit 布局树，而是采用与 HarmonyOS `XComponent` 同构的原生表面代理：
+
+- UIKit 主线程持有 `UIView + CAMetalLayer/MTKView`，只负责 lifecycle、safe area、touch、IME、
+  accessibility、surface 创建/重建与 `CADisplayLink` 帧时钟；
+- `HostNativeSurfaceService` 把不透明 handle、逻辑/像素尺寸、scale 和 generation 通知给仓颉侧；
+- `NativeSurfaceRenderer` 由仓颉侧实现，掌握布局、绘制和状态；宿主不承接业务视图；
+- surface 重建时 generation 必须递增，旧帧和旧 handle 不得继续提交；
+- 所有原生回调通过 N2C 门转发到固定的仓颉 UI scheduler 线程，UIKit 主线程不直接运行
+  仓颉 scheduler。
+
+HarmonyOS 可将同一合同映射到 `XComponent/OHNativeWindow`，iOS 映射到 `CAMetalLayer`。这条路线
+解决渲染承载与多平台统一，但不代替仓颉 runtime 和静态包 bootstrap。
+
+### OwnedWindow 与 EmbeddedSurface
+
+参考 SDL3 callback application 与 SwiftSDL 的宿主分层后，移动端明确保留两种模式：
+
+- `OwnedWindow`：SDL3 管理应用 callback、事件泵、window 和 renderer，适用于独立 CangHui
+  应用；`HostApplicationLoop` 映射 `init/iterate/quit`，输入仍通过专用 host service 进入。
+- `EmbeddedSurface`：既有 UIKit/Harmony 应用拥有原生 view，以 generation-bearing surface 代理
+  接入仓颉渲染器。
+
+两种模式共用组件树、布局、状态和宿主能力合同，但不共用虚假的窗口所有权。
+Apple bundle 还必须提供 LaunchScreen、high-DPI 声明、bundle resource 布局和正确的静态/嵌入式
+依赖。详细参考 [`SDL3 Apple 宿主说明`](sdl3-apple-host.zh-CN.md)。
+
+## kMode 无界面控制面
+
+kMode 是 CangHui 提供的 Debug 无窗口控制面，不依赖布局树。应用使用
+`@KModeLink["stable.endpoint"]` 把一个 `(String) -> String` 顶层函数注册为稳定端点；宏按端点名
+生成确定性符号，同包重名会在编译期报重复定义，注册表再对跨包重名做运行期拒绝。
+
+应用必须在创建 `DesktopApp` 之前调用 `runKModeStdioIfRequested()`。kMode 只存在于编译器
+`debug` 条件（`cjpm -g`）中；调试版 `cuic` 以 `-g` 构建消费者并显式请求 stdio 后，进程只运行
+`health/list/describe/invoke/shutdown` 协议循环并直接退出，不初始化 SDL 或窗口。发布构建会忽略历史
+`CANGHUI_KMODE` / transport 环境变量与 `--kmode-stdio`，显式 `KModePolicy(enabled: true)` 也会被
+强制收敛为 disabled；发布版 `cuic` 只保留 `kmode diff` 静态冲突检查。
+
+`KModeChannelModule` 是调试构建中可覆写的透明通道 SPI，只在启用且具备 Admin 能力时允许安装；
+发布构建拒绝安装并始终返回空 module。外部适配器负责
+connect/send/poll/cursor/ACK，并把 `contracts/canghui-kmode-v0.schema.json` 的 JSON 值作为 opaque
+payload 中继。ACK 只表示消息已被消费，业务成功由 kMode response 表达；cursor 仅在持久消费后推进，
+凭据不得写入日志、配置或仓库。`KModeChannelConfig.protocol` 默认使用
+`canghui.kmode.channel.v0` 通道协议，`payloadProtocol/schemaRef` 分别表示 `canghui.kmode.v0` 业务协议
+及其 schema；两类版本号互不替代。
+
+仓库不提供 socket、listener、远端 relay 或 channel module 实现。控制面只分派已注册函数，收到的
+payload 不会被转换为任意 shell 命令或不受限文件系统操作；未来远端 module 还必须独立完成认证、
+身份绑定、防重放与限速。完整发布边界见[安全边界与发布来源证明](security-and-release.zh-CN.md)。
+
+## 设计依据与演进边界
+
+当前设计参考以下一手资料，而非复刻某个框架的表层语法：
+
+- [Jetpack Compose Modifier](https://developer.android.com/develop/ui/compose/modifiers)：修饰器链的顺序、尺寸、布局、行为与外观组合。
+- [Compose constraints and modifier order](https://developer.android.com/develop/ui/compose/layouts/constraints-modifiers)：修饰器作为布局包装节点的约束传播模型。
+- [Compose state hoisting](https://developer.android.com/develop/ui/compose/state-hoisting)：状态提升到读写者最低共同祖先，向下暴露不可变状态和向上事件。
+- [Compose derivedStateOf](https://developer.android.com/develop/ui/compose/side-effects#derivedstateof)：从其他状态计算、按需失效的派生只读状态。
+- [SwiftUI Binding](https://developer.apple.com/documentation/swiftui/binding)：把大模型的一个分量投影为可读写值、写回单一事实源的双向绑定。
+- [SolidJS createMemo](https://docs.solidjs.com/reference/basic-reactivity/create-memo)：带缓存的派生计算与显式失效信号。
+- [Dear ImGui ID stack](https://github.com/ocornut/imgui/blob/master/docs/FAQ.md#q-about-the-id-stack-system)：立即模式 GUI 以作用域 ID 栈维持跨帧控件身份的机制。
+- [Flutter constraints](https://docs.flutter.dev/ui/layout/constraints)：父级约束、子级尺寸和父级定位的一趟布局协商。
+- [React preserving and resetting state](https://react.dev/learn/preserving-and-resetting-state)：树位置、类型和 key 对状态保留/重置的影响。
+- [ArkUI 像素单位](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ts-pixel-units)：px/vp/fp 三级尺寸单位与密度、字体缩放的解析关系。
+- [Elm: Concurrent FRP for Functional GUIs](https://elm-lang.org/assets/papers/concurrent-frp.pdf)：函数式 GUI 中显式状态与消息驱动视图的理论背景。
+- [A Consistent Semantics of Self-Adjusting Computation](https://arxiv.org/abs/1106.0478)：后续若引入依赖追踪和细粒度增量重建，需要保持变化传播语义一致。
+
+CangHui 当前仍采用确定性的逐帧完整重建，尚未声称实现细粒度重组或自调整计算。未来若加入依赖追踪，
+必须先建立稳定身份、状态读取追踪、失效传播与一致性测试，不能仅用缓存 Widget 实例替代正确模型。
+
+### 静态检查基线
+
+`cjlint` 全量扫描后的处置分两类。已修复：超长布局函数拆分为三趟辅助函数、`DerivedState`
+去除 `getOrThrow`、文本控件补充裁剪。经架构审查后保留的偏离（均有明确理由，不为消除提示
+而破坏设计）：
+
+- **G.ITF.04（接口作类型）**：构建树、异构子项数组、资源托管与状态注入天然需要
+  `Widget`/`Resource`/`Observable`/`Bindable` 存在类型，这是框架的多态边界。
+- **G.ITF.02（扩展实现接口）**：`LengthUnits` 必须以接口扩展加到内置 `Int64`/`Float64` 上
+  （跨包导出扩展成员的唯一通道）；`setIfChanged` 依赖 `where T <: Equatable<T>` 约束，
+  只能定义在受约束扩展中。
+- **G.NAM.04（`ForEach` 大驼峰）**：列表构建器沿用声明式视图词汇（与 `VStack`、`Keyed`
+  同层级的视图结构词），大写命名是有意为之。
+- **G.VAR.02（最小作用域）**：命中的是文件级 `private let` 常量与循环累加器——常量下沉到
+  函数内会逐次重建并伤害可读性，累加器必须先于循环声明，二者均已是实际最小作用域。
+- **G.OPR.01（`Length * Float32`）**：长度按标量缩放与 `Duration * n`、CSS `calc()` 同义，
+  符合量纲运算惯例。
+- **G.FUN.01（`Theme` 构造参数超限）**：主题是一次性构造的纯值记录，命名参数携带默认值；
+  拆分成多次调用反而弱化“一处声明完整配色”的可审阅性。
+
+## FFI 边界
+
+C ABI 声明、原始结构和指针操作位于 `sdl` 模块内部。领域包将 `foreign` 调用转换为仓颉类型、
+`Option` 或 `CuiException`。应用 API 不暴露 `CPointer` 或 `CString`。由于仓颉 1.0.5 的静态链接
+限制，领域专属 ABI 声明与调用方保持同包，而不是集中到一个跨包调用的 raw 包中。

@@ -1,0 +1,10 @@
+[package]
+cjc-version = "1.0.5"
+name = "canghui_style_liquid_glass"
+version = "0.1.0"
+output-type = "static"
+description = "Optional Liquid Glass-inspired material and component style pack for CangHui."
+license = "Apache-2.0"
+
+[dependencies]
+chui = { path = "../.." }

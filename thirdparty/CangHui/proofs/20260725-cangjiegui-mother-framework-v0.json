@@ -1,0 +1,49 @@
+{
+  "schema": "cangjiegui-proof-receipt-v1",
+  "id": "20260725-cangjiegui-mother-framework-v0",
+  "createdAt": "2026-07-25T10:31:00+08:00",
+  "matrixVersion": "CangjieGUI.20260725.1",
+  "baseline": "CangjieGUI@0839a08",
+  "version": "0.3.0",
+  "componentApiVersion": "0.1.0",
+  "extractionSource": "CangHUI platform prototype@3038637",
+  "verification": {
+    "rootTests": "pass: 184/184",
+    "rootBuild": "pass: cjpm build",
+    "samplePackageTests": "pass: 2/2",
+    "samplePackageBuild": "pass: cjpm build",
+    "galleryBuild": "pass: cjpm build",
+    "jsonContracts": "pass: jq parse",
+    "diffCheck": "pass: git diff --check"
+  },
+  "desktopGallery": {
+    "tool": "CUI DesktopApp settled-frame BMP capture",
+    "command": "./scripts/capture-component-gallery.sh /tmp/cangjiegui-mother-gallery",
+    "targets": ["android", "harmony", "tablet", "desktop", "ios"],
+    "visuallyReviewed": true,
+    "result": "pass: compact, medium and expanded layouts fit without overlap or clipping",
+    "snapshotSha256": {
+      "android": "8aba4ad62bbb77ed94a17ac6d1deb33378b337feb2f245c900d2eeb2f826ab75",
+      "harmony": "a214eb40d086bb15228e8316981504de74493aca490b26ef03f4eedacf782930",
+      "tablet": "55681d034fef3a4e7859af58b4ad7e1b35ead0b58aab09dcf2753286b6e35b86",
+      "desktop": "fb9a71bb900e89cfce29602f5ced42c874e3994afbd749b57dab54fee0a09142",
+      "iosLayoutPlanned": "33a3be0ccacd93aff04a21f33f0a00d85ad28e6bbf8c58b4479512e72a5d7e2e"
+    }
+  },
+  "boundary": {
+    "absorbed": [
+      "platform-neutral host capability vocabulary",
+      "typed component package contract",
+      "responsive viewport classification",
+      "desktop preview matrix and reference component package"
+    ],
+    "leftInHarmonyImplementation": [
+      "OHNativeWindow SDL backend",
+      "VK_OHOS_surface and EGL/GLES integration",
+      "Harmony namespace generation",
+      "HAP assembly, signing and device proof"
+    ],
+    "platformClaim": "desktop common-layout proof only; no Android, HarmonyOS or iOS runtime acceptance"
+  },
+  "knownEnvironmentNote": "Homebrew SDL dylibs target macOS 15 while the inherited minimum is macOS 12; linker warnings remain unchanged."
+}

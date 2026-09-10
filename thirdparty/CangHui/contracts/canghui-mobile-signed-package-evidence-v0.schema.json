@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/contracts/canghui-mobile-signed-package-evidence-v0.schema.json",
+  "title": "CangHui mobile signed package evidence receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "platform", "packageKind", "sourceStage", "applicationId",
+    "lifecycleEpoch", "surfaceGeneration", "state", "outcome", "outputName",
+    "platformOwner", "verifierTool", "verificationPolicy", "verificationReceiptId",
+    "artifactDigest", "artifactSize", "sourceBinding", "limitations", "signedPackage",
+    "installable", "installationProven", "deviceProven"
+  ],
+  "properties": {
+    "protocol": { "const": "canghui.mobile-signed-package-evidence.v0" },
+    "platform": { "enum": ["ios", "android", "harmonyos"] },
+    "packageKind": {
+      "enum": [
+        "ios-application-bundle",
+        "android-application-package",
+        "harmony-application-package"
+      ]
+    },
+    "sourceStage": { "const": "input-tree" },
+    "applicationId": { "type": "string", "minLength": 1 },
+    "lifecycleEpoch": { "type": "integer", "minimum": 0 },
+    "surfaceGeneration": { "type": "integer", "minimum": 0 },
+    "state": { "enum": ["rejected", "applied"] },
+    "outcome": { "enum": ["failed", "passed"] },
+    "outputName": { "type": "string", "pattern": "^[A-Za-z0-9:._-]+$", "maxLength": 255 },
+    "platformOwner": { "type": "string", "pattern": "^[A-Za-z0-9:._-]+$", "maxLength": 128 },
+    "verifierTool": { "type": "string", "pattern": "^[A-Za-z0-9:._-]+$", "maxLength": 128 },
+    "verificationPolicy": { "type": "string", "pattern": "^[A-Za-z0-9:._-]+$", "maxLength": 128 },
+    "verificationReceiptId": { "type": "string", "pattern": "^[A-Za-z0-9:._-]+$", "maxLength": 128 },
+    "artifactDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "artifactSize": { "type": "integer", "minimum": 1 },
+    "sourceBinding": { "type": "string", "pattern": "^[A-Za-z0-9:._-]+$", "maxLength": 256 },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "signedPackage": { "type": "boolean" },
+    "installable": { "type": "boolean" },
+    "installationProven": { "const": false },
+    "deviceProven": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "platform": { "const": "ios" } } },
+      "then": { "properties": { "packageKind": { "const": "ios-application-bundle" } } }
+    },
+    {
+      "if": { "properties": { "platform": { "const": "android" } } },
+      "then": { "properties": { "packageKind": { "const": "android-application-package" } } }
+    },
+    {
+      "if": { "properties": { "platform": { "const": "harmonyos" } } },
+      "then": { "properties": { "packageKind": { "const": "harmony-application-package" } } }
+    },
+    {
+      "if": { "properties": { "state": { "const": "applied" } } },
+      "then": {
+        "properties": {
+          "outcome": { "const": "passed" },
+          "signedPackage": { "const": true },
+          "installable": { "const": true }
+        }
+      },
+      "else": {
+        "properties": {
+          "signedPackage": { "const": false },
+          "installable": { "const": false }
+        }
+      }
+    }
+  ]
+}

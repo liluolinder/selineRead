@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/contracts/canghui-mobile-signing-preparation-v0.schema.json",
+  "title": "CangHui mobile signing preparation receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "platform", "packageKind", "sourceStage", "applicationId",
+    "lifecycleEpoch", "surfaceGeneration", "sourceBinding", "state", "outputName",
+    "requiredCapabilities", "missingCapabilities", "limitations", "signedPackage", "installable"
+  ],
+  "properties": {
+    "protocol": { "const": "canghui.mobile-signing-preparation.v0" },
+    "platform": { "enum": ["ios", "android", "harmonyos"] },
+    "packageKind": {
+      "enum": [
+        "ios-application-bundle",
+        "android-application-package",
+        "harmony-application-package"
+      ]
+    },
+    "sourceStage": {
+      "enum": ["contract-ready", "input-tree", "signed-package", "device-proven"]
+    },
+    "applicationId": { "type": "string", "minLength": 1 },
+    "lifecycleEpoch": { "type": "integer", "minimum": 0 },
+    "surfaceGeneration": { "type": "integer", "minimum": 0 },
+    "sourceBinding": { "type": "string", "pattern": "^[A-Za-z0-9:._-]+$", "maxLength": 256 },
+    "state": { "enum": ["blocked", "requirements-satisfied"] },
+    "outputName": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$", "maxLength": 255 },
+    "requiredCapabilities": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$", "maxLength": 128 },
+      "uniqueItems": true,
+      "maxItems": 16
+    },
+    "missingCapabilities": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$", "maxLength": 128 },
+      "uniqueItems": true
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "signedPackage": { "const": false },
+    "installable": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "platform": { "const": "ios" } } },
+      "then": { "properties": { "packageKind": { "const": "ios-application-bundle" } } }
+    },
+    {
+      "if": { "properties": { "platform": { "const": "android" } } },
+      "then": { "properties": { "packageKind": { "const": "android-application-package" } } }
+    },
+    {
+      "if": { "properties": { "platform": { "const": "harmonyos" } } },
+      "then": { "properties": { "packageKind": { "const": "harmony-application-package" } } }
+    },
+    {
+      "if": { "properties": { "state": { "const": "requirements-satisfied" } } },
+      "then": {
+        "properties": {
+          "sourceStage": { "const": "input-tree" },
+          "missingCapabilities": { "maxItems": 0 }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_dashed"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui dashed rounded borders (dashedBorder) — dropzone + adjustable preview."
+
+[dependencies]
+chui = { path = "../.." }

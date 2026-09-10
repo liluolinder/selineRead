@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/contracts/canghui-packaging-artifact-v0.schema.json",
+  "title": "CangHui unsigned packaging artifact receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "platform", "artifactKind", "identity", "generatedFiles", "copiedAssets", "executableIncluded", "signed", "hostReplay", "limitations"],
+  "properties": {
+    "schema": { "const": "canghui.packaging-artifact.v0" },
+    "platform": { "enum": ["macos", "windows", "linux"] },
+    "artifactKind": { "type": "string" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "identifier", "version", "publisher"],
+      "properties": {
+        "name": { "type": "string" },
+        "identifier": { "type": "string" },
+        "version": { "type": "string" },
+        "publisher": { "type": "string" }
+      }
+    },
+    "generatedFiles": { "type": "array", "items": { "type": "string" } },
+    "copiedAssets": { "type": "array", "items": { "type": "string" } },
+    "executableIncluded": { "type": "boolean" },
+    "signed": { "const": false },
+    "hostReplay": { "type": "string" },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  }
+}

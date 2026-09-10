@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_layout_transition"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui keyed layout continuity across reorder and responsive re-grid."
+
+[dependencies]
+chui = { path = "../.." }

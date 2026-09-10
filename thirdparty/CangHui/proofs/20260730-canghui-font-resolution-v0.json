@@ -1,0 +1,35 @@
+{
+  "schema": "canghui-proof-receipt-v1",
+  "id": "20260730-canghui-font-resolution-v0",
+  "createdAt": "2026-07-30T20:00:00+08:00",
+  "matrixVersion": "CangHui.20260730.4",
+  "baseline": "CangHui@9d21a9a",
+  "checkpoint": "commit carrying this receipt",
+  "version": "0.9.2",
+  "protocol": "canghui.font-resolution.v0",
+  "verification": {
+    "frameworkTests": "pass: 455/455",
+    "sdlTests": "pass: 88/88",
+    "integratedCliTests": "pass: 15/15",
+    "integratedCliBuild": "pass: cjpm build",
+    "cliSmoke": "pass: generated project includes font, license, and source notice; build and test pass",
+    "defaultResolution": "pass: bundled HarmonyOS Sans selected without host installation",
+    "latinCjkFallback": "pass: Arial selected for Latin and bundled HarmonyOS Sans selected for missing CJK glyphs",
+    "boldFallback": "pass: bold CJK remains on the bundled fallback tier with companion-or-synthetic policy",
+    "doctorFontGroup": "pass: ready with asset, license, source notice, and resolution contract",
+    "fontAssetSha256": "8978e05044e7089ad6a9de38c505c8148305607983487435a916d2610700a7ca",
+    "fontScreenshot": "pass: examples/.images/fonts.png, 1980x2160",
+    "fontScreenshotSha256": "c24aa9f0e5dbbe72abf696208b9219b817c35a3776739c67689abb814c7b30e2",
+    "visualReview": "pass: default, serif, monospace, CJK, and fallback status render without local paths or clipping"
+  },
+  "delivered": [
+    "component, Theme, application, bundled, and system font resolution tiers",
+    "framework-owned HarmonyOS Sans default without host installation",
+    "glyph-coverage fallback through SDL_ttf TTF_FontHasGlyph",
+    "true-bold companion preference with synthetic fallback",
+    "runtime resolution and Draw IR family/source reporting",
+    "generated-project font, license, and source-notice packaging",
+    "public font contract and integration documentation"
+  ],
+  "boundary": "The bundled font and macOS renderer proof establish the shared resolution contract. Native packaging and runtime validation on other platforms remain platform-specific."
+}

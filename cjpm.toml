@@ -1,0 +1,60 @@
+# SelineRead · cjpm 工程配置
+#
+# 说明：link-option 里的两项是本工程自带的本地静态依赖——
+#   - thirdparty/jpeg/libstbimage.a：stb_image 静态库（封面 JPEG/PNG 解码，见 src/jpeg.cj）
+#   - native/cuishim.o：CreateThread 原生线程 shim（见 src/native_ui.cj 的 cui_start_native）
+# 二者按相对路径链接，构建时请保持目录结构。
+
+[package]
+cjc-version = "1.1.0"
+name = "SelineRead"
+description = "SelineRead - Z-Library 桌面阅读器（Cangjie + chui）"
+version = "1.0.0"
+target-dir = ""
+src-dir = ""
+output-type = "executable"
+compile-option = ""
+override-compile-option = ""
+link-option = "-lcrypt32 thirdparty/jpeg/libstbimage.a native/cuishim.o"
+
+[package.package-configuration]
+
+[dependencies]
+chui = { path = "thirdparty/CangHui" }
+selineDownload = { path = "thirdparty/selineDownload" }
+zlibraryAPI4CJ = { path = "thirdparty/zlibraryAPI4CJ" }
+CJson = { path = "thirdparty/CJson" }
+
+[target]
+[target.aarch64-linux-ohos]
+compile-option = "-B \"${DEVECO_CANGJIE_HOME}/compiler/third_party/llvm/bin\" -B \"${DEVECO_OH_NATIVE_HOME}/sysroot/usr/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/sysroot/usr/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/llvm/lib/clang/15.0.4/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/llvm/lib/aarch64-linux-ohos\" -L \"${DEVECO_CANGJIE_HOME}/build/linux_ohos_aarch64_cjnative/openssl\" --sysroot \"${DEVECO_OH_NATIVE_HOME}/sysroot\""
+[target.aarch64-linux-ohos.bin-dependencies]
+path-option = ["${AARCH64_LIBS}", "${AARCH64_MACRO_LIBS}", "${AARCH64_KIT_LIBS}", "${CANGJIE_STDX_PATH}/linux_ohos_aarch64_cjnative/dynamic/stdx"]
+
+[target.x86_64-linux-ohos]
+compile-option = "-B \"${DEVECO_CANGJIE_HOME}/compiler/third_party/llvm/bin\" -B \"${DEVECO_OH_NATIVE_HOME}/sysroot/usr/lib/x86_64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/sysroot/usr/lib/x86_64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/llvm/lib/clang/15.0.4/lib/x86_64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/llvm/lib/x86_64-linux-ohos\" -L \"${DEVECO_CANGJIE_HOME}/build/linux_ohos_x86_64_cjnative/openssl\" --sysroot \"${DEVECO_OH_NATIVE_HOME}/sysroot\""
+[target.x86_64-linux-ohos.bin-dependencies]
+path-option = ["${X86_64_OHOS_LIBS}", "${X86_64_OHOS_MACRO_LIBS}", "${X86_64_OHOS_KIT_LIBS}", "${CANGJIE_STDX_PATH}/linux_ohos_x86_64_cjnative/dynamic/stdx"]
+
+[target.aarch64-linux-android26]
+compile-option = "--cfg target_platform=android --sysroot \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/sysroot\" -L \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/lib/clang/17/lib/linux\" -L \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/sysroot/usr/lib/aarch64-linux-android/26\" -B \"${ANDROID_CANGJIE_PATH}/third_party/llvm/bin\" -L \"${ANDROID_BRIDGE}\" -ljnimeow"
+[target.aarch64-linux-android26.bin-dependencies]
+path-option = [ "${ANDROID_CJ_FRONTEND}/ohos", "${ANDROID_CJ_FRONTEND}/macro/ohos", "${ANDROID_CANGJIE_STDX_PATH}", "${ANDROID_CJMP_LIBS_PATH}/cjmp" ]
+
+[target.aarch64-apple-ios]
+compile-option = "--cfg target_platform=ios --sysroot=${IOS_SDK_DIR} -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin -L${IOS_BRIDGE} -ljnimeow"
+[target.aarch64-apple-ios.bin-dependencies]
+path-option = ["${IOS_CJ_FRONTEND}/ohos", "${IOS_CJ_FRONTEND}/macro/ohos", "${IOS_CANGJIE_STDX_PATH}", "${IOS_CJMP_LIBS_PATH}/cjmp" ]
+package-option = {}
+
+[target.aarch64-apple-ios-simulator]
+compile-option = "--cfg target_platform=ios-sim --sysroot=${IOS_SIM_SDK_DIR} -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin -L${IOS_BRIDGE} -ljnimeow"
+[target.aarch64-apple-ios-simulator.bin-dependencies]
+path-option = ["${IOS_SIM_CJ_FRONTEND}/ohos", "${IOS_SIM_CJ_FRONTEND}/macro/ohos", "${IOS_SIM_CANGJIE_STDX_PATH}", "${IOS_SIM_CJMP_LIBS_PATH}/cjmp" ]
+package-option = {}
+
+[target.x86_64-w64-mingw32]
+compile-option = "--cfg \"ohos=false\""
+link-option = "-lcrypt32"
+[target.x86_64-w64-mingw32.bin-dependencies]
+path-option = ["${CANGJIE_STDX_PATH}/windows_x86_64_cjnative/static/stdx"]

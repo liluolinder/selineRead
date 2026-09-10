@@ -1,0 +1,31 @@
+{
+  "schema": "canghui.proof.v0",
+  "id": "20260819-canghui-mobile-signing-preparation-v0",
+  "project": "CangHui",
+  "capability": "mobile external-signer preparation",
+  "protocol": "canghui.mobile-signing-preparation.v0",
+  "checkpoint": "atomic member commit containing this proof",
+  "evidence": {
+    "frameworkTests": "pass: 571/571",
+    "focusedHostTests": "pass: 31/31",
+    "cuicTests": "pass: 63/63",
+    "consumerBuild": "pass",
+    "doctor": "pass: contract and schema ready without signing claim",
+    "kmode": "pass: declared iOS capability labels produce requirements-satisfied without host-readiness claim",
+    "securityBoundary": "pass: no paths, commands, certificates, keys, profiles, passwords or secret values accepted",
+    "stageBoundary": "pass: source remains input-tree/unsigned and output remains signedPackage=false/installable=false"
+  },
+  "artifacts": [
+    "src/host/mobile_signing_preparation.cj",
+    "contracts/canghui-mobile-signing-preparation-v0.schema.json",
+    "examples/mobile-host-replay",
+    "docs/mobile-application-host.md",
+    "docs/mobile-application-host.zh-CN.md"
+  ],
+  "nonClaims": [
+    "no certificate, key, provisioning profile content or credential handling",
+    "no codesign, Xcode archive, IPA, installation or device replay",
+    "no Android APK or HarmonyOS HAP signing",
+    "no store, release, production or LTS claim"
+  ]
+}

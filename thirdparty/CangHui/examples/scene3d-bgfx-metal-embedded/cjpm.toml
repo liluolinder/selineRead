@@ -1,0 +1,11 @@
+[package]
+cjc-version = "1.1.0"
+name = "canghui_scene3d_bgfx_metal_embedded"
+version = "0.1.0"
+output-type = "executable"
+description = "Embedded CangHui Scene3DView with the optional macOS bgfx Metal provider"
+license = "Apache-2.0"
+
+[dependencies]
+chui = { path = "../.." }
+canghui_scene3d_bgfx = { path = "../../packages/scene3d-bgfx" }

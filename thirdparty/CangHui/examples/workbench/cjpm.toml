@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_workbench"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui nested-SplitView writing workbench example."
+
+[dependencies]
+chui = { path = "../.." }

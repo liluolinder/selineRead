@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_links"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui RichText clickable link spans (onTap) — an activity feed with inline links."
+
+[dependencies]
+chui = { path = "../.." }

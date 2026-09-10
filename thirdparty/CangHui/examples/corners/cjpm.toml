@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_corners"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui Corners — per-corner radius: asymmetric chat bubbles and a top-rounded compose bar."
+
+[dependencies]
+chui = { path = "../.." }

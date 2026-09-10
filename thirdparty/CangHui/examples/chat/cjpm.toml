@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_chat"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui LazyList variable-height chat example."
+
+[dependencies]
+chui = { path = "../.." }

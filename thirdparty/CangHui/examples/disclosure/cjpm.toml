@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_disclosure"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui Reveal animated expand/collapse (FAQ disclosure list)."
+
+[dependencies]
+chui = { path = "../.." }

@@ -1,0 +1,52 @@
+{
+  "schema": "cangjiegui-proof-receipt-v1",
+  "id": "20260726-cangjiegui-upstream-0.9.2-component-intake-v0",
+  "createdAt": "2026-07-26T10:28:42+08:00",
+  "matrixVersion": "CangjieGUI.20260726.7",
+  "arkuiMatrixVersion": "CangjieGUI.ArkUI.20260726.1",
+  "baseline": "CangjieGUI@c490fe1",
+  "upstreamMain": "c8b33dc15355bd90fef8d9d48d64ae7d3547c828",
+  "upstreamTag": "0.9.2@5eecd25c1dc53c14064fc6c58b1020c44f32bb69",
+  "version": "0.9.2",
+  "verification": {
+    "rootBuild": "pass: cjpm build",
+    "rootTests": "pass: 425/425",
+    "sdlTests": "pass: 81/81",
+    "galleryPackageTests": "pass: 2/2",
+    "galleryBuild": "pass: cjpm build",
+    "jsonContracts": "pass: jq empty",
+    "diffCheck": "pass: git -c core.whitespace=cr-at-eol diff --cached --check; upstream docs/examples preserve CRLF"
+  },
+  "absorbed": [
+    "Accordion, Badge, Breadcrumb, Chip, Pagination, ProgressRing and Rating",
+    "DatePicker, TimePicker, TreeView, StepIndicator and Toast",
+    "SplitView, ReorderableList, RichText and MenuBar",
+    "LazyRow, LazyList, Reveal, tokens, gradients, per-corner fills and dashed borders",
+    "upstream documentation, examples, benchmark surfaces and focused tests",
+    "real SDL_ttf style flags and registered font-file resolution"
+  ],
+  "preservedLocalExtensions": [
+    "kMode debug/headless control plane",
+    "mobile host and native-surface contracts",
+    "target-texture circular theme reveal",
+    "button InkWell and queued pointer proof route",
+    "vendored SDL ownership for current mobile-host experimentation"
+  ],
+  "desktopGallery": {
+    "tool": "CUI DesktopApp --snapshot BMP capture",
+    "visuallyReviewed": true,
+    "result": "pass: desktop and 412px compact common-layout previews fit without overlap or clipping",
+    "snapshotSha256": {
+      "desktopLight": "f637900e76a8b89c4528b944c65eb88d304d5bb98e4d3cef9a34cc814599b8a4",
+      "harmonyCompactDark": "3f3af560e101c96c3b49e7ff56276602cf8353e20b8b4391e05fe02004ac2b78"
+    }
+  },
+  "remaining": [
+    "Search dedicated composition",
+    "Counter semantic control",
+    "indeterminate LoadingProgress",
+    "Refresh, Swiper and navigation-stack semantics",
+    "platform-bound XComponent, Web, Video and Map adapters"
+  ],
+  "boundary": "No iOS work, runtime mobile renderer, release or LTS claim is included."
+}

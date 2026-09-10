@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BINARY="${ROOT_DIR}/target/release/bin/main"
+
+NEEDS_BUILD=0
+if [[ ! -x "${BINARY}" ]]; then
+    NEEDS_BUILD=1
+elif [[ -n "$(find "${ROOT_DIR}/src" "${ROOT_DIR}/cjpm.toml" -type f -newer "${BINARY}" -print -quit)" ]]; then
+    NEEDS_BUILD=1
+fi
+
+if [[ "${NEEDS_BUILD}" -eq 1 ]]; then
+    (cd "${ROOT_DIR}" && cjpm build)
+fi
+
+export CANGHUI_CLI_ROOT="${ROOT_DIR}"
+exec "${BINARY}" "$@"

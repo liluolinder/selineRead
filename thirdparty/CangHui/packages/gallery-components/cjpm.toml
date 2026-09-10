@@ -1,0 +1,13 @@
+[package]
+cjc-version = "1.0.5"
+name = "canghui_gallery_components"
+version = "0.1.0"
+output-type = "static"
+description = "Reference platform-neutral component package for CangHui."
+license = "Apache-2.0"
+
+[dependencies]
+chui = { path = "../.." }
+canghui_symbol_material = { path = "../symbol-material" }
+canghui_symbol_ant = { path = "../symbol-ant" }
+canghui_symbol_arco = { path = "../symbol-arco" }

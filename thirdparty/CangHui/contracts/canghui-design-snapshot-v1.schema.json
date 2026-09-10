@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/contracts/canghui-design-snapshot-v1.schema.json",
+  "title": "CangHui Design Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "contentDigest", "content"],
+  "properties": {
+    "protocol": { "const": "canghui.design-snapshot/v1" },
+    "contentDigest": {
+      "type": "string",
+      "pattern": "^chui-hash-v1:[0-9]+:[0-9]+$"
+    },
+    "content": { "$ref": "#/$defs/content" }
+  },
+  "$defs": {
+    "property": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "value", "redacted"],
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "string" },
+        "redacted": { "type": "boolean" }
+      }
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform", "viewportWidth", "viewportHeight", "scale",
+        "theme", "locale", "reducedMotion"
+      ],
+      "properties": {
+        "platform": { "type": "string" },
+        "viewportWidth": { "type": "number", "minimum": 0 },
+        "viewportHeight": { "type": "number", "minimum": 0 },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "theme": { "type": "string" },
+        "locale": { "type": "string" },
+        "reducedMotion": { "type": "boolean" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "parentId", "kind", "order", "frame", "widgetType",
+        "role", "label", "value", "styles", "states"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "parentId": { "type": "string" },
+        "kind": {
+          "enum": ["document", "page", "state", "screen", "region", "component", "atomic"]
+        },
+        "order": { "type": "integer", "minimum": 0 },
+        "frame": { "$ref": "#/$defs/rect" },
+        "widgetType": { "type": "string" },
+        "role": { "type": "string" },
+        "label": { "type": "string" },
+        "value": { "type": "string" },
+        "styles": {
+          "type": "array",
+          "maxItems": 16384,
+          "items": { "$ref": "#/$defs/property" }
+        },
+        "states": {
+          "type": "array",
+          "maxItems": 16384,
+          "items": { "$ref": "#/$defs/property" }
+        }
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "generator", "id", "inputDigest", "environment",
+        "nodes", "states", "drawIr"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "generator": { "type": "string" },
+        "id": { "type": "string" },
+        "inputDigest": { "type": "string" },
+        "environment": { "$ref": "#/$defs/environment" },
+        "nodes": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": { "$ref": "#/$defs/node" }
+        },
+        "states": {
+          "type": "array",
+          "maxItems": 16384,
+          "items": { "$ref": "#/$defs/property" }
+        },
+        "drawIr": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": { "type": "object" }
+        }
+      }
+    }
+  }
+}

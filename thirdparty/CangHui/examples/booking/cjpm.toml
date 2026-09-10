@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_booking"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui DatePicker hotel-booking example."
+
+[dependencies]
+chui = { path = "../.." }

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canghui.dev/contracts/canghui-packaging-plan-v0.schema.json",
+  "title": "CangHui deterministic packaging plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "platform", "project", "identity", "inputAssets", "generatedFiles", "nativeProviderState", "signingRequired", "unsupportedCapabilities"],
+  "properties": {
+    "schema": { "const": "canghui.packaging-plan.v0" },
+    "platform": { "enum": ["macos", "windows", "linux"] },
+    "project": { "type": "string" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "identifier", "version", "publisher"],
+      "properties": {
+        "name": { "type": "string" },
+        "identifier": { "type": "string" },
+        "version": { "type": "string" },
+        "publisher": { "type": "string" }
+      }
+    },
+    "inputAssets": { "type": "array", "items": { "type": "string" } },
+    "generatedFiles": { "type": "array", "items": { "type": "string" } },
+    "nativeProviderState": { "type": "array", "items": { "type": "string" } },
+    "signingRequired": { "type": "boolean" },
+    "unsupportedCapabilities": { "type": "array", "items": { "type": "string" } }
+  }
+}

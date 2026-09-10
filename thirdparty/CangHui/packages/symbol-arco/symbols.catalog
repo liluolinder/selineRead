@@ -1,0 +1,15 @@
+canghui.symbol.provider.v0
+provider=arco
+namespace=canghui_symbol_arco
+providerType=ArcoSymbolProvider
+adapterType=ArcoSymbolAdapter
+repository=https://github.com/arco-design/arco-design
+revision=fbf2ec0a8cc28a5d20f1f82de6c2c4196ef66950
+version=2.66.16
+license=MIT
+symbol=plus|aliases=add|variants=outlined|directional=false|source=icon/_svgs/tips/outline/plus.svg
+symbol=minus|aliases=remove|variants=outlined|directional=false|source=icon/_svgs/tips/outline/minus.svg
+symbol=close|aliases=cancel|variants=outlined|directional=false|source=icon/_svgs/tips/outline/close.svg
+symbol=check|aliases=done|variants=outlined|directional=false|source=icon/_svgs/tips/outline/check.svg
+symbol=left|aliases=chevron-left|variants=outlined|directional=true|source=icon/_svgs/direction/outline/left.svg
+symbol=right|aliases=chevron-right|variants=outlined|directional=true|source=icon/_svgs/direction/outline/right.svg

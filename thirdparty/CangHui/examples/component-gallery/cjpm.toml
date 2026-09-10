@@ -1,0 +1,10 @@
+[package]
+cjc-version = "1.0.5"
+name = "canghui_component_gallery"
+version = "0.1.0"
+output-type = "executable"
+description = "Desktop preview gallery for CangHui common components."
+
+[dependencies]
+chui = { path = "../.." }
+canghui_gallery_components = { path = "../../packages/gallery-components" }

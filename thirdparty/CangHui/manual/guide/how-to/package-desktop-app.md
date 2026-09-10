@@ -1,0 +1,76 @@
+<!-- kind: how-to; audience: desktop-app-developer; builds-on: first-window -->
+
+# 打包能在目标机器启动的桌面应用
+
+## 目标
+
+在[第一个窗口](../getting-started/first-window.md)工程基础上，把可执行文件、SDL 运行库和应用资源放进干净交付目录，并做一次脱离源码树的启动检查。约需 20 分钟。
+
+## 适用场景
+
+把开发机上已经通过构建、交互和快照检查的 CangHui 程序交给测试人员或最终用户。这里讲最小可移植目录，不代替操作系统安装包、签名或自动更新方案。
+
+## 准备工作
+
+确认目标机器的操作系统和处理器架构与构建产物一致。先在项目内运行首窗口，再找到 `cjpm build` 生成的可执行文件；SDL 动态库名称因平台不同，Windows 常见为 `SDL3.dll`，Linux 为对应的 `.so`。
+
+## 操作步骤
+
+### 1. 给基础程序加入发布身份
+
+将首窗口中的窗口定义替换为下面补丁，并保持其余模型和界面代码不变：
+
+```cangjie role=patch
+let app = DesktopApp(WindowSpec(
+    "CangHui 计数器",
+    640,
+    420,
+    resizable: true
+))
+```
+
+发布标题应稳定、便于用户在任务栏识别。版本号、构建号和许可证等信息放进交付清单，不要临时拼进界面文本。
+
+### 2. 建立干净目录
+
+交付目录至少包含可执行文件和匹配架构的 SDL 运行库。应用运行时读取的字体、图像或配置也按程序约定的相对路径复制。不要把整个源码仓库、编译缓存和测试快照一起打包。
+
+```cangjie role=variation
+// 资源路径以可执行文件所在目录为基准时，集中定义一次：
+let APP_ICON = "assets/app-icon.bmp"
+
+func releaseCard(): Unit {
+    VStack {
+        ImageView(APP_ICON, fit: ImageFit.Contain,
+            preferredWidth: Some(48.vp), preferredHeight: 48.vp)
+        Label("版本 1.0.0").muted()
+    }
+}
+```
+
+### 3. 脱离源码树冒烟
+
+打开全新的终端，把当前目录切到交付目录，直接启动可执行文件。不要依赖项目根目录的 PATH 或相对文件。对开发项目再运行一次 `cuic prnt . --output smoke.bmp`，确认动态库和资源在干净目录也能找到；打包产物的宿主可显式传入 `DesktopCaptureRequest` 做同等检查。
+
+### 4. 记录平台边界
+
+Windows 检查 DLL 架构与安全软件拦截；Linux 同时检查 SDL 及系统 PCRE2 等动态依赖，并在与目标发行版相近的环境验证。签名、安装位置权限、沙箱和文件对话框行为都属于平台测试，不能由开发机一次启动代替。
+
+## 确认结果
+
+源码目录不在 PATH 时，交付目录里的程序仍能打开、关闭并生成快照；缺少 SDL 时的失败可被明确复现，补回正确运行库后恢复。资源路径不依赖开发机绝对路径。交付清单记录操作系统、架构、构建类型、CangHui 版本、运行库文件和人工交互结果。
+
+## 常见错误
+
+- 只复制可执行文件：目标机提示找不到 SDL 动态库。
+- 从项目根启动冒烟：程序悄悄读到源码树中的资源。
+- 混用不同架构的 DLL：文件存在但加载失败。
+- 把 `cjpm run` 成功当成交付验证：它仍处在开发环境中。
+
+## 相关 API
+
+[DesktopApp](../../api/chui/desktop/DesktopApp.md)、[CangHui 包入口](../../api/chui/index.md)。
+
+## 下一步
+
+启动失败按[常见问题](../troubleshooting/common-problems.md)的环境分支排查，并把干净目录冒烟加入每次发布清单。

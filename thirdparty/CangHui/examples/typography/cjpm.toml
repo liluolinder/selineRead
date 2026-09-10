@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "chui_typography"
+version = "0.1.0"
+output-type = "executable"
+description = "CangHui font-style (bold/italic/underline/strikethrough) typography specimen."
+
+[dependencies]
+chui = { path = "../.." }

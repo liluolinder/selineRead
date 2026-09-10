@@ -1,0 +1,38 @@
+{
+  "schema": "cangjiegui-proof-receipt-v1",
+  "id": "20260725-cangjiegui-sdl3-apple-host-reference-v0",
+  "createdAt": "2026-07-25T21:30:00+08:00",
+  "matrixVersion": "CangjieGUI.20260725.6",
+  "sources": [
+    {
+      "repository": "https://github.com/Ravbug/sdl3-sample",
+      "commit": "d6c3c1b46cfab879a4cae71e3da5fb908dc02563",
+      "license": "CC0-1.0"
+    },
+    {
+      "repository": "https://github.com/KevinVitale/SwiftSDL",
+      "commit": "c9c26670c6aaa8130001064e3133a305082f70dc",
+      "license": "MIT"
+    }
+  ],
+  "adopted": [
+    "owned-window versus embedded-surface host modes",
+    "callback-driven application loop contract",
+    "Apple bundle, launch-screen, high-DPI and resource packaging requirements",
+    "reuse existing deterministic Resource and CuiException binding rules"
+  ],
+  "verification": {
+    "frameworkBuild": "pass: Cangjie 1.1.3",
+    "frameworkTests": "pass: 199/199",
+    "galleryBuild": "pass",
+    "deviceStaticLibrary": "pass: aarch64-apple-ios",
+    "simulatorStaticLibrary": "pass: aarch64-apple-ios-simulator",
+    "jsonAndDiff": "pass"
+  },
+  "nonClaims": [
+    "no copied Swift or C++ implementation",
+    "no SDL_EnterAppMainCallbacks runtime binding",
+    "no vendored SDL source or XCFramework",
+    "no iOS renderer or product-device acceptance"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  // Merge into the consumer-owned module.json5. Bundle identity and permissions are intentionally absent.
+  "canghuiProjection": {
+    "host": "XComponent/OHNativeWindow",
+    "surfaceGeneration": true,
+    "safeArea": true,
+    "systemTheme": true,
+    "textInputContract": "CangHuiTextInputIngress"
+  }
+}

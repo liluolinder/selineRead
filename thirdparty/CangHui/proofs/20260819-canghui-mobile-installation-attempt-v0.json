@@ -1,0 +1,33 @@
+{
+  "schema": "canghui.proof.v0",
+  "id": "20260819-canghui-mobile-installation-attempt-v0",
+  "project": "CangHui",
+  "capability": "mobile installation attempt receipt gate",
+  "protocol": "canghui.mobile-installation-attempt.v0",
+  "checkpoint": "atomic member commit containing this proof",
+  "evidence": {
+    "frameworkTests": "pass: 580/580",
+    "focusedHostTests": "pass: 40/40",
+    "cuicTests": "pass: 63/63",
+    "consumerBuild": "pass: mobile-host-replay",
+    "kmode": "pass: 6 links across 3 package roots; installed, failed and stale installation receipts",
+    "binding": "checks applied signed-package evidence, artifact digest and size, platform owner, exact input tree, lifecycle epoch and native-surface generation",
+    "providerGate": "iOS records the external installer outcome while keeping MobileHostPackageReceipt at signed-package",
+    "stageBoundary": "installationProven may become true only for a recorded installed outcome; launchProven, renderingProven and deviceProven remain false"
+  },
+  "artifacts": [
+    "src/host/mobile_installation_attempt.cj",
+    "src/host/mobile_signed_package_evidence.cj",
+    "src/host/ios_mobile_application_host.cj",
+    "contracts/canghui-mobile-installation-attempt-v0.schema.json",
+    "examples/mobile-host-replay",
+    "docs/mobile-application-host.md",
+    "docs/mobile-application-host.zh-CN.md"
+  ],
+  "nonClaims": [
+    "no installer execution or device identifier inspection",
+    "no certificate, key, profile, password, path or command handling",
+    "no launch, rendering or physical-device semantic replay",
+    "no store, release, production or LTS claim"
+  ]
+}

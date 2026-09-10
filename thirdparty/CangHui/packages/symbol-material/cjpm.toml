@@ -1,0 +1,9 @@
+[package]
+cjc-version = "1.0.5"
+name = "canghui_symbol_material"
+version = "0.1.0"
+output-type = "static"
+description = "Optional Material Symbols adapter for CangHui."
+
+[dependencies]
+chui = { path = "../.." }
