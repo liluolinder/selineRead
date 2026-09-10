@@ -48,3 +48,10 @@ compile-option = "--cfg \"ohos=false\""
 link-option = "-lcrypt32"
 [target.x86_64-w64-mingw32.bin-dependencies]
 path-option = ["${CANGJIE_STDX_PATH}/windows_x86_64_cjnative/static/stdx"]
+
+[target.x86_64-apple-darwin]
+[target.x86_64-apple-darwin.bin-dependencies]
+path-option = ["${CANGJIE_STDX_PATH}/darwin_x86_64_cjnative/static/stdx"]
+[target.aarch64-apple-darwin]
+[target.aarch64-apple-darwin.bin-dependencies]
+path-option = ["${CANGJIE_STDX_PATH}/darwin_aarch64_cjnative/static/stdx"]
