@@ -79,13 +79,7 @@ public class BookSourceParser <: Searchable {
         if (rules.searchUrl.isEmpty()) {
             return ArrayList<Book>()
         }
-        // 分页支持检测：searchUrl 含 {{page}} 才支持分页；
-        // 不含且请求了非默认页（page > 1）时，该书源无更多结果，返回空数组；
-        // page=1（默认页）不受影响（否则 supportsOffset 的书源传 page=1 会被误拦截）
-        let supportsPage = rules.searchUrl.contains("{{page}}")
-        if (!supportsPage && page.isSome() && page.getOrThrow() > 1) {
-            return ArrayList<Book>()
-        }
+        // 不拦截分页：page 参数始终透传（书源是否支持分页由 searchUrl 模板决定）
         let pageNum = if (page.isSome()) { page.getOrThrow() } else { 1 }
         let pageVal = pageNum.toString()
         // offsetNum 未传时采用 ruleSearch.offset（固定数字）；再未配置则为 0
@@ -343,7 +337,7 @@ public class BookSourceParser <: Searchable {
                 let arr = ArrayList<String>()
                 if (r.isArray()) {
                     for (item in r.array()) {
-                        arr.add(item.toString().trim())
+                        arr.add(item.toString().trimAscii())
                     }
                 }
                 arr
@@ -544,7 +538,7 @@ public class BookSourceParser <: Searchable {
         }
         var result = text
         for (f in filters) {
-            let item = f.trim()
+            let item = f.trimAscii()
             if (item.isEmpty()) {
                 continue
             }
@@ -575,7 +569,7 @@ public class BookSourceParser <: Searchable {
         let lines = text.split("\n")
         var first = true
         for (line in lines) {
-            let t = line.trim()
+            let t = line.trimAscii()
             if (t.isEmpty()) {
                 continue
             }

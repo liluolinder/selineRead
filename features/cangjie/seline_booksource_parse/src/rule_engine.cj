@@ -23,7 +23,7 @@ public class RuleEngine {
 
     /** 判断响应内容是否为 JSON */
     public static func isJsonContent(content: String): Bool {
-        let trimmed = content.trim()
+        let trimmed = content.trimAscii()
         if (trimmed.isEmpty()) {
             return false
         }
@@ -34,9 +34,9 @@ public class RuleEngine {
     public static func splitRule(rule: String): (String, String) {
         let idx = lastIndexOf(rule, b'@')
         if (idx < 0) {
-            return (rule.trim(), "text")
+            return (rule.trimAscii(), "text")
         }
-        (rule[0..idx].trim(), rule[(idx + 1)..].trim())
+        (rule[0..idx].trimAscii(), rule[(idx + 1)..].trimAscii())
     }
 
     /**
@@ -131,7 +131,7 @@ public class RuleEngine {
         }
         let result = get(json, path)
         if (result.exists()) {
-            return cleanJsonNumber(result.toString().trim())
+            return cleanJsonNumber(result.toString().trimAscii())
         }
         ""
     }
@@ -146,7 +146,7 @@ public class RuleEngine {
         if (r.exists() && r.isArray()) {
             for (item in r.array()) {
                 if (item.exists()) {
-                    result.add(cleanJsonNumber(item.toString().trim()))
+                    result.add(cleanJsonNumber(item.toString().trimAscii()))
                 }
             }
         }
@@ -160,7 +160,7 @@ public class RuleEngine {
         }
         let r = item.get(path)
         if (r.exists()) {
-            return cleanJsonNumber(r.toString().trim())
+            return cleanJsonNumber(r.toString().trimAscii())
         }
         ""
     }
@@ -185,7 +185,7 @@ public class RuleEngine {
             case "html" => element.html()
             case _ => element.attr(attr)
         }
-        value.trim()
+        value.trimAscii()
     }
 
     /**

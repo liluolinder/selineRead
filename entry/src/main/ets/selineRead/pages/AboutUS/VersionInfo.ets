@@ -12,6 +12,11 @@ export function VersionInfoBuilder() {
 export struct VersionInfo {
   @Local historyArray: I_UpdateInfo[] = [
     {
+      version: '1.2.2.3',
+      date: '2026/8/6',
+      addNewFunArray:["书源测试"],
+    },
+    {
       version: '1.2.2.2',
       date: '2026/8/4',
       addNewFunArray:['书籍详细页面新增相似书籍推荐', "书籍详细页面 分享按钮","在线阅读（技术问题 无法传入登录信息）"],

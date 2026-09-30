@@ -42,7 +42,7 @@ public class BookAggregator <: Searchable {
 
     public func search(keyword: String, page!: Option<Int64> = None, offsetNum!: Option<Int64> = None): ArrayList<Book> {
         let merged = ArrayList<Book>()
-        let kw = keyword.trim()
+        let kw = keyword.trimAscii()
         for (parser in sources) {
             // 含 {{page}} 的书源搜索第 1、2 页；否则搜索一次（不指定页码）
             if (parser.supportsPage) {
@@ -62,10 +62,10 @@ public class BookAggregator <: Searchable {
     /** 合并搜索结果去重：相同书名+作者的书合并，记录多源（解析器 + 该书在该源中的地址） */
     private func mergeInto(merged: ArrayList<Book>, books: ArrayList<Book>, parser: BookSourceParser): Unit {
         for (book in books) {
-            let key = book.name.trim() + "|" + book.author.trim()
+            let key = book.name.trimAscii() + "|" + book.author.trimAscii()
             var found = false
             for (b in merged) {
-                if ((b.name.trim() + "|" + b.author.trim()) == key) {
+                if ((b.name.trimAscii() + "|" + b.author.trimAscii()) == key) {
                     // 已存在：记录该书也来自当前源（含该书在该源的地址）
                     b.addSource(parser, book.bookUrl)
                     found = true
@@ -95,7 +95,7 @@ public class BookAggregator <: Searchable {
 
     /** 书名与关键字的相关度：完全匹配 0 > 前缀匹配 1 > 包含匹配 2 > 其他 3 */
     private func relevance(book: Book, kw: String): Int64 {
-        let name = book.name.trim()
+        let name = book.name.trimAscii()
         if (name == kw) {
             return 0
         }

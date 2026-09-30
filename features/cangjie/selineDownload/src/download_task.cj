@@ -1,4 +1,4 @@
-﻿package selineDownload
+package selineDownload
 
 import std.sync.{Mutex, AtomicInt64, AtomicBool}
 import std.fs.{File, Path, OpenMode, exists, remove, rename, Directory}
@@ -8,7 +8,12 @@ import std.convert.*
 import std.time.DateTime
 import stdx.log.*
 import stdx.encoding.json.*
-import linderHttp.{LinderHttpClient, HttpHeader, RequestMethod, RequestUrl}
+import linderHttp.{Headers, HttpClient, HttpClientBuilder, Method, RequestBuilder, RetryPolicy}
+
+/*
+ * 本库的日志（一个自带、默认 OFF 的 logger）在 `download_log.cj` 里，收口在 [DownloadLogger]。
+ * 写日志一律走它，不要碰 `getGlobalLogger()`。
+ */
 
 /**
  * 下载任务类
@@ -22,6 +27,143 @@ import linderHttp.{LinderHttpClient, HttpHeader, RequestMethod, RequestUrl}
  * 5. 全部下载完成后合并所有分片
  * 6. 合并完成后删除临时文件夹
  */
+/**
+ * 异常的消息可能是空的（某些内部错误就是空的，报错里于是只剩"未知"），至少把类型带上。
+ *
+ * 库里的每个 catch 都改成用它：宁可多一行 `Exception`，也不要一条没有内容的失败。
+ */
+private func safeMessage(error: Exception): String {
+    let message = error.message
+    if (!message.isEmpty()) {
+        return message
+    }
+    "${error}"
+}
+/**
+ * 把一次请求的地址和**实际会发出去的头**写进日志。
+ *
+ * 排查"同一个地址 curl 通、这里 404"时，这两样最有用：最终的头是客户端默认头叠加调用方设的那些，
+ * 光读代码猜不出来。同一个地址只记一次，免得资源下载把日志刷满。
+ */
+private var lastLoggedRequest = ""
+
+private func logRequest(method: String, url: String, headers: Headers): Unit {
+    if (url == lastLoggedRequest) {
+        return
+    }
+    lastLoggedRequest = url
+    /* 先问一句开关，再拼那行请求头：关着的时候连字符串都不该组装。
+     * 用本库自己的 logger（见 [DownloadLogger]，默认 OFF），而不是 `getGlobalLogger()` —— 后者
+     * 绕过级别，会把请求头回显直接写进宿主的日志文件。 */
+    if (!DownloadLogger.enabled()) {
+        return
+    }
+    var text = ""
+    for ((name, values) in headers) {
+        text += "${name}=${values.toArray().toString()} "
+    }
+    DownloadLogger.logger.info("[请求] ${method} ${url} 头: ${text}")
+}
+
+/*
+ * 本库的 HTTP 客户端：全进程共用**一个**（见 `sharedHttpClient`），所以它的连接池上限是进程级设置，
+ * 而不是"每个任务各自的"。
+ *
+ * 宿主在开始下载之前调 [setMaxConnectionsPerHost] 设好；没调就用 [DEFAULT_MAX_CONNECTIONS_PER_HOST]。
+ * 之所以做成"设置一次"而不是从每个 `DownloadConfig` 读：同一个主机如果每个任务各按自己的上限去建连接，
+ * 上游看到的压力就是这些上限之和，而池化复用本身也就失去意义了。
+ */
+
+/** 同一主机同时保持的连接数上限（默认 16）。 */
+let DEFAULT_MAX_CONNECTIONS_PER_HOST: Int64 = 16
+
+private var configuredMaxConnectionsPerHost: Int64 = DEFAULT_MAX_CONNECTIONS_PER_HOST
+private let clientLock: Mutex = Mutex()
+private var sharedHttpClientCache: ?HttpClient = None
+
+/**
+ * 设置同一主机的最大连接数（**进程级**，客户端建好之后不再生效）。
+ *
+ * 调用时机：宿主开始下载之前。传小于 1 的值按 1 处理。
+ *
+ * 这是我们这个下载库对外唯一"进程级"的设置，所以单独一个函数、并在名字里写清楚是"设置连接数"——
+ * 不要以为它跟着某个 `DownloadConfig` 走。
+ */
+public func setMaxConnectionsPerHost(value: Int64): Unit {
+    configuredMaxConnectionsPerHost = if (value < 1) { 1 } else { value }
+}
+
+/** 当前的连接上限（便于宿主/自检确认自己设的和库理解的一致）。 */
+public func maxConnectionsPerHost(): Int64 {
+    configuredMaxConnectionsPerHost
+}
+
+/**
+ * 复用的连接池。
+ *
+ * 原来每次请求都新建一个 HTTP 客户端、用完销毁：连接从不复用，于是**每个文件都要重做一次
+ * TCP + TLS 握手** —— 而握手恰恰是这类网络里最容易失败的一步（BMCL 约 6/10 次握手被拒，
+ * 日志里那行 `[HttpEngine1#connect] TLS handshake error` 就是它）。
+ *
+ * 现在共用一个 `HttpClient`：它按 host 维护连接组（组内复用长连接、并发超出上限时排队等待），
+ * 既减少握手次数，也不影响并行分片。读/写超时统一 60 秒，对几十 KB 的 JSON 和几十 MB 的文件都够用。
+ *
+ * 用 `Mutex` 惰性构建而不是直接初始化一个 `let`：这样连接上限能在"开始下载之前"设进去，
+ * 而不是被写死在模块加载那一刻。锁只在第一次取用时争一次，之后是无竞争的一次判断。
+ */
+private func sharedHttpClient(): HttpClient {
+    match (sharedHttpClientCache) {
+        case Some(client) => return client
+        case None => ()
+    }
+    synchronized(clientLock) {
+        match (sharedHttpClientCache) {
+            case Some(client) => return client
+            case None => ()
+        }
+        let client = HttpClientBuilder()
+            .maxConnectionsPerHost(configuredMaxConnectionsPerHost)
+            /*
+             * 空闲连接只留 5 秒。
+             *
+             * 池是"按 host 分组、并发超出上限就排队"，而空闲连接**仍然占着名额**（LinderHttp 默认留
+             * 3 分钟）。连续下载几千个小文件时，那个默认值会让池在几分钟内被空闲连接占满，之后新请求
+             * 全被拒 —— `Too many connections to the same server!`，每个拒绝还要叠 5 次重试，
+             * 于是"越往后越慢"（实测末尾掉到 27 个文件/分钟）。
+             *
+             * 这里的连接复用发生在相邻请求之间，5 秒足够；再长只是占名额。
+             */
+            .idleConnectionTimeout(Duration.second * 5)
+            .readTimeout(Duration.second * 60)
+            .writeTimeout(Duration.second * 60)
+            // 重试只保留「建连/传输失败时再试一次」：超时不重试（读超时已 60s），
+            // 状态码不重试（本类自己按 maxRetries 处理），避免与下方重试循环叠加。
+            .retry(RetryPolicy(maxAttempts: 2, initialBackoff: Duration.millisecond * 300,
+                retryOnTimeout: false, retryOnStatus: []))
+            .build()
+        sharedHttpClientCache = Some(client)
+        client
+    }
+}
+
+/** 这次请求实际会带上的头：库的默认头（`accept`、`user-agent`）由客户端统一合并，这里只放调用方设的那些。 */
+private func effectiveHeaders(config: DownloadConfig): Headers {
+    let headers = Headers()
+    for ((key, value) in config.headers) {
+        headers.set(key, value)
+    }
+    headers
+}
+
+/** 按任务配置起一个池化请求（地址 + 自定义头）；method 与 Range 由调用方接着加。 */
+private func pooledRequest(config: DownloadConfig, method: Method): RequestBuilder {
+    let request = sharedHttpClient().request(method, config.url)
+    for ((key, value) in config.headers) {
+        request.header(key, value)
+    }
+    request
+}
+
 public class DownloadTask {
     private let config: DownloadConfig
     private var status: DownloadStatus = DownloadStatus.Pending
@@ -38,7 +180,27 @@ public class DownloadTask {
     private var cancelCallback: ?() -> Unit = None
     private var retryCallback: ?(Int64, Int64) -> Unit = None // (当前重试次数, 最大重试次数)
     private var completeCallback: ?() -> Unit = None // 下载完成回调
-    private let logger: Logger = getGlobalLogger()
+    /**
+     * 正在合并的那个后台任务；没有合并时为空。
+     *
+     * 合并是异步跑的（跟分片下载同一个模式），但**不能对调用方异步**：原先"分片下完"就把状态置成
+     * Completed 并回调，mergePartFiles() 还在后台写文件 —— 调用方拿到"完成"就去看文件，看到的是
+     * 写到一半的内容（sha1 不符、大小不对）。所以合并任务在这里登记一份，[await] 收尾时等它真正结束。
+     */
+    private var activeMergeFuture: ?Future<Unit> = None
+    private let mergeMutex: Mutex = Mutex()
+    /*
+     * 本库自己的 logger（见 [DownloadLogger]，默认什么都不写）。
+     *
+     * 做成**属性**而不是 `let logger = DownloadLogger.logger` 那样的字段：字段是建任务时的快照，
+     * 而 `DownloadLogger.level` 一改就会换一个 logger 实例 —— 于是先建的任务会一直拿着旧实例
+     * （级别还是 OFF），宿主明明打开了级别却看不到它的日志。属性每次读当下那一个，没有快照问题。
+     */
+    private prop logger: Logger {
+        get() {
+            DownloadLogger.logger
+        }
+    }
 
     // 速度计算相关
     private let speedMutex: Mutex = Mutex()
@@ -152,19 +314,9 @@ public class DownloadTask {
     private func checkRangeSupport(): Bool {
         try {
             // 第一步: 使用HEAD请求获取文件信息
-            let headHttp = LinderHttpClient(
-                url: RequestUrl.from(config.url),
-                method: RequestMethod.HEAD,
-                readTimeout: config.readTimeout,
-                writeTimeout: config.writeTimeout
-            )
-
-            // 设置自定义请求头
-            for ((key, value) in config.headers) {
-                headHttp.headers.set(key: key, value: value)
-            }
-
-            let headResponse = headHttp.send()
+            let headRequest = pooledRequest(config, Method.Head)
+            logRequest("HEAD", config.url, effectiveHeaders(config))
+            let headResponse = headRequest.send()
 
             if (headResponse.status != 200) {
                 let errorMsg = "[预下载检测错误] HEAD请求失败, HTTP状态码: ${headResponse.status}"
@@ -175,8 +327,7 @@ public class DownloadTask {
                 return false
             }
 
-            if (let Some(contentLength) <- headResponse.getHeader("content-length")) {
-                let lengthStr = contentLength[0]
+            if (let Some(lengthStr) <- headResponse.header("content-length")) {
                 config.totalSize = Int64.parse(lengthStr)
                 logger.info("获取到文件大小", ("totalSize", config.totalSize))
             } else {
@@ -184,7 +335,7 @@ public class DownloadTask {
             }
 
             // 检查Accept-Ranges头
-            if (let Some(acceptRanges) <- headResponse.getHeader("accept-ranges")) {
+            if (let Some(acceptRanges) <- headResponse.header("accept-ranges")) {
                 if (acceptRanges.contains("bytes")) {
                     logger.info("检测到Accept-Ranges: bytes,服务器支持断点续传")
                     return true
@@ -193,25 +344,20 @@ public class DownloadTask {
 
             if (config.totalSize > 0) {
                 logger.info("开始测试Range请求...")
-                let testHttp = LinderHttpClient(
-                    url: RequestUrl.from(config.url),
-                    method: RequestMethod.GET,
-                    readTimeout: config.readTimeout,
-                    writeTimeout: config.writeTimeout
-                )
-
-                // 设置自定义请求头（在设置Range之前）
-                for ((key, value) in config.headers) {
-                    testHttp.headers.set(key: key, value: value)
-                }
-
                 // 只请求前1个字节进行测试
-                testHttp.headers.set(key: "Range", value: "bytes=0-0")
-
-                let testResponse = testHttp.send()
+                let testResponse = pooledRequest(config, Method.Get)
+                    .header("Range", "bytes=0-0")
+                    .send()
+                /*
+                 * 这个探测响应只用来读 Content-Range 头，正文一律不要。
+                 * 对规矩的服务器它只有 1 字节；但有的 CDN 会无视 Range 直接回整个文件——
+                 * 那样正文会超过「自动落地」阈值而变成流式租约，不读就会一直占着连接池槽位。
+                 * 显式 close 一次，两种服务器都不会留下未归还的租约（close 是幂等的）。
+                 */
+                testResponse.close()
 
                 // 检查Content-Range头
-                if (let Some(contentRange) <- testResponse.getHeader("content-range")) {
+                if (let Some(contentRange) <- testResponse.header("content-range")) {
                     logger.info("检测到Content-Range头,服务器支持断点续传")
                     return true
                 }
@@ -222,7 +368,7 @@ public class DownloadTask {
 
             false
         } catch (e: Exception) {
-            let errorMsg = "[预下载检测错误] ${e.message}"
+            let errorMsg = "[预下载检测错误] ${safeMessage(e)}"
             logger.error(errorMsg)
             if (let Some(callback) <- errorCallback) {
                 callback(Exception(errorMsg))
@@ -254,13 +400,43 @@ public class DownloadTask {
             return
         }
 
+        /*
+         * 调用方明确禁用断点续传、或明确要求不做预探测时，跳过 HEAD。
+         *
+         * 探测（HEAD + Range 试请求）只服务于分片：不分片时它拿到的 totalSize 只影响进度条的分母，却要多
+         * 发一到两个请求——而这类"探测请求"恰恰是中间层最爱回 404 的东西（实测 CurseForge 的 CDN 对 Range
+         * 一律 404，部分网络对 HEAD 回 404 而 GET 200）。描述符正是这样失败的：日志里先一条 HEAD 404，
+         * 然后整个文件失败。单线程路径不依赖 totalSize（它从 GET 响应的 Content-Length 拿），直接进入下载。
+         *
+         * **海量小文件（资源对象）走的就是这条**：HEAD 占了请求量的 43%，而探测结果从来用不上
+         * （`threadCount=1` 不会分片）。见 [DownloadConfig.probeBeforeDownload]。
+         */
+        if (!config.enableRange || !config.probeBeforeDownload) {
+            config.threadCount = 1
+            logger.info("已禁用断点续传，跳过预下载检测，直接单连接整包下载")
+            startSingleThreadDownload()
+            return
+        }
+
         // 检测是否支持断点续传
         config.supportRange = checkRangeSupport()
 
-        // 如果预下载检测失败(totalSize为0),直接退出
+        /*
+         * 预下载检测没拿到文件大小（HEAD 非 200，或响应里没有 Content-Length）时，退化为单连接整包下载，
+         * 而不是直接判死。
+         *
+         * 有些主机对 HEAD 回 404、对 GET 却一切正常，这是 CDN 的常见行为（实测 CurseForge 的 CDN 对带
+         * Range 的请求一律 404、普通 GET 200）。原先这里直接 markFailed，于是"明明 GET 得下来"的文件
+         * 一个字节都拿不到——版本描述符（几十 KB 的小 JSON）就是这么失败的：日志里先 HEAD 404，
+         * 紧接着"无法获取文件大小（totalSize = 0）"，然后失败。
+         *
+         * 单线程路径不依赖 totalSize（分片才需要），进度按已下载字节上报，totalBytes 为 0 时上层会按
+         * "未知总长"处理。
+         */
         if (config.totalSize == 0) {
-            status = DownloadStatus.Failed
-            logger.error("预下载检测失败,无法获取文件大小,终止下载")
+            logger.warn("预下载检测未拿到文件大小，退化为单连接整包下载")
+            config.threadCount = 1
+            startSingleThreadDownload()
             return
         }
 
@@ -323,8 +499,24 @@ public class DownloadTask {
 
     /**
      * 取消下载
+     *
+     * 语义：置取消标志 + 状态改为 Cancelled + 触发一次 cancelCallback。下载线程退出后不会再覆盖该状态
+     * （各下载/合并路径均先检查 isCancelled），因此调用方 `getStatus()` 当场就能稳定拿到 Cancelled。
+     *
+     * **这里不等下载线程退出**，等过，等出了死锁：取消最自然的调用点是进度回调，而进度回调就运行在下载
+     * 线程上（只有传输途中的回调才能打断正在下的那个大文件）。于是 `f.get()` 变成"等自己"：
+     * `Future.get()` 等自己的 Future 永远不会返回（实测），下载线程就永久卡在这一句上 ——
+     * 分片文件的句柄不放开，调用方的 `await()` 也永远收不了尾，从外面看就是"取消以后目标目录一直原样
+     * 留在那儿"，而真正的原因是没人再往下走，不是目录被占住。
+     *
+     * 所以：取消只负责立标志，让各下载/合并循环自己看到并退出；**等它们结束是 [await] 的职责**，
+     * 由调用方的线程执行。只调 cancel() 不等 await() 的调用方拿到的状态是对的，但文件句柄要过一小会儿才放开。
      */
     public func cancel(): Unit {
+        // 幂等：重复/并发调用只触发一次取消回调
+        if (isCancelled.load()) {
+            return
+        }
         logger.info("取消下载")
         isCancelled.store(true)
         status = DownloadStatus.Cancelled
@@ -333,20 +525,16 @@ public class DownloadTask {
         if (let Some(callback) <- cancelCallback) {
             callback()
         }
-
-        // 等待所有线程结束
-        for (f in futures) {
-            try {
-                f.get()
-            } catch (e: Exception) {
-                // 忽略异常
-            }
-        }
-        futures.clear()
     }
 
     /**
-     * 等待下载完成
+     * 等待下载**并且合并**完成。
+     *
+     * 返回时要么是 Completed（文件已完整落盘），要么是 Failed/Cancelled/Paused —— 不会是
+     * "分片下完了、合并还在后台跑"。合并期间 [getStatus] 是 Merging，可见但不算结束。
+     *
+     * 合并任务必须在分片之后、`start()` 返回之前登记（见 `startMultiThreadDownload`），
+     * 所以这里读得到；循环是为了兜住"登记刚好落在本次读取之后"的顺序。
      */
     public func await(): Unit {
         for (f in futures) {
@@ -358,6 +546,25 @@ public class DownloadTask {
                 }
             }
         }
+        // 分片线程都结束了，合并可能才刚开始：等它真正写完。
+        var guard = 0
+        while (guard < 1000) {
+            guard++
+            var merging: ?Future<Unit> = None
+            synchronized(mergeMutex) {
+                merging = activeMergeFuture
+            }
+            match (merging) {
+                case Some(future) => try {
+                    future.get()
+                } catch (_: Exception) {
+                    /* 合并失败已经由合并流程自己 markFailed 并回调，这里只负责等它结束。 */
+                }
+                case None => return
+            }
+        }
+        /* 合并迟迟不结束（磁盘极慢等）：不再无限等，让调用方看到 Merging 自己决定。 */
+        logger.warn("等待合并超时，任务仍在合并中")
     }
 
     /**
@@ -546,9 +753,50 @@ public class DownloadTask {
         }
     }
 
+    /** 最近一次失败的原因；未失败时为空串。 */
+    private var failureMsg: String = ""
+
+    /**
+     * 最近一次失败的原因。
+     *
+     * 失败时 [getStatus] 只给一个 `Failed`，调用方看不出「为什么」—— 尤其是
+     * 预下载检测失败、临时目录初始化失败这两类，任务直接返回且**不抛异常**，
+     * 调用方只能拿到「文件不存在」。这里给出可读原因。
+     */
+    public func getFailureReason(): String {
+        failureMsg
+    }
+
+    /**
+     * 置为失败态并记下原因（同时写日志）。
+     *
+     * 所有失败路径都应当走这里，别再只写 `status = Failed` ——
+     * 那样调用方无从诊断。
+     */
+    private func markFailed(reason: String): Unit {
+        failureMsg = reason
+        status = DownloadStatus.Failed
+        logger.error(reason)
+    }
+
     /**
      * 初始化临时文件夹
-     * 检查是否存在有效的下载信息，如果匹配则继续，否则创建新文件夹
+     *
+     * 三种情况：
+     * 1. 目录不存在 → 建一个空的；
+     * 2. 目录存在且下载记录**有效** → 继续下载（断点续传）；
+     * 3. 目录存在但记录缺失 / 不匹配 → **清掉重建**。
+     *
+     * 第 3 种是踩过的坑：早先只处理了「记录存在但不匹配」（把目录改名成
+     * `.tmp_<时间戳>` 留着，越积越多），**完全没处理记录缺失**，于是流程落到
+     * 下面的 `Directory.create` —— 在已存在的目录上建目录会抛
+     * `FSException: File exists`，被 catch 后返回 false，整个任务静默中止：
+     * 不抛异常、不落盘，调用方只能看到「文件不存在」。
+     *
+     * 实测表现：一次 Ctrl+C 打断留下的 `<文件>.tmp/`（里面只有半截 `.partN`）
+     * 会让该文件**永远下载失败**，换并发数、换地址都没用。
+     *
+     * 失败时会把原因写进 [getFailureReason]，不再只留一个 `Failed` 状态。
      */
     private func initTempDirectory(): Bool {
         // 临时文件夹路径: savePath + ".tmp"
@@ -556,42 +804,46 @@ public class DownloadTask {
         infoJsonPath = "${tempDir}/download_info.json"
         let tempDirPath = Path(tempDir)
 
-        // 检查临时文件夹是否存在
         if (exists(tempDirPath)) {
-            // 检查JSON信息文件是否存在
             let jsonPath = Path(infoJsonPath)
-            if (exists(jsonPath)) {
-                // 读取并检查JSON信息
-                if (checkDownloadInfo()) {
-                    logger.info("检测到有效的下载记录，继续下载", ("tempDir", tempDir))
-                    return true
-                } else {
-                    // 信息不匹配，创建新的临时文件夹（带时间戳）
-                    let timestamp = DateTime.now().toUnixTimeStamp().toSeconds()
-                    let newTempDir = "${config.savePath}.tmp_${timestamp}"
-                    logger.info("下载信息不匹配，创建新临时文件夹", ("oldDir", tempDir), ("newDir", newTempDir))
-
-                    // 重命名旧文件夹
-                    try {
-                        rename(tempDirPath, to: Path(newTempDir))
-                        logger.info("已保留旧临时文件夹", ("path", newTempDir))
-                    } catch (e: Exception) {
-                        logger.warn("重命名旧临时文件夹失败: ${e.message}")
-                    }
-                }
+            if (exists(jsonPath) && checkDownloadInfo()) {
+                logger.info("检测到有效的下载记录，继续下载", ("tempDir", tempDir))
+                return true
+            }
+            // 记录缺失或不匹配：里面的分片一律不可信（可能是别次下载留下的、
+            // 分片数与本次不同），直接清掉重下，而不是改名留着占地方。
+            logger.info("临时下载记录不可用，清理后重新下载", ("tempDir", tempDir))
+            if (!removeQuietly(tempDirPath)) {
+                markFailed("清理过期的临时分片目录失败: ${tempDir}")
+                return false
             }
         }
 
-        // 创建新的临时文件夹
-        try {
-            Directory.create(tempDirPath, recursive: true)
-            logger.info("创建临时文件夹", ("tempDir", tempDir))
-        } catch (e: Exception) {
-            logger.error("创建临时文件夹失败: ${e.message}")
-            return false
+        // 判空再建：`Directory.create` 建在已存在的目录上会抛异常。
+        if (!exists(tempDirPath)) {
+            try {
+                Directory.create(tempDirPath, recursive: true)
+                logger.info("创建临时文件夹", ("tempDir", tempDir))
+            } catch (e: Exception) {
+                markFailed("创建临时文件夹失败: ${safeMessage(e)}")
+                return false
+            }
         }
 
         return true
+    }
+
+    /** 递归删除目录，失败返回 false（不抛异常）。 */
+    private func removeQuietly(path: Path): Bool {
+        try {
+            if (exists(path)) {
+                remove(path, recursive: true)
+            }
+            true
+        } catch (e: Exception) {
+            logger.error("删除目录失败: ${path} ${safeMessage(e)}")
+            false
+        }
     }
 
     /**
@@ -696,7 +948,7 @@ public class DownloadTask {
             logger.info("下载信息匹配: url=${savedUrl}, totalSize=${savedTotalSize}")
             return true
         } catch (e: Exception) {
-            logger.warn("读取下载信息失败: ${e.message}")
+            logger.warn("读取下载信息失败: ${safeMessage(e)}")
         }
         false
     }
@@ -732,7 +984,7 @@ public class DownloadTask {
 
             logger.info("保存下载信息: path=${infoJsonPath}")
         } catch (e: Exception) {
-            logger.error("保存下载信息失败: ${e.message}")
+            logger.error("保存下载信息失败: ${safeMessage(e)}")
         }
     }
 
@@ -750,7 +1002,7 @@ public class DownloadTask {
                 logger.info("已删除临时文件夹", ("path", tempDir))
             }
         } catch (e: Exception) {
-            logger.warn("删除临时文件夹失败: ${e.message}")
+            logger.warn("删除临时文件夹失败: ${safeMessage(e)}")
         }
     }
 
@@ -763,7 +1015,7 @@ public class DownloadTask {
             remove(Path(infoJsonPath))
             logger.debug("已删除信息文件: ${infoJsonPath}")
         } catch (e: Exception) {
-            logger.warn("删除信息文件失败: ${e.message}")
+            logger.warn("删除信息文件失败: ${safeMessage(e)}")
         }
     }
 
@@ -775,14 +1027,36 @@ public class DownloadTask {
         let fut = spawn {
             try {
                 downloadSingleThread()
+                // downloadSingleThread 在取消/暂停时是正常 return，不能按「完成」处理，
+                // 否则会把 cancel() 写入的 Cancelled 覆盖成 Completed（多线程路径已有此守卫）
+                if (isCancelled.load()) {
+                    status = DownloadStatus.Cancelled
+                    logger.info("单线程下载已取消")
+                    return
+                }
+                if (isPaused.load()) {
+                    status = DownloadStatus.Paused
+                    logger.info("单线程下载已暂停")
+                    return
+                }
                 status = DownloadStatus.Completed
                 logger.info("下载完成")
                 if (let Some(callback) <- completeCallback) {
                     callback()
                 }
             } catch (e: Exception) {
-                status = DownloadStatus.Failed
-                logger.error("下载失败: ${e.message}")
+                // 取消/暂停过程中抛出的异常（例如连接被关闭）不应记为失败
+                if (isCancelled.load()) {
+                    status = DownloadStatus.Cancelled
+                    logger.info("单线程下载已取消")
+                    return
+                }
+                if (isPaused.load()) {
+                    status = DownloadStatus.Paused
+                    logger.info("单线程下载已暂停")
+                    return
+                }
+                markFailed("单线程下载失败: ${safeMessage(e)}")
                 if (let Some(callback) <- errorCallback) {
                     callback(e)
                 }
@@ -800,8 +1074,7 @@ public class DownloadTask {
 
         // 初始化临时文件夹
         if (!initTempDirectory()) {
-            status = DownloadStatus.Failed
-            logger.error("初始化临时文件夹失败")
+            // 失败原因已由 initTempDirectory 记进 getFailureReason()
             return
         }
 
@@ -849,27 +1122,11 @@ public class DownloadTask {
                 callback(progress)
             }
 
-            // 直接合并（加入futures以便await等待）
-            let mergeFuture = spawn {
-                try {
-                    mergePartFiles()
-                    deleteTempDirectory()
-                    status = DownloadStatus.Completed
-                    logger.info("文件合并完成，下载成功")
-                    
-                    // 触发下载完成回调
-                    if (let Some(callback) <- completeCallback) {
-                        callback()
-                    }
-                } catch (e: Exception) {
-                    status = DownloadStatus.Failed
-                    logger.error("文件合并失败: ${e.message}")
-                    if (let Some(callback) <- errorCallback) {
-                        callback(e)
-                    }
-                }
-            }
-            futures.add(mergeFuture)
+            /*
+             * 直接合并：走和"下完再合并"同一条路（[beginMerge]），
+             * 状态同样是 Merging → Completed，并且 `await()` 会等它结束。
+             */
+            beginMerge()
             return
         }
 
@@ -886,7 +1143,7 @@ public class DownloadTask {
                 try {
                     downloadRangeToPartFile(startPos, endPos, i)
                 } catch (e: Exception) {
-                    logger.error("线程${i}下载失败: ${e.message}")
+                    logger.error("线程${i}下载失败: ${safeMessage(e)}")
                     if (let Some(callback) <- errorCallback) {
                         callback(e)
                     }
@@ -908,33 +1165,117 @@ public class DownloadTask {
                 try {
                     f.get()
                 } catch (e: Exception) {
-                    // 忽略
+                    /* 分片线程自己已经 catch 过并报了 errorCallback；这里只是等它结束。 */
                 }
             }
 
-            if (!isCancelled.load() && !isPaused.load()) {
-                // 所有分片下载完成，开始合并
-                logger.info("所有分片下载完成，开始合并文件...")
-                try {
-                    mergePartFiles()
-                    deleteTempDirectory()
-                    status = DownloadStatus.Completed
-                    logger.info("文件合并完成，下载成功")
-                    
-                    // 触发下载完成回调
-                    if (let Some(callback) <- completeCallback) {
-                        callback()
-                    }
-                } catch (e: Exception) {
-                    status = DownloadStatus.Failed
-                    logger.error("文件合并失败: ${e.message}")
-                    if (let Some(callback) <- errorCallback) {
-                        callback(e)
-                    }
+            if (isCancelled.load() || isPaused.load()) {
+                return
+            }
+            /*
+             * 合并之前先确认**每个分片都齐了**。
+             *
+             * 分片线程重试到上限后只是记一条日志、把异常交给 errorCallback，然后正常结束 ——
+             * 监控线程原先不看结果就合并，于是把「四个分片只下了一半」合成一个**截断的完整文件**：
+             * 文件存在、大小不对，调用方只能看到"下载完成"或"校验不符"，而截断的字节数会作为续传
+             * 起点留给下一次（`partN` 的 size 被当成"已下载"），下一次同样下不完，如此循环。
+             */
+            if (!checkAllPartsExist()) {
+                let reason = incompleteParts()
+                markFailed("分片不完整，拒绝合并：${reason}（分片线程重试到上限只记日志、不抛异常，所以" +
+                    "这里必须自己拦；临时分片目录保留，下次可续传）")
+                if (let Some(callback) <- errorCallback) {
+                    callback(Exception(reason))
+                }
+                return
+            }
+
+            // 所有分片下载完成，开始合并
+            logger.info("所有分片下载完成，开始合并文件...")
+            beginMerge()
+        }
+        futures.add(monitorFuture)
+    }
+
+    /**
+     * 开始合并：把状态切成 [Merging]，在后台把分片写成一个文件。
+     *
+     * 合并**在后台跑**（几十 MB 的读写不该占着 `await` 的调用线程），但任务登记在
+     * [activeMergeFuture] 上，[await] 会等它真正结束 —— 见那里的说明。
+     */
+    private func beginMerge(): Unit {
+        status = DownloadStatus.Merging
+        logger.info("开始合并分片文件")
+        let mergeFuture = spawn {
+            try {
+                mergePartFiles()
+                deleteTempDirectory()
+                /*
+                 * 合并期间被取消/暂停：不覆盖那两个终态，交给它们收尾 —— 和分片线程里的守卫一致
+                 * （`cancel()` 可能正好在合并写文件时把状态置成 Cancelled）。
+                 */
+                if (isCancelled.load()) {
+                    status = DownloadStatus.Cancelled
+                    logger.info("合并阶段已取消")
+                    return
+                }
+                if (isPaused.load()) {
+                    status = DownloadStatus.Paused
+                    logger.info("合并阶段已暂停")
+                    return
+                }
+                status = DownloadStatus.Completed
+                logger.info("文件合并完成，下载成功")
+
+                // 触发下载完成回调
+                if (let Some(callback) <- completeCallback) {
+                    callback()
+                }
+            } catch (e: Exception) {
+                if (isCancelled.load()) {
+                    status = DownloadStatus.Cancelled
+                    return
+                }
+                if (isPaused.load()) {
+                    status = DownloadStatus.Paused
+                    return
+                }
+                markFailed("文件合并失败: ${safeMessage(e)}")
+                if (let Some(callback) <- errorCallback) {
+                    callback(e)
                 }
             }
         }
-        futures.add(monitorFuture)
+        synchronized(mergeMutex) {
+            activeMergeFuture = Some(mergeFuture)
+        }
+    }
+
+    /**
+     * 没下完的分片长什么样：`part2（7.9 MB/9.9 MB）`。
+     *
+     * 失败原因里给出分片名与实际/期望大小 —— 「下载结束但没有文件」以前只有一句话，看不出是
+     * 分片没下完、还是预下载检测失败。
+     */
+    private func incompleteParts(): String {
+        var text = ""
+        synchronized(partFilesMutex) {
+            for (i in 0..partFiles.size) {
+                let expectedSize = partSizes[i]
+                let actualSize = getFileSize(Path(partFiles[i]))
+                if (actualSize != expectedSize) {
+                    if (!text.isEmpty()) {
+                        text += "；"
+                    }
+                    text += "part${i}（${actualSize}/${expectedSize} 字节）"
+                }
+            }
+        }
+        if (text.isEmpty()) {
+            "分片缺失"
+        } else {
+            text
+        }
     }
 
     /**
@@ -987,8 +1328,8 @@ public class DownloadTask {
             remove(outputPath)
             logger.info("已删除已存在的文件: ${config.savePath}")
         } catch (e: Exception) {
-            logger.error("删除已存在文件失败: ${e.message}")
-            throw Exception("[文件删除错误] 无法删除已存在的文件: ${e.message}")
+            logger.error("删除已存在文件失败: ${safeMessage(e)}")
+            throw Exception("[文件删除错误] 无法删除已存在的文件: ${safeMessage(e)}")
         }
     }
 
@@ -1038,17 +1379,36 @@ public class DownloadTask {
                         remove(Path(partPath))
                         logger.info("已删除分片文件: ${partPath}")
                     } catch (e: Exception) {
-                        logger.warn("删除分片文件失败: ${partPath}, ${e.message}")
+                        logger.warn("删除分片文件失败: ${partPath}, ${safeMessage(e)}")
                     }
                 }
             }
         } catch (e: Exception) {
             outputFile.close()
-            throw Exception("[文件合并错误] ${e.message}")
+            throw Exception("[文件合并错误] ${safeMessage(e)}")
         }
 
         outputFile.close()
         logger.info("分片文件合并完成，共合并 ${mergedCount} 个分片")
+
+        /*
+         * 合并结果自己再量一次。
+         *
+         * 分片齐了仍然可能写出大小不对的文件（磁盘写失败、分片在合并途中被动过）。截断的文件
+         * 会被下游当成"已经下好"（`FileExistsAction.Skip` 只看在不在），而校验只在调用方有哈希时
+         * 才做 —— 不知道大小的调用方就该由这里挡住。把结果删掉并抛异常：留着比没有更糟。
+         */
+        if (config.totalSize > 0) {
+            let mergedSize = getFileSize(outputPath)
+            if (mergedSize != config.totalSize) {
+                try {
+                    remove(outputPath)
+                } catch (e: Exception) {
+                    logger.warn("删除大小不对的合并结果失败: ${safeMessage(e)}")
+                }
+                throw Exception("合并结果大小不符: 期望 ${config.totalSize} 字节，实际 ${mergedSize} 字节")
+            }
+        }
     }
 
     /**
@@ -1081,7 +1441,7 @@ public class DownloadTask {
                 try {
                     remove(completedPath)
                 } catch (e: Exception) {
-                    logger.warn("删除无效分片文件失败: ${e.message}")
+                    logger.warn("删除无效分片文件失败: ${safeMessage(e)}")
                 }
             }
         }
@@ -1104,7 +1464,7 @@ public class DownloadTask {
                     downloadedBytes.fetchAdd(actualSize)
                     return
                 } catch (e: Exception) {
-                    logger.warn("重命名分片文件失败: ${e.message}")
+                    logger.warn("重命名分片文件失败: ${safeMessage(e)}")
                 }
             } else {
                 // 文件大小异常，删除重新下载
@@ -1112,7 +1472,7 @@ public class DownloadTask {
                 try {
                     remove(tempPath)
                 } catch (e: Exception) {
-                    logger.warn("删除临时分片文件失败: ${e.message}")
+                    logger.warn("删除临时分片文件失败: ${safeMessage(e)}")
                 }
                 currentPos = startPos
             }
@@ -1125,28 +1485,39 @@ public class DownloadTask {
 
             try {
                 // 创建HTTP请求
-                let http = LinderHttpClient(
-                    url: RequestUrl.from(config.url),
-                    method: RequestMethod.GET,
-                    readTimeout: config.readTimeout,
-                    writeTimeout: config.writeTimeout
-                )
-
-                // 设置自定义请求头（在设置Range之前）
-                for ((key, value) in config.headers) {
-                    http.headers.set(key: key, value: value)
-                }
-
                 // 设置Range头
                 let rangeHeader = "bytes=${currentPos}-${endPos}"
-                http.headers.set(key: "Range", value: rangeHeader)
                 logger.debug("线程${threadId}请求范围: ${rangeHeader}")
 
-                // 发送请求
-                let response = http.send()
+                // 发送请求（池化：同 host 复用连接，避免每个分片都重做一次握手）
+                logRequest("GET", config.url, effectiveHeaders(config))
+                let response = pooledRequest(config, Method.Get).header("Range", rangeHeader).sendStream()
 
                 if (response.status != 200 && response.status != 206) {
                     throw Exception("[正式下载错误] HTTP请求失败, 状态码: ${response.status}")
+                }
+
+                /*
+                 * 服务器无视 Range，回了整个文件（200）。
+                 *
+                 * 这时响应正文是**从 0 开始的整份**，跟"接着上次断点追加"的前提正好相反：按追加落盘，
+                 * 文件就会多出 N 个字节；而大小又恰好对得上（已下的前端 + N == 期望分片大小），于是被
+                 * 当成完整分片合并进最终文件，最终文件整体偏移错位、sha1 必然不符 —— 日志里表现为
+                 * 反复"校验不符"。有的 CDN 就是这样（预下载检测里也记着 CurseForge 对 Range 一律 404、
+                 * 普通 GET 200）。
+                 *
+                 * 所以只认正文的实际含义：永远从 0 落盘，并把进度和位置一起回到本分片起点。
+                 */
+                if (response.status == 200) {
+                    if (currentPos > startPos) {
+                        logger.warn("服务器忽略 Range 回了 200 整份，本分片从 0 重新落盘", ("threadId", threadId),
+                            ("startPos", startPos), ("currentPos", currentPos))
+                        downloadedBytes.fetchAdd(-(currentPos - startPos))
+                    }
+                    currentPos = startPos
+                    if (exists(tempPath)) {
+                        remove(tempPath)
+                    }
                 }
 
                 // 创建临时分片文件
@@ -1160,7 +1531,7 @@ public class DownloadTask {
                         File(tempPath, OpenMode.Write)
                     }
                 } catch (e: Exception) {
-                    throw Exception("[文件创建错误] 无法创建分片文件: ${e.message}")
+                    throw Exception("[文件创建错误] 无法创建分片文件: ${safeMessage(e)}")
                 }
 
                 // 如果是断点续传，定位到文件末尾
@@ -1169,15 +1540,17 @@ public class DownloadTask {
                         file.seek(SeekPosition.End(0))
                     } catch (e: Exception) {
                         file.close()
-                        throw Exception("[文件定位错误] 无法定位到文件末尾: ${e.message}")
+                        throw Exception("[文件定位错误] 无法定位到文件末尾: ${safeMessage(e)}")
                     }
                 }
 
                 // 读取数据并写入文件
-                let inputStream = response.getBodyStream()
+                let inputStream = response.stream()
                 let buffer = Array<Byte>(config.bufferSize, repeat: 0)
                 var totalRead: Int64 = 0
 
+                // try/finally 兜住所有退出路径（取消/暂停的 return、读取异常），保证流式租约一定归还
+                try {
                 while (true) {
                     if (isCancelled.load() || isPaused.load()) {
                         file.close()
@@ -1188,7 +1561,7 @@ public class DownloadTask {
                         inputStream.read(buffer)
                     } catch (e: Exception) {
                         file.close()
-                        throw Exception("[数据读取错误] 从网络读取数据失败: ${e.message}")
+                        throw Exception("[数据读取错误] 从网络读取数据失败: ${safeMessage(e)}")
                     }
 
                     if (bytesRead <= 0) {
@@ -1199,7 +1572,7 @@ public class DownloadTask {
                         file.write(buffer[0..bytesRead])
                     } catch (e: Exception) {
                         file.close()
-                        throw Exception("[文件写入错误] 写入分片文件失败: ${e.message}")
+                        throw Exception("[文件写入错误] 写入分片文件失败: ${safeMessage(e)}")
                     }
 
                     totalRead += bytesRead
@@ -1228,14 +1601,19 @@ public class DownloadTask {
 
                 file.close()
 
+                } finally {
+                    // 读完 EOF 时租约已自动归还；这里兜住提前退出与异常路径
+                    response.close()
+                }
+
                 // 下载完成，重命名临时文件为完成文件
                 try {
                     rename(tempPath, to: completedPath)
                     logger.info("线程${threadId}下载完成", ("tempPath", tempPartPath),
                         ("completedPath", completedPartPath), ("totalRead", totalRead))
                 } catch (e: Exception) {
-                    logger.error("重命名分片文件失败: ${e.message}")
-                    throw Exception("[文件重命名错误] 无法重命名分片文件: ${e.message}")
+                    logger.error("重命名分片文件失败: ${safeMessage(e)}")
+                    throw Exception("[文件重命名错误] 无法重命名分片文件: ${safeMessage(e)}")
                 }
 
                 return
@@ -1297,24 +1675,38 @@ public class DownloadTask {
             }
 
             try {
-                // 创建HTTP请求
-                let http = LinderHttpClient(
-                    url: RequestUrl.from(config.url),
-                    method: RequestMethod.GET,
-                    readTimeout: config.readTimeout,
-                    writeTimeout: config.writeTimeout
-                )
-
-                // 设置自定义请求头
-                for ((key, value) in config.headers) {
-                    http.headers.set(key: key, value: value)
-                }
-
-                // 发送请求
-                let response = http.send()
+                // 创建HTTP请求（池化：同 host 复用连接）
+                logRequest("GET", config.url, effectiveHeaders(config))
+                let response = pooledRequest(config, Method.Get).sendStream()
 
                 if (response.status != 200) {
                     throw Exception("[正式下载错误] HTTP请求失败, 状态码: ${response.status}")
+                }
+
+                /*
+                 * 从**这个 GET 自己的响应头**拿文件大小。
+                 *
+                 * 为什么必须在这里做：跳过 HEAD 之后，`config.totalSize` 就是 0，而它有两个作用 ——
+                 * 1. 进度条的分母（为 0 时上层只能显示"已下多少"，没有百分比）；
+                 * 2. 下面那个"读满就收尾"的短路条件（`config.totalSize > 0 && totalRead >= config.totalSize`）。
+                 *    少了它，服务端 keep-alive 不关连接时最后一次 read 会阻塞到 readTimeout（60 秒），
+                 *    表现就是"文件其实下完了，却卡住不动"——实测踩过。
+                 *
+                 * 只在原来没有大小的时候填：不覆盖 HEAD 已经拿到的值（分片路径依赖它）。
+                 */
+                if (config.totalSize <= 0) {
+                    if (let Some(lengthText) <- response.header("content-length")) {
+                        try {
+                            let size = Int64.parse(lengthText.trimAscii())
+                            if (size > 0) {
+                                config.totalSize = size
+                                logger.info("从响应头获取到文件大小", ("totalSize", size))
+                            }
+                        } catch (_: Exception) {
+                            /* 头不合法就当没有：进度退化成"已下字节"，不影响下载本身。 */
+                            ()
+                        }
+                    }
                 }
 
                 // 创建临时文件（每次重试都重新创建，覆盖之前的临时文件）
@@ -1322,21 +1714,30 @@ public class DownloadTask {
                 logger.info("创建临时文件", ("tempPath", tempPath))
 
                 // 读取数据并写入文件
-                let inputStream = response.getBodyStream()
+                let inputStream = response.stream()
                 let buffer = Array<Byte>(config.bufferSize, repeat: 0)
                 var totalRead: Int64 = 0
 
+                // try/finally 兜住所有退出路径（取消/暂停的 return、读取异常），保证流式租约一定归还
+                try {
                 while (true) {
                     if (isCancelled.load() || isPaused.load()) {
                         file.close()
                         return
                     }
 
+                    // 收尾修复：已按 Content-Length 读满就结束，不再等 EOF。
+                    // 服务端 keep-alive 不关连接时，最后一次 read 会阻塞到 readTimeout(默认60s)，
+                    // 表现为「文件已下完、进度 100% 后整个界面卡死」。
+                    if (config.totalSize > 0 && totalRead >= config.totalSize) {
+                        break
+                    }
+
                     let bytesRead = try {
                         inputStream.read(buffer)
                     } catch (e: Exception) {
                         file.close()
-                        throw Exception("[数据读取错误] 从网络读取数据失败: ${e.message}")
+                        throw Exception("[数据读取错误] 从网络读取数据失败: ${safeMessage(e)}")
                     }
 
                     if (bytesRead <= 0) {
@@ -1347,7 +1748,7 @@ public class DownloadTask {
                         file.write(buffer[0..bytesRead])
                     } catch (e: Exception) {
                         file.close()
-                        throw Exception("[文件写入错误] 写入文件失败: ${e.message}")
+                        throw Exception("[文件写入错误] 写入文件失败: ${safeMessage(e)}")
                     }
 
                     totalRead += bytesRead
@@ -1374,6 +1775,10 @@ public class DownloadTask {
                 }
 
                 file.close()
+                } finally {
+                    // 单线程下载按 Content-Length 提前 break，不会读到 EOF，必须显式归还
+                    response.close()
+                }
                 logger.info("单线程下载完成", ("totalRead", totalRead))
 
                 // 下载完成，重命名临时文件为目标文件
@@ -1381,11 +1786,17 @@ public class DownloadTask {
                     rename(tempPathObj, to: finalPath)
                     logger.info("重命名临时文件为目标文件", ("from", tempPath), ("to", config.savePath))
                 } catch (e: Exception) {
-                    throw Exception("[文件重命名错误] 无法重命名临时文件: ${e.message}")
+                    throw Exception("[文件重命名错误] 无法重命名临时文件: ${safeMessage(e)}")
                 }
 
                 return
             } catch (e: Exception) {
+                // 取消/暂停引发的异常不重试：直接正常返回，由包装层按标志收尾为
+                // Cancelled/Paused，避免「已取消」被后续重试/失败覆盖
+                if (isCancelled.load() || isPaused.load()) {
+                    logger.info("单线程下载因取消/暂停中断")
+                    return
+                }
                 retryCount++
                 if (retryCount < config.maxRetries) {
                     logger.warn("单线程下载失败,准备重试 ${retryCount}/${config.maxRetries}", ("error", e.message))

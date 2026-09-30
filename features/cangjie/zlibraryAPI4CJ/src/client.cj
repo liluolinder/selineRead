@@ -7,23 +7,17 @@ import stdx.encoding.url.Form
 
 public class ZlibClient {
     public func login(email!: String, password!: String): GetUserInfoOrLoginRes {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
         let body = Form()
         body.add("email", email)
         body.add("password", password)
-        var response = httpClient
-            .setDefaultHeader()
-            .setUrl("${zlibEAPI}/user/login")
-            .setMethod(RequestMethod.POST)
-            .setBody(body)
+        var response = LinderHttp.client()
+            .request(Method.Post, "${zlibEAPI}/user/login")
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
+            .body(Body.text(body.toEncodeString(), contentType: "application/x-www-form-urlencoded"))
             .send()
 
-       // let headers = HttpHeader()
+        let res = GetUserInfoOrLoginRes.deserialize(response.dataModel())
 
-       // headers.add(key: "Cookie", value: response.getSetCookieString())
-        //response = httpClient.setHeader(headers).send()
-
-        let res = GetUserInfoOrLoginRes.deserialize(response.getBodyDataModel())
         res
     }
 
@@ -35,9 +29,9 @@ public class ZlibClient {
     }
 
     public func getRecommendBook(): GetBookRes {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
-        let response = httpClient.setDefaultHeader().setUrl("${zlibEAPI}/book/most-popular").send()
-        let res = GetBookRes.deserialize(response.getBodyDataModel())
+        let url = "${zlibEAPI}/book/most-popular"
+        let response = LinderHttp.get(url)
+        let res = GetBookRes.deserialize(response.dataModel())
         res
     }
 
@@ -54,14 +48,12 @@ public class ZlibClient {
         if (yearTo.isSome()) {
             body.add('yearTo', "${yearTo}")
         }
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
-        let response = httpClient
-            .setDefaultHeader()
-            .setMethod(RequestMethod.POST)
-            .setUrl("${zlibEAPI}/book/search")
-            .setBody(body)
+        let response = LinderHttp.client()
+            .request(Method.Post, "${zlibEAPI}/book/search")
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
+            .body(Body.text(body.toEncodeString(), contentType: "application/x-www-form-urlencoded"))
             .send()
-        let res = GetBookWithInfoAndPaginationRes.deserialize(response.getBodyDataModel())
+        let res = GetBookWithInfoAndPaginationRes.deserialize(response.dataModel())
         res
     }
 }

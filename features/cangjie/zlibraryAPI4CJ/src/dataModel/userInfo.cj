@@ -32,6 +32,7 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
     public var id: UInt64 = 0
     public var email: String = ""
     public var name: String = ""
+    public var kindleEmail: ?String = ""
     public var remixUserKey: String = ""
     public var todayDownloadNum: UInt64 = 0
     public var downloadLimit: UInt64 = 0
@@ -46,23 +47,22 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
         }
     }
 
-    private prop header: HttpHeader {
+    private prop header: Headers {
         get() {
-            let header: HttpHeader = HttpHeader().set(key: "cookie", value: cookie)
+            let header: Headers = Headers().set("cookie", cookie)
             header
         }
     }
 
     public func getPersonalInfo(): GetUserInfoOrLoginRes {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setHeader(header)
-            .setUrl("${zlibEAPI}/user/profile")
-            .setMethod(RequestMethod.GET)
+            .request(Method.Get, "${zlibEAPI}/user/profile")
+            .headers(header)
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
-        let res = GetUserInfoOrLoginRes.deserialize(response.getBodyDataModel())
+        let res = GetUserInfoOrLoginRes.deserialize(response.dataModel())
         res
     }
 
@@ -71,29 +71,26 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
         param.add("page", "${page}")
         var url = URL.parse("${zlibEAPI}/user/book/saved")
         url = url.replace(query:param.toEncodeString())
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setHeader(header)
-            .setUrl(url)
-            .setMethod(RequestMethod.GET)
-            .setBody(param)
+            .request(Method.Get, url)
+            .headers(header)
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
-        let res = GetBookWithInfoAndPaginationRes.deserialize(response.getBodyDataModel())
+        let res = GetBookWithInfoAndPaginationRes.deserialize(response.dataModel())
         res
     }
 
     public func getRecommendBook(): GetBookRes {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setHeader(header)
-            .setUrl("${zlibEAPI}/user/book/recommended")
-            .setMethod(RequestMethod.GET)
+            .request(Method.Get, "${zlibEAPI}/user/book/recommended")
+            .headers(header)
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
-        let res = GetBookRes.deserialize(response.getBodyDataModel())
+        let res = GetBookRes.deserialize(response.dataModel())
         res
     }
 
@@ -102,6 +99,7 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
             .add(field<UInt64>("id", id))
             .add(field<String>("email", email))
             .add(field<String>("name", name))
+            .add(field<?String>("kindle_email", kindleEmail))
             .add(field<String>("remix_userkey", remixUserKey))
             .add(field<UInt64>("downloads_today", todayDownloadNum))
             .add(field<UInt64>("downloads_limit", downloadLimit))
@@ -115,6 +113,7 @@ public class ZlibUserInfo <: Serializable<ZlibUserInfo> {
         result.id = UInt64.deserialize(dms.get("id"))
         result.email = String.deserialize(dms.get("email"))
         result.name = String.deserialize(dms.get("name"))
+        result.kindleEmail = Option<String>.deserialize(dms.get("kindle_email"))
         result.remixUserKey = String.deserialize(dms.get("remix_userkey"))
         result.todayDownloadNum = UInt64.deserialize(dms.get("downloads_today"))
         result.downloadLimit = UInt64.deserialize(dms.get("downloads_limit"))

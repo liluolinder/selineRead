@@ -8,6 +8,7 @@ import { loadingNewDialog } from "../../components/LoadingNewDialog"
 @ObservedV2
 export class BookSourceHomeData {
   @Trace inSearchMode: boolean = false
+  @Trace isLoading: boolean = true
   @Trace canGetMore: boolean = true
   @Trace errorText: string = ''
   @Trace bookArray:BasicDataSource<BookArk> =
@@ -67,14 +68,12 @@ export struct BookSourceHome {
             if (value != '') {
               __BSHome__.bookArray.clearData()
               __BSHome__.searchWord = value
+              __BSHome__.isLoading = false
               __BSHome__.canGetMore = false
               this.searchIndex = 1
               let parser = __BookSource__.parsers[this.sourceIndex]
               console.log(`meow:${parser.supportsPage||parser.supportsOffset}`)
               parser.search(value, parser.supportsPage||parser.supportsOffset? 1 :undefined,(books)=>{
-                if (parser.supportsPage||parser.supportsOffset) {
-                  this.searchIndex ++
-                }
                 if (books.length==0) {
                   XContext.alterDialogWithTwoButton({
                     title:"提示",
@@ -84,10 +83,15 @@ export struct BookSourceHome {
                   books.forEach((ii)=>{
                     __BSHome__.bookArray.pushData(ii)
                   })
+                  if (parser.supportsPage||parser.supportsOffset) {
+                    this.searchIndex ++
+                  }
                 }
+                __BSHome__.isLoading = true
                 __BSHome__.canGetMore = true
               }, (err)=>{
-                __BSHome__.canGetMore = true
+                __BSHome__.isLoading = true
+                __BSHome__.canGetMore = false
                 XContext.alterDialogWithTwoButton({
                   title:"错误",
                   message:err
@@ -127,7 +131,7 @@ export struct BookSourceHome {
 
       Column() {
           if (__BSHome__.bookArray.totalCount()==0){
-            if (!__BSHome__.canGetMore) {
+            if (!__BSHome__.isLoading) {
               Column({ space: 10 }) {
                 LoadingProgress()
                   .height(75)
@@ -170,12 +174,10 @@ export struct BookSourceHome {
             .padding({ left: 16, right: 16 })
             .onReachEnd(()=>{
               let parser = __BookSource__.parsers[this.sourceIndex]
-              if (__BSHome__.searchWord != '' && (parser.supportsPage||parser.supportsOffset)) {
+              if (__BSHome__.searchWord != '' && __BSHome__.canGetMore  &&(parser.supportsPage||parser.supportsOffset)) {
+                __BSHome__.isLoading = false
                 __BSHome__.canGetMore = false
                 parser.search(__BSHome__.searchWord, parser.supportsPage||parser.supportsOffset?this.searchIndex:undefined,(books)=>{
-                  if (parser.supportsPage||parser.supportsOffset) {
-                    this.searchIndex ++
-                  }
                   if (books.length==0) {
                     XContext.alterDialogWithTwoButton({
                       title:"提示",
@@ -185,10 +187,15 @@ export struct BookSourceHome {
                     books.forEach((ii)=>{
                       __BSHome__.bookArray.pushData(ii)
                     })
+                    if (parser.supportsPage||parser.supportsOffset) {
+                      this.searchIndex ++
+                    }
                   }
                   __BSHome__.canGetMore = true
+                  __BSHome__.isLoading = true
                 }, (err)=>{
-                  __BSHome__.canGetMore = true
+                  __BSHome__.isLoading = true
+                  __BSHome__.canGetMore = false
                   XContext.alterDialogWithTwoButton({
                     title:"错误",
                     message:err
@@ -209,6 +216,10 @@ export struct BookSourceHome {
               __BSHome__.inSearchMode = false
             })
           })
+      }
+
+      if (!__BSHome__.isLoading) {
+        loadingNewDialog()
       }
 
     }.size({ width: '100%', height: '100%' })

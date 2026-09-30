@@ -9,6 +9,7 @@ import { Body } from './index/Body';
 import { __ZlibHome__ } from './zlibrary/Home/Home';
 import { dlpAntiPeep } from '@kit.DeviceSecurityKit';
 import { BackgroundUtil } from '../models/classes/BackgroundRunningManager';
+import { HdsNavigation } from '@hms.hds.hdsBaseComponent';
 
 
 @Entry
@@ -40,7 +41,7 @@ struct Index {
           if (result === dlpAntiPeep.AntiPeepOptionsResult.SUCCESS ||
             result === dlpAntiPeep.AntiPeepOptionsResult.ALREADY_ON) { // 表示防窥保护开关开启成功或已开启
             dlpAntiPeep.on('dlpAntiPeep', DlpAntiPeepCallback);
-          }else{
+          } else {
             __Setting__.needDlpAntiPeep = false
           }
         }
@@ -87,15 +88,24 @@ struct Index {
           .zIndex(114514)
       }
 
-      Navigation(__UI__.mainPageStack) {
+      HdsNavigation(__UI__.mainPageStack) {
         Body()
       }
       .size({ width: '100%', height: '100%' })
-      .navBarWidthRange([400, 1200])
+      .navBarWidthRange({ minWidth: 400, maxWidth: 1200 })
+      // .navBarWidthRange([400, 1200])
       .backgroundColor(Color.Transparent)
       .layoutWeight(1)
       .hideToolBar(true)
+      .hideTitleBar(true)
       .navBarWidth('1100')
+      .titleBar({
+        style: {
+          scrollEffectOpts: {
+            enableScrollEffect: false
+          }
+        }
+      })
       .mode(__UI__.indexNavigationMode)
       .onNavigationModeChange((mode) => {
         if (mode == NavigationMode.Split) {

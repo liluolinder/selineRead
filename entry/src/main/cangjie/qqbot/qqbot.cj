@@ -16,7 +16,7 @@ import ohos.base.AppLog
 import stdx.encoding.url.URL
 import std.collection.HashMap
 import ohos_app_cangjie_entry.baseUrl
-import ohos_app_cangjie_entry.header
+import ohos_app_cangjie_entry.requestHeaders
 
 
 
@@ -30,13 +30,13 @@ public class QQbot {
         errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
-                let url = baseUrl.replace(path: "/check_group")
+                let url = baseUrl.replace(path: "/check_group").toString()
                 let body = JsonObject()
                 body.put("qqNumber", JsonString(qqNum))
 
-                let res = HttpQuick
-                    .post(url, body, header: header)
-                    .getBodyJsonObject()
+                let res = LinderHttp.client()
+                    .post(url, body, headers: Some(requestHeaders()))
+                    .jsonObject()
 
                 let status = res
                     .get("status")
@@ -102,11 +102,10 @@ public class QQbot {
     public func getConfig(returnFunc: (BotConfig) -> Unit, errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
-                let url = baseUrl.replace(path: "/notify_config")
+                let url = baseUrl.replace(path: "/notify_config").toString()
 
-                let res = HttpQuick
-                    .get(url, header: header)
-                    .getBodyJsonObject()
+                let res = LinderHttp.get(url, headers: Some(requestHeaders()))
+                    .jsonObject()
                 AppLog.info("meow:${res}")
                 let config = BotConfig.fromJson(res)
                 if (config.status != 'error') {

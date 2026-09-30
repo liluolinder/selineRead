@@ -11,9 +11,9 @@ import stdx.encoding.json.JsonObject
 import stdx.encoding.json.JsonInt
 import stdx.encoding.json.JsonString
 import zlibraryAPI4CJ.common.zlibEAPI
-import linderHttp.HttpQuick
+import linderHttp.LinderHttp
 import ohos_app_cangjie_entry.baseUrl
-import ohos_app_cangjie_entry.header
+import ohos_app_cangjie_entry.requestHeaders
 
 @Interop[ArkTS]
 public class ZlibBookInfoArk {
@@ -153,7 +153,7 @@ public class ZlibBookInfoArk {
     public func send2QQGroup(cookie: String,qqNumber:String, qqGroup:String, returnFunc: (String) -> Unit, errorFunc: (String) -> Unit): Unit {
         spawn {
             try {
-                let url = baseUrl.replace(path: "/notify")
+                let url = baseUrl.replace(path: "/notify").toString()
                 let body = JsonObject()
                 body.put("qqGroup", JsonString(qqGroup))
                 body.put("qqNumber", JsonString(qqNumber))
@@ -161,8 +161,8 @@ public class ZlibBookInfoArk {
                 body.put("bookHash", JsonString(hash))
                 body.put("cookie", JsonString(cookie))
                 body.put("downloadUrl", JsonString("${zlibEAPI}/book/${id}/${hash}/file"))
-                let res =HttpQuick.post(url, body ,header:header)
-                let resJson = res.getBodyJsonString()
+                let res = LinderHttp.client().post(url, body, headers: Some(requestHeaders()))
+                let resJson = res.json().toJsonString()
                 run2JS {
                     resJson |> returnFunc
                 }

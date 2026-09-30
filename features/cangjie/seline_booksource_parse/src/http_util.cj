@@ -1,10 +1,9 @@
 package seline_booksource_parse
 
 import std.collection.HashMap
-import linderHttp.HttpQuick
-import linderHttp.LinderHttpClient
-import linderHttp.RequestUrl
-import linderHttp.RequestMethod
+import linderHttp.Body
+import linderHttp.Headers
+import linderHttp.LinderHttp
 import stdx.encoding.url.URL
 
 /**
@@ -32,14 +31,14 @@ public class HttpUtil {
         let items = headerStr.split(";")
         var lastKey: String = ""
         for (item in items) {
-            let pair = item.trim()
+            let pair = item.trimAscii()
             if (pair.isEmpty()) {
                 continue
             }
             let eq = pair.indexOf('=')
             if (let Some(pos) <- eq) {
-                let key = pair[0..pos].trim()
-                let value = pair[(pos + 1)..].trim()
+                let key = pair[0..pos].trimAscii()
+                let value = pair[(pos + 1)..].trimAscii()
                 if (!key.isEmpty()) {
                     headers[key] = value
                     lastKey = key
@@ -52,23 +51,43 @@ public class HttpUtil {
         headers
     }
 
+    /**
+     * 把 "名 -> 值" 映射转成 linderHttp 的请求头容器。
+     *
+     * 新版 linderHttp 的请求入口统一接收 `Headers`（大小写不敏感、支持多值），
+     * 不再接受裸 `HashMap`，所以书源 header 解析出来的映射要在这里过一道。
+     */
+    private static func toHeaders(headers: HashMap<String, String>): Headers {
+        let result = Headers()
+        for ((name, value) in headers) {
+            result.set(name, value)
+        }
+        result
+    }
+
     /** GET 请求，返回响应体字符串 */
     public static func get(url: String): String {
-        HttpQuick.get(url).getBodyString()
+        LinderHttp.get(url).text()
     }
 
     /** GET 请求（带请求头），返回响应体字符串 */
     public static func get(url: String, headers: HashMap<String, String>): String {
-        HttpQuick.get(url, header:headers).getBodyString()
+        LinderHttp.get(url, headers: Some(toHeaders(headers))).text()
     }
 
-    /** POST 请求（带请求头），返回响应体字符串 */
+    /**
+     * POST 请求（带请求头），返回响应体字符串
+     *
+     * 请求体是书源的 postBody 模板（`searchkey={{key}}&searchtype=all` 这类），
+     * 本身已经是表单编码串，因此按 `application/x-www-form-urlencoded` 发送。
+     * 注意书源 header 里若自带 Content-Type，则以书源为准（库只在缺省时才用这里的值）。
+     * 旧版 linderHttp 对 String 请求体固定用 `text/xml`（沿用自旧库的缺陷），此处不再沿用。
+     */
     public static func post(url: String, body: String, headers: HashMap<String, String>): String {
-        let response = LinderHttpClient(url: RequestUrl.from(url), method: RequestMethod.POST)
-            .setHeader(headers)
-            .setBody(body)
-            .send()
-        response.getBodyString()
+        LinderHttp.client()
+            .post(url, Body.text(body, contentType: "application/x-www-form-urlencoded"),
+                headers: Some(toHeaders(headers)))
+            .text()
     }
 
     /**

@@ -58,16 +58,14 @@ public class BookInfo <: Serializable<BookInfo> {
     public var readOnlineAvailable: Bool = false
 
     public func saveBook(cookie!: String): Bool {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setDefaultHeader()
-            .setUrl("${zlibEAPI}/user/book/${id}/save")
-            .setMethod(RequestMethod.GET)
-            .setHeader(HttpHeader().set(key: "cookie", value: cookie))
+            .request(Method.Get, "${zlibEAPI}/user/book/${id}/save")
+            .headers(Headers().set("cookie", cookie))
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
-        if (response.getBodyJsonObject().get('success').getOrThrow().asInt().getValue() == 1) {
+        if (response.jsonObject().get('success').getOrThrow().asInt().getValue() == 1) {
             true
         } else {
             false
@@ -75,15 +73,14 @@ public class BookInfo <: Serializable<BookInfo> {
     }
 
     public func unSaveBook(cookie!: String): Bool {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setUrl("${zlibEAPI}/user/book/${id}/unsave")
-            .setMethod(RequestMethod.GET)
-            .setHeader(HttpHeader().set(key: "cookie", value: cookie))
+            .request(Method.Get, "${zlibEAPI}/user/book/${id}/unsave")
+            .headers(Headers().set("cookie", cookie))
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
-        if (response.getBodyJsonObject().get('success').getOrThrow().asInt().getValue() == 1) {
+        if (response.jsonObject().get('success').getOrThrow().asInt().getValue() == 1) {
             true
         } else {
             false
@@ -91,30 +88,26 @@ public class BookInfo <: Serializable<BookInfo> {
     }
 
     public func getSimilarBook(): GetBookRes {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setDefaultHeader()
-            .setUrl("${zlibEAPI}/book/${id}/${hash}/similar")
-            .setMethod(RequestMethod.GET)
+            .request(Method.Get, "${zlibEAPI}/book/${id}/${hash}/similar")
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
-        let res = GetBookRes.deserialize(response.getBodyDataModel())
+        let res = GetBookRes.deserialize(response.dataModel())
         res
     }
 
     public func getDownloadInfo(cookie!: String): GetDownloadInfoRes {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setDefaultHeader()
-            .setUrl("${zlibEAPI}/book/${id}/${hash}/file")
-            .setMethod(RequestMethod.GET)
-            .setHeader(HttpHeader())
-            .setHeader(HttpHeader().set(key: "cookie", value: cookie))
+            .request(Method.Get, "${zlibEAPI}/book/${id}/${hash}/file")
+            .headers(Headers())
+            .headers(Headers().set("cookie", cookie))
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
-        let res = GetDownloadInfoRes.deserialize(response.getBodyDataModel())
+        let res = GetDownloadInfoRes.deserialize(response.dataModel())
         res
     }
 
@@ -160,41 +153,73 @@ public class BookInfo <: Serializable<BookInfo> {
             case data: DataModelStruct => data
             case _ => throw Exception("this data is not DataModelStruct")
         }
+        
         var result = BookInfo()
-        result.id = UInt64.deserialize(dms.get("id"))
-        result.contentType = String.deserialize(dms.get("content_type"))
-        result.title = String.deserialize(dms.get("title"))
+        // 全部走容错反序列化：Z-Library 会偶尔省略字段（实测 `dl` 就有书缺），
+        // 直接 String.deserialize 会抛 DataModelException 让整次搜索/详情失败
+        result.title = strOr(dms.get("title"))
+        result.id = u64Or(dms.get("id"))
+        result.contentType = strOr(dms.get("content_type"))
         result.author = Option<String>.deserialize(dms.get("author"))
-        result.volume = String.deserialize(dms.get("volume"))
-        result.year = UInt64.deserialize(dms.get("year"))
+        result.volume = strOr(dms.get("volume"))
+        result.year = u64Or(dms.get("year"))
         result.edition = Option<String>.deserialize(dms.get("edition"))
         result.publisher = Option<String>.deserialize(dms.get("publisher"))
         result.identifier = Option<String>.deserialize(dms.get("identifier"))
-        result.language = String.deserialize(dms.get("language"))
-        result.pages = UInt64.deserialize(dms.get("pages"))
-        result.series = String.deserialize(dms.get("series"))
-        result.cover = String.deserialize(dms.get("cover"))
-        result.termsHash = String.deserialize(dms.get("terms_hash"))
-        result.active = UInt64.deserialize(dms.get("active"))
-        result.deleted = UInt64.deserialize(dms.get("deleted"))
-        result.filesize = UInt64.deserialize(dms.get("filesize"))
-        result.filesizeString = String.deserialize(dms.get("filesizeString"))
-        result.extension = String.deserialize(dms.get("extension"))
-        result.md5 = String.deserialize(dms.get("md5"))
-        result.sha256 = String.deserialize(dms.get("sha256"))
-        result.href = String.deserialize(dms.get("href"))
-        result.hash = String.deserialize(dms.get("hash"))
-        result.kindleAvailable = Bool.deserialize(dms.get("kindleAvailable"))
-        result.sendToEmailAvailable = Bool.deserialize(dms.get("sendToEmailAvailable"))
-        result.interestScore = String.deserialize(dms.get("interestScore"))
-        result.qualityScore = String.deserialize(dms.get("qualityScore"))
-        result.description = String.deserialize(dms.get("description"))
-        result.dl = String.deserialize(dms.get("dl"))
+        result.language = strOr(dms.get("language"))
+        result.pages = u64Or(dms.get("pages"))
+        result.series = strOr(dms.get("series"))
+        result.cover = strOr(dms.get("cover"))
+        result.termsHash = strOr(dms.get("terms_hash"))
+        result.active = u64Or(dms.get("active"))
+        result.deleted = u64Or(dms.get("deleted"))
+        result.filesize = u64Or(dms.get("filesize"))
+        result.filesizeString = strOr(dms.get("filesizeString"))
+        result.extension = strOr(dms.get("extension"))
+        result.md5 = strOr(dms.get("md5"))
+        result.sha256 = strOr(dms.get("sha256"))
+        result.href = strOr(dms.get("href"))
+        result.hash = strOr(dms.get("hash"))
+        result.kindleAvailable = boolOr(dms.get("kindleAvailable"))
+        result.sendToEmailAvailable = boolOr(dms.get("sendToEmailAvailable"))
+        result.interestScore = strOr(dms.get("interestScore"))
+        result.qualityScore = strOr(dms.get("qualityScore"))
+        result.description = strOr(dms.get("description"))
+        result.dl = strOr(dms.get("dl"))
         result.readOnlineUrl = Option<String>.deserialize(dms.get("readOnlineUrl"))
         result.isUserSavedBook = Option<Bool>.deserialize(dms.get("_isUserSavedBook"))
         result.dataSaved = Option<String>.deserialize(dms.get("date_saved"))
-        result.readOnlineAvailable = Bool.deserialize(dms.get("readOnlineAvailable"))
+        result.readOnlineAvailable = boolOr(dms.get("readOnlineAvailable"))
 
         return result
+    }
+}
+
+/*
+ * 容错反序列化辅助：字段缺失或类型不符时退回默认值。
+ * 实测 Z-Library 的搜索响应里部分书籍缺少 `dl` 字段，非可选字段直接反序列化
+ * 会抛 DataModelException（"This data is not DataModelString"），导致整页结果作废。
+ */
+func strOr(dm: DataModel, fallback!: String = ""): String {
+    try {
+        String.deserialize(dm)
+    } catch (_: Exception) {
+        fallback
+    }
+}
+
+func u64Or(dm: DataModel, fallback!: UInt64 = 0): UInt64 {
+    try {
+        UInt64.deserialize(dm)
+    } catch (_: Exception) {
+        fallback
+    }
+}
+
+func boolOr(dm: DataModel, fallback!: Bool = false): Bool {
+    try {
+        Bool.deserialize(dm)
+    } catch (_: Exception) {
+        fallback
     }
 }

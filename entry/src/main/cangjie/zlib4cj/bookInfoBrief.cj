@@ -44,7 +44,6 @@ public class ZlibBookInfoBriefArk {
                 try {
                     let reqs = cjValue.getBookInfo(cookie: cookie)
 
-                    let requ = cjValue.getUrl()
                     if (reqs.success == 1) {
                         run2JS{
                             returnFunc(ZlibBookInfoArk.fromCJ(reqs

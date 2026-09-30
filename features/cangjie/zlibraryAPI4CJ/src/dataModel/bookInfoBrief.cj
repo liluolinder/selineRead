@@ -30,32 +30,26 @@ public class BookInfoBrief <: Serializable<BookInfoBrief> {
     public var cover: String = ''
     public var hash: String = ''
 
-    public func getUrl():String{
-        "${zlibEAPI}/book/${id}/${hash}"
-    }
-
     public func getBookInfo(cookie!: String = ''): GetBookInfoRes {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .setHeader(HttpHeader().set(key: "cookie", value: cookie))
-            .setUrl("${zlibEAPI}/book/${id}/${hash}")
+            .request(Method.Get, "${zlibEAPI}/book/${id}/${hash}")
+            .headers(Headers().set("cookie", cookie))
             .send()
 
-        let res = GetBookInfoRes.deserialize(response.getBodyDataModel())
+        let res = GetBookInfoRes.deserialize(response.dataModel())
         res
     }
 
     public func getSimilarBook(): GetBookRes {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setDefaultHeader()
-            .setUrl("${zlibEAPI}/book/${id}/${hash}/similar")
-            .setMethod(RequestMethod.GET)
+            .request(Method.Get, "${zlibEAPI}/book/${id}/${hash}/similar")
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
         try {
-            let res = GetBookRes.deserialize(response.getBodyDataModel())
+            let res = GetBookRes.deserialize(response.dataModel())
             res
         } catch (err: Exception) {
             throw Exception('获取错误，错误信息${err.toString()}')
@@ -63,16 +57,14 @@ public class BookInfoBrief <: Serializable<BookInfoBrief> {
     }
 
     public func getDownloadInfo(cookie!: String) {
-        var httpClient = LinderHttpClient(readTimeout: Duration.minute, writeTimeout: Duration.minute)
+        var httpClient = LinderHttp.client()
         let response = httpClient
-            .destroy()
-            .setDefaultHeader()
-            .setUrl("${zlibEAPI}/book/${id}/${hash}/file")
-            .setMethod(RequestMethod.GET)
-            .setHeader(HttpHeader().set(key: "cookie", value: cookie))
+            .request(Method.Get, "${zlibEAPI}/book/${id}/${hash}/file")
+            .headers(Headers().set("cookie", cookie))
+            .timeout(Timeouts(read: Duration.minute, write: Duration.minute))
             .send()
 
-        let res = GetDownloadInfoRes.deserialize(response.getBodyDataModel())
+        let res = GetDownloadInfoRes.deserialize(response.dataModel())
         res
     }
 
@@ -90,11 +82,12 @@ public class BookInfoBrief <: Serializable<BookInfoBrief> {
             case _ => throw Exception("this data is not DataModelStruct")
         }
         var result = BookInfoBrief()
-        result.id = UInt64.deserialize(dms.get("id"))
-        result.title = String.deserialize(dms.get("title"))
-        result.author = String.deserialize(dms.get("author"))
-        result.cover = String.deserialize(dms.get("cover"))
-        result.hash = String.deserialize(dms.get("hash"))
+        // 容错：字段缺失/为 null 时退回默认值（见 bookInfo.cj 的 strOr/u64Or）
+        result.id = u64Or(dms.get("id"))
+        result.title = strOr(dms.get("title"))
+        result.author = strOr(dms.get("author"))
+        result.cover = strOr(dms.get("cover"))
+        result.hash = strOr(dms.get("hash"))
 
         return result
     }

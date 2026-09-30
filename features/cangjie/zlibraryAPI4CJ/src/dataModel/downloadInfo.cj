@@ -34,15 +34,19 @@ public struct DownloadInfo <: Serializable<DownloadInfo> {
         }
     }
 
-    public func download(path!: Path, conflictMethod!: ConflictMethod = ConflictMethod.Harmony) {
+    /**
+     * 下载这本书。
+     *
+     * @param path 保存目录
+     * @param overwrite 目标文件已存在时是否覆盖；默认 false 会自动改名（`file(1).ext`），
+     *                  等价于旧 API 的 ConflictMethod.Harmony；传 true 等价于 OverWrite。
+     * 下载本身（分片/续传）不在 HTTP 库职责内，这里只做「整包流式落盘」。
+     */
+    public func download(path!: Path, overwrite!: Bool = false) {
         let savePath = path.join(fileName)
-        let response = LinderHttpClient(
-            url: RequestUrl.from(downloadLink.getOrThrow().replace("%", "")),
-            writeTimeout: Duration.Max,
-            readTimeout: Duration.Max,
-        ).send()
-        response.status |> println
-        response.getBodyFile(filePath: savePath, conflictMethod: conflictMethod)
+        LinderHttp.get(downloadLink.getOrThrow().replace("%", ""),
+            timeouts: Timeouts(read: Duration.Max, write: Duration.Max))
+            .saveTo(savePath, overwrite: overwrite)
     }
 
     public func serialize(): DataModel {
