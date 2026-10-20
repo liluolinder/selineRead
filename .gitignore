@@ -2,5 +2,7 @@
 .atomcode
 .arts
 .vscode
+# Local build diagnostics
+/build_err.txt
 dist
 target
