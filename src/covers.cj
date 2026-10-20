@@ -23,14 +23,14 @@ import std.sync.AtomicBool
 private let coverManager: DownloadManager = DownloadManager()
 private let coverQueue = LinkedBlockingQueue<(UInt64, String)>(512)
 // 已入队/处理中的封面 id（UI 线程去重，worker 完成后移除）
-private let coverInFlight = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
+private var coverInFlight = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
 // 下载或转换失败过的封面 id：本次会话不再重试
-private let coverFailed = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
+private var coverFailed = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
 // 原始文件已下载、BMP 已就绪的封面 id（UI 线程只查，零文件 IO）
-private let coverDownloaded = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
-private let coverReady = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
+private var coverDownloaded = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
+private var coverReady = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
 // 缓存目录是否已确认存在
-private let coverDirEnsured = ConcurrentHashMap<Bool, Bool>(concurrencyLevel: 2)
+private var coverDirEnsured = ConcurrentHashMap<Bool, Bool>(concurrencyLevel: 2)
 // 刷新通知：worker 只置无锁脏标志，绝不调用 postToUi（其内部有互斥锁，
 // 主循环每帧也在争用；主绿色线程一旦在该锁上 park 就可能被调度器迁移，
 // 触发 SDL owner 校验闪退）。改为 UI 线程每帧主动轮询此标志。
@@ -39,6 +39,18 @@ private let coverDirty = AtomicBool(false)
 // worker 线程调用：仅置脏标志（无锁、无阻塞）
 func notifyCoversChanged(app: DesktopApp, state: AppState): Unit {
     coverDirty.store(true)
+}
+
+/** 清缓存后重置内存缓存集合：让所有封面回到「未下载」状态，按需重新拉取。 */
+func resetCoverMemoryCaches(): Unit {
+    // ConcurrentHashMap 无 clear()/keys()：直接换新实例（worker 对旧实例的
+    // 残留写入无害，最多多下载一次封面）
+    coverInFlight = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
+    coverFailed = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
+    coverDownloaded = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
+    coverReady = ConcurrentHashMap<UInt64, Bool>(concurrencyLevel: 8)
+    coverDirEnsured = ConcurrentHashMap<Bool, Bool>(concurrencyLevel: 2)
+    coverDirty.store(false)
 }
 
 // ===== 分帧揭示（第二次启动未响应的修复）=====

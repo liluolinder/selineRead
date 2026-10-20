@@ -20,6 +20,8 @@ let SIDEBAR_RAIL: Float32 = 64.0
 func rootView(app: DesktopApp, state: AppState) {
     // 详情页只在「打开它的页签」下显示：切到其他页签再切回仍保留详情状态
     let inDetail = detailVisibleNow(state)
+    // 设置页与详情页同款：内嵌内容区切换（非弹窗），详情优先
+    let inSettings = !inDetail && state.showSetting.value
     ZStack {
         HStack(spacing: 0.vp) {
             sidePanel(state)
@@ -29,6 +31,8 @@ func rootView(app: DesktopApp, state: AppState) {
                 VStack(spacing: 0.vp) {
                     if (inDetail) {
                         detailView(app, state)
+                    } else if (inSettings) {
+                        settingsView(app, state)
                     } else if (state.currentTab.value == 0) {
                         homeView(app, state)
                     } else if (state.currentTab.value == 1) {
@@ -42,7 +46,6 @@ func rootView(app: DesktopApp, state: AppState) {
             }.padding(0.vp, 0.vp, 12.vp, 0.vp).fillHeight().flex()
         }
         accountModal(app, state)
-        settingModal(state)
         aboutModal(state)
         cancelDownloadModal(state)
         // 右下角 toast 层：不占布局、不拦截事件，始终位于最上层
@@ -580,10 +583,10 @@ func userInfoPanel(state: AppState) {
 // 设置 / 关于
 // =====================================================================
 
-func settingModal(state: AppState) {
-    Modal(state.showSetting, onDismiss: {=> state.showSetting.value = false}) { =>
+func settingsView(app: DesktopApp, state: AppState) {
+    ScrollView {
         VStack(spacing: 16.0.vp) {
-            Label("设置").bold().fontSize(18.0)
+            Label("设置").bold().fontSize(22.0)
             Divider()
 
             // ---- Z-Library 域名 ----
@@ -611,6 +614,7 @@ func settingModal(state: AppState) {
                 HStack(spacing: 8.0.vp) {
                     TextField(state.downloadPath, placeholder: "下载目录路径...")
                         .width(260.0)
+                    Button("浏览...", {=> chooseDownloadFolder(app, state)})
                     Button("保存", {=>
                         let path = state.downloadPath.value.trimAscii()
                         if (!path.isEmpty()) {
@@ -623,9 +627,21 @@ func settingModal(state: AppState) {
             }
 
             Divider()
-            Button("关闭", {=> state.showSetting.value = false})
-        }.padding(12.0).width(400.0)
-    }
+
+            // ---- 缓存维护 ----
+            VStack(spacing: 6.0.vp) {
+                Label("图片缓存").muted().fontSize(12.0)
+                Label("封面等临时图片缓存于系统 Temp 目录（%TEMP%\\SelineRead\\covers）")
+                    .muted().fontSize(11.0).maxLines(2)
+                HStack(spacing: 8.0.vp) {
+                    Button("清理缓存", {=> clearImageCache(app, state)}, role: ButtonRole.Danger)
+                    Button("打开缓存目录", {=> openImageCacheFolder()})
+                }.crossAxisAlignment(CrossAxisAlignment.Center)
+            }
+
+            Divider()
+        }.width(560.0).padding(20.0)
+    }.fillWidth().fillHeight()
 }
 
 func aboutModal(state: AppState) {

@@ -144,12 +144,21 @@ func windowControlButtons(app: DesktopApp, mode: Int64): Unit {
 func titleBar(app: DesktopApp, state: AppState): Unit {
     // 详情页只在「打开它的页签」下生效（切到其他页签再切回仍显示详情）
     let inDetail = detailVisibleNow(state)
-    let downloadsTab = !inDetail && state.currentTab.value == 2
-    let shelfTab = !inDetail && state.currentTab.value == 1
+    let inSettings = !inDetail && state.showSetting.value
+    let downloadsTab = !inDetail && !inSettings && state.currentTab.value == 2
+    let shelfTab = !inDetail && !inSettings && state.currentTab.value == 1
     let leftPad: Float32 = if (inDetail) { 20.0 } else { 14.0 }
     HStack {
         if (inDetail) {
             detailNavButtons(app, state)
+        } else if (inSettings) {
+            // 设置页：标题栏中段放返回键（与详情页同款交互）
+            Button(onClick: {=> state.showSetting.value = false}, style: Some(PILL_BUTTON_STYLE)) {
+                HStack(spacing: 6.0.vp) {
+                    Label("‹").bold().fontSize(19.0)
+                    Label("返回").fontSize(15.0)
+                }.crossAxisAlignment(CrossAxisAlignment.Center).hug()
+            }
         } else if (downloadsTab) {
             // 下载页签：打开下载文件夹（常驻）+ 清空已完成（仅存在已结束任务时出现）
             Button("打开文件夹", {=> openDownloadsFolder()})

@@ -4,7 +4,7 @@ import chui.*
 import selineDownload.*
 import std.collection.ArrayList
 import std.env.*
-import std.fs.{Directory, Path, exists}
+import std.fs.{Directory, Path, exists, remove}
 import std.process.{ProcessRedirect, launch}
 import std.sync.{AtomicInt64, AtomicBool, AtomicReference}
 import zlibraryAPI4CJ.*
@@ -794,6 +794,80 @@ func openDownloadsFolder(): Unit {
             stdErr: ProcessRedirect.Inherit)
     } catch (_: Exception) {
         // 打不开就静默忽略（例如 explorer 不存在），不打断 UI
+    }
+}
+
+/** 打开图片缓存目录（%TEMP%\SelineRead\covers，UI 线程调用）。 */
+func openImageCacheFolder(): Unit {
+    try {
+        let _ = launch("explorer.exe", [coverCacheDir()],
+            stdIn: ProcessRedirect.Discard,
+            stdOut: ProcessRedirect.Inherit,
+            stdErr: ProcessRedirect.Inherit)
+    } catch (_: Exception) {
+        ()
+    }
+}
+
+/** 一键清理图片缓存：后台线程删 %TEMP%\SelineRead\covers 下全部文件，
+ * 完成后回 UI 线程清内存缓存并 Toast 报告数量。 */
+func clearImageCache(app: DesktopApp, state: AppState) {
+    let cacheDir = coverCacheDir()
+    spawn { =>
+        var count = 0
+        try {
+            for (entry in Directory.readFrom(Path(cacheDir))) {
+                try {
+                    remove(Path("${cacheDir}\\${entry.name}"))
+                    count += 1
+                } catch (_: Exception) {
+                    ()
+                }
+            }
+        } catch (_: Exception) {
+            ()
+        }
+        let n = count
+        app.postToUi({ =>
+            resetCoverMemoryCaches()
+            state.toaster.show("已清理 ${n} 个缓存文件", kind: ToastKind.Success)
+        })
+    }
+}
+
+/** 目录选择器：打开系统文件夹对话框，选中后回填下载目录并持久化。
+ * 对话框在 UI 线程发起（SDL 要求），结果由后台线程轮询、postToUi 回填。 */
+func chooseDownloadFolder(app: DesktopApp, state: AppState) {
+    let start = state.downloadPath.value
+    let options = if (start.isEmpty()) {
+        FileDialogOptions()
+    } else {
+        FileDialogOptions(defaultLocation: Some(start))
+    }
+    try {
+        let request = FileDialogs.openFolder(options: options)
+        spawn { =>
+            // 对话框异步回调完成标志，轮询等待（100ms 间隔，无锁）
+            while (!request.isDone()) {
+                sleep(Duration.millisecond * 100)
+            }
+            match (request.result()) {
+                case FileDialogResult.FileDialogSelected(paths, _) =>
+                    if (paths.size > 0) {
+                        let picked = paths[0]
+                        app.postToUi({ =>
+                            state.downloadPath.value = picked
+                            applyDownloadPath(picked)
+                            saveSettings(state.settingsZlibUrl.value.trimAscii(),
+                                state.themeMode.value, picked)
+                            state.toaster.show("下载目录已设置", kind: ToastKind.Success)
+                        })
+                    }
+                case _ => () // 用户取消或失败：不改动
+            }
+        }
+    } catch (_: Exception) {
+        state.toaster.show("无法打开目录选择器", kind: ToastKind.Error)
     }
 }
 
