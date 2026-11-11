@@ -23,15 +23,15 @@ let DETAIL_DESC_H: Float32 = 218.0
 func detailPage(state: AppState): Unit {
     let theme = selineTheme()
     VStack(spacing: vp(0.0)) {
-        // 工具行：「下载」和「返回」同一行、贴最右侧
+        // 工具行：「返回」贴左，「下载」贴右，同一行
         HStack(spacing: vp(SELINE_SPACE_SM)) {
+            SelineButton("返回", {=> state.closeDetail()}, glyph: "home",
+                kind: SelineButtonKind.Ghost, compact: true)
             Spacer()
             if (!state.loggedIn.value) {
                 Label("下载需要先登录").fontSize(theme.fontCaption).muted()
             }
             DownloadMenuButton(state)
-            SelineButton("返回", {=> state.closeDetail()}, glyph: "home",
-                kind: SelineButtonKind.Ghost, compact: true)
         }.hug().fillWidth().padding(PAGE_PAD, 10.0, PAGE_PAD, 2.0)
         pageScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
