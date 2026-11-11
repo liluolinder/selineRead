@@ -563,6 +563,27 @@ public class AppState {
     public let detailHash = State<String>("")
     /** 选中的下载版本：0 = 原书，1..N = `detailFormats[index-1]`。 */
     public let detailFormatIndex = State<Int64>(0)
+    /** 详情页分段：0 书籍信息 / 1 书籍评论 / 2 相关书籍。 */
+    public let detailSection = State<Int64>(0)
+    /** 书籍信息（两列展示）。 */
+    public let detailYear = State<String>("")
+    public let detailPublisher = State<String>("")
+    public let detailIdentifier = State<String>("")
+    public let detailLanguage = State<String>("")
+    public let detailPages = State<String>("")
+    public let detailEdition = State<String>("")
+    public let detailSeries = State<String>("")
+    public let detailExtension = State<String>("")
+    public let detailFilesize = State<String>("")
+    /** 简介滚动区的偏移（固定高度、自己处理滚轮）。 */
+    public let detailDescriptionOffset = State<Float32>(0.0)
+    /** 简介按宽度折行的缓存（key = 宽度|文本）。 */
+    private let wrappedDescriptionCache = HashMap<String, ArrayList<String>>()
+    /** 相关书籍（BookApi.similar）。 */
+    public let detailRelated = State<ArrayList<BookCell>>(ArrayList<BookCell>())
+    public let detailRelatedLoading = State<Bool>(false)
+    public let detailRelatedError = State<String>("")
+    private var detailRelatedLoaded = false
 
     /* ---- 账号 ---- */
     public let loggedIn = State<Bool>(false)
@@ -1050,9 +1071,23 @@ public class AppState {
         commentsNextOffset.value = 0
         commentsVisible.value = 20
         commentsLoaded = false
-        // 不在打开详情时立刻拉评论：评论区滚进视口后由哨兵触发（懒加载）
+        // 不在打开详情时立刻拉评论：切到「书籍评论」分段时才加载
         detailDescription.value = ""
         detailFormats.value = ArrayList<BookFormat>()
+        detailSection.value = 0
+        detailRelated.value = ArrayList<BookCell>()
+        detailRelatedError.value = ""
+        detailRelatedLoaded = false
+        detailYear.value = ""
+        detailPublisher.value = ""
+        detailIdentifier.value = ""
+        detailLanguage.value = ""
+        detailPages.value = ""
+        detailEdition.value = ""
+        detailSeries.value = ""
+        detailExtension.value = ""
+        detailFilesize.value = ""
+        detailDescriptionOffset.value = 0.0
         detailLoading.value = true
         detailError.value = ""
         let clientBox = match (this.client) {
@@ -1083,6 +1118,24 @@ public class AppState {
                 detailAuthor.value = author
                 detailMeta.value = "${info.extension} · ${info.filesizeString}"
                 detailDescription.value = info.description
+                detailYear.value = if (info.year > 0) { info.year.toString() } else { "" }
+                detailPublisher.value = match (info.publisher) {
+                    case Some(value) => value
+                    case None => ""
+                }
+                detailIdentifier.value = match (info.identifier) {
+                    case Some(value) => value
+                    case None => ""
+                }
+                detailLanguage.value = info.language
+                detailPages.value = if (info.pages > 0) { info.pages.toString() } else { "" }
+                detailEdition.value = match (info.edition) {
+                    case Some(value) => value
+                    case None => ""
+                }
+                detailSeries.value = info.series
+                detailExtension.value = info.extension
+                detailFilesize.value = info.filesizeString
                 detailCover.value = normalizeCoverUrl(info.cover, currentSite())
                 detailError.value = ""
             case None =>
@@ -1090,6 +1143,88 @@ public class AppState {
         }
         detailFormats.value = payload.formats
         detailLoading.value = false
+    }
+
+    /** 详情页分段切换：评论/相关书籍第一次点开才加载。 */
+    public func selectDetailSection(index: Int64): Unit {
+        if (index < 0 || index > 2 || index == detailSection.value) {
+            return
+        }
+        detailSection.value = index
+        if (index == 1) {
+            ensureCommentsLoaded()
+        }
+        if (index == 2) {
+            ensureRelatedLoaded()
+        }
+    }
+
+    /** 相关书籍懒加载：第一次进入「相关书籍」分段才请求。 */
+    public func ensureRelatedLoaded(): Unit {
+        if (detailRelatedLoaded || detailRelatedLoading.value || !detailRelatedError.value.isEmpty()) {
+            return
+        }
+        loadRelated()
+    }
+
+    /** 按可用宽度把简介折行（缓存，避免每帧重新测量）。 */
+    public func wrappedDescriptionLines(ctx: UiContext, text: String,
+        width: Float32): ArrayList<String> {
+        let key = "${Int64(width)}|${text}"
+        match (wrappedDescriptionCache.get(key)) {
+            case Some(value) => return value
+            case None => ()
+        }
+        let lines = wrapTextByWidth(ctx, text, max(80.0, width),
+            selineTheme().fontBody, selineTheme().fontFamily)
+        wrappedDescriptionCache[key] = lines
+        lines
+    }
+
+    /** 「重新加载」按钮：清掉错误后重试。 */
+    public func reloadRelated(): Unit {
+        detailRelatedError.value = ""
+        detailRelatedLoaded = false
+        detailRelatedLoading.value = false
+        loadRelated()
+    }
+
+    private func loadRelated(): Unit {
+        let clientBox = match (this.client) {
+            case Some(value) => value
+            case None =>
+                detailRelatedError.value = "客户端未就绪"
+                return
+        }
+        let id = detailId.value
+        let hash = detailHash.value
+        if (id <= 0 || hash.isEmpty()) {
+            return
+        }
+        detailRelatedLoading.value = true
+        detailRelatedError.value = ""
+        let _ = spawn {=>
+            try {
+                let briefs = BookApi.similar(clientBox.value, id, hash)
+                let cells = cellsFromBriefs(briefs, clientBox.value.currentSiteUrl())
+                postToUi({=>
+                    if (detailId.value != id) {
+                        return
+                    }
+                    detailRelated.value = cells
+                    detailRelatedLoaded = true
+                    detailRelatedLoading.value = false
+                })
+            } catch (failure: ZlibError) {
+                postToUi({=>
+                    if (detailId.value != id) {
+                        return
+                    }
+                    detailRelatedError.value = "相关书籍加载失败：${failure.detail}"
+                    detailRelatedLoading.value = false
+                })
+            }
+        }
     }
 
     /** 验收/脚本用：没有列表项时按 id + hash 直接打开详情页。 */

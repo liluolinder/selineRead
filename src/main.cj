@@ -313,6 +313,12 @@ main(args: Array<String>): Int64 {
                 }
             }
         }
+        // 验收：直接切到详情页某个分段（0 信息 / 1 评论 / 2 相关）
+        let detailSectionEnv = getVariable("SELINE_READ_DETAIL_SECTION") ?? ""
+        if (!detailSectionEnv.isEmpty()) {
+            state.selectDetailSection(Int64.parse(detailSectionEnv))
+            writeDebugLog("detail section -> ${state.detailSection.value}")
+        }
         if (!options.downloadTarget.isEmpty()) {
             let parts = options.downloadTarget.split("|")
             if (parts.size >= 2) {

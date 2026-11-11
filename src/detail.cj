@@ -6,8 +6,12 @@
  */
 package seline_read
 
+import std.collection.ArrayList
 import chui.*
 import seline_ui.*
+
+/** 详情页顶部（封面 + 简介）的固定高度：简介区与封面同高。 */
+let DETAIL_TOP_HEIGHT: Float32 = 270.0
 
 func detailPage(state: AppState): Unit {
     let theme = selineTheme()
@@ -22,91 +26,167 @@ func detailPage(state: AppState): Unit {
                 if (!state.detailError.value.isEmpty()) {
                     errorBannerText(state.detailError.value)
                 }
+                VStack(spacing: vp(SELINE_SPACE_XS)) {
+                    Label(state.detailTitle.value).fontSize(theme.fontTitle).bold().wrap()
+                    Label(if (state.detailAuthor.value.isEmpty()) {
+                        "未知作者"
+                    } else {
+                        state.detailAuthor.value
+                    }).fontSize(theme.fontBody).muted()
+                    Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
+                }.hug().fillWidth()
+                // 封面 + 简介：简介在封面右侧，高度与封面一致（270），内部可滚动
                 HStack(spacing: vp(SELINE_SPACE_LG)) {
                     DetailCover(state)
                     VStack(spacing: vp(SELINE_SPACE_XS)) {
-                        Label(state.detailTitle.value).fontSize(theme.fontTitle).bold().wrap()
-                        Label(if (state.detailAuthor.value.isEmpty()) {
-                            "未知作者"
+                        Label("简介").fontSize(theme.fontHeading).bold()
+                        if (state.detailLoading.value &&
+                            state.detailDescription.value.isEmpty()) {
+                            commentSkeleton(rows: 3)
+                            ()
+                        } else if (state.detailDescription.value.isEmpty()) {
+                            Label("暂无简介").fontSize(theme.fontBody).muted()
+                            ()
                         } else {
-                            state.detailAuthor.value
-                        }).fontSize(theme.fontBody).muted()
-                        Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
-
-                        HStack(spacing: vp(SELINE_SPACE_SM)) {
-                            // 点击弹出「版本选择」菜单：第一项是默认下载链接，下面是可选格式
-                            DownloadMenuButton(state)
-                            if (!state.loggedIn.value) {
-                                Label("下载需要先在「设置」页登录").fontSize(theme.fontCaption)
-                                    .muted()
-                            }
-                            Spacer()
-                        }.hug().fillWidth()
-                            .padding(0.0, 4.0, 0.0, 0.0)
-                        if (!state.downloadMessage.value.isEmpty()) {
-                            Label(state.downloadMessage.value).fontSize(theme.fontCaption)
-                                .foregroundColor(theme.palette.accent)
+                            DescriptionScroll(state, 236.0)
+                            ()
                         }
-                    }.hug()
+                    }.flex()
+                }.height(DETAIL_TOP_HEIGHT).fillWidth()
+                // 下载（点击弹出「版本选择」菜单）
+                HStack(spacing: vp(SELINE_SPACE_SM)) {
+                    DownloadMenuButton(state)
+                    if (!state.loggedIn.value) {
+                        Label("下载需要先在「设置」页登录").fontSize(theme.fontCaption).muted()
+                    }
                     Spacer()
                 }.hug().fillWidth()
-                if (state.forceSkeleton.value ||
-                    (state.detailLoading.value && state.detailDescription.value.isEmpty())) {
-                    descriptionSkeleton()
-                } else if (!state.detailDescription.value.isEmpty()) {
-                    VStack(spacing: vp(SELINE_SPACE_XS)) {
-                        Label("简介").fontSize(theme.fontHeading).bold()
-                        Label(plainText(state.detailDescription.value)).fontSize(theme.fontBody).wrap()
-                    }.hug().fillWidth()
+                if (!state.downloadMessage.value.isEmpty()) {
+                    Label(state.downloadMessage.value).fontSize(theme.fontCaption)
+                        .foregroundColor(theme.palette.accent)
                 }
-
-                // 评论（papi）：懒加载——滚到评论区才请求，且只渲染前 N 条
-                VStack(spacing: vp(SELINE_SPACE_XS)) {
-                    Label(if (state.comments.value.isEmpty()) {
-                        "评论"
-                    } else {
-                        "评论 ${state.comments.value.size}"
-                    }).fontSize(theme.fontHeading).bold()
-                    // 哨兵：自己进入视口时才触发首次加载
-                    CommentsSentinel(state)
-                    if (!state.commentsError.value.isEmpty()) {
-                        errorBannerText(state.commentsError.value)
-                    }
-                    if (state.commentsDisabled.value) {
-                        Label("本书已关闭评论").fontSize(theme.fontCaption).muted()
-                    }
-                    if (state.forceSkeleton.value ||
-                        (state.commentsLoading.value && state.comments.value.isEmpty())) {
-                        commentSkeleton()
-                    }
-                    var shown: Int64 = 0
-                    for (comment in state.comments.value) {
-                        if (shown >= state.commentsVisible.value) {
-                            break
-                        }
-                        commentRow(comment)
-                        shown += 1
-                    }
-                    if (!state.commentsLoading.value && state.comments.value.isEmpty() &&
-                        state.commentsError.value.isEmpty() &&
-                        !state.commentsDisabled.value) {
-                        Label("向下滚动加载评论").fontSize(theme.fontCaption).muted()
-                    }
-                    if (state.commentsVisible.value < Int64(state.comments.value.size)) {
-                        SelineButton("显示更多评论", {=> state.showMoreComments()},
-                            glyph: "chevron_down_fill", kind: SelineButtonKind.Ghost,
-                            compact: true)
-                    } else if (state.commentsNextOffset.value > 0) {
-                        SelineButton("加载更多评论", {=> state.loadMoreComments()},
-                            glyph: "refresh", kind: SelineButtonKind.Ghost,
-                            compact: true, busy: state.commentsLoading.value)
-                    }
+                // 分段：书籍信息 / 书籍评论 / 相关书籍
+                HStack(spacing: vp(SELINE_SPACE_SM)) {
+                    SelineSegmented(["书籍信息", "书籍评论", "相关书籍"],
+                        state.detailSection.value,
+                        {index => state.selectDetailSection(index)}, minSegment: 96.0)
+                    Spacer()
                 }.hug().fillWidth()
-            }.padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
+                if (state.detailSection.value == 0) {
+                    bookInfoSection(state)
+                } else if (state.detailSection.value == 1) {
+                    commentsSection(state)
+                } else {
+                    relatedSection(state)
+                }
+            }.padding(PAGE_PAD, SELINE_SPACE_MD, PAGE_PAD, 32.0)
         }
     }.fillWidth().fillHeight()
 }
 
+/** 书籍信息：两列 key/value。 */
+func bookInfoSection(state: AppState): Unit {
+    let theme = selineTheme()
+    VStack(spacing: vp(SELINE_SPACE_SM)) {
+        Label("书籍信息").fontSize(theme.fontHeading).bold()
+        HStack(spacing: vp(SELINE_SPACE_XL)) {
+            VStack(spacing: vp(SELINE_SPACE_SM)) {
+                detailInfoRow("ISBN", state.detailIdentifier.value)
+                detailInfoRow("出版社", state.detailPublisher.value)
+                detailInfoRow("年份", state.detailYear.value)
+                detailInfoRow("语言", state.detailLanguage.value)
+                detailInfoRow("页数", state.detailPages.value)
+            }.hug().fillWidth()
+            VStack(spacing: vp(SELINE_SPACE_SM)) {
+                detailInfoRow("版本", state.detailEdition.value)
+                detailInfoRow("系列", state.detailSeries.value)
+                detailInfoRow("格式", state.detailExtension.value)
+                detailInfoRow("文件大小", state.detailFilesize.value)
+                detailInfoRow("作者", state.detailAuthor.value)
+            }.hug().fillWidth()
+        }.hug().fillWidth()
+    }.hug().fillWidth()
+        .padding(12.0)
+        .background(theme.palette.surfaceRaised, vp(10.0))
+}
+
+func detailInfoRow(label: String, value: String): Unit {
+    let theme = selineTheme()
+    HStack(spacing: vp(SELINE_SPACE_SM)) {
+        Label(label).fontSize(theme.fontCaption).muted().width(72.0)
+        Label(if (value.isEmpty()) { "—" } else { value })
+            .fontSize(theme.fontBody).wrap()
+        Spacer()
+    }.hug().fillWidth()
+}
+
+/** 书籍评论（懒加载：切到本分段才请求）。 */
+func commentsSection(state: AppState): Unit {
+    let theme = selineTheme()
+    state.ensureCommentsLoaded()
+    VStack(spacing: vp(SELINE_SPACE_XS)) {
+        Label(if (state.comments.value.isEmpty()) {
+            "评论"
+        } else {
+            "评论 ${state.comments.value.size}"
+        }).fontSize(theme.fontHeading).bold()
+        if (!state.commentsError.value.isEmpty()) {
+            errorBannerText(state.commentsError.value)
+        }
+        if (state.commentsDisabled.value) {
+            Label("本书已关闭评论").fontSize(theme.fontCaption).muted()
+        }
+        if (state.commentsLoading.value && state.comments.value.isEmpty()) {
+            commentSkeleton(rows: 3)
+        }
+        var shown: Int64 = 0
+        for (comment in state.comments.value) {
+            if (shown >= state.commentsVisible.value) {
+                break
+            }
+            commentRow(comment)
+            shown += 1
+        }
+        if (!state.commentsLoading.value && state.comments.value.isEmpty() &&
+            state.commentsError.value.isEmpty() && !state.commentsDisabled.value) {
+            Label("还没有评论").fontSize(theme.fontCaption).muted()
+        }
+        if (state.commentsVisible.value < Int64(state.comments.value.size)) {
+            SelineButton("显示更多评论", {=> state.showMoreComments()},
+                glyph: "chevron_down_fill", kind: SelineButtonKind.Ghost, compact: true)
+        } else if (state.commentsNextOffset.value > 0) {
+            SelineButton("加载更多评论", {=> state.loadMoreComments()},
+                glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true,
+                busy: state.commentsLoading.value)
+        }
+    }.hug().fillWidth()
+}
+
+/** 相关书籍（懒加载：切到本分段才请求）。 */
+func relatedSection(state: AppState): Unit {
+    let theme = selineTheme()
+    state.ensureRelatedLoaded()
+    VStack(spacing: vp(SELINE_SPACE_MD)) {
+        Label("相关书籍").fontSize(theme.fontHeading).bold()
+        if (!state.detailRelatedError.value.isEmpty()) {
+            errorBannerText(state.detailRelatedError.value)
+            HStack(spacing: vp(SELINE_SPACE_SM)) {
+                SelineButton("重新加载", {=> state.reloadRelated()}, glyph: "refresh",
+                    kind: SelineButtonKind.Ghost, compact: true,
+                    busy: state.detailRelatedLoading.value)
+                Spacer()
+            }.hug().fillWidth()
+        }
+        if (state.detailRelatedLoading.value && state.detailRelated.value.isEmpty()) {
+            bookSkeletonGrid(count: 12)
+        } else if (state.detailRelated.value.isEmpty() &&
+            state.detailRelatedError.value.isEmpty()) {
+            emptyBlock("cloud", "没有相关书籍", "服务端没有返回相似图书")
+        } else {
+            bookGrid(state, state.detailRelated.value)
+        }
+    }.hug().fillWidth()
+}
 /** 详情页大封面：2:3 固定槽位。 */
 class DetailCover <: Widget {
     private let state: AppState
@@ -241,32 +321,82 @@ func commentRow(comment: CommentCell): Unit {
         .padding(10.0)
         .background(theme.palette.surfaceSunken, vp(8.0))
 }
-/** 评论区哨兵：进入视口时才触发首次评论加载（避免打开详情就拉 100 条评论）。 */
-class CommentsSentinel <: Widget {
+
+/** 固定高度、可滚动的简介区：自己折行并处理滚轮，避免与页面 ScrollView 嵌套。 */
+class DescriptionScroll <: Widget {
     private let state: AppState
+    private let viewHeight: Float32
     private var frame = Rect.zero()
 
-    init(state: AppState) {
+    init(state: AppState, height: Float32) {
         this.state = state
+        this.viewHeight = height
         emit(this)
     }
 
-    public func measure(_: UiContext, _: Size): Size {
-        Size(0.0, 1.0)
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, viewHeight)
     }
 
     public func layout(_: UiContext, rect: Rect): Unit {
         frame = rect
     }
 
-    public func draw(ctx: UiContext): Unit {
-        if (frame.y < ctx.viewportHeight + 120.0) {
-            state.ensureCommentsLoaded()
-        }
+    private func lineHeight(): Float32 {
+        selineTheme().fontBody + 7.0
     }
 
-    public func handle(_: UiContext, _: UiEvent): Bool {
-        false
+    private func lines(ctx: UiContext): ArrayList<String> {
+        state.wrappedDescriptionLines(ctx, plainText(state.detailDescription.value),
+            frame.w - 8.0)
+    }
+
+    private func maxOffset(ctx: UiContext): Float32 {
+        let total = lineHeight() * Float32(lines(ctx).size)
+        max(0.0, total - frame.h)
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        let theme = selineTheme()
+        let content = lines(ctx)
+        let lineH = lineHeight()
+        let limit = maxOffset(ctx)
+        var offset = state.detailDescriptionOffset.value
+        if (offset > limit) {
+            offset = limit
+        }
+        ctx.renderer.pushClip(frame)
+        var index: Int64 = 0
+        while (index < content.size) {
+            let y = frame.y + Float32(index) * lineH - offset
+            if (y > frame.bottom()) {
+                break
+            }
+            if (y + lineH >= frame.y) {
+                paintText(ctx.renderer, content[index],
+                    Rect(frame.x, y, frame.w, lineH), theme.palette.text,
+                    theme.fontBody, family: theme.fontFamily)
+            }
+            index += 1
+        }
+        ctx.renderer.popClip()
+    }
+
+    public func handle(ctx: UiContext, event: UiEvent): Bool {
+        match (event) {
+            case UiEvent.MouseWheel(_, wheelY, x, y) =>
+                if (!frame.contains(x, y)) {
+                    return false
+                }
+                let limit = maxOffset(ctx)
+                let next = max(0.0, min(limit,
+                    state.detailDescriptionOffset.value + wheelY * 48.0))
+                if (next != state.detailDescriptionOffset.value) {
+                    state.detailDescriptionOffset.value = next
+                }
+                true
+            case _ => false
+        }
     }
 
     public func isFlexible(): Bool {
@@ -276,4 +406,52 @@ class CommentsSentinel <: Widget {
     public func acceptsStretch(_: Axis): Bool {
         false
     }
+}
+
+/** 把文本按像素宽度折行（贪心 + 二分查找每行结尾，结果由 AppState 缓存）。 */
+func wrapTextByWidth(ctx: UiContext, text: String, width: Float32, pointSize: Float32,
+    family: String): ArrayList<String> {
+    let out = ArrayList<String>()
+    let fontValue: ?String = if (family.isEmpty()) {
+        None<String>
+    } else {
+        Some(family)
+    }
+    for (paragraph in text.split("\n")) {
+        let runes = paragraph.toRuneArray()
+        if (runes.isEmpty()) {
+            out.add("")
+            continue
+        }
+        var start: Int64 = 0
+        while (start < Int64(runes.size)) {
+            var low = start + 1
+            var high = Int64(runes.size)
+            var best = low
+            while (low <= high) {
+                let mid = (low + high) / 2
+                let candidate = runesSlice(runes, start, mid)
+                if (ctx.renderer.textWidth(candidate, pointSize: pointSize,
+                    font: fontValue) <= width) {
+                    best = mid
+                    low = mid + 1
+                } else {
+                    high = mid - 1
+                }
+            }
+            out.add(runesSlice(runes, start, best))
+            start = best
+        }
+    }
+    out
+}
+
+func runesSlice(runes: Array<Rune>, start: Int64, end: Int64): String {
+    let builder = StringBuilder()
+    var index = start
+    while (index < end && index < Int64(runes.size)) {
+        builder.append(runes[index].toString())
+        index += 1
+    }
+    builder.toString()
 }
