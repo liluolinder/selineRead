@@ -23,11 +23,16 @@ let DETAIL_DESC_H: Float32 = 218.0
 func detailPage(state: AppState): Unit {
     let theme = selineTheme()
     VStack(spacing: vp(0.0)) {
+        // 工具行：「下载」和「返回」同一行、贴最右侧
         HStack(spacing: vp(SELINE_SPACE_SM)) {
+            Spacer()
+            if (!state.loggedIn.value) {
+                Label("下载需要先登录").fontSize(theme.fontCaption).muted()
+            }
+            DownloadMenuButton(state)
             SelineButton("返回", {=> state.closeDetail()}, glyph: "home",
                 kind: SelineButtonKind.Ghost, compact: true)
-            Spacer()
-        }.hug().fillWidth().padding(PAGE_PAD, 12.0, PAGE_PAD, 4.0)
+        }.hug().fillWidth().padding(PAGE_PAD, 10.0, PAGE_PAD, 2.0)
         pageScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.detailError.value.isEmpty()) {
@@ -70,14 +75,6 @@ func detailPage(state: AppState): Unit {
                         .padding(DETAIL_CARD_PAD)
                         .background(theme.palette.surfaceRaised, vp(DETAIL_CARD_RADIUS))
                 }.height(DETAIL_TOP_HEIGHT).fillWidth()
-                // 下载（点击弹出「版本选择」菜单）
-                HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    DownloadMenuButton(state)
-                    if (!state.loggedIn.value) {
-                        Label("下载需要先在「设置」页登录").fontSize(theme.fontCaption).muted()
-                    }
-                    Spacer()
-                }.hug().fillWidth()
                 if (!state.downloadMessage.value.isEmpty()) {
                     Label(state.downloadMessage.value).fontSize(theme.fontCaption)
                         .foregroundColor(theme.palette.accent)
