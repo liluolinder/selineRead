@@ -313,6 +313,11 @@ main(args: Array<String>): Int64 {
                 }
             }
         }
+        // 验收：简介滚动偏移（验证固定高度内的滚动）
+        let descOffset = getVariable("SELINE_READ_DESC_OFFSET") ?? ""
+        if (!descOffset.isEmpty()) {
+            state.detailDescriptionOffset.value = Float32.parse(descOffset)
+        }
         // 验收：直接切到详情页某个分段（0 信息 / 1 评论 / 2 相关）
         let detailSectionEnv = getVariable("SELINE_READ_DETAIL_SECTION") ?? ""
         if (!detailSectionEnv.isEmpty()) {
