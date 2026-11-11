@@ -26,6 +26,7 @@ import zlibraryAPI4CJ.login.*
 import zlibraryAPI4CJ.user.*
 import zlibraryAPI4CJ.booklist.*
 import zlibraryAPI4CJ.comment.*
+import selineDownload.*
 
 /**
  * 网格里的一本书（列表项的 ViewModel）。
@@ -517,6 +518,37 @@ private func accountFilePath(): String {
     Path(temp).join("SelineRead").join("account.txt").toString()
 }
 
+/** 用户配置（主题 / 下载目录 / 站点）持久化文件：`%TEMP%/SelineRead/user_config.txt`。 */
+private func userConfigFilePath(): String {
+    let temp = getVariable("TEMP") ?? "."
+    Path(temp).join("SelineRead").join("user_config.txt").toString()
+}
+
+/** 读回用户配置（不存在时返回空表）。 */
+private func readUserConfig(): HashMap<String, String> {
+    let result = HashMap<String, String>()
+    let file = Path(userConfigFilePath())
+    if (!exists(file)) {
+        return result
+    }
+    try {
+        let text = String.fromUtf8(File.readFrom(file))
+        for (line in text.split("\n")) {
+            let trimmed = line.trimAscii()
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                continue
+            }
+            let parts = trimmed.split("=", 2)
+            if (parts.size == 2) {
+                result[parts[0].trimAscii()] = parts[1].trimAscii()
+            }
+        }
+    } catch (_: Exception) {
+        ()
+    }
+    result
+}
+
 /** 读回上次保存的凭证；没有/损坏时返回游客凭证。 */
 private func loadSavedCredential(): ZlibCredential {
     let path = accountFilePath()
@@ -612,6 +644,25 @@ public class AppState {
     public let loading = State<Bool>(false)
     /** 验收用：强制显示骨架（截图/回归用）。 */
     public let forceSkeleton = State<Bool>(false)
+    /** 设置页左侧竖直页签：0 显示设置 / 1 下载设置 / 2 网络设置。 */
+    public let settingsTab = State<Int64>(0)
+    /** 显示设置：深浅色（与 darkMode 同步）。 */
+    public let downloadPathInput = State<String>("")
+    /** 网络设置：3 个官方站（占位，留空但不可删）+ 自定义站 + 种子站 + 当前选中站。 */
+    public let officialSites = State<ArrayList<String>>(ArrayList<String>())
+    public let customSites = State<ArrayList<String>>(ArrayList<String>())
+    public let seedSites = State<ArrayList<String>>(ArrayList<String>())
+    public let activeSite = State<String>("")
+    /** 新站输入框内容（自定义站 / 种子站）。 */
+    public let siteInput = State<String>("")
+    public let seedInput = State<String>("")
+    public let networkMessage = State<String>("")
+    /** 下载管理器（selineDownload）：任务列表 + 进度刷新计数。 */
+    public let downloadItems = State<ArrayList<DownloadItem>>(ArrayList<DownloadItem>())
+    public let downloadsTick = State<Int64>(0)
+    private let downloadTasks = HashMap<String, DownloadTask>()
+    private let downloadTaskLock = Mutex()
+    private var downloadSeq: Int64 = 0
     /** 各页面的滚动位置（切页/返回后保持原位）。 */
     public let homeScroll = State<Float32>(0.0)
     public let searchScroll = State<Float32>(0.0)
@@ -619,6 +670,8 @@ public class AppState {
     public let booklistsScroll = State<Float32>(0.0)
     public let booklistDetailScroll = State<Float32>(0.0)
     public let detailScroll = State<Float32>(0.0)
+    public let settingsScroll = State<Float32>(0.0)
+    public let downloadsScroll = State<Float32>(0.0)
     /** 详情页返回栈：从「相关书籍」再点进另一本时，返回能回到上一本。 */
     private let detailHistory = ArrayList<DetailSnapshot>()
     /** 深色模式（false = 浅色）。 */
@@ -864,9 +917,24 @@ public class AppState {
      */
     public func bootstrap(): Unit {
         let credential = loadSavedCredential()
+        loadUserConfig()
+        // 自定义站点 / 种子站：用户配置优先，没配置就用官方默认站
+        let baseUrl = if (activeSite.value.isEmpty()) {
+            ZlibHost.DEFAULT_URL
+        } else {
+            activeSite.value
+        }
+        var seeds = ArrayList<String>()
+        for (seed in seedSites.value) {
+            seeds.add(seed)
+        }
+        if (seeds.isEmpty()) {
+            seeds.add(ZlibHost.DEFAULT_URL)
+        }
+        writeDebugLog("bootstrap: base=${baseUrl} seeds=${seeds.size}")
         let created = try {
-            ZlibClient.create(baseUrl: ZlibHost.DEFAULT_URL, credential: credential,
-                seeds: [ZlibHost.DEFAULT_URL])
+            ZlibClient.create(baseUrl: baseUrl, credential: credential,
+                seeds: seeds.toArray())
         } catch (failure: ZlibError) {
             error.value = "创建客户端失败：${failure.detail}"
             status.value = "离线"
@@ -881,6 +949,10 @@ public class AppState {
             writeDebugLog("credential restored: uid=${credential.userId}")
         }
         writeDebugLog("bootstrap: site=${created.currentSiteUrl()}")
+        if (activeSite.value.isEmpty()) {
+            activeSite.value = created.currentSiteUrl()
+        }
+        adoptRefreshedSite()
         // 离线模式（UI 截图/开发用）：跳过阻塞式首屏请求
         if ((getVariable("SELINE_READ_OFFLINE") ?? "") == "1") {
             writeDebugLog("bootstrap: offline mode, skip popular")
@@ -1705,6 +1777,264 @@ public class AppState {
         writeDebugLog("profile ok: ${outcome.quota}")
     }
 
+    /* -------------------------------------------------- 设置 / 网络配置 */
+
+    /** 启动时读回配置（主题 / 下载目录 / 站点）。 */
+    private func loadUserConfig(): Unit {
+        let config = readUserConfig()
+        match (config.get("theme")) {
+            case Some(value) =>
+                let dark = value != "light"
+                darkMode.value = dark
+                setSelineTheme(if (dark) { SelineTheme.dark() } else { SelineTheme.light() })
+            case None => ()
+        }
+        match (config.get("downloadDir")) {
+            case Some(value) => if (!value.isEmpty()) {
+                downloadDir.value = value
+            }
+            case None => ()
+        }
+        downloadPathInput.value = downloadDir.value
+        match (config.get("activeSite")) {
+            case Some(value) => activeSite.value = value
+            case None => ()
+        }
+        // 自定义站（多行，用 | 分隔）
+        match (config.get("customSites")) {
+            case Some(value) => for (item in value.split("|")) {
+                let trimmed = item.trimAscii()
+                if (!trimmed.isEmpty()) {
+                    customSites.value.add(trimmed)
+                }
+            }
+            case None => ()
+        }
+        match (config.get("seedSites")) {
+            case Some(value) => for (item in value.split("|")) {
+                let trimmed = item.trimAscii()
+                if (!trimmed.isEmpty()) {
+                    seedSites.value.add(trimmed)
+                }
+            }
+            case None => ()
+        }
+        writeDebugLog("user config loaded: dark=${darkMode.value} sites=${customSites.value.size} seeds=${seedSites.value.size} active=${activeSite.value}")
+    }
+
+    /** 把当前配置写回磁盘。 */
+    public func saveUserConfig(): Unit {
+        let builder = StringBuilder()
+        builder.append("theme=${if (darkMode.value) { "dark" } else { "light" }}\n")
+        builder.append("downloadDir=${downloadDir.value}\n")
+        builder.append("activeSite=${activeSite.value}\n")
+        let sites = StringBuilder()
+        for (index in 0..customSites.value.size) {
+            if (index > 0) {
+                sites.append("|")
+            }
+            sites.append(customSites.value[index])
+        }
+        builder.append("customSites=${sites.toString()}\n")
+        let seeds = StringBuilder()
+        for (index in 0..seedSites.value.size) {
+            if (index > 0) {
+                seeds.append("|")
+            }
+            seeds.append(seedSites.value[index])
+        }
+        builder.append("seedSites=${seeds.toString()}\n")
+        try {
+            let file = Path(userConfigFilePath())
+            Directory.create(file.parent, recursive: true)
+            File.writeTo(file, builder.toString().toArray())
+        } catch (failure: Exception) {
+            writeDebugLog("save user config failed: ${failure.message}")
+        }
+    }
+
+    /** 设置页页签切换。 */
+    public func selectSettingsTab(index: Int64): Unit {
+        if (index >= 0 && index <= 2) {
+            settingsTab.value = index
+        }
+    }
+
+    /** 下载路径输入框：应用到 downloadDir 并持久化。 */
+    public func applyDownloadPath(): Unit {
+        let value = downloadPathInput.value.trimAscii()
+        if (value.isEmpty()) {
+            return
+        }
+        downloadDir.value = value
+        try {
+            Directory.create(Path(value), recursive: true)
+        } catch (_: Exception) {
+            ()
+        }
+        saveUserConfig()
+        networkMessage.value = "下载目录已保存：${value}"
+    }
+
+    /** 添加一个自定义站点（会去重并规范成 `https://host`）。 */
+    public func addCustomSite(): Unit {
+        let value = normalizeSiteInput(siteInput.value)
+        if (value.isEmpty()) {
+            networkMessage.value = "站点地址不能为空"
+            return
+        }
+        for (existing in customSites.value) {
+            if (existing == value) {
+                networkMessage.value = "已经在列表里：${value}"
+                return
+            }
+        }
+        customSites.value.add(value)
+        siteInput.value = ""
+        networkMessage.value = "已添加站点：${value}"
+        saveUserConfig()
+    }
+
+    /** 删除自定义站点（官方 3 个占位不可删）。 */
+    public func removeCustomSite(url: String): Unit {
+        for (index in 0..customSites.value.size) {
+            if (customSites.value[index] == url) {
+                customSites.value.remove(at: index)
+                if (activeSite.value == url) {
+                    activeSite.value = if (customSites.value.isEmpty()) {
+                        ""
+                    } else {
+                        customSites.value[0]
+                    }
+                    applyActiveSite()
+                }
+                networkMessage.value = "已删除站点：${url}"
+                saveUserConfig()
+                return
+            }
+        }
+    }
+
+    /** 添加种子站。 */
+    public func addSeedSite(): Unit {
+        let value = normalizeSiteInput(seedInput.value)
+        if (value.isEmpty()) {
+            networkMessage.value = "种子站地址不能为空"
+            return
+        }
+        for (existing in seedSites.value) {
+            if (existing == value) {
+                networkMessage.value = "种子站已在列表里：${value}"
+                return
+            }
+        }
+        seedSites.value.add(value)
+        seedInput.value = ""
+        networkMessage.value = "已添加种子站：${value}"
+        saveUserConfig()
+    }
+
+    public func removeSeedSite(url: String): Unit {
+        for (index in 0..seedSites.value.size) {
+            if (seedSites.value[index] == url) {
+                seedSites.value.remove(at: index)
+                networkMessage.value = "已删除种子站：${url}"
+                saveUserConfig()
+                return
+            }
+        }
+    }
+
+    /** 用单选框选中某个站点：立刻切到它并持久化。 */
+    public func selectActiveSite(url: String): Unit {
+        activeSite.value = url
+        applyActiveSite()
+        saveUserConfig()
+        networkMessage.value = "当前站点：${url}"
+    }
+
+    /** 把 activeSite 应用到客户端。 */
+    public func applyActiveSite(): Unit {
+        let url = activeSite.value
+        if (url.isEmpty()) {
+            return
+        }
+        match (this.client) {
+            case Some(box) =>
+                try {
+                    box.value.setCustomSite(url)
+                } catch (_: Exception) {
+                    ()
+                }
+            case None => ()
+        }
+    }
+
+    /**
+     * 种子站回退成功后：把新站点**覆盖**到自定义站点列表与当前站点，并持久化。
+     *
+     * zlibraryAPI4CJ 内部换站后 `currentSiteUrl()` 就是新地址；这里把它写回配置，
+     * 下次启动直接用新地址，不用再走一遍种子站。
+     */
+    public func adoptRefreshedSite(): Unit {
+        let current = match (this.client) {
+            case Some(box) => box.value.currentSiteUrl()
+            case None => ""
+        }
+        if (current.isEmpty() || current == activeSite.value) {
+            return
+        }
+        writeDebugLog("site refreshed -> ${current}")
+        // 覆盖：原来选中的自定义站换成新地址
+        var replaced = false
+        for (index in 0..customSites.value.size) {
+            if (customSites.value[index] == activeSite.value) {
+                customSites.value[index] = current
+                replaced = true
+            }
+        }
+        if (!replaced && !customSites.value.isEmpty()) {
+            customSites.value[0] = current
+        }
+        activeSite.value = current
+        saveUserConfig()
+        status.value = "站点已更新：${current}"
+    }
+
+    /** 「重新拉取站点」：走种子站换新地址，成功后覆盖自定义站点。 */
+    public func refreshSiteNow(): Unit {
+        match (this.client) {
+            case Some(box) =>
+                let refreshed = try {
+                    box.value.refreshSite(force: true)
+                } catch (_: ZlibError) {
+                    false
+                }
+                if (refreshed) {
+                    adoptRefreshedSite()
+                    networkMessage.value = "站点已更新：${box.value.currentSiteUrl()}"
+                } else {
+                    networkMessage.value = "没有可用的种子站，或拉取失败"
+                }
+            case None => networkMessage.value = "客户端未就绪"
+        }
+    }
+
+    /** 规范化用户输入的站点地址。 */
+    private func normalizeSiteInput(raw: String): String {
+        var value = raw.trimAscii()
+        if (value.isEmpty()) {
+            return ""
+        }
+        if (value.endsWith("/")) {
+            value = value[0..value.size - 1]
+        }
+        if (!value.startsWith("http://") && !value.startsWith("https://")) {
+            value = "https://" + value
+        }
+        value
+    }
+
     /* -------------------------------------------------- 主题 */
 
     /** 从某个点（侧栏按钮）开始「往外辐射」地切换深浅色。 */
@@ -2019,7 +2349,7 @@ public class AppState {
         autoDownloadTarget = "${id}|${hash}"
     }
 
-    /** 下载当前详情页选中的版本。 */
+    /** 下载当前详情页选中的版本（走 selineDownload；zlib 不支持 Range，单线程）。 */
     public func downloadBook(): Unit {
         if (!loggedIn.value) {
             detailError.value = "下载需要登录：请到「设置」页登录"
@@ -2029,33 +2359,161 @@ public class AppState {
             detailError.value = "详情还没加载完，请稍候"
             return
         }
-        let clientBox = match (this.client) {
-            case Some(value) => value
-            case None =>
-                detailError.value = "客户端未就绪"
-                return
-        }
         let target = chosenTarget()
-        let dir = Path(downloadDir.value)
-        downloading.value = true
-        downloadMessage.value = ""
-        let _ = spawn {=>
-            let outcome = DownloadOutcome.load(clientBox.value, target, dir)
-            postToUi({=> applyDownloadOutcome(outcome) })
+        let title = if (detailTitle.value.isEmpty()) {
+            "书籍 ${target.id}"
+        } else {
+            detailTitle.value
         }
-    }
-
-    private func applyDownloadOutcome(outcome: DownloadOutcome): Unit {
-        downloading.value = false
-        if (!outcome.ok) {
-            detailError.value = "下载失败：${outcome.message}"
-            return
-        }
-        downloads.value.add(DownloadEntry(outcome.fileName, outcome.bytes))
-        downloadMessage.value = "已下载：${outcome.fileName}（${outcome.bytes} 字节）→ ${downloadDir.value}"
+        let taskId = startDownload(target.id, target.hash, title)
+        downloadMessage.value = "已加入下载队列（${taskId}）"
         detailError.value = ""
     }
 
+    /**
+     * 新建一个下载任务并立即开始。
+     *
+     * 阻塞的「换下载链接 + 下载」都在后台线程；进度通过 `postToUi` 写回。
+     * 返回 taskId（下载页用它停止任务）。
+     */
+    public func startDownload(bookId: Int64, hash: String, title: String): String {
+        downloadSeq += 1
+        let taskId = "${bookId}-${downloadSeq}"
+        let item = DownloadItem(taskId, title)
+        downloadItems.value.add(item)
+        downloadsTick.value += 1
+        writeDebugLog("download start: ${taskId} ${title}")
+        let clientBox = match (this.client) {
+            case Some(value) => value
+            case None =>
+                item.status = DL_FAILED
+                item.error = "客户端未就绪"
+                downloadsTick.value += 1
+                return taskId
+        }
+        let dirValue = downloadDir.value
+        let _ = spawn {=>
+            try {
+                let info = BookApi.file(clientBox.value, bookId, hash)
+                if (!info.available()) {
+                    postToUi({=>
+                        item.status = DL_FAILED
+                        item.error = "服务端没有提供可下载链接（可能没有权限）"
+                        downloadsTick.value += 1
+                    })
+                    return
+                }
+                let fileName = info.fileName()
+                try {
+                    Directory.create(Path(dirValue), recursive: true)
+                } catch (_: Exception) {
+                    ()
+                }
+                let savePath = Path(dirValue).join(fileName).toString()
+                let config = DownloadConfig()
+                    .setUrl(info.downloadLink)
+                    .setSavePath(savePath)
+                    .setThreadCount(1)
+                    .setEnableRange(false)
+                    .setFileExistsAction(FileExistsAction.Rename)
+                let task = DownloadTask(config)
+                task.setProgressCallback({progress =>
+                    postToUi({=>
+                        item.downloadedBytes = progress.downloadedBytes
+                        item.totalBytes = progress.totalBytes
+                        item.speedText = progress.formattedSpeed
+                        item.fileName = fileName
+                        if (item.status != DL_STOPPED) {
+                            item.status = DL_RUNNING
+                        }
+                        downloadsTick.value += 1
+                    })
+                })
+                task.setCompleteCallback({=>
+                    postToUi({=>
+                        item.downloadedBytes = item.totalBytes
+                        item.speedText = ""
+                        item.status = DL_COMPLETED
+                        downloadsTick.value += 1
+                        writeDebugLog("download complete: ${taskId} ${fileName}")
+                    })
+                })
+                task.setErrorCallback({failure =>
+                    postToUi({=>
+                        item.speedText = ""
+                        item.status = DL_FAILED
+                        item.error = failure.message
+                        downloadsTick.value += 1
+                        writeDebugLog("download failed: ${taskId} ${failure.message}")
+                    })
+                })
+                task.setCancelCallback({=>
+                    postToUi({=>
+                        item.speedText = ""
+                        if (item.status != DL_COMPLETED) {
+                            item.status = DL_STOPPED
+                        }
+                        downloadsTick.value += 1
+                    })
+                })
+                synchronized(downloadTaskLock) {
+                    downloadTasks[taskId] = task
+                }
+                postToUi({=>
+                    item.fileName = fileName
+                    item.status = DL_RUNNING
+                    downloadsTick.value += 1
+                })
+                task.start()
+                task.await()
+            } catch (failure: ZlibError) {
+                postToUi({=>
+                    item.status = DL_FAILED
+                    item.error = failure.detail
+                    downloadsTick.value += 1
+                })
+            } catch (failure: Exception) {
+                postToUi({=>
+                    item.status = DL_FAILED
+                    item.error = failure.message
+                    downloadsTick.value += 1
+                })
+            }
+        }
+        taskId
+    }
+
+    /** 停止下载（zlib 不支持断点续传，停止后不保留恢复）。 */
+    public func stopDownload(taskId: String): Unit {
+        let task = synchronized(downloadTaskLock) {
+            match (downloadTasks.get(taskId)) {
+                case Some(value) => Some(value)
+                case None => Option<DownloadTask>.None
+            }
+        }
+        match (task) {
+            case Some(value) =>
+                try {
+                    value.cancel()
+                    writeDebugLog("download cancel: ${taskId}")
+                } catch (_: Exception) {
+                    ()
+                }
+            case None => writeDebugLog("download cancel: task not found ${taskId}")
+        }
+    }
+
+    /** 清掉已结束的下载记录。 */
+    public func clearFinishedDownloads(): Unit {
+        let kept = ArrayList<DownloadItem>()
+        for (item in downloadItems.value) {
+            if (item.active()) {
+                kept.add(item)
+            }
+        }
+        downloadItems.value = kept
+        downloadsTick.value += 1
+    }
     /* -------------------------------------------------- 网络封面 */
 
     /**

@@ -22,6 +22,7 @@
   chui = { path = "../chui" }
   seline_ui = { path = "../seline_ui" }
   zlibraryAPI4CJ = { path = "../zlibraryAPI4CJ" }
+  selineDownload = { path = "../selineDownload" }
   linderHttp = { path = "../LinderHttp" }
 
 [target]

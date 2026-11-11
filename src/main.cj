@@ -330,6 +330,10 @@ main(args: Array<String>): Int64 {
                 }
             }
         }
+        let settingsTabEnv = getVariable("SELINE_READ_SETTINGS_TAB") ?? ""
+        if (!settingsTabEnv.isEmpty()) {
+            state.selectSettingsTab(Int64.parse(settingsTabEnv))
+        }
         // 验收：各页面滚动位置（截图用）
         let detailScrollEnv = getVariable("SELINE_READ_DETAIL_SCROLL") ?? ""
         if (!detailScrollEnv.isEmpty()) {
