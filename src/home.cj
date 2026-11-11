@@ -13,15 +13,19 @@ import seline_ui.*
 
 /** 热门页：页头 + 自适应网格。 */
 func homePage(state: AppState): Unit {
+    // 首页不要页头、不要常驻刷新按钮：直接一墙封面。
+    // 只有获取失败时才出现错误条 + 「重新加载」（用户明确要求）。
     VStack(spacing: vp(0.0)) {
-        pageHeader("热门图书", state.status.value, {=>
-            SelineButton("刷新", {=> state.reloadPopular()}, glyph: "refresh",
-                kind: SelineButtonKind.Ghost, compact: true, busy: state.loading.value)
-        })
         ScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.error.value.isEmpty()) {
                     errorBannerText(state.error.value)
+                    HStack(spacing: vp(SELINE_SPACE_SM)) {
+                        SelineButton("重新加载", {=> state.reloadPopular()},
+                            glyph: "refresh", kind: SelineButtonKind.Ghost,
+                            compact: true, busy: state.loading.value)
+                        Spacer()
+                    }.hug().fillWidth()
                 }
                 if (state.loading.value && state.popular.value.isEmpty()) {
                     loadingBlock("正在获取热门图书…")
@@ -29,9 +33,9 @@ func homePage(state: AppState): Unit {
                 bookGrid(state, state.popular.value)
                 if (!state.loading.value && state.popular.value.isEmpty() &&
                     state.error.value.isEmpty()) {
-                    emptyBlock("cloud", "没有拿到热门图书", "点右上角「刷新」重试")
+                    emptyBlock("cloud", "没有拿到热门图书", "检查站点状态后再试")
                 }
-            }.padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
+            }.padding(PAGE_PAD, SELINE_SPACE_MD, PAGE_PAD, 32.0)
         }
     }.fillWidth().fillHeight()
 }

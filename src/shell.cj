@@ -38,7 +38,6 @@ func appShell(state: AppState): Unit {
         }.alignment(Alignment.TopLeading)
             // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
             .fillWidth().flex()
-        statusBar(state)
     }.background(palette.surfaceSunken).fillWidth().fillHeight()
 }
 
@@ -64,16 +63,6 @@ func titleBar(state: AppState): Unit {
     }.height(TITLE_BAR_HEIGHT)
 }
 
-/** 底部状态栏：库状态 + 当前站点提示。 */
-func statusBar(state: AppState): Unit {
-    let theme = selineTheme()
-    HStack(spacing: vp(SELINE_SPACE_MD)) {
-        Label(state.status.value).fontSize(theme.fontCaption).muted()
-        Spacer()
-        Label("Z-Library · zlibraryAPI4CJ").fontSize(theme.fontCaption).muted()
-    }.hug().fillWidth()
-        .padding(vp(SELINE_PAGE_MARGIN), vp(3.0), vp(SELINE_PAGE_MARGIN), vp(5.0))
-}
 
 /** 按当前状态分派页面：详情页（二级）优先于一级页签。 */
 func pageFor(state: AppState): Unit {
