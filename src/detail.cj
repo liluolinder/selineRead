@@ -15,6 +15,9 @@ let DETAIL_TOP_HEIGHT: Float32 = 272.0
 /** 卡片内边距 / 圆角。 */
 let DETAIL_CARD_PAD: Float32 = 12.0
 let DETAIL_CARD_RADIUS: Float32 = 12.0
+/** 左右两张卡的宽度分配：封面卡 6 : 简介卡 4。 */
+let DETAIL_CARD_LEFT_WEIGHT: Float32 = 6.0
+let DETAIL_CARD_RIGHT_WEIGHT: Float32 = 4.0
 /** 卡片内可用高度（总高 - 上下内边距）：封面高度取它。 */
 let DETAIL_CARD_INNER_H: Float32 = 248.0
 /** 简介滚动区高度（内高 - 「简介」标题行）。 */
@@ -54,8 +57,8 @@ func detailPage(state: AppState): Unit {
                             }).fontSize(theme.fontBody).muted()
                             Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
                             Spacer()
-                        }.width(190.0)
-                    }.hug()
+                        }.flex()
+                    }.flex(DETAIL_CARD_LEFT_WEIGHT)
                         .padding(DETAIL_CARD_PAD)
                         .background(theme.palette.surfaceRaised, vp(DETAIL_CARD_RADIUS))
                     VStack(spacing: vp(SELINE_SPACE_XS)) {
@@ -71,7 +74,7 @@ func detailPage(state: AppState): Unit {
                             DescriptionScroll(state, DETAIL_DESC_H)
                             ()
                         }
-                    }.flex()
+                    }.flex(DETAIL_CARD_RIGHT_WEIGHT)
                         .padding(DETAIL_CARD_PAD)
                         .background(theme.palette.surfaceRaised, vp(DETAIL_CARD_RADIUS))
                 }.height(DETAIL_TOP_HEIGHT).fillWidth()
