@@ -405,6 +405,8 @@ main(args: Array<String>): Int64 {
             }, keepsAlive: {=>
                 railAnimating(state) || options.perf || !options.shotPath.isEmpty()
             }) {
+                // 主题过渡：这一帧按目标主题构建（构建期抓到的颜色才会跟着揭示走）
+                state.prepareThemeBuild()
                 if (options.blank) {
                     VStack { }.fillWidth().fillHeight()
                 } else {

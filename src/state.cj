@@ -676,6 +676,9 @@ public class AppState {
     private let detailHistory = ArrayList<DetailSnapshot>()
     /** 深色模式（false = 浅色）。 */
     public let darkMode = State<Bool>(true)
+    /** 正在做主题过渡；过渡期间构建用"目标"主题，点击那一帧仍用旧主题。 */
+    private var themeSwitching: Bool = false
+    private var themeTargetDark: Bool = true
 
     /** 热门列表。 */
     public let popular = State<ArrayList<BookCell>>(ArrayList<BookCell>())
@@ -2098,19 +2101,40 @@ public class AppState {
      * 用 `renderer.texturedCircle` 把新主题从圆内逐渐扩散出来 —— 颜色是跟着
      * 辐射边界走的，而不是整体瞬切。
      */
+    /** 构建期钩子：主题过渡期间让"新帧"用目标主题构建（否则构建期抓色仍是旧主题）。 */
+    public func prepareThemeBuild(): Unit {
+        if (themeSwitching) {
+            setSelineTheme(if (themeTargetDark) { SelineTheme.dark() } else { SelineTheme.light() })
+        }
+    }
+
     public func toggleTheme(originX: Float32, originY: Float32): Unit {
+        if (themeSwitching) {
+            return
+        }
         let nextDark = !darkMode.value
-        darkMode.value = nextDark
-        saveUserConfig()
-        writeDebugLog("theme: transition -> dark=${nextDark}")
+        themeTargetDark = nextDark
+        themeSwitching = true
+        // 注意：**不立刻**改 darkMode —— 点击这一帧要按旧主题构建，chui 才会冻出正确的"旧帧"
+        let ms = Int64.parse(getVariable("SELINE_READ_THEME_MS") ?? "620")
+        writeDebugLog("theme: transition -> dark=${nextDark} (${ms}ms)")
         match (app) {
             case Some(value) =>
-                // 过渡期间由 ThemeSyncProbe 按 ctx.theme 同步全局 seline 主题
-                let ms = Int64.parse(getVariable("SELINE_READ_THEME_MS") ?? "620")
                 value.transitionTheme(selineChuiThemeFor(nextDark), durationMs: UInt64(ms))
             case None =>
-                // 没有窗口（单测）时退化为瞬时切换
                 setSelineTheme(if (nextDark) { SelineTheme.dark() } else { SelineTheme.light() })
+                darkMode.value = nextDark
+                themeSwitching = false
+        }
+        // chui 不会回调过渡结束：自己按 duration 收尾
+        let _ = spawn {=>
+            sleep((ms + 150) * Duration.millisecond)
+            postToUi({=>
+                darkMode.value = themeTargetDark
+                themeSwitching = false
+                saveUserConfig()
+                writeDebugLog("theme: finalized dark=${darkMode.value}")
+            })
         }
     }
 
