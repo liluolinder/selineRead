@@ -42,7 +42,7 @@ func appShell(state: AppState): Unit {
         }.alignment(Alignment.TopLeading)
             // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
             .fillWidth().flex()
-    }.background(palette.surfaceSunken).fillWidth().fillHeight()
+    }.fillWidth().fillHeight()
 }
 
 /**

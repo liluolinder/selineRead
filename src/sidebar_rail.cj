@@ -185,7 +185,8 @@ class RailShell <: Widget {
         if (frame.w <= 0.5) {
             return
         }
-        ctx.renderer.fill(frame, backdrop)
+        // 在 draw 时取色：主题过渡分两遍绘制，构建期抓色会让侧栏瞬时换色
+        ctx.renderer.fill(frame, selineTheme().palette.surfaceSunken)
         ctx.renderer.pushClip(frame)
         try {
             content.draw(ctx)
