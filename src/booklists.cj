@@ -12,25 +12,10 @@ import chui.*
 import seline_ui.*
 import zlibraryAPI4CJ.core.*
 
+/** 书单页：没有页头/没有「我的书单」开关，滚动到底自动加载下一页。 */
 func booklistsPage(state: AppState): Unit {
-    // 构建期懒加载：第一次进入本页才发请求（构建每帧都跑，方法内部会去重）
     state.ensureBooklistsLoaded()
-    let mine = state.booklistsMine.value
-    let subtitle = if (mine) {
-        "我创建的书单"
-    } else if (state.booklistQuery.value.isEmpty()) {
-        "发现公开书单"
-    } else {
-        "书单搜索：${state.booklistQuery.value}"
-    }
     VStack(spacing: vp(0.0)) {
-        pageHeader("书单", subtitle, {=>
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineButton(if (mine) { "公开书单" } else { "我的书单" },
-                    {=> state.setBooklistsMine(!mine)}, glyph: "star_fill",
-                    kind: SelineButtonKind.Ghost, compact: true)
-            }
-        })
         ScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.booklistsError.value.isEmpty()) {
@@ -52,18 +37,57 @@ func booklistsPage(state: AppState): Unit {
                         }
                     }.spacing(SELINE_SPACE_MD, SELINE_SPACE_MD)
                     if (state.booklistsNextPage.value > 0) {
-                        SelineButton("加载更多书单", {=> state.loadBooklists(reset: false)},
-                            glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true,
-                            busy: state.booklistsLoading.value)
+                        BooklistsLoadMoreFooter(state)
                     }
                 } else if (!state.booklistsLoading.value &&
                     state.booklistsError.value.isEmpty()) {
-                    emptyBlock("star_fill", if (mine) { "还没有自己的书单" } else { "没有找到书单" },
-                        "换个关键词，或稍后点「刷新」重试")
+                    emptyBlock("folder", "没有找到书单", "换个关键词，或稍后重试")
                 }
-            }.padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
+            }.padding(PAGE_PAD, SELINE_SPACE_MD, PAGE_PAD, 32.0)
         }
     }.fillWidth().fillHeight()
+}
+
+/** 书单页 footer：滚进视口就自动加载下一页。 */
+class BooklistsLoadMoreFooter <: Widget {
+    private let state: AppState
+    private var frame = Rect.zero()
+
+    init(state: AppState) {
+        this.state = state
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, 56.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        if (!state.booklistsLoading.value && frame.y < ctx.viewportHeight + 100.0) {
+            state.loadBooklists(reset: false)
+        }
+        let theme = selineTheme()
+        paintText(ctx.renderer,
+            if (state.booklistsLoading.value) { "正在加载更多书单…" } else { "继续向下滚动加载更多" },
+            Rect(frame.x, frame.centerY() - 9.0, frame.w, 20.0),
+            theme.palette.textFaint, theme.fontCaption, align: SelineTextAlign.Center)
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
 }
 
 /** 书单卡片：左侧预览封面，右侧文字。 */

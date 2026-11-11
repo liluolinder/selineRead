@@ -28,29 +28,17 @@ let RAIL_STEP_MS: Float32 = 33.0
 
 /** 页签下标：内容页在前，设置固定在底部。 */
 let TAB_HOME: Int64 = 0
-let TAB_SEARCH: Int64 = 1
+let TAB_FAVORITES: Int64 = 1
 let TAB_BOOKLISTS: Int64 = 2
 let TAB_DOWNLOADS: Int64 = 3
 let TAB_SETTINGS: Int64 = 4
 
-/** 内容页签。 */
+/** 内容页签（搜索不再是独立页签：结果直接显示在「热门」页签里）。 */
 let APP_TABS: Array<SelineRailItem> = [
     SelineRailItem("热门", "home", "home_fill"),
-    SelineRailItem("搜索", "search", "search"),
-    SelineRailItem("书单", "star_fill", "star_fill"),
+    SelineRailItem("收藏", "star", "star_fill"),
+    SelineRailItem("书单", "folder", "folder"),
     SelineRailItem("下载", "download", "download")
-]
-
-/** 「分区」子项：本轮是分类占位，点击无动作（与 seline_bili 同一处理）。 */
-let ZONE_ITEMS: Array<SelineRailItem> = [
-    SelineRailItem("小说", "star_fill", "star_fill"),
-    SelineRailItem("非虚构", "home_fill", "home_fill"),
-    SelineRailItem("科幻", "clock_fill", "clock_fill"),
-    SelineRailItem("历史", "person_fill", "person_fill"),
-    SelineRailItem("学术", "folder", "folder"),
-    SelineRailItem("哲学", "cloud", "cloud"),
-    SelineRailItem("技术", "download", "download"),
-    SelineRailItem("语言", "search", "search")
 ]
 
 /** 侧栏进度的帧间通道：帧回调写入，构建/绘制读取。 */
@@ -239,7 +227,6 @@ class RailShell <: Widget {
 
 /** 侧栏的行：固定区（顶）→ 弹性区 → 底栏。 */
 func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
-    let zonesScroll = expanded && state.railZonesOpen.value
     VStack(spacing: vp(0.0)) {
         // ---- 固定区 ----
         VStack(spacing: vp(0.0)) {
@@ -254,26 +241,10 @@ func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
                     item.label, expanded, selectedTab == index,
                     {=> state.tabSelectFromRail(index)})
             }
-            if (expanded) {
-                ZStack { }.height(SELINE_SPACE_XS)
-                SidebarGroupHeader("分区", state.railZonesOpen.value,
-                    {=> state.railZonesOpen.value = !state.railZonesOpen.value})
-            }
         }.hug()
 
-        // ---- 弹性区 ----
-        if (zonesScroll) {
-            ScrollView {
-                VStack(spacing: vp(0.0)) {
-                    for (zone in ZONE_ITEMS) {
-                        SidebarItem(zone.icon, zone.label, true, false, {=> ()},
-                            height: SIDEBAR_ZONE_ROW_HEIGHT)
-                    }
-                }.width(RAIL_EXPANDED)
-            }
-        } else {
-            Spacer()
-        }
+        // ---- 弹性区（不再有「分区」分组） ----
+        Spacer()
 
         // ---- 底栏：分隔线 + 设置 + 账号入口 ----
         VStack(spacing: vp(0.0)) {

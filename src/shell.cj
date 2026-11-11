@@ -76,8 +76,8 @@ func pageFor(state: AppState): Unit {
     }
     // 用 if 而不是 `match` + 常量：`case 常量名` 在这里是绑定模式，会匹配一切。
     let tab = state.tab.value
-    if (tab == TAB_SEARCH) {
-        searchPage(state)
+    if (tab == TAB_FAVORITES) {
+        favoritesPage(state)
         return
     }
     if (tab == TAB_BOOKLISTS) {
@@ -92,5 +92,10 @@ func pageFor(state: AppState): Unit {
         settingsPage(state)
         return
     }
-    homePage(state)
+    // 搜索不再是独立页签：提交搜索后结果就显示在「热门」页签里
+    if (!state.lastKeyword.value.isEmpty()) {
+        searchPage(state)
+    } else {
+        homePage(state)
+    }
 }

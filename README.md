@@ -50,6 +50,8 @@ Z-Library 桌面阅读客户端，用**仓颉 + CangHui（chui）**写成，后�
 | 登录（邮箱密码，凭证落盘，重启自动恢复） | 完成 |
 | 下载（点「下载」弹出菜单：默认链接 + 可选格式 → `BookApi.file` → 落盘） | 完成 |
 | 评论（papi：书/书单评论、点赞、回复关系，offset 分页） | 完成 |
+| 收藏（eapi `user/book/saved`，登录后分页加载） | 完成 |
+| 字体缺字回退（`Fonts.registerBundledFallback`：Windows 优先 msyh.ttc） | 完成 |
 | 下载列表页 | 完成（本次会话记录） |
 | 本地阅读器 | 未开始（下载后可先用系统阅读器打开） |
 
@@ -86,7 +88,9 @@ cd target\release\bin
 .\main.exe --rail                        # 启动即展开侧栏
 .\main.exe --tab=2                       # 直接打开书单页
 .\main.exe --tab=3                       # 直接打开下载页
+.\main.exe --tab=1                       # 收藏页（登录后加载 user/book/saved）
 .\main.exe --tab=2 --bl-open             # 书单页并自动打开第一份书单
+$env:SELINE_READ_SEARCH="三体"          # 启动后直接搜索（中文命令行参数在子系统下会丢，用环境变量）
 .\main.exe --book=<id>|<hash> --dl-menu  # 打开详情页并展开下载版本菜单
 .\main.exe --search=rust                 # 启动即搜索
 .\main.exe --login                       # 用 ZLIB_TEST_EMAIL / ZLIB_TEST_PASSWORD 自动登录
@@ -94,6 +98,11 @@ cd target\release\bin
 ```
 
 诊断日志写在 `%TEMP%/seline_read_debug.log`（Windows 子系统下 stdout 无接收方）。
+
+## 导航
+
+侧栏（无「分区」分组）：**热门 / 收藏 / 书单 / 下载**，设置固定在底部。
+搜索不再是独立页签：标题栏回车后结果显示在「热门」页签内，点「热门」图标或「回到热门」退出搜索。
 
 ## 已知限制
 

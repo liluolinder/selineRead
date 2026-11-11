@@ -11,6 +11,7 @@ package seline_read
 
 import std.convert.*
 import std.env.getVariable
+import std.fs.{Path, exists}
 import chui.*
 import seline_ui.*
 import seline_read.platform.*
@@ -222,6 +223,13 @@ main(args: Array<String>): Int64 {
                 options.gpuDriver)]
             writeDebugLog("render driver hint: ${options.gpuDriver}")
         }
+        // 字体回退：系统字体缺字时用一份覆盖面更广的 CJK 字体兜底
+        match (resolveFallbackFont()) {
+            case Some(path) =>
+                Fonts.registerBundledFallback(path)
+                writeDebugLog("fallback font: ${path}")
+            case None => writeDebugLog("fallback font: none")
+        }
         let app = DesktopApp(
             windowSpecFor(options),
             theme: selineChuiTheme(),
@@ -258,8 +266,15 @@ main(args: Array<String>): Int64 {
         }
         // 验收开关必须在 attach 之后：后台结果靠 `postToUi` 回投，
         // 窗口没建好时那条通道会直接丢弃。
-        if (!options.searchKeyword.isEmpty()) {
-            state.searchText.value = options.searchKeyword
+        // 验收开关：--search= 或环境变量 SELINE_READ_SEARCH（中文参数在子系统下可能传不进来）
+        let envKeyword = getVariable("SELINE_READ_SEARCH") ?? ""
+        if (!options.searchKeyword.isEmpty() || !envKeyword.isEmpty()) {
+            let keyword = if (!options.searchKeyword.isEmpty()) {
+                options.searchKeyword
+            } else {
+                envKeyword
+            }
+            state.searchText.value = keyword
             state.submitSearch()
         }
         if (options.login) {
@@ -344,4 +359,30 @@ func windowSpecFor(options: LaunchOptions): WindowSpec {
         scaling: Some(WindowScaleSettings(followSystem: true, zoom: options.zoom)),
         supersample: 1,
         vsync: !options.noVsync)
+}
+/**
+ * 找一份覆盖较广的 CJK 字体做回退（缺字时自动用它补）。
+ *
+ * 顺序：`SELINE_READ_FALLBACK_FONT` → 程序旁 `assets/fonts/` → Windows 自带字体。
+ * 找不到返回 None（保持框架默认行为，不影响启动）。
+ */
+func resolveFallbackFont(): ?String {
+    let custom = getVariable("SELINE_READ_FALLBACK_FONT") ?? ""
+    let candidates = [
+        custom,
+        Path("assets").join("fonts").join("HarmonyOS_Sans_SC.ttf").toString(),
+        Path("target").join("release").join("bin").join("assets").join("fonts")
+            .join("HarmonyOS_Sans_SC.ttf").toString(),
+        "C:\\Windows\\Fonts\\msyh.ttc",
+        "C:\\Windows\\Fonts\\msyhbd.ttc",
+        "C:\\Windows\\Fonts\\simhei.ttf",
+        "C:\\Windows\\Fonts\\simsun.ttc",
+        "C:\\Windows\\Fonts\\Deng.ttf"
+    ]
+    for (candidate in candidates) {
+        if (!candidate.isEmpty() && exists(Path(candidate))) {
+            return Some(candidate)
+        }
+    }
+    None<String>
 }

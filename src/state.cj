@@ -646,6 +646,14 @@ public class AppState {
     private var autoDownloadTarget: String = ""
     /** 书单列表是否已成功加载过（构建期懒加载用）。 */
     private var booklistsLoaded: Bool = false
+
+    /* ---- 收藏（eapi /user/book/saved） ---- */
+    public let favorites = State<ArrayList<BookCell>>(ArrayList<BookCell>())
+    public let favoritesLoading = State<Bool>(false)
+    public let favoritesError = State<String>("")
+    /** 下一页页码；0 表示没有更多（或未登录）。 */
+    public let favoritesNextPage = State<Int64>(0)
+    private var favoritesLoaded: Bool = false
     /** 验收开关：书单第一次加载成功后自动打开第一份。 */
     private var autoOpenFirstBooklist: Bool = false
 
@@ -713,6 +721,11 @@ public class AppState {
         detailOpen.value = false
         booklistOpen.value = false
         downloadMenuOpen.value = false
+        // 点「热门」= 退出搜索态，回到推荐墙
+        if (index == TAB_HOME && !lastKeyword.value.isEmpty()) {
+            lastKeyword.value = ""
+            results.value = ArrayList<BookCell>()
+        }
         tab.value = index
     }
 
@@ -887,6 +900,9 @@ public class AppState {
             return
         }
         if (keyword.isEmpty()) {
+            lastKeyword.value = ""
+            results.value = ArrayList<BookCell>()
+            tab.value = TAB_HOME
             return
         }
         let clientBox = match (this.client) {
@@ -895,7 +911,12 @@ public class AppState {
                 error.value = "客户端未就绪"
                 return
         }
-        tab.value = 1
+        // 搜索不再是独立页签：结果显示在「热门」页签里
+        detailOpen.value = false
+        booklistOpen.value = false
+        tab.value = TAB_HOME
+        lastKeyword.value = keyword
+        results.value = ArrayList<BookCell>()
         loading.value = true
         error.value = ""
         let _ = spawn {=>
@@ -1187,6 +1208,9 @@ public class AppState {
             return
         }
         loggedIn.value = true
+        favoritesLoaded = false
+        favorites.value = ArrayList<BookCell>()
+        favoritesNextPage.value = 0
         writeDebugLog("login ok: uid=${outcome.uid} name=${outcome.name}")
         accountName.value = outcome.name
         accountId.value = outcome.uid
@@ -1220,6 +1244,10 @@ public class AppState {
     public func logout(): Unit {
         deleteCredential()
         loggedIn.value = false
+        favoritesLoaded = false
+        favorites.value = ArrayList<BookCell>()
+        favoritesNextPage.value = 0
+        favoritesError.value = ""
         accountName.value = ""
         accountId.value = ""
         loginMessage.value = "已退出登录"
@@ -1273,6 +1301,71 @@ public class AppState {
         }
         loginMessage.value = "已登录 · ${outcome.quota}"
         writeDebugLog("profile ok: ${outcome.quota}")
+    }
+
+    /* -------------------------------------------------- 收藏 */
+
+    /** 收藏页构建期懒加载：登录后第一次进入才请求。 */
+    public func ensureFavoritesLoaded(): Unit {
+        if (!loggedIn.value) {
+            return
+        }
+        if (favoritesLoaded || favoritesLoading.value) {
+            return
+        }
+        loadFavorites(reset: true)
+    }
+
+    /** 拉取收藏（`UserApi.saved`，分页）。 */
+    public func loadFavorites(reset!: Bool = true): Unit {
+        if (!loggedIn.value) {
+            favoritesError.value = "登录后查看收藏"
+            favoritesLoading.value = false
+            return
+        }
+        let clientBox = match (this.client) {
+            case Some(value) => value
+            case None =>
+                favoritesError.value = "客户端未就绪"
+                return
+        }
+        let target = if (reset) { 1 } else { favoritesNextPage.value }
+        if (target <= 0) {
+            return
+        }
+        favoritesLoading.value = true
+        if (reset) {
+            favoritesError.value = ""
+        }
+        let _ = spawn {=>
+            try {
+                let page = UserApi.saved(clientBox.value, page: target, limit: 20)
+                let cells = cellsFromBooks(page.books, clientBox.value.currentSiteUrl())
+                writeDebugLog("favorites loaded: page=${target} count=${cells.size} " +
+                    "current=${page.pagination.current} total=${page.pagination.totalItems}")
+                postToUi({=>
+                    if (reset) {
+                        favorites.value = cells
+                    } else {
+                        for (cell in cells) {
+                            favorites.value.add(cell)
+                        }
+                    }
+                    favoritesNextPage.value = if (page.pagination.hasMore()) {
+                        page.pagination.nextPage()
+                    } else {
+                        0
+                    }
+                    favoritesLoaded = true
+                    favoritesLoading.value = false
+                })
+            } catch (failure: ZlibError) {
+                postToUi({=>
+                    favoritesError.value = "收藏加载失败：${failure.detail}"
+                    favoritesLoading.value = false
+                })
+            }
+        }
     }
 
     /* -------------------------------------------------- 下载菜单 */
