@@ -16,7 +16,7 @@ func homePage(state: AppState): Unit {
     // 首页不要页头、不要常驻刷新按钮：直接一墙封面。
     // 只有获取失败时才出现错误条 + 「重新加载」（用户明确要求）。
     VStack(spacing: vp(0.0)) {
-        pageScrollView {
+        pageScrollView(scrollState: state.homeScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.error.value.isEmpty()) {
                     errorBannerText(state.error.value)

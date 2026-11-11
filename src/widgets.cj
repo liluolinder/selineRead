@@ -26,9 +26,17 @@ func appScrollOptions(): ScrollOptions {
         easing: Easing.CubicBezier(0.16, 1.0, 0.3, 1.0))
 }
 
-/** 页面级滚动容器：统一使用 appScrollOptions（各页面滚动都不再用默认手感）。 */
-func pageScrollView(body!: () -> Unit): ScrollView {
-    ScrollView(body: body).scrollOptions(appScrollOptions())
+/**
+ * 页面级滚动容器：统一使用 appScrollOptions（各页面滚动都不再用默认手感）。
+ *
+ * `scrollState` 传入外部 State 时，滚动位置在切页（进详情再返回）后仍保留。
+ */
+func pageScrollView(scrollState!: ?State<Float32> = None, body!: () -> Unit): ScrollView {
+    let view = ScrollView(body: body).scrollOptions(appScrollOptions())
+    match (scrollState) {
+        case Some(value) => view.scrollState(value)
+        case None => view
+    }
 }
 
 /** 页面标题 + 右侧动作。 */

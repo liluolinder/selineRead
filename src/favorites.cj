@@ -14,7 +14,7 @@ import seline_ui.*
 func favoritesPage(state: AppState): Unit {
     state.ensureFavoritesLoaded()
     VStack(spacing: vp(0.0)) {
-        pageScrollView {
+        pageScrollView(scrollState: state.favoritesScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.loggedIn.value) {
                     emptyBlock("user", "登录后查看收藏",

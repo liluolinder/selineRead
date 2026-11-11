@@ -249,6 +249,10 @@ func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
         // ---- 底栏：分隔线 + 设置 + 账号入口 ----
         VStack(spacing: vp(0.0)) {
             SelineRule().width(RAIL_COLLAPSED - 16.0).padding(8.0, 4.0, 8.0, 4.0)
+            // 深浅色切换（点击时从按钮位置向外辐射切换）
+            SidebarItem(if (state.darkMode.value) { "sun" } else { "moon" },
+                if (state.darkMode.value) { "浅色模式" } else { "深色模式" }, expanded, false,
+                {=> state.toggleTheme(RAIL_COLLAPSED * 0.5, railThemeButtonCenterY())})
             SidebarItem("clock_fill", "设置", expanded, selectedTab == TAB_SETTINGS,
                 {=> state.tabSelectFromRail(TAB_SETTINGS)})
             SidebarAccountChip(state, expanded)
@@ -256,4 +260,14 @@ func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
         }.hug()
     }.width(RAIL_EXPANDED)
         .fillHeight()
+}
+/**
+ * 主题按钮的纵向中心（相对窗口顶部）。
+ *
+ * 底栏顺序固定为：分隔线 → 主题 → 设置 → 账号入口 → 8px。
+ * 侧栏底栏贴着窗口底部，所以从下往上算比从上往下稳。
+ */
+func railThemeButtonCenterY(): Float32 {
+    // 账号入口 52 + 设置 44 + 空隙，主题按钮在设置之上
+    52.0 + SIDEBAR_ROW_HEIGHT + SIDEBAR_ROW_HEIGHT * 0.5 + 12.0
 }

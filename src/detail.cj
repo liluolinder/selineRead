@@ -36,7 +36,7 @@ func detailPage(state: AppState): Unit {
             }
             DownloadMenuButton(state)
         }.hug().fillWidth().padding(PAGE_PAD, 10.0, PAGE_PAD, 2.0)
-        pageScrollView {
+        pageScrollView(scrollState: state.detailScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.detailError.value.isEmpty()) {
                     errorBannerText(state.detailError.value)
@@ -168,13 +168,10 @@ func commentsSection(state: AppState): Unit {
             state.commentsError.value.isEmpty() && !state.commentsDisabled.value) {
             Label("还没有评论").fontSize(theme.fontCaption).muted()
         }
-        if (state.commentsVisible.value < Int64(state.comments.value.size)) {
-            SelineButton("显示更多评论", {=> state.showMoreComments()},
-                glyph: "chevron_down_fill", kind: SelineButtonKind.Ghost, compact: true)
-        } else if (state.commentsNextOffset.value > 0) {
-            SelineButton("加载更多评论", {=> state.loadMoreComments()},
-                glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true,
-                busy: state.commentsLoading.value)
+        // 滚到底自动加载：先揭示已加载的，再拉下一段
+        if (state.commentsVisible.value < Int64(state.comments.value.size) ||
+            state.commentsNextOffset.value > 0) {
+            CommentsLoadMoreFooter(state)
         }
     }.hug().fillWidth()
 }
@@ -335,6 +332,21 @@ func commentRow(comment: CommentCell): Unit {
             }
             Spacer()
         }.hug().fillWidth()
+        if (comment.isReply) {
+            if (comment.parentText.isEmpty()) {
+                Label("回复的原评论未在当前已加载的评论中").fontSize(theme.fontCaption)
+                    .foregroundColor(theme.palette.textFaint).wrap()
+            } else {
+                VStack(spacing: vp(2.0)) {
+                    Label("回复 @${comment.parentAuthor}").fontSize(theme.fontCaption)
+                        .foregroundColor(theme.palette.accent)
+                    Label(comment.parentText).fontSize(theme.fontCaption)
+                        .foregroundColor(theme.palette.textMuted).wrap().maxLines(3)
+                }.hug().fillWidth()
+                    .padding(8.0)
+                    .background(theme.palette.surfaceSunken, vp(6.0))
+            }
+        }
         Label(comment.text).fontSize(theme.fontBody).wrap()
     }.hug().fillWidth()
         .padding(10.0)
@@ -479,4 +491,49 @@ func runesSlice(runes: Array<Rune>, start: Int64, end: Int64): String {
         index += 1
     }
     builder.toString()
+}
+/** 评论底部哨兵：进入视口就自动揭示更多/加载下一页（不需要点按钮）。 */
+class CommentsLoadMoreFooter <: Widget {
+    private let state: AppState
+    private var frame = Rect.zero()
+
+    init(state: AppState) {
+        this.state = state
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, 48.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        if (!state.commentsLoading.value && frame.y < ctx.viewportHeight + 120.0) {
+            if (state.commentsVisible.value < Int64(state.comments.value.size)) {
+                state.showMoreComments()
+            } else if (state.commentsNextOffset.value > 0) {
+                state.loadMoreComments()
+            }
+        }
+        let theme = selineTheme()
+        paintText(ctx.renderer,
+            if (state.commentsLoading.value) { "正在加载更多评论…" } else { "继续向下滚动加载更多评论" },
+            Rect(frame.x, frame.centerY() - 9.0, frame.w, 20.0),
+            theme.palette.textFaint, theme.fontCaption, align: SelineTextAlign.Center)
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
 }

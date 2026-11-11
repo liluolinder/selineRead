@@ -260,6 +260,19 @@ main(args: Array<String>): Int64 {
         if ((getVariable("SELINE_READ_SKELETON") ?? "") == "1") {
             state.forceSkeleton.value = true
         }
+        // 验收：启动即为浅色（并可选触发一次辐射切换）
+        if ((getVariable("SELINE_READ_LIGHT") ?? "") == "1") {
+            state.darkMode.value = false
+            setSelineTheme(SelineTheme.light())
+            app.setTheme(selineChuiTheme())
+        }
+        let themeMs = getVariable("SELINE_READ_TOGGLE_THEME_MS") ?? ""
+        if (!themeMs.isEmpty()) {
+            let _ = spawn {=>
+                sleep(Int64.parse(themeMs) * Duration.millisecond)
+                state.postThemeToggleForTest()
+            }
+        }
         if (options.booklistAutoOpen) {
             state.setAutoOpenFirstBooklist()
         }
@@ -316,6 +329,23 @@ main(args: Array<String>): Int64 {
                     state.openBookById(bookId, parts[1])
                 }
             }
+        }
+        // 验收：各页面滚动位置（截图用）
+        let detailScrollEnv = getVariable("SELINE_READ_DETAIL_SCROLL") ?? ""
+        if (!detailScrollEnv.isEmpty()) {
+            state.detailScroll.value = Float32.parse(detailScrollEnv)
+        }
+        let homeScrollEnv = getVariable("SELINE_READ_HOME_SCROLL") ?? ""
+        if (!homeScrollEnv.isEmpty()) {
+            state.homeScroll.value = Float32.parse(homeScrollEnv)
+        }
+        let openRelatedMs = getVariable("SELINE_READ_OPEN_RELATED_MS") ?? ""
+        if (!openRelatedMs.isEmpty()) {
+            state.scheduleOpenFirstRelatedForTest(Int64.parse(openRelatedMs))
+        }
+        let backMs = getVariable("SELINE_READ_BACK_MS") ?? ""
+        if (!backMs.isEmpty()) {
+            state.scheduleCloseDetailForTest(Int64.parse(backMs))
         }
         // 验收：简介滚动偏移（验证固定高度内的滚动）
         let descOffset = getVariable("SELINE_READ_DESC_OFFSET") ?? ""

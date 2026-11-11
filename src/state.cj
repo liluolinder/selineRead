@@ -181,21 +181,31 @@ class BooklistBooksPayload {
 
 /** 详情页的一条评论（ViewModel）。 */
 public class CommentCell {
+    public let id: Int64
+    public let parentId: Int64
     public let author: String
     public let dateRelative: String
     public let text: String
     public let likes: Int64
     public let liked: Bool
     public let isReply: Bool
+    /** 被回复那条评论的作者 / 正文（父评论不在已加载范围时为空）。 */
+    public var parentAuthor: String
+    public var parentText: String
 
-    public init(author: String, dateRelative: String, text: String, likes: Int64,
-        liked: Bool, isReply: Bool) {
+    public init(id: Int64, parentId: Int64, author: String, dateRelative: String,
+        text: String, likes: Int64, liked: Bool, isReply: Bool,
+        parentAuthor!: String = "", parentText!: String = "") {
+        this.id = id
+        this.parentId = parentId
         this.author = author
         this.dateRelative = dateRelative
         this.text = text
         this.likes = likes
         this.liked = liked
         this.isReply = isReply
+        this.parentAuthor = parentAuthor
+        this.parentText = parentText
     }
 }
 
@@ -217,12 +227,32 @@ class CommentsPayload {
         try {
             let page = CommentApi.book(client, bookId, offset: offset)
             let cells = ArrayList<CommentCell>()
+            // 先建立 id -> (作者, 正文) 索引，好让「回复」能显示被回复的原评论
+            let index = HashMap<Int64, (String, String)>()
             for (comment in page.comments) {
                 let author = if (comment.user.name.isEmpty()) { "读者" } else {
                     comment.user.name
                 }
-                cells.add(CommentCell(author, comment.dateRelative, comment.text,
-                    comment.likes, comment.liked, comment.parentId != 0))
+                index[comment.id] = (author, comment.text)
+            }
+            for (comment in page.comments) {
+                let author = if (comment.user.name.isEmpty()) { "读者" } else {
+                    comment.user.name
+                }
+                var parentAuthor = ""
+                var parentText = ""
+                if (comment.parentId != 0) {
+                    match (index.get(comment.parentId)) {
+                        case Some(value) =>
+                            parentAuthor = value[0]
+                            parentText = value[1]
+                        case None => ()
+                    }
+                }
+                cells.add(CommentCell(comment.id, comment.parentId, author,
+                    comment.dateRelative, comment.text, comment.likes, comment.liked,
+                    comment.parentId != 0, parentAuthor: parentAuthor,
+                    parentText: parentText))
             }
             // 本页满 100 条才可能还有下一段；服务端忽略 limit、固定最多 100
             let next = if (page.comments.size >= 100) {
@@ -247,6 +277,51 @@ public class DownloadMenuAnchor {
     public var h: Float32 = 0.0
 
     public init() {}
+}
+
+/** 详情页快照：从详情页再进一本书时压栈，返回时恢复。 */
+class DetailSnapshot {
+    let id: Int64
+    let hash: String
+    let title: String
+    let author: String
+    let meta: String
+    let cover: String
+    let description: String
+    let formats: ArrayList<BookFormat>
+    let section: Int64
+    let year: String
+    let publisher: String
+    let identifier: String
+    let language: String
+    let pages: String
+    let edition: String
+    let series: String
+    let extension: String
+    let filesize: String
+    let scroll: Float32
+
+    init(state: AppState) {
+        this.id = state.detailId.value
+        this.hash = state.detailHash.value
+        this.title = state.detailTitle.value
+        this.author = state.detailAuthor.value
+        this.meta = state.detailMeta.value
+        this.cover = state.detailCover.value
+        this.description = state.detailDescription.value
+        this.formats = state.detailFormats.value
+        this.section = state.detailSection.value
+        this.year = state.detailYear.value
+        this.publisher = state.detailPublisher.value
+        this.identifier = state.detailIdentifier.value
+        this.language = state.detailLanguage.value
+        this.pages = state.detailPages.value
+        this.edition = state.detailEdition.value
+        this.series = state.detailSeries.value
+        this.extension = state.detailExtension.value
+        this.filesize = state.detailFilesize.value
+        this.scroll = state.detailScroll.value
+    }
 }
 
 /** 图片后台任务：下载+解码，或只解码本地缓存。 */
@@ -537,6 +612,22 @@ public class AppState {
     public let loading = State<Bool>(false)
     /** 验收用：强制显示骨架（截图/回归用）。 */
     public let forceSkeleton = State<Bool>(false)
+    /** 各页面的滚动位置（切页/返回后保持原位）。 */
+    public let homeScroll = State<Float32>(0.0)
+    public let searchScroll = State<Float32>(0.0)
+    public let favoritesScroll = State<Float32>(0.0)
+    public let booklistsScroll = State<Float32>(0.0)
+    public let booklistDetailScroll = State<Float32>(0.0)
+    public let detailScroll = State<Float32>(0.0)
+    /** 详情页返回栈：从「相关书籍」再点进另一本时，返回能回到上一本。 */
+    private let detailHistory = ArrayList<DetailSnapshot>()
+    /** 深色模式（false = 浅色）。 */
+    public let darkMode = State<Bool>(true)
+    /** 主题切换的辐射动画：进度 0..1；active 为 true 时在根上盖一层圆形遮罩。 */
+    public let themeReveal = State<Float32>(0.0)
+    public let themeRevealing = State<Bool>(false)
+    private var themeRevealX: Float32 = 0.0
+    private var themeRevealY: Float32 = 0.0
     /** 热门列表。 */
     public let popular = State<ArrayList<BookCell>>(ArrayList<BookCell>())
     /** 首屏只渲染这么多张卡片，滚到底再追加（避免一次重绘 100 张卡）。 */
@@ -602,6 +693,8 @@ public class AppState {
     public let downloadMessage = State<String>("")
     /** 下载按钮弹出的「版本选择」菜单是否打开。 */
     public let downloadMenuOpen = State<Bool>(false)
+    /** 菜单正在收起（播完反向动画再卸载）。 */
+    public let downloadMenuClosing = State<Bool>(false)
     /** 下载按钮在窗口里的矩形（由按钮每帧 layout 写入）。 */
     public let downloadAnchor = DownloadMenuAnchor()
     /** 打开菜单时锁定的锚点（滚动/布局变化时菜单不跟着动，避免反复缩放）。 */
@@ -642,6 +735,8 @@ public class AppState {
     private var commentsLoaded: Bool = false
     /** 当前渲染多少条评论，超出时「显示更多」再追加。 */
     public let commentsVisible = State<Int64>(20)
+    /** 已加载评论的 id -> 单元格索引（跨页解析「回复」的原评论）。 */
+    private let commentIndex = HashMap<Int64, CommentCell>()
 
     private var client: ?ClientBox = None
     private var app: ?DesktopApp = None
@@ -751,6 +846,7 @@ public class AppState {
         detailOpen.value = false
         booklistOpen.value = false
         downloadMenuOpen.value = false
+        detailHistory.clear()
         // 点「热门」= 退出搜索态，回到推荐墙
         if (index == TAB_HOME && !lastKeyword.value.isEmpty()) {
             searchGeneration += 1
@@ -785,12 +881,21 @@ public class AppState {
             writeDebugLog("credential restored: uid=${credential.userId}")
         }
         writeDebugLog("bootstrap: site=${created.currentSiteUrl()}")
+        // 离线模式（UI 截图/开发用）：跳过阻塞式首屏请求
+        if ((getVariable("SELINE_READ_OFFLINE") ?? "") == "1") {
+            writeDebugLog("bootstrap: offline mode, skip popular")
+            status.value = "离线模式"
+            return
+        }
         loadPopularBlocking(created)
     }
 
     /** 窗口建立后挂上；之后后台结果才回得来。 */
     public func attach(app: DesktopApp): Unit {
         this.app = app
+        if ((getVariable("SELINE_READ_OFFLINE") ?? "") == "1") {
+            return
+        }
         // 恢复出来的凭证要真的打一次接口才知道还有效（改密码/风控会让旧 key 失效）
         refreshProfile()
     }
@@ -1024,6 +1129,30 @@ public class AppState {
         }
     }
 
+    /** 验收用：延迟 delayMs 后打开「相关书籍」里的第一本（验证详情返回栈）。 */
+    public func scheduleOpenFirstRelatedForTest(delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=>
+                if (!detailRelated.value.isEmpty()) {
+                    writeDebugLog("test: open related ${detailRelated.value[0].id}")
+                    openBook(detailRelated.value[0])
+                }
+            })
+        }
+    }
+
+    /** 验收用：延迟 delayMs 后点「返回」。 */
+    public func scheduleCloseDetailForTest(delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=>
+                writeDebugLog("test: closeDetail (history=${detailHistory.size})")
+                closeDetail()
+            })
+        }
+    }
+
     /** 验收用：延迟 delayMs 后清空搜索框，验证「清空即回热门」。 */
     public func scheduleClearSearchForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
@@ -1059,6 +1188,11 @@ public class AppState {
     /** 打开图书详情页（二级页面）。 */
     public func openBook(cell: BookCell): Unit {
         writeDebugLog("openBook: ${cell.id} ${cell.title}")
+        // 已经在详情页（从「相关书籍」点进来）：把上一本压栈，返回可回退
+        if (detailOpen.value && detailId.value > 0) {
+            detailHistory.add(DetailSnapshot(this))
+        }
+        detailScroll.value = 0.0
         detailOpen.value = true
         detailTitle.value = cell.title
         detailAuthor.value = cell.author
@@ -1074,6 +1208,7 @@ public class AppState {
         commentsNextOffset.value = 0
         commentsVisible.value = 20
         commentsLoaded = false
+        commentIndex.clear()
         // 不在打开详情时立刻拉评论：切到「书籍评论」分段时才加载
         detailDescription.value = ""
         detailFormats.value = ArrayList<BookFormat>()
@@ -1237,8 +1372,54 @@ public class AppState {
 
     /** 关闭详情页，回到来处。 */
     public func closeDetail(): Unit {
-        detailOpen.value = false
         downloadMenuOpen.value = false
+        if (!detailHistory.isEmpty()) {
+            let previous = detailHistory[detailHistory.size - 1]
+            detailHistory.remove(at: detailHistory.size - 1)
+            restoreDetail(previous)
+            return
+        }
+        detailOpen.value = false
+    }
+
+    /** 恢复上一本详情（不重新请求；评论按需重新加载）。 */
+    private func restoreDetail(snapshot: DetailSnapshot): Unit {
+        detailId.value = snapshot.id
+        detailHash.value = snapshot.hash
+        detailTitle.value = snapshot.title
+        detailAuthor.value = snapshot.author
+        detailMeta.value = snapshot.meta
+        detailCover.value = snapshot.cover
+        detailDescription.value = snapshot.description
+        detailFormats.value = snapshot.formats
+        detailExtension.value = snapshot.extension
+        detailFilesize.value = snapshot.filesize
+        detailYear.value = snapshot.year
+        detailPublisher.value = snapshot.publisher
+        detailIdentifier.value = snapshot.identifier
+        detailLanguage.value = snapshot.language
+        detailPages.value = snapshot.pages
+        detailEdition.value = snapshot.edition
+        detailSeries.value = snapshot.series
+        detailSection.value = snapshot.section
+        detailScroll.value = snapshot.scroll
+        detailLoading.value = false
+        detailError.value = ""
+        detailRelated.value = ArrayList<BookCell>()
+        detailRelatedError.value = ""
+        detailRelatedLoaded = false
+        comments.value = ArrayList<CommentCell>()
+        commentsError.value = ""
+        commentsNextOffset.value = 0
+        commentsVisible.value = 20
+        commentsLoaded = false
+        commentIndex.clear()
+        if (snapshot.section == 1) {
+            ensureCommentsLoaded()
+        } else if (snapshot.section == 2) {
+            ensureRelatedLoaded()
+        }
+        writeDebugLog("detail back: ${snapshot.id} ${snapshot.title}")
     }
 
     /* -------------------------------------------------- 书单 */
@@ -1524,6 +1705,56 @@ public class AppState {
         writeDebugLog("profile ok: ${outcome.quota}")
     }
 
+    /* -------------------------------------------------- 主题 */
+
+    /** 从某个点（侧栏按钮）开始「往外辐射」地切换深浅色。 */
+    public func toggleTheme(originX: Float32, originY: Float32): Unit {
+        if (themeRevealing.value) {
+            return
+        }
+        themeRevealX = originX
+        themeRevealY = originY
+        themeReveal.value = 0.0
+        themeRevealing.value = true
+        writeDebugLog("theme: reveal start -> dark=${!darkMode.value}")
+    }
+
+    public func themeRevealOriginX(): Float32 {
+        themeRevealX
+    }
+
+    public func themeRevealOriginY(): Float32 {
+        themeRevealY
+    }
+
+    /** 验收用：从侧栏主题按钮位置触发一次切换。 */
+    public func postThemeToggleForTest(): Unit {
+        let appRef = match (app) {
+            case Some(value) => value
+            case None => return
+        }
+        let _ = appRef.postToUi({=> toggleTheme(28.0, 700.0)})
+    }
+
+    /** 动画结束：真正切换到目标主题（同时换 seline_ui 与 chui 两套 token）。 */
+    public func applyThemeSwitch(): Unit {
+        let nextDark = !darkMode.value
+        darkMode.value = nextDark
+        setSelineTheme(if (nextDark) { SelineTheme.dark() } else { SelineTheme.light() })
+        match (app) {
+            case Some(value) =>
+                try {
+                    value.setTheme(selineChuiTheme())
+                } catch (_: Exception) {
+                    ()
+                }
+            case None => ()
+        }
+        themeRevealing.value = false
+        themeReveal.value = 0.0
+        writeDebugLog("theme: switched dark=${nextDark}")
+    }
+
     /* -------------------------------------------------- 收藏 */
 
     /** 收藏页构建期懒加载：登录后第一次进入才请求。 */
@@ -1604,6 +1835,7 @@ public class AppState {
     public func openDownloadMenu(): Unit {
         menuAnchorX = downloadAnchor.x
         menuAnchorY = downloadAnchor.y + downloadAnchor.h + 6.0
+        downloadMenuClosing.value = false
         downloadMenuOpen.value = true
     }
 
@@ -1624,9 +1856,19 @@ public class AppState {
         menuAnchorY
     }
 
-    /** 关闭下载菜单（点菜单外、切换页面时调用）。 */
+    /** 关闭下载菜单：先播收起动画，动画结束再卸载。 */
     public func closeDownloadMenu(): Unit {
-        downloadMenuOpen.value = false
+        if (!downloadMenuOpen.value || downloadMenuClosing.value) {
+            return
+        }
+        downloadMenuClosing.value = true
+        let _ = spawn {=>
+            sleep(140 * Duration.millisecond)
+            postToUi({=>
+                downloadMenuOpen.value = false
+                downloadMenuClosing.value = false
+            })
+        }
     }
 
     /**
@@ -1661,6 +1903,7 @@ public class AppState {
     public func selectDownloadFormat(index: Int64): Unit {
         detailFormatIndex.value = index
         downloadMenuOpen.value = false
+        downloadMenuClosing.value = false
         downloadBook()
     }
 
@@ -1695,9 +1938,25 @@ public class AppState {
             comments.value = payload.cells
             commentsVisible.value = 20
             commentsLoaded = true
+            commentIndex.clear()
         } else {
             for (cell in payload.cells) {
                 comments.value.add(cell)
+            }
+        }
+        // 跨页解析「回复」的原评论：父评论可能在更早的分页里
+        for (cell in payload.cells) {
+            commentIndex[cell.id] = cell
+        }
+        for (cell in comments.value) {
+            if (!cell.isReply || !cell.parentText.isEmpty() || cell.parentId == 0) {
+                continue
+            }
+            match (commentIndex.get(cell.parentId)) {
+                case Some(parent) =>
+                    cell.parentAuthor = parent.author
+                    cell.parentText = parent.text
+                case None => ()
             }
         }
         commentsDisabled.value = payload.disabled

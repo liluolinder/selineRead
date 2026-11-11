@@ -9,6 +9,7 @@
  */
 package seline_read
 
+import std.math.*
 import chui.*
 import seline_ui.*
 
@@ -28,11 +29,16 @@ func appShell(state: AppState): Unit {
                 .fillWidth().fillHeight()
             // 侧栏浮层：直接作为 ZStack 子节点，位置由父容器给（x=0）
             sidebarTabs(state)
+            // 主题切换的辐射遮罩：盖住整窗，画一个从按钮位置扩张的圆
+            if (state.themeRevealing.value) {
+                ThemeRevealOverlay(state)
+            }
             // 下载版本菜单：浮在最上层，点菜单外/切换页面自动关闭
-            if (state.downloadMenuOpen.value) {
+            if (state.downloadMenuOpen.value || state.downloadMenuClosing.value) {
                 SelineContextMenuOverlay(state.downloadMenuItems(),
                     state.downloadMenuX(), state.downloadMenuY(),
-                    {=> state.closeDownloadMenu()}, width: 250.0)
+                    {=> state.closeDownloadMenu()}, width: 250.0,
+                    closing: state.downloadMenuClosing.value)
             }
         }.alignment(Alignment.TopLeading)
             // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
@@ -99,5 +105,67 @@ func pageFor(state: AppState): Unit {
         searchPage(state)
     } else {
         homePage(state)
+    }
+}
+/**
+ * 主题切换的「往外辐射」遮罩。
+ *
+ * chui 只支持矩形裁剪，做不出真正的圆形揭示，所以这里反过来画：
+ * 在旧主题的界面上盖一个以按钮为圆心、半径逐渐变大的**新主题底色圆**，
+ * 圆铺满整窗时再真正切换主题（`applyThemeSwitch`）。视觉上就是新主题从按钮处扩散开。
+ */
+class ThemeRevealOverlay <: Widget {
+    private let state: AppState
+    private var frame = Rect.zero()
+
+    init(state: AppState) {
+        this.state = state
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, available.h)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        // 目标主题的底色（还没切换，所以按 darkMode 取反）
+        let target = if (state.darkMode.value) {
+            SelineTheme.light()
+        } else {
+            SelineTheme.dark()
+        }
+        let originX = state.themeRevealOriginX()
+        let originY = state.themeRevealOriginY()
+        // 半径要盖到最远的角
+        let dx = max(max(originX - frame.x, frame.right() - originX), 0.0)
+        let dy = max(max(originY - frame.y, frame.bottom() - originY), 0.0)
+        let maxRadius = Float32(sqrt(Float64(dx * dx + dy * dy)))
+        // 约 420ms 的扩张（按帧 delta 推进，不依赖 State 弹簧）
+        var progress = state.themeReveal.value + Float32(ctx.frame.deltaMs) / 420.0
+        if (progress >= 1.0) {
+            progress = 1.0
+        }
+        if (progress != state.themeReveal.value) {
+            state.themeReveal.value = progress
+        }
+        let eased = 1.0 - (1.0 - progress) * (1.0 - progress)
+        let radius = maxRadius * eased
+        // 用一圈同心圆近似"实心圆"（renderer 没有圆填充，只有圆角矩形）
+        paintSurface(ctx.renderer,
+            Rect(originX - radius, originY - radius, radius * 2.0, radius * 2.0),
+            target.palette.window, radius)
+        if (progress >= 1.0) {
+            state.applyThemeSwitch()
+        } else {
+            ctx.requestFrame()
+        }
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        true
     }
 }
