@@ -46,9 +46,10 @@ Z-Library 桌面阅读客户端，用**仓颉 + CangHui（chui）**写成，后�
 | 搜索 + 搜索结果页 | 完成 |
 | 书单页（papi 抓取公开书单 + 预览封面） | 完成 |
 | 书单详情（书单内图书网格） | 完成 |
-| 图书详情（元信息 / 可选格式 / 简介） | 完成 |
+| 图书详情（元信息 / 下载菜单 / 简介 / 评论） | 完成 |
 | 登录（邮箱密码，凭证落盘，重启自动恢复） | 完成 |
-| 下载（格式选择 → `BookApi.file` → 落盘） | 完成 |
+| 下载（点「下载」弹出菜单：默认链接 + 可选格式 → `BookApi.file` → 落盘） | 完成 |
+| 评论（papi：书/书单评论、点赞、回复关系，offset 分页） | 完成 |
 | 下载列表页 | 完成（本次会话记录） |
 | 本地阅读器 | 未开始（下载后可先用系统阅读器打开） |
 
@@ -79,6 +80,7 @@ cd target\release\bin
 .\main.exe --tab=2                       # 直接打开书单页
 .\main.exe --tab=3                       # 直接打开下载页
 .\main.exe --tab=2 --bl-open             # 书单页并自动打开第一份书单
+.\main.exe --book=<id>|<hash> --dl-menu  # 打开详情页并展开下载版本菜单
 .\main.exe --search=rust                 # 启动即搜索
 .\main.exe --login                       # 用 ZLIB_TEST_EMAIL / ZLIB_TEST_PASSWORD 自动登录
 .\main.exe --login --download=<id>|<hash> # 登录成功后自动下载指定书
@@ -89,7 +91,8 @@ cd target\release\bin
 ## 已知限制
 
 - 下载列表目前只记录本次会话（重启后不重新扫描目录）。
-- 书单来自网站前端 papi（eapi 没有书单接口）；书籍评论没有可用接口
-  （eapi/papi 的 `comments`/`reviews` 均为 404），详情页因此不显示评论。
+- 书单与评论都来自网站前端 papi（eapi 没有这两类接口）。
+- 评论接口忽略 `limit`、每页固定最多 100 条，分页只能按 offset 递增。
+- 首屏偶发某张封面空白：CDN 请求失败时保留占位块，不会反复重试。
 - 窗口最大化时圆角暂未归零（普通窗口态 12px 圆角）。
 - Windows 上底层 TLS 偶发原生崩溃（`0xc0000374`，环境问题，非本工程代码）。

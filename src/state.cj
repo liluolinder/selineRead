@@ -23,6 +23,7 @@ import zlibraryAPI4CJ.book.*
 import zlibraryAPI4CJ.login.*
 import zlibraryAPI4CJ.user.*
 import zlibraryAPI4CJ.booklist.*
+import zlibraryAPI4CJ.comment.*
 
 /**
  * 网格里的一本书（列表项的 ViewModel）。
@@ -174,6 +175,76 @@ class BooklistBooksPayload {
             BooklistBooksPayload(ArrayList<BookCell>(), 0, 0, failure.detail)
         }
     }
+}
+
+/** 详情页的一条评论（ViewModel）。 */
+public class CommentCell {
+    public let author: String
+    public let dateRelative: String
+    public let text: String
+    public let likes: Int64
+    public let liked: Bool
+    public let isReply: Bool
+
+    public init(author: String, dateRelative: String, text: String, likes: Int64,
+        liked: Bool, isReply: Bool) {
+        this.author = author
+        this.dateRelative = dateRelative
+        this.text = text
+        this.likes = likes
+        this.liked = liked
+        this.isReply = isReply
+    }
+}
+
+/** 评论后台结果。 */
+class CommentsPayload {
+    let cells: ArrayList<CommentCell>
+    let disabled: Bool
+    let nextOffset: Int64
+    let error: String
+
+    init(cells: ArrayList<CommentCell>, disabled: Bool, nextOffset: Int64, error: String) {
+        this.cells = cells
+        this.disabled = disabled
+        this.nextOffset = nextOffset
+        this.error = error
+    }
+
+    static func load(client: ZlibClient, bookId: Int64, offset: Int64): CommentsPayload {
+        try {
+            let page = CommentApi.book(client, bookId, offset: offset)
+            let cells = ArrayList<CommentCell>()
+            for (comment in page.comments) {
+                let author = if (comment.user.name.isEmpty()) { "读者" } else {
+                    comment.user.name
+                }
+                cells.add(CommentCell(author, comment.dateRelative, comment.text,
+                    comment.likes, comment.liked, comment.parentId != 0))
+            }
+            // 本页满 100 条才可能还有下一段；服务端忽略 limit、固定最多 100
+            let next = if (page.comments.size >= 100) {
+                page.nextOffset(offset)
+            } else {
+                0
+            }
+            writeDebugLog("comments loaded: offset=${offset} count=${cells.size} disabled=${page.commentsDisabled}")
+            CommentsPayload(cells, page.commentsDisabled, next, "")
+        } catch (failure: ZlibError) {
+            writeDebugLog("comments failed: ${failure.detail}")
+            CommentsPayload(ArrayList<CommentCell>(), false, 0, failure.detail)
+        }
+    }
+}
+
+/** 下载按钮的位置（菜单弹出锚点）。普通可变对象：每帧由按钮 layout 写入，不需要触发重建。 */
+public class DownloadMenuAnchor {
+    public var x: Float32 = 0.0
+    public var y: Float32 = 0.0
+    public var w: Float32 = 0.0
+    public var h: Float32 = 0.0
+
+    public init() {}
 }
 
 /** 把 `ZlibClient` 装进不可变对象，方便后台闭包安全捕获。 */
@@ -475,6 +546,10 @@ public class AppState {
     public let downloads = State<ArrayList<DownloadEntry>>(ArrayList<DownloadEntry>())
     public let downloading = State<Bool>(false)
     public let downloadMessage = State<String>("")
+    /** 下载按钮弹出的「版本选择」菜单是否打开。 */
+    public let downloadMenuOpen = State<Bool>(false)
+    /** 下载按钮在窗口里的矩形（由按钮每帧 layout 写入，菜单定位用）。 */
+    public let downloadAnchor = DownloadMenuAnchor()
 
     /* ---- 书单（papi） ---- */
     /** 书单列表。 */
@@ -498,6 +573,14 @@ public class AppState {
     public let booklistError = State<String>("")
     public let booklistNextPage = State<Int64>(1)
     public let booklistTotal = State<Int64>(0)
+
+    /* ---- 详情页评论 ---- */
+    public let comments = State<ArrayList<CommentCell>>(ArrayList<CommentCell>())
+    public let commentsLoading = State<Bool>(false)
+    public let commentsError = State<String>("")
+    public let commentsDisabled = State<Bool>(false)
+    /** 下一段评论的 offset；0 表示没有更多。 */
+    public let commentsNextOffset = State<Int64>(0)
 
     private var client: ?ClientBox = None
     private var app: ?DesktopApp = None
@@ -538,6 +621,7 @@ public class AppState {
         writeDebugLog("rail tab -> ${index}")
         detailOpen.value = false
         booklistOpen.value = false
+        downloadMenuOpen.value = false
         tab.value = index
     }
 
@@ -748,6 +832,11 @@ public class AppState {
         detailHash.value = cell.hash
         detailFormatIndex.value = 0
         downloadMessage.value = ""
+        comments.value = ArrayList<CommentCell>()
+        commentsError.value = ""
+        commentsDisabled.value = false
+        commentsNextOffset.value = 0
+        loadComments(true)
         detailDescription.value = ""
         detailFormats.value = ArrayList<BookFormat>()
         detailLoading.value = true
@@ -797,6 +886,7 @@ public class AppState {
     /** 关闭详情页，回到来处。 */
     public func closeDetail(): Unit {
         detailOpen.value = false
+        downloadMenuOpen.value = false
     }
 
     /* -------------------------------------------------- 书单 */
@@ -1065,6 +1155,94 @@ public class AppState {
         }
         loginMessage.value = "已登录 · ${outcome.quota}"
         writeDebugLog("profile ok: ${outcome.quota}")
+    }
+
+    /* -------------------------------------------------- 下载菜单 */
+
+    /** 打开/关闭下载版本菜单。 */
+    public func toggleDownloadMenu(): Unit {
+        downloadMenuOpen.value = !downloadMenuOpen.value
+    }
+
+    /** 关闭下载菜单（点菜单外、切换页面时调用）。 */
+    public func closeDownloadMenu(): Unit {
+        downloadMenuOpen.value = false
+    }
+
+    /**
+     * 下载菜单的条目：第一项是「默认下载链接（原书）」，
+     * 之后是服务端给的可选格式（每项都有自己的 id/hash）。
+     */
+    public func downloadMenuItems(): Array<SelineMenuItem> {
+        let items = ArrayList<SelineMenuItem>()
+        items.add(SelineMenuItem("默认下载链接（原书）", {=> selectDownloadFormat(0)},
+            glyph: "download"))
+        var index: Int64 = 0
+        for (format in detailFormats.value) {
+            let position = index + 1
+            let label = if (format.sizeText().isEmpty()) {
+                format.extension
+            } else {
+                "${format.extension} · ${format.sizeText()}"
+            }
+            items.add(SelineMenuItem(label, {=> selectDownloadFormat(position)},
+                glyph: "download"))
+            index += 1
+        }
+        items.toArray()
+    }
+
+    /** 选中某个版本并立即下载（0 = 原书）。 */
+    public func selectDownloadFormat(index: Int64): Unit {
+        detailFormatIndex.value = index
+        downloadMenuOpen.value = false
+        downloadBook()
+    }
+
+    /* -------------------------------------------------- 评论 */
+
+    /** 加载评论；`reset=true` 从 offset 0 开始，否则续接。 */
+    public func loadComments(reset: Bool): Unit {
+        let bookId = detailId.value
+        if (bookId <= 0) {
+            return
+        }
+        let clientBox = match (this.client) {
+            case Some(value) => value
+            case None => return
+        }
+        let offset = if (reset) { 0 } else { comments.value.size }
+        commentsLoading.value = true
+        commentsError.value = ""
+        let _ = spawn {=>
+            let payload = CommentsPayload.load(clientBox.value, bookId, offset)
+            postToUi({=> applyComments(payload, reset) })
+        }
+    }
+
+    private func applyComments(payload: CommentsPayload, reset: Bool): Unit {
+        commentsLoading.value = false
+        if (!payload.error.isEmpty()) {
+            commentsError.value = "加载评论失败：${payload.error}"
+            return
+        }
+        if (reset) {
+            comments.value = payload.cells
+        } else {
+            for (cell in payload.cells) {
+                comments.value.add(cell)
+            }
+        }
+        commentsDisabled.value = payload.disabled
+        commentsNextOffset.value = payload.nextOffset
+    }
+
+    /** 「加载更多评论」。 */
+    public func loadMoreComments(): Unit {
+        if (commentsNextOffset.value <= 0 || commentsLoading.value) {
+            return
+        }
+        loadComments(false)
     }
 
     /* -------------------------------------------------- 下载 */

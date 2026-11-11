@@ -36,9 +36,8 @@ func detailPage(state: AppState): Unit {
                             loadingBlock("正在加载详情…")
                         }
                         HStack(spacing: vp(SELINE_SPACE_SM)) {
-                            SelineButton("下载", {=> state.downloadBook()}, glyph: "download",
-                                kind: SelineButtonKind.Secondary, compact: true,
-                                busy: state.downloading.value)
+                            // 点击弹出「版本选择」菜单：第一项是默认下载链接，下面是可选格式
+                            DownloadMenuButton(state)
                             if (!state.loggedIn.value) {
                                 Label("下载需要先在「设置」页登录").fontSize(theme.fontCaption)
                                     .muted()
@@ -59,24 +58,33 @@ func detailPage(state: AppState): Unit {
                         Label(plainText(state.detailDescription.value)).fontSize(theme.fontBody).wrap()
                     }.hug().fillWidth()
                 }
-                if (!state.detailFormats.value.isEmpty()) {
-                    VStack(spacing: vp(SELINE_SPACE_XS)) {
-                        Label("可选格式").fontSize(theme.fontHeading).bold()
-                        HStack(spacing: vp(SELINE_SPACE_SM)) {
-                            FormatChip("默认", "", state.detailFormatIndex.value == 0,
-                                {=> state.detailFormatIndex.value = 0})
-                            var index: Int64 = 0
-                            for (format in state.detailFormats.value) {
-                                let position = index + 1
-                                FormatChip(format.extension, format.sizeText(),
-                                    state.detailFormatIndex.value == position,
-                                    {=> state.detailFormatIndex.value = position})
-                                index += 1
-                            }
-                            Spacer()
-                        }.hug().fillWidth()
-                    }.hug().fillWidth()
-                }
+
+                // 评论（papi：eapi 没有评论接口）
+                VStack(spacing: vp(SELINE_SPACE_XS)) {
+                    Label("评论").fontSize(theme.fontHeading).bold()
+                    if (!state.commentsError.value.isEmpty()) {
+                        errorBannerText(state.commentsError.value)
+                    }
+                    if (state.commentsDisabled.value) {
+                        Label("本书已关闭评论").fontSize(theme.fontCaption).muted()
+                    }
+                    if (state.commentsLoading.value && state.comments.value.isEmpty()) {
+                        loadingBlock("正在加载评论…")
+                    }
+                    for (comment in state.comments.value) {
+                        commentRow(comment)
+                    }
+                    if (!state.commentsLoading.value && state.comments.value.isEmpty() &&
+                        state.commentsError.value.isEmpty() &&
+                        !state.commentsDisabled.value) {
+                        Label("还没有评论").fontSize(theme.fontCaption).muted()
+                    }
+                    if (state.commentsNextOffset.value > 0) {
+                        SelineButton("加载更多评论", {=> state.loadMoreComments()},
+                            glyph: "refresh", kind: SelineButtonKind.Ghost,
+                            compact: true, busy: state.commentsLoading.value)
+                    }
+                }.hug().fillWidth()
             }.padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
         }
     }.fillWidth().fillHeight()
@@ -117,68 +125,68 @@ class DetailCover <: Widget {
     }
 }
 
-/** 格式徽标（可点选，选中项用强调色描边）。 */
-class FormatChip <: Widget {
-    private let extensionText: String
-    private let sizeText: String
-    private let selected: Bool
-    private let onTap: () -> Unit
+/** 下载按钮：点击弹出「默认链接 + 可选格式」菜单，并把自身位置写给菜单定位。 */
+class DownloadMenuButton <: Widget {
+    private let state: AppState
     private var frame = Rect.zero()
-    private var hot = false
+    private var hovered = false
 
-    init(extensionText: String, sizeText: String, selected: Bool, onTap: () -> Unit) {
-        this.extensionText = extensionText
-        this.sizeText = sizeText
-        this.selected = selected
-        this.onTap = onTap
+    init(state: AppState) {
+        this.state = state
         emit(this)
     }
 
-    private func label(ctx: UiContext): String {
-        if (sizeText.isEmpty()) {
-            extensionText
-        } else {
-            "${extensionText} · ${sizeText}"
-        }
-    }
-
     public func measure(ctx: UiContext, _: Size): Size {
-        let width = ctx.renderer.textWidth(label(ctx),
-            pointSize: selineTheme().fontLabel, font: None<String>)
-        Size(width + 24.0, 30.0)
+        let theme = selineTheme()
+        let textWidth = ctx.renderer.textWidth("下载", pointSize: theme.fontLabel,
+            style: selineFontStyle(bold: true), font: None<String>)
+        Size(max(100.0, textWidth + 64.0), 34.0)
     }
 
     public func layout(_: UiContext, rect: Rect): Unit {
         frame = rect
+        // 菜单锚点：每帧同步（普通对象，不触发重建）
+        state.downloadAnchor.x = rect.x
+        state.downloadAnchor.y = rect.y
+        state.downloadAnchor.w = rect.w
+        state.downloadAnchor.h = rect.h
     }
 
     public func draw(ctx: UiContext): Unit {
         let theme = selineTheme()
         let palette = theme.palette
-        let fill = if (selected) { palette.accentSoft } else if (hot) {
+        let open = state.downloadMenuOpen.value
+        let fill = if (open) {
+            palette.accentSoft
+        } else if (hovered) {
             palette.surfaceHover
         } else {
             palette.surfaceSunken
         }
         paintSurface(ctx.renderer, frame, fill, 8.0,
-            border: if (selected) { palette.accent } else { palette.border })
-        paintText(ctx.renderer, label(ctx), frame, if (selected) {
-            palette.accent
-        } else {
-            palette.text
-        }, theme.fontLabel, align: SelineTextAlign.Center)
+            border: if (open) { palette.accent } else { palette.border })
+        drawGlyph(ctx.renderer, "download",
+            Rect(frame.x + 12.0, frame.centerY() - 8.0, 16.0, 16.0), palette.accent,
+            1.0)
+        let label = if (state.downloading.value) { "下载中…" } else { "下载" }
+        paintText(ctx.renderer, label,
+            Rect(frame.x + 34.0, frame.y, frame.w - 58.0, frame.h), palette.text,
+            theme.fontLabel, style: selineFontStyle(bold: true), family: theme.fontFamily)
+        drawGlyph(ctx.renderer, "chevron_down_fill",
+            Rect(frame.right() - 22.0, frame.centerY() - 6.0, 12.0, 12.0),
+            palette.textMuted, 1.0)
     }
 
     public func handle(_: UiContext, event: UiEvent): Bool {
         match (event) {
             case UiEvent.MouseMove(x, y) =>
-                hot = frame.contains(x, y)
+                hovered = frame.contains(x, y)
                 false
             case UiEvent.MouseDown(MouseButton.Left, x, y) =>
                 frame.contains(x, y)
             case UiEvent.MouseUp(MouseButton.Left, x, y) =>
                 if (frame.contains(x, y)) {
-                    onTap()
+                    state.toggleDownloadMenu()
                     true
                 } else {
                     false
@@ -194,4 +202,25 @@ class FormatChip <: Widget {
     public func acceptsStretch(_: Axis): Bool {
         false
     }
+}
+/** 一条评论：作者 / 相对时间 / 点赞 + 正文（自动换行）。 */
+func commentRow(comment: CommentCell): Unit {
+    let theme = selineTheme()
+    VStack(spacing: vp(3.0)) {
+        HStack(spacing: vp(SELINE_SPACE_SM)) {
+            if (comment.isReply) {
+                Label("回复").fontSize(theme.fontCaption)
+                    .foregroundColor(theme.palette.accent)
+            }
+            Label(comment.author).fontSize(theme.fontLabel).bold()
+            Label(comment.dateRelative).fontSize(theme.fontCaption).muted()
+            if (comment.likes > 0) {
+                Label("赞 ${comment.likes}").fontSize(theme.fontCaption).muted()
+            }
+            Spacer()
+        }.hug().fillWidth()
+        Label(comment.text).fontSize(theme.fontBody).wrap()
+    }.hug().fillWidth()
+        .padding(10.0)
+        .background(theme.palette.surfaceSunken, vp(8.0))
 }

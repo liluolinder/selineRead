@@ -34,10 +34,11 @@ class LaunchOptions {
     let bookTarget: String
     let settleFrames: UInt64
     let booklistAutoOpen: Bool
+    let openDownloadMenu: Bool
 
     init(shotPath: String, initialTab: Int64, searchKeyword: String, railOpen: Bool,
         login: Bool, downloadTarget: String, bookTarget: String, settleFrames: UInt64,
-        booklistAutoOpen: Bool) {
+        booklistAutoOpen: Bool, openDownloadMenu: Bool) {
         this.shotPath = shotPath
         this.initialTab = initialTab
         this.searchKeyword = searchKeyword
@@ -47,6 +48,7 @@ class LaunchOptions {
         this.bookTarget = bookTarget
         this.settleFrames = settleFrames
         this.booklistAutoOpen = booklistAutoOpen
+        this.openDownloadMenu = openDownloadMenu
     }
 }
 
@@ -61,6 +63,7 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
     var bookTarget = ""
     var settleFrames: UInt64 = UInt64(720)
     var booklistAutoOpen = false
+    var openDownloadMenu = false
     for (arg in args) {
         // 验收用：把渲染器后备缓冲导出成 PNG，拍完自动关窗
         if (arg.startsWith("--shot=")) {
@@ -97,9 +100,13 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         if (arg == "--bl-open") {
             booklistAutoOpen = true
         }
+        // 验收：直接展开下载版本菜单（配合 --book=）
+        if (arg == "--dl-menu") {
+            openDownloadMenu = true
+        }
     }
     LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget, bookTarget,
-        settleFrames, booklistAutoOpen)
+        settleFrames, booklistAutoOpen, openDownloadMenu)
 }
 
 main(args: Array<String>): Int64 {
@@ -171,6 +178,9 @@ main(args: Array<String>): Int64 {
             } else {
                 writeDebugLog("--login: ZLIB_TEST_EMAIL/PASSWORD not set")
             }
+        }
+        if (options.openDownloadMenu) {
+            state.downloadMenuOpen.value = true
         }
         if (!options.bookTarget.isEmpty()) {
             let parts = options.bookTarget.split("|")

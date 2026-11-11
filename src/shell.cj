@@ -28,6 +28,13 @@ func appShell(state: AppState): Unit {
                 .fillWidth().fillHeight()
             // 侧栏浮层：直接作为 ZStack 子节点，位置由父容器给（x=0）
             sidebarTabs(state)
+            // 下载版本菜单：浮在最上层，点菜单外/切换页面自动关闭
+            if (state.downloadMenuOpen.value) {
+                SelineContextMenuOverlay(state.downloadMenuItems(),
+                    state.downloadAnchor.x,
+                    state.downloadAnchor.y + state.downloadAnchor.h + 6.0,
+                    {=> state.closeDownloadMenu()}, width: 250.0)
+            }
         }.alignment(Alignment.TopLeading)
             // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
             .fillWidth().flex()
