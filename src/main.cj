@@ -38,11 +38,14 @@ class LaunchOptions {
     let perf: Bool
     let gpuDriver: String
     let noVsync: Bool
+    let zoom: Float32
+    let plainWindow: Bool
+    let blank: Bool
 
     init(shotPath: String, initialTab: Int64, searchKeyword: String, railOpen: Bool,
         login: Bool, downloadTarget: String, bookTarget: String, settleFrames: UInt64,
         booklistAutoOpen: Bool, openDownloadMenu: Bool, perf: Bool, gpuDriver: String,
-        noVsync: Bool) {
+        noVsync: Bool, zoom: Float32, plainWindow: Bool, blank: Bool) {
         this.shotPath = shotPath
         this.initialTab = initialTab
         this.searchKeyword = searchKeyword
@@ -56,6 +59,9 @@ class LaunchOptions {
         this.perf = perf
         this.gpuDriver = gpuDriver
         this.noVsync = noVsync
+        this.zoom = zoom
+        this.plainWindow = plainWindow
+        this.blank = blank
     }
 }
 
@@ -74,6 +80,9 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
     var perf = false
     var gpuDriver = ""
     var noVsync = false
+    var zoom: Float32 = 1.0
+    var plainWindow = false
+    var blank = false
     for (arg in args) {
         // 验收用：把渲染器后备缓冲导出成 PNG，拍完自动关窗
         if (arg.startsWith("--shot=")) {
@@ -126,9 +135,21 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         if (arg == "--novsync") {
             noVsync = true
         }
+        // 验收：UI 缩放（影响后备像素量，用于诊断渲染成本）
+        if (arg.startsWith("--zoom=")) {
+            zoom = Float32.parse(arg[7..])
+        }
+        // 诊断：退化为系统边框普通窗口（排查无边框/圆角软合成成本）
+        if (arg == "--plain-window") {
+            plainWindow = true
+        }
+        // 诊断：只画一个空根节点，测渲染地板
+        if (arg == "--blank") {
+            blank = true
+        }
     }
     LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget, bookTarget,
-        settleFrames, booklistAutoOpen, openDownloadMenu, perf, gpuDriver, noVsync)
+        settleFrames, booklistAutoOpen, openDownloadMenu, perf, gpuDriver, noVsync, zoom, plainWindow, blank)
 }
 
 /** 帧耗时统计（`--perf` 时启用）：用于证明/回归性能优化。 */
@@ -156,7 +177,7 @@ class PerfStats {
         if (deltaMs > 33.0) {
             slowFrames += 1
         }
-        if (frames % 120 == 0) {
+        if (frames % 30 == 0) {
             writeDebugLog("PERF frame=${frames} avg=${Int64(totalMs / Float64(frames))}ms " +
                 "max=${Int64(maxMs)}ms slow=${slowFrames}")
         }
@@ -202,18 +223,9 @@ main(args: Array<String>): Int64 {
             writeDebugLog("render driver hint: ${options.gpuDriver}")
         }
         let app = DesktopApp(
-            WindowSpec(
-                "Seline Read",
-                1280,
-                820,
-                // 自绘标题栏：系统不能再画一条
-                frameless: true,
-                cornerRadius: WINDOW_CORNER_RADIUS,
-                scaling: Some(WindowScaleSettings(followSystem: true, zoom: 1.0)),
-                supersample: 1,
-                vsync: !options.noVsync
-            ),
+            windowSpecFor(options),
             theme: selineChuiTheme(),
+
             hints: hintSettings,
             // 验收用：`--shot=<path>` 由框架在 present 之后从渲染器后备缓冲读回像素，
             // 与窗口是否在前台、有没有被遮挡无关；拍完自动关窗。
@@ -300,7 +312,11 @@ main(args: Array<String>): Int64 {
             }, keepsAlive: {=>
                 railAnimating(state) || options.perf || !options.shotPath.isEmpty()
             }) {
-                appShell(state)
+                if (options.blank) {
+                    VStack { }.fillWidth().fillHeight()
+                } else {
+                    appShell(state)
+                }
             }
         }
         writeDebugLog("window closed")
@@ -311,4 +327,21 @@ main(args: Array<String>): Int64 {
         }
     })
     0
+}
+
+/** 窗口规格：默认无边框 + 透明圆角（自绘标题栏）；`--plain-window` 用系统边框做诊断。 */
+func windowSpecFor(options: LaunchOptions): WindowSpec {
+    if (options.plainWindow) {
+        return WindowSpec("Seline Read", 1200, 780, resizable: true,
+            frameless: false, decorated: true, transparent: false, cornerRadius: 0.0,
+            scaling: Some(WindowScaleSettings(followSystem: true, zoom: 1.0)),
+            supersample: 1, vsync: true)
+    }
+    WindowSpec("Seline Read", 1280, 820,
+        // 自绘标题栏：系统不能再画一条
+        frameless: true,
+        cornerRadius: WINDOW_CORNER_RADIUS,
+        scaling: Some(WindowScaleSettings(followSystem: true, zoom: options.zoom)),
+        supersample: 1,
+        vsync: !options.noVsync)
 }

@@ -153,15 +153,19 @@ class BookCard <: Widget {
         let textX = cover.x
         let titleY = cover.y + cover.h + 8.0
         let titleStyle = selineFontStyle(bold: true)
-        // 卡片每帧重画，逐字符测量文字宽度会把 100 张卡片的绘制拖到几秒一帧；
-        // 按字符数截断足够（书名标题的展示只需要"大致不溢出"）。
-        let title = truncateRunes(cell.title, 16, suffix: "…")
+        // 按实际像素宽度截断（结果缓存），避免混排时超出卡片
+        let title = state.fittedText(ctx, cell.title, coverW, theme.fontLabel, true,
+            theme.fontFamily)
+        let author = if (cell.author.isEmpty()) { "未知作者" } else { cell.author }
+        let authorText = state.fittedText(ctx, author, coverW, theme.fontCaption, false,
+            theme.fontFamily)
+        // 文本裁剪到卡片内：即使测量误差/字体回退，也不会"飞"出卡片
+        ctx.renderer.pushClip(Rect(frame.x, titleY, frame.w, frame.bottom() - titleY))
         paintText(ctx.renderer, title, Rect(textX, titleY, coverW, 18.0), palette.text,
             theme.fontLabel, style: titleStyle, family: theme.fontFamily)
-        let author = if (cell.author.isEmpty()) { "未知作者" } else { cell.author }
-        let authorText = truncateRunes(author, 18, suffix: "…")
         paintText(ctx.renderer, authorText, Rect(textX, titleY + 20.0, coverW, 16.0),
             palette.textMuted, theme.fontCaption, family: theme.fontFamily)
+        ctx.renderer.popClip()
     }
 
     public func handle(_: UiContext, event: UiEvent): Bool {

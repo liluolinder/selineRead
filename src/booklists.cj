@@ -117,23 +117,29 @@ class BooklistCard <: Widget {
         let textX = frame.x + BOOKLIST_CARD_PAD +
             Float32(3) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP) + 4.0
         let textW = max(Float32(40.0), frame.right() - BOOKLIST_CARD_PAD - textX)
-        let title = truncateRunes(cell.title, 16, suffix: "…")
+        let title = state.fittedText(ctx, cell.title, textW, theme.fontLabel, true,
+            theme.fontFamily)
         paintText(ctx.renderer, title,
             Rect(textX, frame.y + 8.0, textW, 20.0), palette.text, theme.fontLabel,
             style: selineFontStyle(bold: true), family: theme.fontFamily)
         let author = if (cell.author.isEmpty()) { "匿名书单" } else { cell.author }
-        paintText(ctx.renderer, truncateRunes(author, 20, suffix: "…"),
-            Rect(textX, frame.y + 30.0, textW, 16.0), palette.textMuted,
-            theme.fontCaption, family: theme.fontFamily)
+        paintText(ctx.renderer, state.fittedText(ctx, author, textW, theme.fontCaption,
+            false, theme.fontFamily), Rect(textX, frame.y + 30.0, textW, 16.0),
+            palette.textMuted, theme.fontCaption, family: theme.fontFamily)
         if (!cell.description.isEmpty()) {
-            paintText(ctx.renderer, truncateRunes(cell.description, 28, suffix: "…"),
+            paintText(ctx.renderer, state.fittedText(ctx, cell.description, textW,
+                theme.fontCaption, false, theme.fontFamily),
                 Rect(textX, frame.y + 50.0, textW, 16.0), palette.textFaint,
                 theme.fontCaption, family: theme.fontFamily)
         }
-        let meta = "${cell.booksCount} 本 · 浏览 ${cell.viewsCount} · 收藏 ${cell.favoritesCount}"
+        let meta = state.fittedText(ctx,
+            "${cell.booksCount} 本 · 浏览 ${cell.viewsCount} · 收藏 ${cell.favoritesCount}",
+            textW, theme.fontCaption, false, theme.fontFamily)
+        ctx.renderer.pushClip(Rect(textX, frame.y, textW, frame.h))
         paintText(ctx.renderer, meta,
             Rect(textX, frame.bottom() - 26.0, textW, 16.0), palette.textFaint,
             theme.fontCaption, family: theme.fontFamily)
+        ctx.renderer.popClip()
     }
 
     public func handle(_: UiContext, event: UiEvent): Bool {

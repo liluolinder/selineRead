@@ -637,6 +637,24 @@ public class AppState {
         iconAsset
     }
 
+
+    /** 文本按宽截断缓存：同一文本/字号/宽度只测量一次。 */
+    private let fittedTextCache = HashMap<String, String>()
+
+    /** 按可用宽度截断文本（带缓存，避免每帧对每张卡片重复测量）。 */
+    public func fittedText(ctx: UiContext, text: String, maxWidth: Float32,
+        pointSize: Float32, bold: Bool, family: String): String {
+        let key = "${Int64(maxWidth)}|${pointSize}|${bold}|${text}"
+        match (fittedTextCache.get(key)) {
+            case Some(value) => return value
+            case None => ()
+        }
+        let fitted = fitTextWidth(ctx, text, maxWidth, pointSize,
+            selineFontStyle(bold: bold), family)
+        fittedTextCache[key] = fitted
+        fitted
+    }
+
     /** 默认封面纹理（懒加载，UI 线程 draw 时创建一次）。 */
     public func placeholderCoverTexture(ctx: UiContext): ?SelineImageTexture {
         match (placeholderTexture) {
