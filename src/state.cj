@@ -14,6 +14,8 @@ package seline_read
 import std.collection.{ArrayList, HashMap}
 import std.convert.*
 import std.env.getVariable
+import std.sync.*
+import std.time.*
 import std.fs.{Directory, File, Path, exists, remove}
 import chui.*
 import seline_ui.*
@@ -246,6 +248,31 @@ public class DownloadMenuAnchor {
 
     public init() {}
 }
+
+/** 图片后台任务：下载+解码，或只解码本地缓存。 */
+enum ImageJobKind {
+    | FetchAndDecode
+    | DecodeCached
+}
+
+/** 一条图片后台任务（worker 池消费，避免每张图 spawn 一个线程）。 */
+class ImageJob {
+    let kind: ImageJobKind
+    let url: String
+    let path: String
+    let imageKind: SelineImageKind
+
+    init(kind: ImageJobKind, url: String, path: String, imageKind: SelineImageKind) {
+        this.kind = kind
+        this.url = url
+        this.path = path
+        this.imageKind = imageKind
+    }
+}
+
+/** 图片 worker 数量与同时下载上限。 */
+let IMAGE_WORKERS: Int64 = 3
+let IMAGE_FETCH_LIMIT: Int64 = 4
 
 /** 把 `ZlibClient` 装进不可变对象，方便后台闭包安全捕获。 */
 class ClientBox {
@@ -602,6 +629,13 @@ public class AppState {
     private let failedCovers = HashMap<String, Bool>()
     /** 解码失败后的重试次数（缓存文件损坏时删掉重下一次）。 */
     private let decodeRetries = HashMap<String, Int64>()
+    /** 图片后台队列 + 固定 worker（替代「每张图 spawn 一个线程」）。 */
+    private let imageQueue = ArrayList<ImageJob>()
+    private let imageQueueLock = Mutex()
+    private var imageWorkersStarted = false
+    private var imageWorkersStopped = false
+    /** 正在下载的图片数（仅 UI 线程读写）。 */
+    private var activeFetches: Int64 = 0
     /** 应用图标资源路径（标题栏与窗口图标用）。 */
     private var iconAsset: String = ""
     /** 默认封面图资源路径（图片占位用）。 */
@@ -725,6 +759,9 @@ public class AppState {
             } catch (_: Exception) {
                 ()
             }
+        }
+        synchronized(imageQueueLock) {
+            imageWorkersStopped = true
         }
         coverTextures.clear()
         decodedImages.clear()
@@ -1464,39 +1501,7 @@ public class AppState {
             return
         }
         pendingImages[url] = true
-        let _ = spawn {=>
-            let decoded = decodeImageFile(path)
-            postToUi({=>
-                match (decoded) {
-                    case Some(image) =>
-                        decodedImages[url] = image
-                        pendingImages.remove(url)
-                        ()
-                    case None =>
-                        pendingImages.remove(url)
-                        let retries = match (decodeRetries.get(url)) {
-                            case Some(value) => value
-                            case None => 0
-                        }
-                        if (retries < 1) {
-                            decodeRetries[url] = retries + 1
-                            // 缓存文件可能损坏（上次下载中断）：删掉重新下一次
-                            try {
-                                remove(Path(path))
-                            } catch (_: Exception) {
-                                ()
-                            }
-                            match (this.store) {
-                                case Some(storeValue) =>
-                                    scheduleImageFetch(url, SelineImageKind.Cover, storeValue)
-                                case None => ()
-                            }
-                        } else {
-                            failedCovers[url] = true
-                        }
-                }
-            })
-        }
+        enqueueImageJob(ImageJob(ImageJobKind.DecodeCached, url, path, SelineImageKind.Cover))
     }
 
     private func scheduleImageFetch(url: String, kind: SelineImageKind,
@@ -1504,46 +1509,152 @@ public class AppState {
         if (failedCovers.contains(url) || pendingImages.contains(url)) {
             return
         }
-        // 首页一次会画出很多封面；同时压太多 HTTPS 请求会拖慢整体
-        // （底层 TLS 在部分环境下还不稳定），限制并发、后面的帧再补。
-        if (pendingImages.size >= 6) {
+        // 同时压太多 HTTPS 请求会拖慢整体（底层 TLS 在部分环境下还不稳定），
+        // 限制并发，其余任务排队由固定 worker 顺序处理。
+        if (activeFetches >= IMAGE_FETCH_LIMIT) {
             return
         }
-        let clientBox = match (this.client) {
-            case Some(value) => value
+        match (this.client) {
+            case Some(_) => ()
             case None => return
         }
         pendingImages[url] = true
-        let _ = spawn {=>
-            let result = imageStore.fetchDecoded(url, kind, {link =>
-                try {
-                    Some(clientBox.value.fetchBytes(link))
-                } catch (_: ZlibError) {
-                    Option<Array<Byte>>.None
-                }
-            })
-            postToUi({=>
-                match (result) {
-                    case Some(image) =>
-                        decodedImages[url] = image
-                        pendingImages.remove(url)
-                        ()
-                    case None =>
-                        pendingImages.remove(url)
-                        failedCovers[url] = true
-                        ()
-                }
-            })
+        activeFetches += 1
+        enqueueImageJob(ImageJob(ImageJobKind.FetchAndDecode, url, "", kind))
+    }
+
+    private func enqueueImageJob(job: ImageJob): Unit {
+        startImageWorkers()
+        synchronized(imageQueueLock) {
+            imageQueue.add(job)
         }
     }
 
+    /** 固定 worker：线程数恒定，下载/解码都走队列，不再每张图 spawn 一个线程。 */
+    private func startImageWorkers(): Unit {
+        if (imageWorkersStarted) {
+            return
+        }
+        imageWorkersStarted = true
+        writeDebugLog("image workers: ${IMAGE_WORKERS} (fetch limit ${IMAGE_FETCH_LIMIT})")
+        var index: Int64 = 0
+        while (index < IMAGE_WORKERS) {
+            let _ = spawn {=> imageWorkerLoop() }
+            index += 1
+        }
+    }
+
+    private func imageWorkerLoop(): Unit {
+        while (true) {
+            var job: ?ImageJob = None
+            var stop = false
+            synchronized(imageQueueLock) {
+                if (!imageQueue.isEmpty()) {
+                    job = Some(imageQueue[0])
+                    imageQueue.remove(at: 0)
+                } else if (imageWorkersStopped) {
+                    stop = true
+                }
+            }
+            match (job) {
+                case Some(value) =>
+                    try {
+                        runImageJob(value)
+                    } catch (_: Exception) {
+                        ()
+                    }
+                case None =>
+                    if (stop) {
+                        return
+                    }
+                    sleep(8 * Duration.millisecond)
+            }
+        }
+    }
+
+    private func runImageJob(job: ImageJob): Unit {
+        match (job.kind) {
+            case ImageJobKind.DecodeCached =>
+                let decoded = decodeImageFile(job.path)
+                postToUi({=> finishImageDecode(job, decoded) })
+            case ImageJobKind.FetchAndDecode =>
+                let clientBox = match (this.client) {
+                    case Some(value) => value
+                    case None =>
+                        postToUi({=> finishImageFetch(job, Option<DecodedImage>.None) })
+                        return
+                }
+                let storeValue = match (this.store) {
+                    case Some(value) => value
+                    case None =>
+                        postToUi({=> finishImageFetch(job, Option<DecodedImage>.None) })
+                        return
+                }
+                let result = storeValue.fetchDecoded(job.url, job.imageKind, {link =>
+                    try {
+                        Some(clientBox.value.fetchBytes(link))
+                    } catch (_: ZlibError) {
+                        Option<Array<Byte>>.None
+                    }
+                })
+                postToUi({=> finishImageFetch(job, result) })
+        }
+    }
+
+    /** 下载+解码完成（UI 线程）：存像素或标记失败。 */
+    private func finishImageFetch(job: ImageJob, result: ?DecodedImage): Unit {
+        pendingImages.remove(job.url)
+        if (activeFetches > 0) {
+            activeFetches -= 1
+        }
+        match (result) {
+            case Some(image) =>
+                decodedImages[job.url] = image
+            case None =>
+                failedCovers[job.url] = true
+        }
+    }
+
+    /** 纯解码完成（UI 线程）：存像素；缓存损坏删掉重下一次。 */
+    private func finishImageDecode(job: ImageJob, decoded: ?DecodedImage): Unit {
+        match (decoded) {
+            case Some(image) =>
+                decodedImages[job.url] = image
+                pendingImages.remove(job.url)
+            case None =>
+                pendingImages.remove(job.url)
+                let retries = match (decodeRetries.get(job.url)) {
+                    case Some(value) => value
+                    case None => 0
+                }
+                if (retries < 1) {
+                    decodeRetries[job.url] = retries + 1
+                    try {
+                        remove(Path(job.path))
+                    } catch (_: Exception) {
+                        ()
+                    }
+                    match (this.store) {
+                        case Some(storeValue) =>
+                            scheduleImageFetch(job.url, SelineImageKind.Cover, storeValue)
+                        case None => ()
+                    }
+                } else {
+                    failedCovers[job.url] = true
+                }
+        }
+    }
     /* -------------------------------------------------- UI 线程投递 */
 
     /** 把一段状态更新投递到 UI 线程执行（窗口未建好时丢弃）。 */
     private func postToUi(action: () -> Unit): Unit {
         match (app) {
             case Some(value) =>
-                let _ = value.postToUi(action)
+                try {
+                    let _ = value.postToUi(action)
+                } catch (_: Exception) {
+                    ()
+                }
             case None => ()
         }
     }
