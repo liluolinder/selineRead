@@ -35,7 +35,7 @@ func booklistDetailPage(state: AppState): Unit {
                     errorBannerText(state.booklistError.value)
                 }
                 if (state.booklistLoading.value && state.booklistBooks.value.isEmpty()) {
-                    detailSkeleton()
+                    bookSkeletonGrid(count: 12)
                 }
                 bookGrid(state, state.booklistBooks.value)
                 if (state.booklistBooks.value.isEmpty() &&

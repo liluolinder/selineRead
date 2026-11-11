@@ -32,9 +32,7 @@ func detailPage(state: AppState): Unit {
                             state.detailAuthor.value
                         }).fontSize(theme.fontBody).muted()
                         Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
-                        if (state.detailLoading.value) {
-                            detailSkeleton()
-                        }
+
                         HStack(spacing: vp(SELINE_SPACE_SM)) {
                             // 点击弹出「版本选择」菜单：第一项是默认下载链接，下面是可选格式
                             DownloadMenuButton(state)
@@ -52,7 +50,10 @@ func detailPage(state: AppState): Unit {
                     }.hug()
                     Spacer()
                 }.hug().fillWidth()
-                if (!state.detailDescription.value.isEmpty()) {
+                if (state.forceSkeleton.value ||
+                    (state.detailLoading.value && state.detailDescription.value.isEmpty())) {
+                    descriptionSkeleton()
+                } else if (!state.detailDescription.value.isEmpty()) {
                     VStack(spacing: vp(SELINE_SPACE_XS)) {
                         Label("简介").fontSize(theme.fontHeading).bold()
                         Label(plainText(state.detailDescription.value)).fontSize(theme.fontBody).wrap()
@@ -74,7 +75,8 @@ func detailPage(state: AppState): Unit {
                     if (state.commentsDisabled.value) {
                         Label("本书已关闭评论").fontSize(theme.fontCaption).muted()
                     }
-                    if (state.commentsLoading.value && state.comments.value.isEmpty()) {
+                    if (state.forceSkeleton.value ||
+                        (state.commentsLoading.value && state.comments.value.isEmpty())) {
                         commentSkeleton()
                     }
                     var shown: Int64 = 0

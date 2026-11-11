@@ -32,7 +32,7 @@ class SkeletonBox <: Widget {
     }
 
     public func draw(ctx: UiContext): Unit {
-        paintSurface(ctx.renderer, frame, selineTheme().palette.surfaceSunken, radius)
+        paintSurface(ctx.renderer, frame, selineTheme().palette.surfaceHover, radius)
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {
@@ -76,14 +76,14 @@ class SkeletonBookCard <: Widget {
         let coverW = frame.w - BOOK_CARD_PAD * 2.0
         let coverH = coverW / BOOK_COVER_ASPECT
         let cover = Rect(frame.x + BOOK_CARD_PAD, frame.y + BOOK_CARD_PAD, coverW, coverH)
-        paintSurface(ctx.renderer, cover, palette.surfaceSunken,
+        paintSurface(ctx.renderer, cover, palette.surfaceHover,
             BOOK_CARD_RADIUS - BOOK_CARD_PAD)
         let textX = cover.x
         let textY = cover.y + cover.h + 10.0
         paintSurface(ctx.renderer, Rect(textX, textY, coverW * 0.72, 12.0),
-            palette.surfaceSunken, 4.0)
+            palette.surfaceHover, 4.0)
         paintSurface(ctx.renderer, Rect(textX, textY + 22.0, coverW * 0.42, 10.0),
-            palette.surfaceSunken, 4.0)
+            palette.surfaceHover, 4.0)
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {
@@ -140,18 +140,18 @@ class SkeletonBooklistCard <: Widget {
                 Float32(index) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP)
             paintSurface(ctx.renderer,
                 Rect(x, frame.y + BOOKLIST_CARD_PAD, BOOKLIST_PREVIEW_W, BOOKLIST_PREVIEW_H),
-                palette.surfaceSunken, 6.0)
+                palette.surfaceHover, 6.0)
             index += 1
         }
         let textX = frame.x + BOOKLIST_CARD_PAD +
             Float32(3) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP) + 4.0
         let textW = max(Float32(40.0), frame.right() - BOOKLIST_CARD_PAD - textX)
         paintSurface(ctx.renderer, Rect(textX, frame.y + 14.0, textW * 0.7, 14.0),
-            palette.surfaceSunken, 4.0)
+            palette.surfaceHover, 4.0)
         paintSurface(ctx.renderer, Rect(textX, frame.y + 38.0, textW * 0.45, 11.0),
-            palette.surfaceSunken, 4.0)
+            palette.surfaceHover, 4.0)
         paintSurface(ctx.renderer, Rect(textX, frame.y + 58.0, textW * 0.8, 11.0),
-            palette.surfaceSunken, 4.0)
+            palette.surfaceHover, 4.0)
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {
@@ -178,34 +178,101 @@ func booklistSkeletonGrid(count!: Int64 = 6): Unit {
     }.spacing(SELINE_SPACE_MD, SELINE_SPACE_MD)
 }
 
-/** 详情页骨架：大封面 + 标题/作者/简介条。 */
-func detailSkeleton(): Unit {
-    HStack(spacing: vp(SELINE_SPACE_LG)) {
-        SkeletonBox(180.0, 270.0, radius: 10.0)
-        VStack(spacing: vp(SELINE_SPACE_SM)) {
-            SkeletonBox(320.0, 24.0, radius: 6.0)
-            SkeletonBox(160.0, 14.0, radius: 5.0)
-            SkeletonBox(220.0, 14.0, radius: 5.0)
-            ZStack { }.height(8.0)
-            SkeletonBox(420.0, 12.0, radius: 5.0)
-            SkeletonBox(380.0, 12.0, radius: 5.0)
-            Spacer()
-        }.hug()
-        Spacer()
+/** 详情页「简介」骨架：标题条 + 三行正文条（按可用宽度百分比收缩）。 */
+func descriptionSkeleton(): Unit {
+    VStack(spacing: vp(SELINE_SPACE_XS)) {
+        Label("简介").fontSize(selineTheme().fontHeading).bold()
+        CommentSkeletonLine(widthRatio: 0.92, height: 12.0)
+        CommentSkeletonLine(widthRatio: 0.98, height: 12.0)
+        CommentSkeletonLine(widthRatio: 0.62, height: 12.0)
     }.hug().fillWidth()
 }
 
-/** 评论骨架：几行头像 + 文本条。 */
-func commentSkeleton(rows!: Int64 = 4): Unit {
+/** 按宽度比例画一条骨架（不能预知可用宽度，所以只能按 frame 百分比）。 */
+class CommentSkeletonLine <: Widget {
+    private let widthRatio: Float32
+    private let lineHeight: Float32
+    private var frame = Rect.zero()
+
+    init(widthRatio!: Float32, height!: Float32) {
+        this.widthRatio = widthRatio
+        this.lineHeight = height
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, lineHeight)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        paintSurface(ctx.renderer,
+            Rect(frame.x, frame.y, frame.w * widthRatio, frame.h),
+            selineTheme().palette.surfaceHover, 4.0)
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
+}
+
+/** 评论区骨架：几张浅色评论卡（作者条 + 正文条），高度接近真实评论行。 */
+class SkeletonCommentRow <: Widget {
+    private var frame = Rect.zero()
+
+    init() {
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, 64.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        let palette = selineTheme().palette
+        paintSurface(ctx.renderer, frame, palette.surfaceRaised, 8.0)
+        let innerX = frame.x + 12.0
+        let innerW = max(0.0, frame.w - 24.0)
+        paintSurface(ctx.renderer, Rect(innerX, frame.y + 14.0, innerW * 0.18, 10.0),
+            palette.surfaceHover, 4.0)
+        paintSurface(ctx.renderer, Rect(innerX, frame.y + 34.0, innerW * 0.72, 10.0),
+            palette.surfaceHover, 4.0)
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
+}
+
+/** 评论骨架：3 行。 */
+func commentSkeleton(rows!: Int64 = 3): Unit {
     VStack(spacing: vp(SELINE_SPACE_SM)) {
         var index: Int64 = 0
         while (index < rows) {
-            VStack(spacing: vp(6.0)) {
-                SkeletonBox(120.0, 12.0, radius: 4.0)
-                SkeletonBox(420.0, 11.0, radius: 4.0)
-            }.hug().fillWidth()
-                .padding(10.0)
-                .background(selineTheme().palette.surfaceSunken, vp(8.0))
+            SkeletonCommentRow()
             index += 1
         }
     }.hug().fillWidth()
