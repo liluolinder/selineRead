@@ -276,6 +276,12 @@ main(args: Array<String>): Int64 {
             }
             state.searchText.value = keyword
             state.submitSearch()
+            // 验收：延迟 500ms 再搜 B，验证 A 的迟到结果会被丢弃
+            let raceB = getVariable("SELINE_READ_SEARCH_RACE_B") ?? ""
+            if (!raceB.isEmpty()) {
+                let delayMs = Int64.parse(getVariable("SELINE_READ_SEARCH_RACE_DELAY_MS") ?? "500")
+                state.scheduleSearchForTest(raceB, delayMs)
+            }
         }
         if (options.login) {
             let email = getVariable("ZLIB_TEST_EMAIL") ?? ""

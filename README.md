@@ -91,6 +91,8 @@ cd target\release\bin
 .\main.exe --tab=1                       # 收藏页（登录后加载 user/book/saved）
 .\main.exe --tab=2 --bl-open             # 书单页并自动打开第一份书单
 $env:SELINE_READ_SEARCH="三体"          # 启动后直接搜索（中文命令行参数在子系统下会丢，用环境变量）
+# 竞态验收：先搜 三体，10ms 后再搜 活着；三体的迟到结果应被丢弃
+$env:SELINE_READ_SEARCH="三体"; $env:SELINE_READ_SEARCH_RACE_B="活着"; $env:SELINE_READ_SEARCH_RACE_DELAY_MS="10"
 .\main.exe --book=<id>|<hash> --dl-menu  # 打开详情页并展开下载版本菜单
 .\main.exe --search=rust                 # 启动即搜索
 .\main.exe --login                       # 用 ZLIB_TEST_EMAIL / ZLIB_TEST_PASSWORD 自动登录

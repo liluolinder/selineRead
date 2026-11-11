@@ -543,6 +543,8 @@ public class AppState {
     public let results = State<ArrayList<BookCell>>(ArrayList<BookCell>())
     /** 最近一次搜索关键词；空串表示「没在搜索态」。 */
     public let lastKeyword = State<String>("")
+    /** 搜索请求序号：只接受最后一次搜索的返回，A/B 竞态时丢弃过期的 A。 */
+    private var searchGeneration: Int64 = 0
     /** 是否停在图书详情页（二级页面）。 */
     public let detailOpen = State<Bool>(false)
     /** 详情页字段。 */
@@ -646,6 +648,8 @@ public class AppState {
     private var autoDownloadTarget: String = ""
     /** 书单列表是否已成功加载过（构建期懒加载用）。 */
     private var booklistsLoaded: Bool = false
+    /** 书单请求序号：书单搜索 A/B 竞态时只接受最后一次。 */
+    private var booklistsGeneration: Int64 = 0
 
     /* ---- 收藏（eapi /user/book/saved） ---- */
     public let favorites = State<ArrayList<BookCell>>(ArrayList<BookCell>())
@@ -723,6 +727,7 @@ public class AppState {
         downloadMenuOpen.value = false
         // 点「热门」= 退出搜索态，回到推荐墙
         if (index == TAB_HOME && !lastKeyword.value.isEmpty()) {
+            searchGeneration += 1
             lastKeyword.value = ""
             results.value = ArrayList<BookCell>()
         }
@@ -896,15 +901,19 @@ public class AppState {
             booklistQuery.value = keyword
             booklistsLoaded = false
             booklistsError.value = ""
+            booklists.value = ArrayList<BooklistCell>()
+            booklistsNextPage.value = 0
             loadBooklists()
             return
         }
+        searchGeneration += 1
         if (keyword.isEmpty()) {
             lastKeyword.value = ""
             results.value = ArrayList<BookCell>()
             tab.value = TAB_HOME
             return
         }
+        let generation = searchGeneration
         let clientBox = match (this.client) {
             case Some(value) => value
             case None =>
@@ -924,6 +933,11 @@ public class AppState {
                 let page = SearchApi.search(clientBox.value, keyword, limit: 20)
                 let cells = cellsFromBooks(page.books, clientBox.value.currentSiteUrl())
                 postToUi({=>
+                    // 期间又搜了别的词：这次结果已经过期，直接丢弃
+                    if (generation != searchGeneration) {
+                        writeDebugLog("drop stale search result: ${keyword}")
+                        return
+                    }
                     results.value = cells
                     lastKeyword.value = keyword
                     status.value = "搜索「${keyword}」：${cells.size} 本"
@@ -931,6 +945,10 @@ public class AppState {
                 })
             } catch (failure: ZlibError) {
                 postToUi({=>
+                    if (generation != searchGeneration) {
+                        writeDebugLog("drop stale search error: ${keyword}")
+                        return
+                    }
                     error.value = "搜索失败：${failure.detail}"
                     loading.value = false
                 })
@@ -948,11 +966,23 @@ public class AppState {
         popularVisible.value = if (next > total) { total } else { next }
     }
 
+    /** 验收用：延迟 delayMs 后自动搜索一次（模拟「A 未返回时又搜 B」的竞态）。 */
+    public func scheduleSearchForTest(keyword: String, delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=>
+                searchText.value = keyword
+                submitSearch()
+            })
+        }
+    }
+
     /** 退出搜索态，回到热门列表。 */
     public func exitSearch(): Unit {
+        searchGeneration += 1
         lastKeyword.value = ""
         results.value.clear()
-        tab.value = 0
+        tab.value = TAB_HOME
     }
 
     /* -------------------------------------------------- 详情 */
@@ -1057,6 +1087,8 @@ public class AppState {
         }
         let query = booklistQuery.value
         let mine = booklistsMine.value
+        booklistsGeneration += 1
+        let generation = booklistsGeneration
         booklistsLoading.value = true
         booklistsError.value = ""
         let _ = spawn {=>
@@ -1065,7 +1097,13 @@ public class AppState {
             } else {
                 BooklistsPayload.load(clientBox.value, targetPage, query)
             }
-            postToUi({=> applyBooklists(payload, reset) })
+            postToUi({=>
+                if (generation != booklistsGeneration) {
+                    writeDebugLog("drop stale booklists result: page=${targetPage}")
+                    return
+                }
+                applyBooklists(payload, reset)
+            })
         }
     }
 
