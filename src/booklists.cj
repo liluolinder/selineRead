@@ -16,7 +16,7 @@ import zlibraryAPI4CJ.core.*
 func booklistsPage(state: AppState): Unit {
     state.ensureBooklistsLoaded()
     VStack(spacing: vp(0.0)) {
-        ScrollView {
+        pageScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.booklistsError.value.isEmpty()) {
                     errorBannerText(state.booklistsError.value)

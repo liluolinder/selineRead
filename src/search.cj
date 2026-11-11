@@ -12,7 +12,7 @@ import seline_ui.*
 /** 搜索结果（不再占用独立页签，显示在「热门」页签内）。 */
 func searchPage(state: AppState): Unit {
     VStack(spacing: vp(0.0)) {
-        ScrollView {
+        pageScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
 
                 if (!state.error.value.isEmpty()) {

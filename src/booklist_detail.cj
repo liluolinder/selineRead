@@ -19,7 +19,7 @@ func booklistDetailPage(state: AppState): Unit {
                 kind: SelineButtonKind.Ghost, compact: true)
             Spacer()
         }.hug().fillWidth().padding(PAGE_PAD, 12.0, PAGE_PAD, 4.0)
-        ScrollView {
+        pageScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 VStack(spacing: vp(SELINE_SPACE_XS)) {
                     Label(state.booklistTitle.value).fontSize(theme.fontTitle).bold()

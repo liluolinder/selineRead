@@ -21,7 +21,7 @@ func detailPage(state: AppState): Unit {
                 kind: SelineButtonKind.Ghost, compact: true)
             Spacer()
         }.hug().fillWidth().padding(PAGE_PAD, 12.0, PAGE_PAD, 4.0)
-        ScrollView {
+        pageScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.detailError.value.isEmpty()) {
                     errorBannerText(state.detailError.value)
@@ -389,11 +389,17 @@ class DescriptionScroll <: Widget {
                     return false
                 }
                 let limit = maxOffset(ctx)
-                let next = max(0.0, min(limit,
-                    state.detailDescriptionOffset.value + wheelY * 48.0))
-                if (next != state.detailDescriptionOffset.value) {
-                    state.detailDescriptionOffset.value = next
+                if (limit <= 0.0) {
+                    // 简介没有超出高度：滚轮交给页面继续滚动
+                    return false
                 }
+                let current = state.detailDescriptionOffset.value
+                let next = max(0.0, min(limit, current + wheelY * 48.0))
+                if (next == current) {
+                    // 已经到顶/到底：滚轮继续传给页面
+                    return false
+                }
+                state.detailDescriptionOffset.value = next
                 true
             case _ => false
         }

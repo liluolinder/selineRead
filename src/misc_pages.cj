@@ -15,7 +15,7 @@ func downloadsPage(state: AppState): Unit {
     let palette = theme.palette
     VStack(spacing: vp(0.0)) {
         pageHeader("下载", state.downloadDir.value, {=> ()})
-        ScrollView {
+        pageScrollView {
             VStack(spacing: vp(SELINE_SPACE_SM)) {
                 if (!state.downloadMessage.value.isEmpty()) {
                     Label(state.downloadMessage.value).fontSize(theme.fontCaption)
@@ -46,7 +46,7 @@ func settingsPage(state: AppState): Unit {
     let palette = theme.palette
     VStack(spacing: vp(0.0)) {
         pageHeader("设置", "账号与本地目录", {=> ()})
-        ScrollView {
+        pageScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 Label("账号").fontSize(theme.fontHeading).bold()
                 if (state.loggedIn.value) {

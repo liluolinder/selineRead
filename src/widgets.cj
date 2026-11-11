@@ -3,11 +3,33 @@
  */
 package seline_read
 
+import std.env.getVariable
 import chui.*
 import seline_ui.*
 
 /** 内容区左右留白，各页面共用。 */
 let PAGE_PAD: Float32 = SELINE_PAGE_MARGIN
+
+/**
+ * 全局滚动手感：滚轮步长放大，动画时长缩短。
+ *
+ * chui 默认是 300ms 的缓动动画；本机整窗重绘较慢（约 40~60ms/帧），
+ * 长动画在低帧率下看起来是一跳一跳的。缩短到 160ms + ease-out，
+ * 滚轮响应更跟手；也支持 `SELINE_READ_SCROLL=immediate` 直接无动画。
+ */
+func appScrollOptions(): ScrollOptions {
+    let mode = getVariable("SELINE_READ_SCROLL") ?? ""
+    if (mode == "immediate") {
+        return ScrollOptions.immediate(wheelStep: 96.0)
+    }
+    ScrollOptions.web(wheelStep: 96.0, duration: 160,
+        easing: Easing.CubicBezier(0.16, 1.0, 0.3, 1.0))
+}
+
+/** 页面级滚动容器：统一使用 appScrollOptions（各页面滚动都不再用默认手感）。 */
+func pageScrollView(body!: () -> Unit): ScrollView {
+    ScrollView(body: body).scrollOptions(appScrollOptions())
+}
 
 /** 页面标题 + 右侧动作。 */
 func pageHeader(title: String, subtitle: String, trailing: () -> Unit): Unit {
