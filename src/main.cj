@@ -32,9 +32,10 @@ class LaunchOptions {
     let login: Bool
     let downloadTarget: String
     let bookTarget: String
+    let settleFrames: UInt64
 
     init(shotPath: String, initialTab: Int64, searchKeyword: String, railOpen: Bool,
-        login: Bool, downloadTarget: String, bookTarget: String) {
+        login: Bool, downloadTarget: String, bookTarget: String, settleFrames: UInt64) {
         this.shotPath = shotPath
         this.initialTab = initialTab
         this.searchKeyword = searchKeyword
@@ -42,6 +43,7 @@ class LaunchOptions {
         this.login = login
         this.downloadTarget = downloadTarget
         this.bookTarget = bookTarget
+        this.settleFrames = settleFrames
     }
 }
 
@@ -54,6 +56,7 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
     var login = false
     var downloadTarget = ""
     var bookTarget = ""
+    var settleFrames: UInt64 = UInt64(720)
     for (arg in args) {
         // 验收用：把渲染器后备缓冲导出成 PNG，拍完自动关窗
         if (arg.startsWith("--shot=")) {
@@ -82,8 +85,13 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         if (arg.startsWith("--book=")) {
             bookTarget = arg[7..]
         }
+        // 验收：截图前等待的帧数（网络/解码慢时可加大）
+        if (arg.startsWith("--settle=")) {
+            settleFrames = UInt64.parse(arg[9..])
+        }
     }
-    LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget, bookTarget)
+    LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget, bookTarget,
+        settleFrames)
 }
 
 main(args: Array<String>): Int64 {
@@ -127,7 +135,7 @@ main(args: Array<String>): Int64 {
             capture: if (options.shotPath.isEmpty()) {
                 Option<DesktopCaptureRequest>.None
             } else {
-                Some(DesktopCaptureRequest(options.shotPath, settleFrames: UInt64(720)))
+                Some(DesktopCaptureRequest(options.shotPath, settleFrames: options.settleFrames))
             }
         )
         app.setMinimumSize(1000, 680)

@@ -691,9 +691,11 @@ public class AppState {
         }
         if (!outcome.ok) {
             loginMessage.value = "登录失败：${outcome.message}"
+            writeDebugLog("login failed: ${outcome.message}")
             return
         }
         loggedIn.value = true
+        writeDebugLog("login ok: uid=${outcome.uid} name=${outcome.name}")
         accountName.value = outcome.name
         accountId.value = outcome.uid
         loginMessage.value = "登录成功"
@@ -778,6 +780,7 @@ public class AppState {
             accountId.value = outcome.uid
         }
         loginMessage.value = "已登录 · ${outcome.quota}"
+        writeDebugLog("profile ok: ${outcome.quota}")
     }
 
     /* -------------------------------------------------- 下载 */
