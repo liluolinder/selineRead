@@ -181,7 +181,7 @@ func booklistSkeletonGrid(count!: Int64 = 6): Unit {
 /** 详情页「简介」骨架：标题条 + 三行正文条（按可用宽度百分比收缩）。 */
 /** 简介骨架（页面自己画「简介」标题，这里只画那一整块）。 */
 func descriptionSkeleton(): Unit {
-    DescriptionSkeletonBlock(236.0)
+    DescriptionSkeletonBlock(DETAIL_DESC_H)
 }
 
 /** 简介骨架：**一整块**（简介本身是一块连续正文，不该拆成多张卡）。 */

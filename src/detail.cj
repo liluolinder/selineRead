@@ -10,8 +10,15 @@ import std.collection.ArrayList
 import chui.*
 import seline_ui.*
 
-/** 详情页顶部（封面 + 简介）的固定高度：简介区与封面同高。 */
-let DETAIL_TOP_HEIGHT: Float32 = 270.0
+/** 详情页顶部两张卡片的总高度。 */
+let DETAIL_TOP_HEIGHT: Float32 = 272.0
+/** 卡片内边距 / 圆角。 */
+let DETAIL_CARD_PAD: Float32 = 12.0
+let DETAIL_CARD_RADIUS: Float32 = 12.0
+/** 卡片内可用高度（总高 - 上下内边距）：封面高度取它。 */
+let DETAIL_CARD_INNER_H: Float32 = 248.0
+/** 简介滚动区高度（内高 - 「简介」标题行）。 */
+let DETAIL_DESC_H: Float32 = 218.0
 
 func detailPage(state: AppState): Unit {
     let theme = selineTheme()
@@ -26,20 +33,26 @@ func detailPage(state: AppState): Unit {
                 if (!state.detailError.value.isEmpty()) {
                     errorBannerText(state.detailError.value)
                 }
-                // 三段：封面 | 书名/作者/元信息 | 简介（简介与封面同高，内部可滚动）
-                HStack(spacing: vp(SELINE_SPACE_LG)) {
-                    DetailCover(state)
-                    VStack(spacing: vp(SELINE_SPACE_XS)) {
-                        Label(state.detailTitle.value).fontSize(theme.fontHeading).bold()
-                            .wrap()
-                        Label(if (state.detailAuthor.value.isEmpty()) {
-                            "未知作者"
-                        } else {
-                            state.detailAuthor.value
-                        }).fontSize(theme.fontBody).muted()
-                        Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
-                        Spacer()
-                    }.width(230.0)
+                // 两张卡片（都圆角、都有底色）：
+                //   左：封面 + 书名 + 作者/元信息
+                //   右：简介（高度与左卡一致，内部可滚动）
+                HStack(spacing: vp(SELINE_SPACE_MD)) {
+                    HStack(spacing: vp(SELINE_SPACE_MD)) {
+                        DetailCover(state, height: DETAIL_CARD_INNER_H)
+                        VStack(spacing: vp(SELINE_SPACE_XS)) {
+                            Label(state.detailTitle.value).fontSize(theme.fontHeading).bold()
+                                .wrap()
+                            Label(if (state.detailAuthor.value.isEmpty()) {
+                                "未知作者"
+                            } else {
+                                state.detailAuthor.value
+                            }).fontSize(theme.fontBody).muted()
+                            Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
+                            Spacer()
+                        }.width(190.0)
+                    }.hug()
+                        .padding(DETAIL_CARD_PAD)
+                        .background(theme.palette.surfaceRaised, vp(DETAIL_CARD_RADIUS))
                     VStack(spacing: vp(SELINE_SPACE_XS)) {
                         Label("简介").fontSize(theme.fontHeading).bold()
                         if (state.detailLoading.value &&
@@ -50,10 +63,12 @@ func detailPage(state: AppState): Unit {
                             Label("暂无简介").fontSize(theme.fontBody).muted()
                             ()
                         } else {
-                            DescriptionScroll(state, 236.0)
+                            DescriptionScroll(state, DETAIL_DESC_H)
                             ()
                         }
                     }.flex()
+                        .padding(DETAIL_CARD_PAD)
+                        .background(theme.palette.surfaceRaised, vp(DETAIL_CARD_RADIUS))
                 }.height(DETAIL_TOP_HEIGHT).fillWidth()
                 // 下载（点击弹出「版本选择」菜单）
                 HStack(spacing: vp(SELINE_SPACE_SM)) {
@@ -192,15 +207,17 @@ func relatedSection(state: AppState): Unit {
 /** 详情页大封面：2:3 固定槽位。 */
 class DetailCover <: Widget {
     private let state: AppState
+    private let coverHeight: Float32
     private var frame = Rect.zero()
 
-    init(state: AppState) {
+    init(state: AppState, height!: Float32 = 270.0) {
         this.state = state
+        this.coverHeight = height
         emit(this)
     }
 
     public func measure(_: UiContext, _: Size): Size {
-        Size(180.0, 270.0)
+        Size(coverHeight * 2.0 / 3.0, coverHeight)
     }
 
     public func layout(_: UiContext, rect: Rect): Unit {
