@@ -382,6 +382,8 @@ public class AppState {
     private let pendingImages = HashMap<String, Bool>()
     /** 下载/解码失败的 URL：不再重试，避免每帧重复请求。 */
     private let failedCovers = HashMap<String, Bool>()
+    /** 解码失败后的重试次数（缓存文件损坏时删掉重下一次）。 */
+    private let decodeRetries = HashMap<String, Int64>()
     /** 验收开关：登录成功后自动下载 `id|hash`。 */
     private var autoDownloadTarget: String = ""
 
@@ -509,6 +511,7 @@ public class AppState {
         // 首页第一张封面在启动期就开始下载，缩短首屏空白时间
         if (!popular.value.isEmpty()) {
             let first = popular.value[0]
+            writeDebugLog("first book: id=${first.id} hash=${first.hash}")
             writeDebugLog("first cover url: ${first.cover}")
             if (!first.cover.isEmpty()) {
                 let _ = imagePath(first.cover, SelineImageKind.Cover)
@@ -642,6 +645,11 @@ public class AppState {
         }
         detailFormats.value = payload.formats
         detailLoading.value = false
+    }
+
+    /** 验收/脚本用：没有列表项时按 id + hash 直接打开详情页。 */
+    public func openBookById(id: Int64, hash: String): Unit {
+        openBook(BookCell(id, hash, "（加载中…）", "", "", ""))
     }
 
     /** 关闭详情页，回到来处。 */
@@ -896,8 +904,26 @@ public class AppState {
                         ()
                     case None =>
                         pendingImages.remove(url)
-                        failedCovers[url] = true
-                        ()
+                        let retries = match (decodeRetries.get(url)) {
+                            case Some(value) => value
+                            case None => 0
+                        }
+                        if (retries < 1) {
+                            decodeRetries[url] = retries + 1
+                            // 缓存文件可能损坏（上次下载中断）：删掉重新下一次
+                            try {
+                                remove(Path(path))
+                            } catch (_: Exception) {
+                                ()
+                            }
+                            match (this.store) {
+                                case Some(storeValue) =>
+                                    scheduleImageFetch(url, SelineImageKind.Cover, storeValue)
+                                case None => ()
+                            }
+                        } else {
+                            failedCovers[url] = true
+                        }
                 }
             })
         }

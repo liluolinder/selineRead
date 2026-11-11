@@ -31,15 +31,17 @@ class LaunchOptions {
     let railOpen: Bool
     let login: Bool
     let downloadTarget: String
+    let bookTarget: String
 
     init(shotPath: String, initialTab: Int64, searchKeyword: String, railOpen: Bool,
-        login: Bool, downloadTarget: String) {
+        login: Bool, downloadTarget: String, bookTarget: String) {
         this.shotPath = shotPath
         this.initialTab = initialTab
         this.searchKeyword = searchKeyword
         this.railOpen = railOpen
         this.login = login
         this.downloadTarget = downloadTarget
+        this.bookTarget = bookTarget
     }
 }
 
@@ -51,6 +53,7 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
     var railOpen = false
     var login = false
     var downloadTarget = ""
+    var bookTarget = ""
     for (arg in args) {
         // 验收用：把渲染器后备缓冲导出成 PNG，拍完自动关窗
         if (arg.startsWith("--shot=")) {
@@ -75,8 +78,12 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         if (arg.startsWith("--download=")) {
             downloadTarget = arg[11..]
         }
+        // 验收：`--book=<id>|<hash>` 直接打开详情页
+        if (arg.startsWith("--book=")) {
+            bookTarget = arg[7..]
+        }
     }
-    LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget)
+    LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget, bookTarget)
 }
 
 main(args: Array<String>): Int64 {
@@ -144,6 +151,15 @@ main(args: Array<String>): Int64 {
                 state.submitLogin()
             } else {
                 writeDebugLog("--login: ZLIB_TEST_EMAIL/PASSWORD not set")
+            }
+        }
+        if (!options.bookTarget.isEmpty()) {
+            let parts = options.bookTarget.split("|")
+            if (parts.size >= 2) {
+                let bookId = Int64.tryParse(parts[0]) ?? 0
+                if (bookId > 0) {
+                    state.openBookById(bookId, parts[1])
+                }
             }
         }
         if (!options.downloadTarget.isEmpty()) {

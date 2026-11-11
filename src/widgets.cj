@@ -57,3 +57,78 @@ func emptyBlock(glyph: String, title: String, detail: String): Unit {
         .fillWidth()
         .padding(0.0, 48.0, 0.0, 48.0)
 }
+
+/** 解 HTML 常见命名实体。 */
+private func decodeHtmlEntity(name: String): String {
+    if (name == "amp") {
+        return "&"
+    }
+    if (name == "lt") {
+        return "<"
+    }
+    if (name == "gt") {
+        return ">"
+    }
+    if (name == "quot") {
+        return "\""
+    }
+    if (name == "apos" || name == "#39") {
+        return "'"
+    }
+    if (name == "nbsp") {
+        return " "
+    }
+    "&" + name + ";"
+}
+
+/**
+ * 把服务端简介里的 HTML 标签与常见实体转成纯文本。
+ *
+ * 只用于展示：服务端 `description` 是 HTML 片段（`<p>…</p>`），直接塞进
+ * `Label` 会把标签本身显示出来。这里不追求完整 HTML 解析，只处理标签与实体。
+ */
+func plainText(markup: String): String {
+    let runes = markup.toRuneArray()
+    var result = ""
+    var inTag = false
+    var inEntity = false
+    var entity = ""
+    for (rune in runes) {
+        let ch = rune.toString()
+        if (inTag) {
+            if (ch == ">") {
+                inTag = false
+            }
+            continue
+        }
+        if (inEntity) {
+            if (ch == ";") {
+                result += decodeHtmlEntity(entity)
+                entity = ""
+                inEntity = false
+            } else if (ch == "<") {
+                result += "&" + entity
+                entity = ""
+                inEntity = false
+                inTag = true
+            } else {
+                entity += ch
+            }
+            continue
+        }
+        if (ch == "<") {
+            inTag = true
+            continue
+        }
+        if (ch == "&") {
+            inEntity = true
+            entity = ""
+            continue
+        }
+        result += ch
+    }
+    if (inEntity) {
+        result += "&" + entity
+    }
+    result
+}

@@ -84,8 +84,6 @@ cd target\release\bin
 
 ## 已知限制
 
-- 热门列表的封面来自 Z-Library CDN，编码是**渐进式 JPEG**；
-  `seline_ui` 的 JPEG 解码器正在补 SOF2 支持（搜索结果的 baseline 封面已经能显示）。
 - 下载列表目前只记录本次会话（重启后不重新扫描目录）。
 - 窗口最大化时圆角暂未归零（普通窗口态 12px 圆角）。
 - Windows 上底层 TLS 偶发原生崩溃（`0xc0000374`，环境问题，非本工程代码）。

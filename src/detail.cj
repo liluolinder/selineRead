@@ -56,7 +56,7 @@ func detailPage(state: AppState): Unit {
                 if (!state.detailDescription.value.isEmpty()) {
                     VStack(spacing: vp(SELINE_SPACE_XS)) {
                         Label("简介").fontSize(theme.fontHeading).bold()
-                        Label(state.detailDescription.value).fontSize(theme.fontBody).wrap()
+                        Label(plainText(state.detailDescription.value)).fontSize(theme.fontBody).wrap()
                     }.hug().fillWidth()
                 }
                 if (!state.detailFormats.value.isEmpty()) {
