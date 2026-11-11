@@ -85,12 +85,15 @@ class BookCard <: Widget {
     public func draw(ctx: UiContext): Unit {
         let theme = selineTheme()
         let palette = theme.palette
-        let fill = if (hovered) { palette.surfaceHover } else { palette.surface }
+        // 卡片必须有一层比内容面板更亮的底色（同 seline_bili 的 surfaceRaised），
+        // 否则卡片与页面同色，圆角和卡片边界完全看不出来。
+        let fill = if (hovered) { palette.surfaceHover } else { palette.surfaceRaised }
         paintSurface(ctx.renderer, frame, fill, BOOK_CARD_RADIUS)
         let coverW = frame.w - BOOK_CARD_PAD * 2.0
         let coverH = coverW / BOOK_COVER_ASPECT
         let cover = Rect(frame.x + BOOK_CARD_PAD, frame.y + BOOK_CARD_PAD, coverW, coverH)
-        drawBookCover(ctx, state, cell.cover, cover, 8.0)
+        // 封面圆角 = 卡片圆角 - 内边距，两条圆弧同心
+        drawBookCover(ctx, state, cell.cover, cover, BOOK_CARD_RADIUS - BOOK_CARD_PAD)
         let textX = cover.x
         let titleY = cover.y + cover.h + 8.0
         let titleStyle = selineFontStyle(bold: true)

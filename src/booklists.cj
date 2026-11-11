@@ -101,7 +101,7 @@ class BooklistCard <: Widget {
     public func draw(ctx: UiContext): Unit {
         let theme = selineTheme()
         let palette = theme.palette
-        let fill = if (hovered) { palette.surfaceHover } else { palette.surface }
+        let fill = if (hovered) { palette.surfaceHover } else { palette.surfaceRaised }
         paintSurface(ctx.renderer, frame, fill, BOOKLIST_CARD_RADIUS)
         // 左侧预览封面（最多 3 张）
         let coverCount = if (cell.covers.size > 3) { 3 } else { cell.covers.size }
