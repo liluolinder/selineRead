@@ -29,13 +29,15 @@ let RAIL_STEP_MS: Float32 = 33.0
 /** 页签下标：内容页在前，设置固定在底部。 */
 let TAB_HOME: Int64 = 0
 let TAB_SEARCH: Int64 = 1
-let TAB_DOWNLOADS: Int64 = 2
-let TAB_SETTINGS: Int64 = 3
+let TAB_BOOKLISTS: Int64 = 2
+let TAB_DOWNLOADS: Int64 = 3
+let TAB_SETTINGS: Int64 = 4
 
 /** 内容页签。 */
 let APP_TABS: Array<SelineRailItem> = [
     SelineRailItem("热门", "home", "home_fill"),
     SelineRailItem("搜索", "search", "search"),
+    SelineRailItem("书单", "star_fill", "star_fill"),
     SelineRailItem("下载", "download", "download")
 ]
 

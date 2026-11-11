@@ -74,10 +74,18 @@ func pageFor(state: AppState): Unit {
         detailPage(state)
         return
     }
+    if (state.booklistOpen.value) {
+        booklistDetailPage(state)
+        return
+    }
     // 用 if 而不是 `match` + 常量：`case 常量名` 在这里是绑定模式，会匹配一切。
     let tab = state.tab.value
     if (tab == TAB_SEARCH) {
         searchPage(state)
+        return
+    }
+    if (tab == TAB_BOOKLISTS) {
+        booklistsPage(state)
         return
     }
     if (tab == TAB_DOWNLOADS) {

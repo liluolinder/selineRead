@@ -33,9 +33,11 @@ class LaunchOptions {
     let downloadTarget: String
     let bookTarget: String
     let settleFrames: UInt64
+    let booklistAutoOpen: Bool
 
     init(shotPath: String, initialTab: Int64, searchKeyword: String, railOpen: Bool,
-        login: Bool, downloadTarget: String, bookTarget: String, settleFrames: UInt64) {
+        login: Bool, downloadTarget: String, bookTarget: String, settleFrames: UInt64,
+        booklistAutoOpen: Bool) {
         this.shotPath = shotPath
         this.initialTab = initialTab
         this.searchKeyword = searchKeyword
@@ -44,6 +46,7 @@ class LaunchOptions {
         this.downloadTarget = downloadTarget
         this.bookTarget = bookTarget
         this.settleFrames = settleFrames
+        this.booklistAutoOpen = booklistAutoOpen
     }
 }
 
@@ -57,6 +60,7 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
     var downloadTarget = ""
     var bookTarget = ""
     var settleFrames: UInt64 = UInt64(720)
+    var booklistAutoOpen = false
     for (arg in args) {
         // 验收用：把渲染器后备缓冲导出成 PNG，拍完自动关窗
         if (arg.startsWith("--shot=")) {
@@ -89,9 +93,13 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         if (arg.startsWith("--settle=")) {
             settleFrames = UInt64.parse(arg[9..])
         }
+        // 验收：书单列表第一次加载成功后自动打开第一份
+        if (arg == "--bl-open") {
+            booklistAutoOpen = true
+        }
     }
     LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget, bookTarget,
-        settleFrames)
+        settleFrames, booklistAutoOpen)
 }
 
 main(args: Array<String>): Int64 {
@@ -140,6 +148,9 @@ main(args: Array<String>): Int64 {
         )
         app.setMinimumSize(1000, 680)
         state.attach(app)
+        if (options.booklistAutoOpen) {
+            state.setAutoOpenFirstBooklist()
+        }
         if (options.railOpen) {
             state.railExpanded.value = true
             state.railZonesOpen.value = true

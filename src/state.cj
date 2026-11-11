@@ -22,6 +22,7 @@ import zlibraryAPI4CJ.search.*
 import zlibraryAPI4CJ.book.*
 import zlibraryAPI4CJ.login.*
 import zlibraryAPI4CJ.user.*
+import zlibraryAPI4CJ.booklist.*
 
 /**
  * 网格里的一本书（列表项的 ViewModel）。
@@ -66,6 +67,111 @@ public class DownloadEntry {
             "${size / 1024} KB"
         } else {
             "${size} B"
+        }
+    }
+}
+
+/** 书单卡片（ViewModel）：书单元信息 + 预览封面。 */
+public class BooklistCell {
+    public let id: Int64
+    public let title: String
+    public let author: String
+    public let description: String
+    public let booksCount: Int64
+    public let viewsCount: Int64
+    public let favoritesCount: Int64
+    public let covers: ArrayList<String>
+
+    public init(id: Int64, title: String, author: String, description: String,
+        booksCount: Int64, viewsCount: Int64, favoritesCount: Int64,
+        covers: ArrayList<String>) {
+        this.id = id
+        this.title = title
+        this.author = author
+        this.description = description
+        this.booksCount = booksCount
+        this.viewsCount = viewsCount
+        this.favoritesCount = favoritesCount
+        this.covers = covers
+    }
+}
+
+/** 把 papi 书单页归一化成卡片；封面优先用 `coverUrl`，否则补站点前缀。 */
+func booklistCells(page: BooklistPage, siteUrl: String): ArrayList<BooklistCell> {
+    let cells = ArrayList<BooklistCell>()
+    for (readlist in page.readlists) {
+        let covers = ArrayList<String>()
+        match (page.previewOf(readlist.id)) {
+            case Some(previews) =>
+                for (preview in previews) {
+                    let url = if (!preview.coverUrl.isEmpty()) {
+                        preview.coverUrl
+                    } else {
+                        normalizeCoverUrl(preview.cover, siteUrl)
+                    }
+                    if (!url.isEmpty()) {
+                        covers.add(url)
+                    }
+                }
+            case None => ()
+        }
+        cells.add(BooklistCell(readlist.id, readlist.title, readlist.ownerName(page),
+            readlist.description, readlist.booksCount, readlist.viewsCount,
+            readlist.favoritesCount, covers))
+    }
+    cells
+}
+
+/** 书单列表后台结果。 */
+class BooklistsPayload {
+    let page: ?BooklistPage
+    let error: String
+
+    init(page: ?BooklistPage, error: String) {
+        this.page = page
+        this.error = error
+    }
+
+    static func load(client: ZlibClient, page: Int64, searchQuery: String): BooklistsPayload {
+        try {
+            BooklistsPayload(Some(BooklistApi.list(client, page: page,
+                searchQuery: searchQuery)), "")
+        } catch (failure: ZlibError) {
+            BooklistsPayload(Option<BooklistPage>.None, failure.detail)
+        }
+    }
+
+    static func loadMine(client: ZlibClient, page: Int64): BooklistsPayload {
+        try {
+            BooklistsPayload(Some(BooklistApi.my(client, page: page)), "")
+        } catch (failure: ZlibError) {
+            BooklistsPayload(Option<BooklistPage>.None, failure.detail)
+        }
+    }
+}
+
+/** 书单内的书后台结果。 */
+class BooklistBooksPayload {
+    let cells: ArrayList<BookCell>
+    let totalPages: Int64
+    let totalItems: Int64
+    let error: String
+
+    init(cells: ArrayList<BookCell>, totalPages: Int64, totalItems: Int64, error: String) {
+        this.cells = cells
+        this.totalPages = totalPages
+        this.totalItems = totalItems
+        this.error = error
+    }
+
+    static func load(client: ZlibClient, readlistId: Int64, page: Int64,
+        siteUrl: String): BooklistBooksPayload {
+        try {
+            let result = BooklistApi.books(client, readlistId, page: page)
+            BooklistBooksPayload(cellsFromBooks(result.books, siteUrl),
+                result.totalPages, result.totalItems, "")
+        } catch (failure: ZlibError) {
+            BooklistBooksPayload(ArrayList<BookCell>(), 0, 0, failure.detail)
         }
     }
 }
@@ -370,6 +476,29 @@ public class AppState {
     public let downloading = State<Bool>(false)
     public let downloadMessage = State<String>("")
 
+    /* ---- 书单（papi） ---- */
+    /** 书单列表。 */
+    public let booklists = State<ArrayList<BooklistCell>>(ArrayList<BooklistCell>())
+    public let booklistsLoading = State<Bool>(false)
+    public let booklistsError = State<String>("")
+    /** 书单搜索关键词（标题栏搜索框在「书单」页签时用它）。 */
+    public let booklistQuery = State<String>("")
+    /** 下一页页码；0 表示没有更多。 */
+    public let booklistsNextPage = State<Int64>(0)
+    /** 是否看「我的书单」（需要登录）。 */
+    public let booklistsMine = State<Bool>(false)
+    /** 是否停在书单详情（二级页面）。 */
+    public let booklistOpen = State<Bool>(false)
+    public let booklistId = State<Int64>(0)
+    public let booklistTitle = State<String>("")
+    public let booklistAuthor = State<String>("")
+    public let booklistDescription = State<String>("")
+    public let booklistBooks = State<ArrayList<BookCell>>(ArrayList<BookCell>())
+    public let booklistLoading = State<Bool>(false)
+    public let booklistError = State<String>("")
+    public let booklistNextPage = State<Int64>(1)
+    public let booklistTotal = State<Int64>(0)
+
     private var client: ?ClientBox = None
     private var app: ?DesktopApp = None
     private var store: ?SelineImageStore = None
@@ -386,6 +515,10 @@ public class AppState {
     private let decodeRetries = HashMap<String, Int64>()
     /** 验收开关：登录成功后自动下载 `id|hash`。 */
     private var autoDownloadTarget: String = ""
+    /** 书单列表是否已成功加载过（构建期懒加载用）。 */
+    private var booklistsLoaded: Bool = false
+    /** 验收开关：书单第一次加载成功后自动打开第一份。 */
+    private var autoOpenFirstBooklist: Bool = false
 
     /* -------------------------------------------------- 生命周期 */
 
@@ -404,6 +537,7 @@ public class AppState {
     public func tabSelectFromRail(index: Int64): Unit {
         writeDebugLog("rail tab -> ${index}")
         detailOpen.value = false
+        booklistOpen.value = false
         tab.value = index
     }
 
@@ -554,6 +688,14 @@ public class AppState {
     public func submitSearch(): Unit {
         let keyword = searchText.value.trimAscii()
         writeDebugLog("submitSearch: '${keyword}'")
+        // 「书单」页签下，标题栏搜索框搜的是书单，不是书
+        if (tab.value == TAB_BOOKLISTS) {
+            booklistQuery.value = keyword
+            booklistsLoaded = false
+            booklistsError.value = ""
+            loadBooklists()
+            return
+        }
         if (keyword.isEmpty()) {
             return
         }
@@ -655,6 +797,148 @@ public class AppState {
     /** 关闭详情页，回到来处。 */
     public func closeDetail(): Unit {
         detailOpen.value = false
+    }
+
+    /* -------------------------------------------------- 书单 */
+
+    /** 构建期懒加载：第一次进入「书单」页签时拉一次列表。 */
+    public func ensureBooklistsLoaded(): Unit {
+        if (booklistsLoaded || booklistsLoading.value || !booklistsError.value.isEmpty()) {
+            return
+        }
+        loadBooklists()
+    }
+
+    /** 验收用：书单列表第一次加载成功后自动打开第一份。 */
+    public func setAutoOpenFirstBooklist(): Unit {
+        autoOpenFirstBooklist = true
+    }
+
+    /** 刷新/搜索公开书单。 */
+    public func loadBooklists(reset!: Bool = true): Unit {
+        let clientBox = match (this.client) {
+            case Some(value) => value
+            case None =>
+                booklistsError.value = "客户端未就绪"
+                return
+        }
+        let targetPage = if (reset) { 1 } else { booklistsNextPage.value }
+        if (targetPage <= 0) {
+            return
+        }
+        let query = booklistQuery.value
+        let mine = booklistsMine.value
+        booklistsLoading.value = true
+        booklistsError.value = ""
+        let _ = spawn {=>
+            let payload = if (mine) {
+                BooklistsPayload.loadMine(clientBox.value, targetPage)
+            } else {
+                BooklistsPayload.load(clientBox.value, targetPage, query)
+            }
+            postToUi({=> applyBooklists(payload, reset) })
+        }
+    }
+
+    /** 切换「公开书单 / 我的书单」。 */
+    public func setBooklistsMine(value: Bool): Unit {
+        if (booklistsMine.value == value) {
+            return
+        }
+        booklistsMine.value = value
+        booklistsLoaded = false
+        booklists.value = ArrayList<BooklistCell>()
+        booklistsNextPage.value = 0
+        booklistsError.value = ""
+        loadBooklists()
+    }
+
+    private func applyBooklists(payload: BooklistsPayload, reset: Bool): Unit {
+        booklistsLoading.value = false
+        match (payload.page) {
+            case Some(page) =>
+                let cells = booklistCells(page, currentSite())
+                if (reset) {
+                    booklists.value = cells
+                } else {
+                    for (cell in cells) {
+                        booklists.value.add(cell)
+                    }
+                }
+                booklistsNextPage.value = page.nextPage
+                booklistsError.value = ""
+                booklistsLoaded = true
+            case None =>
+                booklistsError.value = "加载书单失败：${payload.error}"
+        }
+        if (autoOpenFirstBooklist && !booklists.value.isEmpty()) {
+            autoOpenFirstBooklist = false
+            openBooklist(booklists.value[0])
+        }
+    }
+
+    /** 打开一份书单（二级页面）。 */
+    public func openBooklist(cell: BooklistCell): Unit {
+        booklistOpen.value = true
+        booklistId.value = cell.id
+        booklistTitle.value = cell.title
+        booklistAuthor.value = cell.author
+        booklistDescription.value = cell.description
+        booklistBooks.value = ArrayList<BookCell>()
+        booklistTotal.value = 0
+        booklistNextPage.value = 1
+        booklistError.value = ""
+        loadBooklistBooks(1)
+    }
+
+    /** 关闭书单详情。 */
+    public func closeBooklist(): Unit {
+        booklistOpen.value = false
+    }
+
+    /** 加载书单里的某一页书。 */
+    public func loadBooklistBooks(page: Int64): Unit {
+        let readlistId = booklistId.value
+        if (readlistId <= 0) {
+            return
+        }
+        let clientBox = match (this.client) {
+            case Some(value) => value
+            case None =>
+                booklistError.value = "客户端未就绪"
+                return
+        }
+        let site = currentSite()
+        booklistLoading.value = true
+        let _ = spawn {=>
+            let payload = BooklistBooksPayload.load(clientBox.value, readlistId, page, site)
+            postToUi({=> applyBooklistBooks(payload, page) })
+        }
+    }
+
+    private func applyBooklistBooks(payload: BooklistBooksPayload, page: Int64): Unit {
+        booklistLoading.value = false
+        if (!payload.error.isEmpty()) {
+            booklistError.value = "加载书单内容失败：${payload.error}"
+            return
+        }
+        if (page <= 1) {
+            booklistBooks.value = payload.cells
+        } else {
+            for (cell in payload.cells) {
+                booklistBooks.value.add(cell)
+            }
+        }
+        booklistTotal.value = payload.totalItems
+        booklistNextPage.value = if (page < payload.totalPages) { page + 1 } else { 0 }
+    }
+
+    /** 继续加载书单里的书（滚到底时调用）。 */
+    public func loadMoreBooklistBooks(): Unit {
+        let next = booklistNextPage.value
+        if (next > 0 && !booklistLoading.value) {
+            loadBooklistBooks(next)
+        }
     }
 
     /* -------------------------------------------------- 账号 */

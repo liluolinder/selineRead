@@ -1,0 +1,161 @@
+/*
+ * 书单页（一级页面）。
+ *
+ * 数据来自 papi（eapi 没有书单接口）：`BooklistApi.list` 一次返回
+ * 本页书单 + 作者信息 + 每份书单的前几本书（用于卡片预览）。
+ *
+ * 卡片是自绘控件：左侧一列预览封面，右侧标题/作者/简介/统计，整卡可点。
+ */
+package seline_read
+
+import chui.*
+import seline_ui.*
+import zlibraryAPI4CJ.core.*
+
+func booklistsPage(state: AppState): Unit {
+    // 构建期懒加载：第一次进入本页才发请求（构建每帧都跑，方法内部会去重）
+    state.ensureBooklistsLoaded()
+    let mine = state.booklistsMine.value
+    let subtitle = if (mine) {
+        "我创建的书单"
+    } else if (state.booklistQuery.value.isEmpty()) {
+        "发现公开书单"
+    } else {
+        "书单搜索：${state.booklistQuery.value}"
+    }
+    VStack(spacing: vp(0.0)) {
+        pageHeader("书单", subtitle, {=>
+            HStack(spacing: vp(SELINE_SPACE_SM)) {
+                SelineButton(if (mine) { "公开书单" } else { "我的书单" },
+                    {=> state.setBooklistsMine(!mine)}, glyph: "star_fill",
+                    kind: SelineButtonKind.Ghost, compact: true)
+                SelineButton("刷新", {=> state.loadBooklists()}, glyph: "refresh",
+                    kind: SelineButtonKind.Ghost, compact: true,
+                    busy: state.booklistsLoading.value)
+            }
+        })
+        ScrollView {
+            VStack(spacing: vp(SELINE_SPACE_MD)) {
+                if (!state.booklistsError.value.isEmpty()) {
+                    errorBannerText(state.booklistsError.value)
+                }
+                if (state.booklistsLoading.value && state.booklists.value.isEmpty()) {
+                    loadingBlock("正在加载书单…")
+                }
+                if (!state.booklists.value.isEmpty()) {
+                    AdaptiveGrid(360.0, minColumns: 2, maxColumns: 3) {
+                        for (cell in state.booklists.value) {
+                            BooklistCard(state, cell)
+                        }
+                    }.spacing(SELINE_SPACE_MD, SELINE_SPACE_MD)
+                    if (state.booklistsNextPage.value > 0) {
+                        SelineButton("加载更多书单", {=> state.loadBooklists(reset: false)},
+                            glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true,
+                            busy: state.booklistsLoading.value)
+                    }
+                } else if (!state.booklistsLoading.value &&
+                    state.booklistsError.value.isEmpty()) {
+                    emptyBlock("star_fill", if (mine) { "还没有自己的书单" } else { "没有找到书单" },
+                        "换个关键词，或稍后点「刷新」重试")
+                }
+            }.padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
+        }
+    }.fillWidth().fillHeight()
+}
+
+/** 书单卡片：左侧预览封面，右侧文字。 */
+let BOOKLIST_CARD_RADIUS: Float32 = 12.0
+let BOOKLIST_CARD_PAD: Float32 = 10.0
+let BOOKLIST_PREVIEW_W: Float32 = 46.0
+let BOOKLIST_PREVIEW_H: Float32 = 66.0
+let BOOKLIST_PREVIEW_GAP: Float32 = 5.0
+
+class BooklistCard <: Widget {
+    private let state: AppState
+    private let cell: BooklistCell
+    private var frame = Rect.zero()
+    private var hovered = false
+
+    init(state: AppState, cell: BooklistCell) {
+        this.state = state
+        this.cell = cell
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        let width = if (available.w > Float32(0.0) && available.w < Float32.Max) {
+            available.w
+        } else {
+            Float32(360.0)
+        }
+        Size(width, 112.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        let theme = selineTheme()
+        let palette = theme.palette
+        let fill = if (hovered) { palette.surfaceHover } else { palette.surface }
+        paintSurface(ctx.renderer, frame, fill, BOOKLIST_CARD_RADIUS)
+        // 左侧预览封面（最多 3 张）
+        let coverCount = if (cell.covers.size > 3) { 3 } else { cell.covers.size }
+        var index: Int64 = 0
+        while (index < coverCount) {
+            let x = frame.x + BOOKLIST_CARD_PAD +
+                Float32(index) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP)
+            let cover = Rect(x, frame.y + BOOKLIST_CARD_PAD, BOOKLIST_PREVIEW_W,
+                BOOKLIST_PREVIEW_H)
+            drawBookCover(ctx, state, cell.covers[index], cover, 6.0)
+            index += 1
+        }
+        let textX = frame.x + BOOKLIST_CARD_PAD +
+            Float32(3) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP) + 4.0
+        let textW = max(Float32(40.0), frame.right() - BOOKLIST_CARD_PAD - textX)
+        let title = truncateRunes(cell.title, 16, suffix: "…")
+        paintText(ctx.renderer, title,
+            Rect(textX, frame.y + 8.0, textW, 20.0), palette.text, theme.fontLabel,
+            style: selineFontStyle(bold: true), family: theme.fontFamily)
+        let author = if (cell.author.isEmpty()) { "匿名书单" } else { cell.author }
+        paintText(ctx.renderer, truncateRunes(author, 20, suffix: "…"),
+            Rect(textX, frame.y + 30.0, textW, 16.0), palette.textMuted,
+            theme.fontCaption, family: theme.fontFamily)
+        if (!cell.description.isEmpty()) {
+            paintText(ctx.renderer, truncateRunes(cell.description, 28, suffix: "…"),
+                Rect(textX, frame.y + 50.0, textW, 16.0), palette.textFaint,
+                theme.fontCaption, family: theme.fontFamily)
+        }
+        let meta = "${cell.booksCount} 本 · 浏览 ${cell.viewsCount} · 收藏 ${cell.favoritesCount}"
+        paintText(ctx.renderer, meta,
+            Rect(textX, frame.bottom() - 26.0, textW, 16.0), palette.textFaint,
+            theme.fontCaption, family: theme.fontFamily)
+    }
+
+    public func handle(_: UiContext, event: UiEvent): Bool {
+        match (event) {
+            case UiEvent.MouseMove(x, y) =>
+                hovered = frame.contains(x, y)
+                false
+            case UiEvent.MouseDown(MouseButton.Left, x, y) =>
+                frame.contains(x, y)
+            case UiEvent.MouseUp(MouseButton.Left, x, y) =>
+                if (frame.contains(x, y)) {
+                    state.openBooklist(cell)
+                    true
+                } else {
+                    false
+                }
+            case _ => false
+        }
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
+}
