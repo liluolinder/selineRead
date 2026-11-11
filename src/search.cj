@@ -14,18 +14,12 @@ func searchPage(state: AppState): Unit {
     VStack(spacing: vp(0.0)) {
         ScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
-                HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    Label("搜索「${state.lastKeyword.value}」").fontSize(selineTheme().fontLabel)
-                        .muted()
-                    Spacer()
-                    SelineButton("回到热门", {=> state.exitSearch()}, glyph: "home",
-                        kind: SelineButtonKind.Ghost, compact: true)
-                }.hug().fillWidth()
+
                 if (!state.error.value.isEmpty()) {
                     errorBannerText(state.error.value)
                 }
-                if (state.loading.value) {
-                    loadingBlock("正在搜索…")
+                if (state.loading.value || state.forceSkeleton.value) {
+                    bookSkeletonGrid(count: 12)
                 } else {
                     bookGrid(state, state.results.value)
                     if (state.results.value.isEmpty()) {

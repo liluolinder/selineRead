@@ -33,7 +33,7 @@ func detailPage(state: AppState): Unit {
                         }).fontSize(theme.fontBody).muted()
                         Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
                         if (state.detailLoading.value) {
-                            loadingBlock("正在加载详情…")
+                            detailSkeleton()
                         }
                         HStack(spacing: vp(SELINE_SPACE_SM)) {
                             // 点击弹出「版本选择」菜单：第一项是默认下载链接，下面是可选格式
@@ -75,7 +75,7 @@ func detailPage(state: AppState): Unit {
                         Label("本书已关闭评论").fontSize(theme.fontCaption).muted()
                     }
                     if (state.commentsLoading.value && state.comments.value.isEmpty()) {
-                        loadingBlock("正在加载评论…")
+                        commentSkeleton()
                     }
                     var shown: Int64 = 0
                     for (comment in state.comments.value) {

@@ -535,6 +535,8 @@ public class AppState {
     public let error = State<String>("")
     /** 是否正在加载首页数据。 */
     public let loading = State<Bool>(false)
+    /** 验收用：强制显示骨架（截图/回归用）。 */
+    public let forceSkeleton = State<Bool>(false)
     /** 热门列表。 */
     public let popular = State<ArrayList<BookCell>>(ArrayList<BookCell>())
     /** 首屏只渲染这么多张卡片，滚到底再追加（避免一次重绘 100 张卡）。 */
@@ -964,6 +966,49 @@ public class AppState {
         }
         let next = popularVisible.value + 24
         popularVisible.value = if (next > total) { total } else { next }
+    }
+
+    /**
+     * 标题栏搜索框内容变化：清空时退出搜索态。
+     *
+     * - 书单页签：清空书单搜索词，重新加载公开书单（留在书单页）；
+     * - 其他页签：回到热门墙；
+     * - 详情/书单详情内清空输入框不跳页。
+     */
+    public func onSearchTextChanged(text: String): Unit {
+        if (!text.trimAscii().isEmpty()) {
+            return
+        }
+        if (detailOpen.value || booklistOpen.value) {
+            return
+        }
+        if (tab.value == TAB_BOOKLISTS) {
+            if (!booklistQuery.value.isEmpty()) {
+                booklistQuery.value = ""
+                booklistsLoaded = false
+                booklists.value = ArrayList<BooklistCell>()
+                booklistsNextPage.value = 0
+                loadBooklists()
+            }
+            return
+        }
+        if (!lastKeyword.value.isEmpty()) {
+            searchGeneration += 1
+            lastKeyword.value = ""
+            results.value = ArrayList<BookCell>()
+            tab.value = TAB_HOME
+        }
+    }
+
+    /** 验收用：延迟 delayMs 后清空搜索框，验证「清空即回热门」。 */
+    public func scheduleClearSearchForTest(delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=>
+                searchText.value = ""
+                onSearchTextChanged("")
+            })
+        }
     }
 
     /** 验收用：延迟 delayMs 后自动搜索一次（模拟「A 未返回时又搜 B」的竞态）。 */

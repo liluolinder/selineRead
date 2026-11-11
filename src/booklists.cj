@@ -27,10 +27,10 @@ func booklistsPage(state: AppState): Unit {
                         Spacer()
                     }.hug().fillWidth()
                 }
-                if (state.booklistsLoading.value && state.booklists.value.isEmpty()) {
-                    loadingBlock("正在加载书单…")
-                }
-                if (!state.booklists.value.isEmpty()) {
+                if (state.forceSkeleton.value ||
+                    (state.booklistsLoading.value && state.booklists.value.isEmpty())) {
+                    booklistSkeletonGrid(count: 6)
+                } else if (!state.booklists.value.isEmpty()) {
                     AdaptiveGrid(360.0, minColumns: 2, maxColumns: 3) {
                         for (cell in state.booklists.value) {
                             BooklistCard(state, cell)

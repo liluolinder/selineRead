@@ -257,6 +257,9 @@ main(args: Array<String>): Int64 {
             writeDebugLog("window icon: asset missing")
         }
         state.attach(app)
+        if ((getVariable("SELINE_READ_SKELETON") ?? "") == "1") {
+            state.forceSkeleton.value = true
+        }
         if (options.booklistAutoOpen) {
             state.setAutoOpenFirstBooklist()
         }
@@ -277,6 +280,10 @@ main(args: Array<String>): Int64 {
             state.searchText.value = keyword
             state.submitSearch()
             // 验收：延迟 500ms 再搜 B，验证 A 的迟到结果会被丢弃
+            let clearMs = getVariable("SELINE_READ_CLEAR_SEARCH_MS") ?? ""
+            if (!clearMs.isEmpty()) {
+                state.scheduleClearSearchForTest(Int64.parse(clearMs))
+            }
             let raceB = getVariable("SELINE_READ_SEARCH_RACE_B") ?? ""
             if (!raceB.isEmpty()) {
                 let delayMs = Int64.parse(getVariable("SELINE_READ_SEARCH_RACE_DELAY_MS") ?? "500")

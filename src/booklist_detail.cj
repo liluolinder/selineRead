@@ -35,7 +35,7 @@ func booklistDetailPage(state: AppState): Unit {
                     errorBannerText(state.booklistError.value)
                 }
                 if (state.booklistLoading.value && state.booklistBooks.value.isEmpty()) {
-                    loadingBlock("正在加载书单内容…")
+                    detailSkeleton()
                 }
                 bookGrid(state, state.booklistBooks.value)
                 if (state.booklistBooks.value.isEmpty() &&

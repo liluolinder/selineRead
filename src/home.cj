@@ -27,10 +27,12 @@ func homePage(state: AppState): Unit {
                         Spacer()
                     }.hug().fillWidth()
                 }
-                if (state.loading.value && state.popular.value.isEmpty()) {
-                    loadingBlock("正在获取热门图书…")
+                if (state.forceSkeleton.value ||
+                    (state.loading.value && state.popular.value.isEmpty())) {
+                    bookSkeletonGrid(count: 12)
+                } else {
+                    bookGrid(state, state.popular.value, limit: state.popularVisible.value)
                 }
-                bookGrid(state, state.popular.value, limit: state.popularVisible.value)
                 if (state.popularVisible.value < Int64(state.popular.value.size)) {
                     PopularLoadMoreFooter(state)
                 }

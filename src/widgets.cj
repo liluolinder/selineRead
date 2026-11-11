@@ -24,15 +24,6 @@ func pageHeader(title: String, subtitle: String, trailing: () -> Unit): Unit {
         .padding(PAGE_PAD, 14.0, PAGE_PAD, 8.0)
 }
 
-/** 加载态：转圈 + 一句说明。 */
-func loadingBlock(text: String): Unit {
-    HStack(spacing: vp(SELINE_SPACE_SM)) {
-        SelineSpinner(size: 16.0)
-        Label(text).fontSize(selineTheme().fontBody).muted()
-    }.hug()
-        .fillWidth()
-        .padding(0.0, 24.0, 0.0, 24.0)
-}
 
 /** 错误提示条：红字 + 浅底，不弹窗（弹窗会打断用户）。 */
 func errorBannerText(text: String): Unit {

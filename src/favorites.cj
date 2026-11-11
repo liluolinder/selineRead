@@ -34,10 +34,11 @@ func favoritesPage(state: AppState): Unit {
                             Spacer()
                         }.hug().fillWidth()
                     }
-                    if (state.favoritesLoading.value && state.favorites.value.isEmpty()) {
-                        loadingBlock("正在加载收藏…")
+                    if (state.favoritesLoading.value || state.forceSkeleton.value) {
+                        bookSkeletonGrid(count: 12)
+                    } else {
+                        bookGrid(state, state.favorites.value)
                     }
-                    bookGrid(state, state.favorites.value)
                     if (state.favoritesNextPage.value > 0) {
                         FavoritesLoadMoreFooter(state)
                     }

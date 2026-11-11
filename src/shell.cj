@@ -51,7 +51,10 @@ func titleBar(state: AppState): Unit {
     ZStack {
         SelineTitleBarSurface(state.window())
         SelineCenteredLeaf(SelineTextField(state.searchText.value,
-            {text => state.searchText.value = text},
+            {text =>
+                state.searchText.value = text
+                state.onSearchTextChanged(text)
+            },
             placeholder: "搜索书名、作者、关键词…", glyph: "search", height: 36.0,
             paste: true, onSubmit: {=> state.submitSearch()}).width(520.0))
         HStack(spacing: vp(SELINE_SPACE_MD)) {
