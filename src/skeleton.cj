@@ -179,13 +179,59 @@ func booklistSkeletonGrid(count!: Int64 = 6): Unit {
 }
 
 /** 详情页「简介」骨架：标题条 + 三行正文条（按可用宽度百分比收缩）。 */
+/** 简介骨架（页面自己画「简介」标题，这里只画那一整块）。 */
 func descriptionSkeleton(): Unit {
-    VStack(spacing: vp(SELINE_SPACE_XS)) {
-        Label("简介").fontSize(selineTheme().fontHeading).bold()
-        CommentSkeletonLine(widthRatio: 0.92, height: 12.0)
-        CommentSkeletonLine(widthRatio: 0.98, height: 12.0)
-        CommentSkeletonLine(widthRatio: 0.62, height: 12.0)
-    }.hug().fillWidth()
+    DescriptionSkeletonBlock(236.0)
+}
+
+/** 简介骨架：**一整块**（简介本身是一块连续正文，不该拆成多张卡）。 */
+class DescriptionSkeletonBlock <: Widget {
+    private let blockHeight: Float32
+    private var frame = Rect.zero()
+
+    init(height: Float32) {
+        this.blockHeight = height
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, blockHeight)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        let palette = selineTheme().palette
+        paintSurface(ctx.renderer, frame, palette.surfaceRaised, 8.0)
+        // 块内部只画几条淡淡的行，表示"这里是一段正文"
+        let innerX = frame.x + 12.0
+        let innerW = max(0.0, frame.w - 24.0)
+        var index: Int64 = 0
+        while (index < 8) {
+            let y = frame.y + 14.0 + Float32(index) * 26.0
+            if (y + 10.0 > frame.bottom() - 10.0) {
+                break
+            }
+            let ratio: Float32 = if (index == 7) { 0.42 } else { 0.94 }
+            paintSurface(ctx.renderer, Rect(innerX, y, innerW * ratio, 10.0),
+                palette.surfaceHover, 4.0)
+            index += 1
+        }
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
 }
 
 /** 按宽度比例画一条骨架（不能预知可用宽度，所以只能按 frame 百分比）。 */

@@ -26,23 +26,25 @@ func detailPage(state: AppState): Unit {
                 if (!state.detailError.value.isEmpty()) {
                     errorBannerText(state.detailError.value)
                 }
-                VStack(spacing: vp(SELINE_SPACE_XS)) {
-                    Label(state.detailTitle.value).fontSize(theme.fontTitle).bold().wrap()
-                    Label(if (state.detailAuthor.value.isEmpty()) {
-                        "未知作者"
-                    } else {
-                        state.detailAuthor.value
-                    }).fontSize(theme.fontBody).muted()
-                    Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
-                }.hug().fillWidth()
-                // 封面 + 简介：简介在封面右侧，高度与封面一致（270），内部可滚动
+                // 三段：封面 | 书名/作者/元信息 | 简介（简介与封面同高，内部可滚动）
                 HStack(spacing: vp(SELINE_SPACE_LG)) {
                     DetailCover(state)
+                    VStack(spacing: vp(SELINE_SPACE_XS)) {
+                        Label(state.detailTitle.value).fontSize(theme.fontHeading).bold()
+                            .wrap()
+                        Label(if (state.detailAuthor.value.isEmpty()) {
+                            "未知作者"
+                        } else {
+                            state.detailAuthor.value
+                        }).fontSize(theme.fontBody).muted()
+                        Label(state.detailMeta.value).fontSize(theme.fontCaption).muted()
+                        Spacer()
+                    }.width(230.0)
                     VStack(spacing: vp(SELINE_SPACE_XS)) {
                         Label("简介").fontSize(theme.fontHeading).bold()
                         if (state.detailLoading.value &&
                             state.detailDescription.value.isEmpty()) {
-                            commentSkeleton(rows: 3)
+                            descriptionSkeleton()
                             ()
                         } else if (state.detailDescription.value.isEmpty()) {
                             Label("暂无简介").fontSize(theme.fontBody).muted()
