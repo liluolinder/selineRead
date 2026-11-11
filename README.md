@@ -44,6 +44,8 @@ Z-Library 桌面阅读客户端，用**仓颉 + CangHui（chui）**写成，后�
 | 可伸缩侧栏（弹簧动画、分区组、账号入口，交互同 seline_bili） | 完成 |
 | 热门图书网格 + 网络封面（磁盘/内存缓存） | 完成 |
 | 搜索 + 搜索结果页 | 完成 |
+| 书单页（papi 抓取公开书单 + 预览封面） | 完成 |
+| 书单详情（书单内图书网格） | 完成 |
 | 图书详情（元信息 / 可选格式 / 简介） | 完成 |
 | 登录（邮箱密码，凭证落盘，重启自动恢复） | 完成 |
 | 下载（格式选择 → `BookApi.file` → 落盘） | 完成 |
@@ -74,7 +76,9 @@ cd target\release\bin
 ```powershell
 .\main.exe --shot=%TEMP%\home.png        # 启动后导出窗口画面并退出
 .\main.exe --rail                        # 启动即展开侧栏
-.\main.exe --tab=2                       # 直接打开下载页
+.\main.exe --tab=2                       # 直接打开书单页
+.\main.exe --tab=3                       # 直接打开下载页
+.\main.exe --tab=2 --bl-open             # 书单页并自动打开第一份书单
 .\main.exe --search=rust                 # 启动即搜索
 .\main.exe --login                       # 用 ZLIB_TEST_EMAIL / ZLIB_TEST_PASSWORD 自动登录
 .\main.exe --login --download=<id>|<hash> # 登录成功后自动下载指定书
@@ -85,5 +89,7 @@ cd target\release\bin
 ## 已知限制
 
 - 下载列表目前只记录本次会话（重启后不重新扫描目录）。
+- 书单来自网站前端 papi（eapi 没有书单接口）；书籍评论没有可用接口
+  （eapi/papi 的 `comments`/`reviews` 均为 404），详情页因此不显示评论。
 - 窗口最大化时圆角暂未归零（普通窗口态 12px 圆角）。
 - Windows 上底层 TLS 偶发原生崩溃（`0xc0000374`，环境问题，非本工程代码）。
