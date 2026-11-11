@@ -252,8 +252,7 @@ func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
             // 深浅色切换：辐射原点就是这个按钮的真实中心（每帧由 layout 上报）
             SidebarItem(if (state.darkMode.value) { "sun" } else { "moon" },
                 if (state.darkMode.value) { "浅色模式" } else { "深色模式" }, expanded, false,
-                {=> state.toggleThemeAtRecordedButton()},
-                onFrame: {rect => state.rememberThemeButtonCenter(rect.centerX(), rect.centerY())})
+                {=> state.toggleTheme(0.0, 0.0)})
             SidebarItem("clock_fill", "设置", expanded, selectedTab == TAB_SETTINGS,
                 {=> state.tabSelectFromRail(TAB_SETTINGS)})
             SidebarAccountChip(state, expanded)

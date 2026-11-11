@@ -676,14 +676,7 @@ public class AppState {
     private let detailHistory = ArrayList<DetailSnapshot>()
     /** 深色模式（false = 浅色）。 */
     public let darkMode = State<Bool>(true)
-    /** 主题切换的辐射动画：进度 0..1；active 为 true 时在根上盖一层圆形遮罩。 */
-    public let themeReveal = State<Float32>(0.0)
-    public let themeRevealing = State<Bool>(false)
-    private var themeRevealX: Float32 = 0.0
-    private var themeRevealY: Float32 = 0.0
-    /** 主题按钮的真实中心（侧栏 layout 每帧上报）。 */
-    private var themeButtonX: Float32 = 28.0
-    private var themeButtonY: Float32 = 120.0
+
     /** 热门列表。 */
     public let popular = State<ArrayList<BookCell>>(ArrayList<BookCell>())
     /** 首屏只渲染这么多张卡片，滚到底再追加（避免一次重绘 100 张卡）。 */
@@ -2097,42 +2090,30 @@ public class AppState {
 
     /* -------------------------------------------------- 主题 */
 
-    /** 记住主题按钮的真实中心（由侧栏 layout 上报，不触发重建）。 */
-    public func rememberThemeButtonCenter(x: Float32, y: Float32): Unit {
-        themeButtonX = x
-        themeButtonY = y
-    }
-
-    /** 从主题按钮中心触发切换（辐射原点 = 按钮中心）。 */
-    public func toggleThemeAtRecordedButton(): Unit {
-        toggleTheme(themeButtonX, themeButtonY)
-    }
 
     /**
-     * 切换深浅色：**立刻**换主题（内容不消失），再从按钮位置放一圈辐射光晕。
+     * 切换深浅色：用 chui 自带的圆形揭示过渡（`DesktopApp.transitionTheme`）。
      *
-     * 早期实现是用新主题底色画一个扩张的实心圆盖住整窗，结果就是切换期间
-     * 内容全被盖住、动画结束才回来；现在改成：主题瞬时切换 + 半透明强调色光环扩散。
+     * 它会冻结新旧两帧，再以**鼠标位置（= 刚点的主题按钮）**为圆心、
+     * 用 `renderer.texturedCircle` 把新主题从圆内逐渐扩散出来 —— 颜色是跟着
+     * 辐射边界走的，而不是整体瞬切。
      */
     public func toggleTheme(originX: Float32, originY: Float32): Unit {
-        if (themeRevealing.value) {
-            return
+        let nextDark = !darkMode.value
+        darkMode.value = nextDark
+        saveUserConfig()
+        writeDebugLog("theme: transition -> dark=${nextDark}")
+        match (app) {
+            case Some(value) =>
+                // 过渡期间由 ThemeSyncProbe 按 ctx.theme 同步全局 seline 主题
+                let ms = Int64.parse(getVariable("SELINE_READ_THEME_MS") ?? "620")
+                value.transitionTheme(selineChuiThemeFor(nextDark), durationMs: UInt64(ms))
+            case None =>
+                // 没有窗口（单测）时退化为瞬时切换
+                setSelineTheme(if (nextDark) { SelineTheme.dark() } else { SelineTheme.light() })
         }
-        themeRevealX = originX
-        themeRevealY = originY
-        writeDebugLog("theme: toggle at (${originX},${originY}) -> dark=${!darkMode.value}")
-        applyThemeSwitch()
-        themeReveal.value = 0.0
-        themeRevealing.value = true
     }
 
-    public func themeRevealOriginX(): Float32 {
-        themeRevealX
-    }
-
-    public func themeRevealOriginY(): Float32 {
-        themeRevealY
-    }
 
     /** 验收用：从侧栏主题按钮位置触发一次切换。 */
     public func postThemeToggleForTest(): Unit {
@@ -2140,7 +2121,7 @@ public class AppState {
             case Some(value) => value
             case None => return
         }
-        let _ = appRef.postToUi({=> toggleThemeAtRecordedButton()})
+        let _ = appRef.postToUi({=> toggleTheme(0.0, 0.0)})
     }
 
     /** 动画结束：真正切换到目标主题（同时换 seline_ui 与 chui 两套 token）。 */
@@ -2157,8 +2138,6 @@ public class AppState {
                 }
             case None => ()
         }
-        themeRevealing.value = false
-        themeReveal.value = 0.0
         writeDebugLog("theme: switched dark=${nextDark}")
     }
 

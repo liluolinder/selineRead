@@ -22,6 +22,8 @@ func appShell(state: AppState): Unit {
     VStack(spacing: vp(0.0)) {
         titleBar(state)
         ZStack {
+            // 主题同步探针（必须在最前面：先对齐全局配色再画内容）
+            ThemeSyncProbe()
             // 内容区：左边距 = 侧栏当前宽度（与侧栏同一帧、同一表达式）
             SelineContentPanel(palette.surface, 14.0, true) {
                 pageFor(state)
@@ -29,10 +31,7 @@ func appShell(state: AppState): Unit {
                 .fillWidth().fillHeight()
             // 侧栏浮层：直接作为 ZStack 子节点，位置由父容器给（x=0）
             sidebarTabs(state)
-            // 主题切换的辐射遮罩：盖住整窗，画一个从按钮位置扩张的圆
-            if (state.themeRevealing.value) {
-                ThemeRevealOverlay(state)
-            }
+
             // 下载版本菜单：浮在最上层，点菜单外/切换页面自动关闭
             if (state.downloadMenuOpen.value || state.downloadMenuClosing.value) {
                 SelineContextMenuOverlay(state.downloadMenuItems(),
@@ -108,66 +107,37 @@ func pageFor(state: AppState): Unit {
     }
 }
 /**
- * 主题切换的「往外辐射」遮罩。
+ * 主题同步探针：放在根 `ZStack` 的**第一个**子节点。
  *
- * chui 只支持矩形裁剪，做不出真正的圆形揭示，所以这里反过来画：
- * 在旧主题的界面上盖一个以按钮为圆心、半径逐渐变大的**新主题底色圆**，
- * 圆铺满整窗时再真正切换主题（`applyThemeSwitch`）。视觉上就是新主题从按钮处扩散开。
+ * chui 的主题过渡会把同一棵控件树分两遍画（`ctx.theme` 依次为旧/新主题）。
+ * 我们的控件读全局 `selineTheme()`，所以在每一遍开始前先把全局主题对齐到
+ * `ctx.theme`；因为 `ZStack` 按子节点顺序绘制，探针先画，后面所有内容就是
+ * 该遍对应的配色 —— 圆形揭示时颜色才会跟着辐射边界走。
  */
-class ThemeRevealOverlay <: Widget {
-    private let state: AppState
-    private var frame = Rect.zero()
-
-    init(state: AppState) {
-        this.state = state
+class ThemeSyncProbe <: Widget {
+    init() {
         emit(this)
     }
 
-    public func measure(_: UiContext, available: Size): Size {
-        Size(available.w, available.h)
+    public func measure(_: UiContext, _: Size): Size {
+        Size(0.0, 0.0)
     }
 
-    public func layout(_: UiContext, rect: Rect): Unit {
-        frame = rect
-    }
+    public func layout(_: UiContext, _: Rect): Unit {}
 
     public func draw(ctx: UiContext): Unit {
-        let palette = selineTheme().palette
-        let originX = state.themeRevealOriginX()
-        let originY = state.themeRevealOriginY()
-        let dx = max(max(originX - frame.x, frame.right() - originX), 0.0)
-        let dy = max(max(originY - frame.y, frame.bottom() - originY), 0.0)
-        let maxRadius = Float32(sqrt(Float64(dx * dx + dy * dy)))
-        // 约 420ms 的扩散（按帧 delta 推进）
-        var progress = state.themeReveal.value + Float32(ctx.frame.deltaMs) / 420.0
-        if (progress >= 1.0) {
-            progress = 1.0
-        }
-        if (progress != state.themeReveal.value) {
-            state.themeReveal.value = progress
-        }
-        let eased = 1.0 - (1.0 - progress) * (1.0 - progress)
-        let radius = maxRadius * eased
-        // 半透明光晕：主题已经切好了，这里只加一圈从按钮扩散的强调色，
-        // 不做不透明覆盖 —— 内容全程可见。
-        let fade = (1.0 - progress) * 0.30
-        let alpha = Int64(255.0 * fade)
-        if (alpha > 2 && radius > 1.0) {
-            let glow = palette.accent.withAlpha(alpha)
-            paintSurface(ctx.renderer,
-                Rect(originX - radius, originY - radius, radius * 2.0, radius * 2.0),
-                glow, radius)
-        }
-        if (progress >= 1.0) {
-            state.themeRevealing.value = false
-            state.themeReveal.value = 0.0
-        } else {
-            ctx.requestFrame()
-        }
+        setSelineTheme(selineThemeForChuiTheme(ctx.theme))
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {
-        // 动画期间不吞事件：内容照常可交互
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
         false
     }
 }
