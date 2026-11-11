@@ -29,15 +29,18 @@ func booklistsPage(state: AppState): Unit {
                 SelineButton(if (mine) { "公开书单" } else { "我的书单" },
                     {=> state.setBooklistsMine(!mine)}, glyph: "star_fill",
                     kind: SelineButtonKind.Ghost, compact: true)
-                SelineButton("刷新", {=> state.loadBooklists()}, glyph: "refresh",
-                    kind: SelineButtonKind.Ghost, compact: true,
-                    busy: state.booklistsLoading.value)
             }
         })
         ScrollView {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.booklistsError.value.isEmpty()) {
                     errorBannerText(state.booklistsError.value)
+                    HStack(spacing: vp(SELINE_SPACE_SM)) {
+                        SelineButton("重新加载", {=> state.loadBooklists()},
+                            glyph: "refresh", kind: SelineButtonKind.Ghost,
+                            compact: true, busy: state.booklistsLoading.value)
+                        Spacer()
+                    }.hug().fillWidth()
                 }
                 if (state.booklistsLoading.value && state.booklists.value.isEmpty()) {
                     loadingBlock("正在加载书单…")
