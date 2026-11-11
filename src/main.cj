@@ -302,7 +302,11 @@ main(args: Array<String>): Int64 {
             }
         }
         if (options.openDownloadMenu) {
-            state.downloadMenuOpen.value = true
+            state.openDownloadMenu()
+        }
+        let openMenuMs = getVariable("SELINE_READ_OPEN_DL_MENU_AFTER_MS") ?? ""
+        if (!openMenuMs.isEmpty()) {
+            state.scheduleOpenDownloadMenuForTest(Int64.parse(openMenuMs))
         }
         if (!options.bookTarget.isEmpty()) {
             let parts = options.bookTarget.split("|")

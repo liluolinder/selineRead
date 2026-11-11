@@ -602,8 +602,11 @@ public class AppState {
     public let downloadMessage = State<String>("")
     /** 下载按钮弹出的「版本选择」菜单是否打开。 */
     public let downloadMenuOpen = State<Bool>(false)
-    /** 下载按钮在窗口里的矩形（由按钮每帧 layout 写入，菜单定位用）。 */
+    /** 下载按钮在窗口里的矩形（由按钮每帧 layout 写入）。 */
     public let downloadAnchor = DownloadMenuAnchor()
+    /** 打开菜单时锁定的锚点（滚动/布局变化时菜单不跟着动，避免反复缩放）。 */
+    private var menuAnchorX: Float32 = 0.0
+    private var menuAnchorY: Float32 = 0.0
 
     /* ---- 书单（papi） ---- */
     /** 书单列表。 */
@@ -1588,9 +1591,37 @@ public class AppState {
 
     /* -------------------------------------------------- 下载菜单 */
 
-    /** 打开/关闭下载版本菜单。 */
+    /** 打开/关闭下载版本菜单；打开时把当前按钮位置锁成菜单锚点。 */
     public func toggleDownloadMenu(): Unit {
-        downloadMenuOpen.value = !downloadMenuOpen.value
+        if (downloadMenuOpen.value) {
+            downloadMenuOpen.value = false
+            return
+        }
+        openDownloadMenu()
+    }
+
+    /** 用按钮当前矩形打开下载菜单（锚点只在打开瞬间取一次）。 */
+    public func openDownloadMenu(): Unit {
+        menuAnchorX = downloadAnchor.x
+        menuAnchorY = downloadAnchor.y + downloadAnchor.h + 6.0
+        downloadMenuOpen.value = true
+    }
+
+    /** 验收用：延迟 delayMs 后打开下载菜单（等按钮完成 layout）。 */
+    public func scheduleOpenDownloadMenuForTest(delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=> openDownloadMenu() })
+        }
+    }
+
+    /** 菜单锚点（打开时锁定）。 */
+    public func downloadMenuX(): Float32 {
+        menuAnchorX
+    }
+
+    public func downloadMenuY(): Float32 {
+        menuAnchorY
     }
 
     /** 关闭下载菜单（点菜单外、切换页面时调用）。 */
@@ -1604,7 +1635,12 @@ public class AppState {
      */
     public func downloadMenuItems(): Array<SelineMenuItem> {
         let items = ArrayList<SelineMenuItem>()
-        items.add(SelineMenuItem("默认下载链接（原书）", {=> selectDownloadFormat(0)},
+        let defaultLabel = if (detailMeta.value.isEmpty()) {
+            "默认下载链接（原书）"
+        } else {
+            "${detailMeta.value}（原书）"
+        }
+        items.add(SelineMenuItem(defaultLabel, {=> selectDownloadFormat(0)},
             glyph: "download"))
         var index: Int64 = 0
         for (format in detailFormats.value) {

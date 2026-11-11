@@ -31,8 +31,7 @@ func appShell(state: AppState): Unit {
             // 下载版本菜单：浮在最上层，点菜单外/切换页面自动关闭
             if (state.downloadMenuOpen.value) {
                 SelineContextMenuOverlay(state.downloadMenuItems(),
-                    state.downloadAnchor.x,
-                    state.downloadAnchor.y + state.downloadAnchor.h + 6.0,
+                    state.downloadMenuX(), state.downloadMenuY(),
                     {=> state.closeDownloadMenu()}, width: 250.0)
             }
         }.alignment(Alignment.TopLeading)
