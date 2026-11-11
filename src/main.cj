@@ -330,6 +330,12 @@ main(args: Array<String>): Int64 {
                 }
             }
         }
+        if ((getVariable("SELINE_READ_TEST_DL") ?? "") == "1") {
+            state.runDownloadSelfTest()
+        }
+        if ((getVariable("SELINE_READ_TEST_NAV") ?? "") == "1") {
+            state.runNavStackSelfTest()
+        }
         let settingsTabEnv = getVariable("SELINE_READ_SETTINGS_TAB") ?? ""
         if (!settingsTabEnv.isEmpty()) {
             state.selectSettingsTab(Int64.parse(settingsTabEnv))
@@ -338,6 +344,16 @@ main(args: Array<String>): Int64 {
         let detailScrollEnv = getVariable("SELINE_READ_DETAIL_SCROLL") ?? ""
         if (!detailScrollEnv.isEmpty()) {
             state.detailScroll.value = Float32.parse(detailScrollEnv)
+        }
+        let scrollAfterEnv = getVariable("SELINE_READ_SCROLL_AFTER_MS") ?? ""
+        let scrollValueEnv = getVariable("SELINE_READ_DETAIL_SCROLL") ?? "0"
+        if (!scrollAfterEnv.isEmpty()) {
+            let delayMs = Int64.parse(scrollAfterEnv)
+            let value = Float32.parse(scrollValueEnv)
+            let _ = spawn {=>
+                sleep(delayMs * Duration.millisecond)
+                state.postDetailScrollForTest(value)
+            }
         }
         let homeScrollEnv = getVariable("SELINE_READ_HOME_SCROLL") ?? ""
         if (!homeScrollEnv.isEmpty()) {

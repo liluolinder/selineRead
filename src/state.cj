@@ -1214,6 +1214,63 @@ public class AppState {
         }
     }
 
+    /** 验收用：延迟后设置详情页滚动位置（内容加载完再滚）。 */
+    public func postDetailScrollForTest(value: Float32): Unit {
+        match (app) {
+            case Some(appRef) =>
+                let _ = appRef.postToUi({=>
+                    detailScroll.value = value
+                    writeDebugLog("detail scroll -> ${value}")
+                })
+            case None => ()
+        }
+    }
+
+    /** 验收用：自检下载管理器（离线时应显示「失败」而不是崩溃）。 */
+    public func runDownloadSelfTest(): Unit {
+        let _ = spawn {=>
+            sleep(800 * Duration.millisecond)
+            postToUi({=>
+                let id = startDownload(24126585, "217fd6", "下载自检")
+                writeDebugLog("dlselftest: created ${id}")
+            })
+            sleep(3000 * Duration.millisecond)
+            postToUi({=>
+                for (item in downloadItems.value) {
+                    writeDebugLog("dlselftest: item ${item.taskId} status=${item.status} " +
+                        "err=${item.error} progress=${item.percent()}")
+                }
+            })
+        }
+    }
+
+    /** 验收用：自检详情返回栈（离线也能跑，不依赖网络数据）。 */
+    public func runNavStackSelfTest(): Unit {
+        let _ = spawn {=>
+            sleep(900 * Duration.millisecond)
+            postToUi({=>
+                writeDebugLog("navselftest: open A id=${detailId.value}")
+                openBook(BookCell(111, "hashA", "书 A", "作者 A", "", ""))
+                writeDebugLog("navselftest: A opened id=${detailId.value} history=${detailHistory.size}")
+            })
+            sleep(400 * Duration.millisecond)
+            postToUi({=>
+                openBook(BookCell(222, "hashB", "书 B", "作者 B", "", ""))
+                writeDebugLog("navselftest: B opened id=${detailId.value} history=${detailHistory.size}")
+            })
+            sleep(400 * Duration.millisecond)
+            postToUi({=>
+                closeDetail()
+                writeDebugLog("navselftest: after back id=${detailId.value} title=${detailTitle.value} history=${detailHistory.size}")
+            })
+            sleep(300 * Duration.millisecond)
+            postToUi({=>
+                closeDetail()
+                writeDebugLog("navselftest: after 2nd back open=${detailOpen.value} id=${detailId.value}")
+            })
+        }
+    }
+
     /** 验收用：延迟 delayMs 后点「返回」。 */
     public func scheduleCloseDetailForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
