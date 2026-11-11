@@ -53,6 +53,13 @@ Z-Library 桌面阅读客户端，用**仓颉 + CangHui（chui）**写成，后�
 | 下载列表页 | 完成（本次会话记录） |
 | 本地阅读器 | 未开始（下载后可先用系统阅读器打开） |
 
+## 图标与占位图
+
+- 应用图标：`assets/zlib.png`（标题栏品牌位 + `DesktopApp.setWindowIcon`，任务栏/Alt-Tab 生效）。
+- 图片占位：`assets/default_cover.png`（封面加载中 / 无封面 / 解码失败时铺在封面上）。
+- `build.ps1` 会把 `assets/` 复制到 `target\release\bin\assets\`；运行时按
+  `SELINE_READ_ASSETS` → `assets/` → `target/release/bin/assets/` 依次查找。
+
 ## 缓存与账号文件
 
 - 封面缓存：`%TEMP%\SelineRead\covers/<md5>.jpg`（也就是 `/temp/SelineRead`）。

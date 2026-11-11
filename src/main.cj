@@ -154,6 +154,18 @@ main(args: Array<String>): Int64 {
             }
         )
         app.setMinimumSize(1000, 680)
+        // 任务栏/窗口图标：从 assets/zlib.png 读入 PNG Surface
+        let iconPath = state.iconPath()
+        if (!iconPath.isEmpty()) {
+            try {
+                app.setWindowIcon(SdlSurface.loadPng(iconPath))
+                writeDebugLog("window icon: ${iconPath}")
+            } catch (failure: Exception) {
+                writeDebugLog("window icon failed: ${failure.message}")
+            }
+        } else {
+            writeDebugLog("window icon: asset missing")
+        }
         state.attach(app)
         if (options.booklistAutoOpen) {
             state.setAutoOpenFirstBooklist()

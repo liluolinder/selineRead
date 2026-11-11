@@ -21,7 +21,16 @@ func drawBookCover(ctx: UiContext, state: AppState, url: String, frame: Rect,
     radius: Float32): Unit {
     let palette = selineTheme().palette
     paintSurface(ctx.renderer, frame, palette.surfaceSunken, radius)
-    if (url.isEmpty() || frame.w <= 0.0 || frame.h <= 0.0) {
+    if (frame.w <= 0.0 || frame.h <= 0.0) {
+        return
+    }
+    // 先铺默认封面图：加载中/没有封面/解码失败时这就是最终显示
+    match (state.placeholderCoverTexture(ctx)) {
+        case Some(texture) =>
+            drawFittedTexture(ctx.renderer, texture, frame)
+        case None => ()
+    }
+    if (url.isEmpty()) {
         return
     }
     // 1) 纹理已就绪

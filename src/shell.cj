@@ -56,7 +56,7 @@ func titleBar(state: AppState): Unit {
             placeholder: "搜索书名、作者、关键词…", glyph: "search", height: 36.0,
             paste: true, onSubmit: {=> state.submitSearch()}).width(520.0))
         HStack(spacing: vp(SELINE_SPACE_MD)) {
-            SelineWindowTitle("Seline Read", glyph: "cloud")
+            SelineWindowTitle("Seline Read", glyph: "cloud", image: state.iconPath())
             Spacer()
             SelineCaptionControls(state.window(), barHeight: TITLE_BAR_HEIGHT)
         }.hug().fillWidth()

@@ -19,4 +19,11 @@ foreach ($dll in @("SDL3.dll", "SDL3_ttf.dll")) {
     $source = Join-Path $sdl $dll
     if (Test-Path $source) { Copy-Item $source $bin -Force }
 }
+# 资源：应用图标 + 默认封面图（运行时按 exe 旁 assets/ 解析）
+$assets = Join-Path $PSScriptRoot "assets"
+$targetAssets = Join-Path $bin "assets"
+if (Test-Path $assets) {
+    New-Item -ItemType Directory -Force -Path $targetAssets | Out-Null
+    Copy-Item (Join-Path $assets "*") $targetAssets -Force
+}
 Write-Output "build ok: $bin\main.exe"

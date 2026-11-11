@@ -596,6 +596,12 @@ public class AppState {
     private let failedCovers = HashMap<String, Bool>()
     /** 解码失败后的重试次数（缓存文件损坏时删掉重下一次）。 */
     private let decodeRetries = HashMap<String, Int64>()
+    /** 应用图标资源路径（标题栏与窗口图标用）。 */
+    private var iconAsset: String = ""
+    /** 默认封面图资源路径（图片占位用）。 */
+    private var placeholderAsset: String = ""
+    private var placeholderDecoded: ?DecodedImage = None
+    private var placeholderTexture: ?SelineImageTexture = None
     /** 验收开关：登录成功后自动下载 `id|hash`。 */
     private var autoDownloadTarget: String = ""
     /** 书单列表是否已成功加载过（构建期懒加载用）。 */
@@ -614,6 +620,33 @@ public class AppState {
         let profile = getVariable("USERPROFILE") ?? temp
         let books = Path(profile).join("Downloads").join("SelineRead").toString()
         downloadDir.value = books
+        // 随 exe 分发的资源：应用图标 / 默认封面
+        iconAsset = findAsset("zlib.png")
+        placeholderAsset = findAsset("default_cover.png")
+        writeDebugLog("assets: icon=${iconAsset} placeholder=${placeholderAsset}")
+    }
+
+    /** 应用图标路径（空串表示没有）。 */
+    public func iconPath(): String {
+        iconAsset
+    }
+
+    /** 默认封面纹理（懒加载，UI 线程 draw 时创建一次）。 */
+    public func placeholderCoverTexture(ctx: UiContext): ?SelineImageTexture {
+        match (placeholderTexture) {
+            case Some(value) => return Some(value)
+            case None => ()
+        }
+        if (placeholderDecoded.isNone() && !placeholderAsset.isEmpty()) {
+            placeholderDecoded = decodeImageFile(placeholderAsset)
+        }
+        match (placeholderDecoded) {
+            case Some(image) =>
+                let texture = SelineImageTexture(ctx.renderer, image)
+                placeholderTexture = Some(texture)
+                Some(texture)
+            case None => None
+        }
     }
 
     /** 侧栏导航：切一级页签，并退出详情页。 */
@@ -672,6 +705,16 @@ public class AppState {
         coverTextures.clear()
         decodedImages.clear()
         pendingImages.clear()
+        match (placeholderTexture) {
+            case Some(texture) =>
+                try {
+                    texture.close()
+                } catch (_: Exception) {
+                    ()
+                }
+                placeholderTexture = None
+            case None => ()
+        }
         match (client) {
             case Some(box) =>
                 try {
