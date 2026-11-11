@@ -132,19 +132,13 @@ class ThemeRevealOverlay <: Widget {
     }
 
     public func draw(ctx: UiContext): Unit {
-        // 目标主题的底色（还没切换，所以按 darkMode 取反）
-        let target = if (state.darkMode.value) {
-            SelineTheme.light()
-        } else {
-            SelineTheme.dark()
-        }
+        let palette = selineTheme().palette
         let originX = state.themeRevealOriginX()
         let originY = state.themeRevealOriginY()
-        // 半径要盖到最远的角
         let dx = max(max(originX - frame.x, frame.right() - originX), 0.0)
         let dy = max(max(originY - frame.y, frame.bottom() - originY), 0.0)
         let maxRadius = Float32(sqrt(Float64(dx * dx + dy * dy)))
-        // 约 420ms 的扩张（按帧 delta 推进，不依赖 State 弹簧）
+        // 约 420ms 的扩散（按帧 delta 推进）
         var progress = state.themeReveal.value + Float32(ctx.frame.deltaMs) / 420.0
         if (progress >= 1.0) {
             progress = 1.0
@@ -154,18 +148,26 @@ class ThemeRevealOverlay <: Widget {
         }
         let eased = 1.0 - (1.0 - progress) * (1.0 - progress)
         let radius = maxRadius * eased
-        // 用一圈同心圆近似"实心圆"（renderer 没有圆填充，只有圆角矩形）
-        paintSurface(ctx.renderer,
-            Rect(originX - radius, originY - radius, radius * 2.0, radius * 2.0),
-            target.palette.window, radius)
+        // 半透明光晕：主题已经切好了，这里只加一圈从按钮扩散的强调色，
+        // 不做不透明覆盖 —— 内容全程可见。
+        let fade = (1.0 - progress) * 0.30
+        let alpha = Int64(255.0 * fade)
+        if (alpha > 2 && radius > 1.0) {
+            let glow = palette.accent.withAlpha(alpha)
+            paintSurface(ctx.renderer,
+                Rect(originX - radius, originY - radius, radius * 2.0, radius * 2.0),
+                glow, radius)
+        }
         if (progress >= 1.0) {
-            state.applyThemeSwitch()
+            state.themeRevealing.value = false
+            state.themeReveal.value = 0.0
         } else {
             ctx.requestFrame()
         }
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {
-        true
+        // 动画期间不吞事件：内容照常可交互
+        false
     }
 }

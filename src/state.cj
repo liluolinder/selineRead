@@ -681,6 +681,9 @@ public class AppState {
     public let themeRevealing = State<Bool>(false)
     private var themeRevealX: Float32 = 0.0
     private var themeRevealY: Float32 = 0.0
+    /** 主题按钮的真实中心（侧栏 layout 每帧上报）。 */
+    private var themeButtonX: Float32 = 28.0
+    private var themeButtonY: Float32 = 120.0
     /** 热门列表。 */
     public let popular = State<ArrayList<BookCell>>(ArrayList<BookCell>())
     /** 首屏只渲染这么多张卡片，滚到底再追加（避免一次重绘 100 张卡）。 */
@@ -2094,16 +2097,33 @@ public class AppState {
 
     /* -------------------------------------------------- 主题 */
 
-    /** 从某个点（侧栏按钮）开始「往外辐射」地切换深浅色。 */
+    /** 记住主题按钮的真实中心（由侧栏 layout 上报，不触发重建）。 */
+    public func rememberThemeButtonCenter(x: Float32, y: Float32): Unit {
+        themeButtonX = x
+        themeButtonY = y
+    }
+
+    /** 从主题按钮中心触发切换（辐射原点 = 按钮中心）。 */
+    public func toggleThemeAtRecordedButton(): Unit {
+        toggleTheme(themeButtonX, themeButtonY)
+    }
+
+    /**
+     * 切换深浅色：**立刻**换主题（内容不消失），再从按钮位置放一圈辐射光晕。
+     *
+     * 早期实现是用新主题底色画一个扩张的实心圆盖住整窗，结果就是切换期间
+     * 内容全被盖住、动画结束才回来；现在改成：主题瞬时切换 + 半透明强调色光环扩散。
+     */
     public func toggleTheme(originX: Float32, originY: Float32): Unit {
         if (themeRevealing.value) {
             return
         }
         themeRevealX = originX
         themeRevealY = originY
+        writeDebugLog("theme: toggle at (${originX},${originY}) -> dark=${!darkMode.value}")
+        applyThemeSwitch()
         themeReveal.value = 0.0
         themeRevealing.value = true
-        writeDebugLog("theme: reveal start -> dark=${!darkMode.value}")
     }
 
     public func themeRevealOriginX(): Float32 {
@@ -2120,7 +2140,7 @@ public class AppState {
             case Some(value) => value
             case None => return
         }
-        let _ = appRef.postToUi({=> toggleTheme(28.0, 700.0)})
+        let _ = appRef.postToUi({=> toggleThemeAtRecordedButton()})
     }
 
     /** 动画结束：真正切换到目标主题（同时换 seline_ui 与 chui 两套 token）。 */

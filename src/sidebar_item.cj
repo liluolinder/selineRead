@@ -18,11 +18,15 @@ class SidebarItem <: Widget {
     private let onTap: () -> Unit
     private let id: String
     private let rowHeight: Float32
+    /** 可选：把自己每帧的矩形报给调用方（主题按钮要用真实位置做辐射原点）。 */
+    private let onFrame: (Rect) -> Unit
     private var frame = Rect.zero()
     private var hot = false
 
     init(glyph: String, title: String, expanded: Bool, selected: Bool,
-        onTap: () -> Unit, height!: Float32 = SIDEBAR_ROW_HEIGHT) {
+        onTap: () -> Unit, height!: Float32 = SIDEBAR_ROW_HEIGHT,
+        onFrame!: (Rect) -> Unit = {_ => ()}) {
+        this.onFrame = onFrame
         this.glyph = glyph
         this.title = title
         this.expanded = expanded
@@ -40,6 +44,7 @@ class SidebarItem <: Widget {
 
     public func layout(_: UiContext, rect: Rect): Unit {
         frame = rect
+        onFrame(rect)
     }
 
     public func draw(ctx: UiContext): Unit {
