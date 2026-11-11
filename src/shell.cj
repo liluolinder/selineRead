@@ -1,0 +1,92 @@
+/*
+ * 应用外壳：自绘标题栏 + 可伸缩侧栏（与 seline_bili 一致）+ 内容面板 + 状态栏。
+ *
+ * 标题栏是**无边框窗口**里唯一能拖动窗口的区域：`SelineTitleBarSurface`
+ * 负责背景与拖动，`SelineCaptionControls` 负责最小化/最大化/关闭。
+ *
+ * 侧栏是 `ZStack` 的**直接子节点**（浮层），内容区左边距 = 侧栏当前宽度；
+ * 两者读同一个弹簧值，所以动画过程中不会留缝（见 `sidebar_rail.cj`）。
+ */
+package seline_read
+
+import chui.*
+import seline_ui.*
+
+/** 标题栏高度（窗口按钮、居中搜索框都按它对齐）。 */
+let TITLE_BAR_HEIGHT: Float32 = 52.0
+
+/** 整个窗口的树。 */
+func appShell(state: AppState): Unit {
+    let palette = selineTheme().palette
+    VStack(spacing: vp(0.0)) {
+        titleBar(state)
+        ZStack {
+            // 内容区：左边距 = 侧栏当前宽度（与侧栏同一帧、同一表达式）
+            SelineContentPanel(palette.surface, 14.0, true) {
+                pageFor(state)
+            }.padding(railVisibleWidth(), 0.0, 0.0, 0.0)
+                .fillWidth().fillHeight()
+            // 侧栏浮层：直接作为 ZStack 子节点，位置由父容器给（x=0）
+            sidebarTabs(state)
+        }.alignment(Alignment.TopLeading)
+            // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
+            .fillWidth().flex()
+        statusBar(state)
+    }.background(palette.surfaceSunken).fillWidth().fillHeight()
+}
+
+/**
+ * 自绘标题栏：底层可拖动 surface + 居中搜索框 + 左标题/右窗口按钮。
+ *
+ * 三层 `ZStack`：底层背景，中层居中搜索框（`SelineCenteredLeaf` 拒绝拉伸，
+ * 父容器才会按内容尺寸把它摆在正中），顶层左右两端。
+ */
+func titleBar(state: AppState): Unit {
+    ZStack {
+        SelineTitleBarSurface(state.window())
+        SelineCenteredLeaf(SelineTextField(state.searchText.value,
+            {text => state.searchText.value = text},
+            placeholder: "搜索书名、作者、关键词…", glyph: "search", height: 36.0,
+            paste: true, onSubmit: {=> state.submitSearch()}).width(520.0))
+        HStack(spacing: vp(SELINE_SPACE_MD)) {
+            SelineWindowTitle("Seline Read", glyph: "cloud")
+            Spacer()
+            SelineCaptionControls(state.window(), barHeight: TITLE_BAR_HEIGHT)
+        }.hug().fillWidth()
+            .padding(vp(SELINE_PAGE_MARGIN), vp(0.0), vp(10.0), vp(0.0))
+    }.height(TITLE_BAR_HEIGHT)
+}
+
+/** 底部状态栏：库状态 + 当前站点提示。 */
+func statusBar(state: AppState): Unit {
+    let theme = selineTheme()
+    HStack(spacing: vp(SELINE_SPACE_MD)) {
+        Label(state.status.value).fontSize(theme.fontCaption).muted()
+        Spacer()
+        Label("Z-Library · zlibraryAPI4CJ").fontSize(theme.fontCaption).muted()
+    }.hug().fillWidth()
+        .padding(vp(SELINE_PAGE_MARGIN), vp(3.0), vp(SELINE_PAGE_MARGIN), vp(5.0))
+}
+
+/** 按当前状态分派页面：详情页（二级）优先于一级页签。 */
+func pageFor(state: AppState): Unit {
+    if (state.detailOpen.value) {
+        detailPage(state)
+        return
+    }
+    // 用 if 而不是 `match` + 常量：`case 常量名` 在这里是绑定模式，会匹配一切。
+    let tab = state.tab.value
+    if (tab == TAB_SEARCH) {
+        searchPage(state)
+        return
+    }
+    if (tab == TAB_DOWNLOADS) {
+        downloadsPage(state)
+        return
+    }
+    if (tab == TAB_SETTINGS) {
+        settingsPage(state)
+        return
+    }
+    homePage(state)
+}

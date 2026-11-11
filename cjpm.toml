@@ -1,0 +1,34 @@
+# seline_read · zlibraryAPI4CJ 的 CangHui 前端
+#
+# 依赖链：
+#   seline_read（可执行）
+#     ├── chui            声明式 GUI 框架（禁止修改）
+#     ├── seline_ui       共用 UI 层（标题栏 / 令牌 / 组件 / 图片解码与缓存）
+#     ├── zlibraryAPI4CJ  Z-Library API 静态库（本库）
+#     └── linderHttp      HTTP 客户端（zlibraryAPI4CJ 的传递依赖，显式列出）
+#
+# Windows 上 `--subsystem windows` 让双击不弹命令行；此时进程没有控制台，
+# 需要自己挂一个隐藏控制台给将来可能启动的子进程继承（见 src/platform/console.cj）。
+
+[package]
+  cjc-version = "1.2.0"
+  name = "seline_read"
+  version = "0.1.0"
+  output-type = "executable"
+  description = "Z-Library desktop reader built on CangHui."
+  compile-option = "-Woff unused"
+
+[dependencies]
+  chui = { path = "../chui" }
+  seline_ui = { path = "../seline_ui" }
+  zlibraryAPI4CJ = { path = "../zlibraryAPI4CJ" }
+  linderHttp = { path = "../LinderHttp" }
+
+[target]
+[target.x86_64-w64-mingw32]
+compile-option = "--cfg \"ohos=false\""
+# `--subsystem windows` 让双击不弹命令行；此时进程没有控制台，
+# 需要自己挂一个隐藏控制台给子进程继承（见 src/platform/console.cj）。
+link-option = "-lcrypt32 --subsystem windows --entry mainCRTStartup"
+[target.x86_64-w64-mingw32.bin-dependencies]
+path-option = ["${CANGJIE_STDX_PATH}/windows_x86_64_cjnative/static/stdx"]
