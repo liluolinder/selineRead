@@ -510,6 +510,8 @@ public class AppState {
     public let loading = State<Bool>(false)
     /** 热门列表。 */
     public let popular = State<ArrayList<BookCell>>(ArrayList<BookCell>())
+    /** 首屏只渲染这么多张卡片，滚到底再追加（避免一次重绘 100 张卡）。 */
+    public let popularVisible = State<Int64>(12)
     /** 搜索结果。 */
     public let results = State<ArrayList<BookCell>>(ArrayList<BookCell>())
     /** 最近一次搜索关键词；空串表示「没在搜索态」。 */
@@ -581,6 +583,10 @@ public class AppState {
     public let commentsDisabled = State<Bool>(false)
     /** 下一段评论的 offset；0 表示没有更多。 */
     public let commentsNextOffset = State<Int64>(0)
+    /** 评论是否已经发起过加载（懒加载：滚到评论区才请求）。 */
+    private var commentsLoaded: Bool = false
+    /** 当前渲染多少条评论，超出时「显示更多」再追加。 */
+    public let commentsVisible = State<Int64>(20)
 
     private var client: ?ClientBox = None
     private var app: ?DesktopApp = None
@@ -755,6 +761,7 @@ public class AppState {
         try {
             let briefs = SearchApi.mostPopular(clientValue)
             popular.value = cellsFromBriefs(briefs, clientValue.currentSiteUrl())
+            popularVisible.value = 12
             status.value = "热门 ${popular.value.size} 本 · ${clientValue.currentSiteUrl()}"
             error.value = ""
             writeDebugLog("popular loaded: ${popular.value.size}")
@@ -796,6 +803,7 @@ public class AppState {
                 let cells = cellsFromBriefs(briefs, clientBox.value.currentSiteUrl())
                 postToUi({=>
                     popular.value = cells
+                    popularVisible.value = 12
                     status.value = "热门 ${cells.size} 本 · ${clientBox.value.currentSiteUrl()}"
                     loading.value = false
                     error.value = ""
@@ -854,6 +862,16 @@ public class AppState {
         }
     }
 
+    /** 首页「继续向下滚动」：每次多揭示 24 张卡片（渲染量有上限）。 */
+    public func showMorePopular(): Unit {
+        let total = Int64(popular.value.size)
+        if (popularVisible.value >= total) {
+            return
+        }
+        let next = popularVisible.value + 24
+        popularVisible.value = if (next > total) { total } else { next }
+    }
+
     /** 退出搜索态，回到热门列表。 */
     public func exitSearch(): Unit {
         lastKeyword.value = ""
@@ -879,7 +897,9 @@ public class AppState {
         commentsError.value = ""
         commentsDisabled.value = false
         commentsNextOffset.value = 0
-        loadComments(true)
+        commentsVisible.value = 20
+        commentsLoaded = false
+        // 不在打开详情时立刻拉评论：评论区滚进视口后由哨兵触发（懒加载）
         detailDescription.value = ""
         detailFormats.value = ArrayList<BookFormat>()
         detailLoading.value = true
@@ -1271,6 +1291,8 @@ public class AppState {
         }
         if (reset) {
             comments.value = payload.cells
+            commentsVisible.value = 20
+            commentsLoaded = true
         } else {
             for (cell in payload.cells) {
                 comments.value.add(cell)
@@ -1278,6 +1300,28 @@ public class AppState {
         }
         commentsDisabled.value = payload.disabled
         commentsNextOffset.value = payload.nextOffset
+    }
+
+    /** 评论区哨兵可见时调用：第一次才真正请求（懒加载）。 */
+    public func ensureCommentsLoaded(): Unit {
+        if (commentsLoaded || commentsLoading.value || !commentsError.value.isEmpty()) {
+            return
+        }
+        if (detailId.value <= 0) {
+            return
+        }
+        loadComments(true)
+    }
+
+    /** 「显示更多」：先揭示已加载的评论，再按需拉下一段。 */
+    public func showMoreComments(): Unit {
+        let loaded = Int64(comments.value.size)
+        if (commentsVisible.value < loaded) {
+            let next = commentsVisible.value + 20
+            commentsVisible.value = if (next > loaded) { loaded } else { next }
+            return
+        }
+        loadMoreComments()
     }
 
     /** 「加载更多评论」。 */

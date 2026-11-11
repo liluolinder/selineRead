@@ -35,10 +35,14 @@ class LaunchOptions {
     let settleFrames: UInt64
     let booklistAutoOpen: Bool
     let openDownloadMenu: Bool
+    let perf: Bool
+    let gpuDriver: String
+    let noVsync: Bool
 
     init(shotPath: String, initialTab: Int64, searchKeyword: String, railOpen: Bool,
         login: Bool, downloadTarget: String, bookTarget: String, settleFrames: UInt64,
-        booklistAutoOpen: Bool, openDownloadMenu: Bool) {
+        booklistAutoOpen: Bool, openDownloadMenu: Bool, perf: Bool, gpuDriver: String,
+        noVsync: Bool) {
         this.shotPath = shotPath
         this.initialTab = initialTab
         this.searchKeyword = searchKeyword
@@ -49,6 +53,9 @@ class LaunchOptions {
         this.settleFrames = settleFrames
         this.booklistAutoOpen = booklistAutoOpen
         this.openDownloadMenu = openDownloadMenu
+        this.perf = perf
+        this.gpuDriver = gpuDriver
+        this.noVsync = noVsync
     }
 }
 
@@ -64,6 +71,9 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
     var settleFrames: UInt64 = UInt64(720)
     var booklistAutoOpen = false
     var openDownloadMenu = false
+    var perf = false
+    var gpuDriver = ""
+    var noVsync = false
     for (arg in args) {
         // 验收用：把渲染器后备缓冲导出成 PNG，拍完自动关窗
         if (arg.startsWith("--shot=")) {
@@ -104,9 +114,60 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         if (arg == "--dl-menu") {
             openDownloadMenu = true
         }
+        // 验收：打印帧耗时统计（HOME/DETAIL 卡顿排查）
+        if (arg == "--perf") {
+            perf = true
+        }
+        // 验收：强制 SDL 渲染驱动（direct3d11 / direct3d12 / vulkan / software）
+        if (arg.startsWith("--gpu=")) {
+            gpuDriver = arg[6..]
+        }
+        // 验收：关闭 vsync（测真实渲染耗时 / 滚动跟手）
+        if (arg == "--novsync") {
+            noVsync = true
+        }
     }
     LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget, bookTarget,
-        settleFrames, booklistAutoOpen, openDownloadMenu)
+        settleFrames, booklistAutoOpen, openDownloadMenu, perf, gpuDriver, noVsync)
+}
+
+/** 帧耗时统计（`--perf` 时启用）：用于证明/回归性能优化。 */
+class PerfStats {
+    let enabled: Bool
+    var frames: Int64 = 0
+    var totalMs: Float64 = 0.0
+    var maxMs: Float64 = 0.0
+    var slowFrames: Int64 = 0
+
+    init(enabled: Bool) {
+        this.enabled = enabled
+    }
+
+    func onFrame(deltaMs: Float32): Unit {
+        if (!enabled) {
+            return
+        }
+        frames += 1
+        totalMs += Float64(deltaMs)
+        let value = Float64(deltaMs)
+        if (value > maxMs) {
+            maxMs = value
+        }
+        if (deltaMs > 33.0) {
+            slowFrames += 1
+        }
+        if (frames % 120 == 0) {
+            writeDebugLog("PERF frame=${frames} avg=${Int64(totalMs / Float64(frames))}ms " +
+                "max=${Int64(maxMs)}ms slow=${slowFrames}")
+        }
+    }
+
+    func summary(): Unit {
+        if (enabled && frames > 0) {
+            writeDebugLog("PERF FINAL frames=${frames} avg=${Int64(totalMs / Float64(frames))}ms " +
+                "max=${Int64(maxMs)}ms slow=${slowFrames}")
+        }
+    }
 }
 
 main(args: Array<String>): Int64 {
@@ -133,6 +194,13 @@ main(args: Array<String>): Int64 {
     // 之后全部跑在专用原生线程上
     runUiOnNativeThread({=>
         try {
+        // 可选：强制渲染驱动（默认让 SDL 自选；本机疑似落到 software 渲染）
+        var hintSettings: Array<SdlHintSetting> = []
+        if (!options.gpuDriver.isEmpty()) {
+            hintSettings = [SdlHintSetting(SdlHint.CustomHint("SDL_RENDER_DRIVER"),
+                options.gpuDriver)]
+            writeDebugLog("render driver hint: ${options.gpuDriver}")
+        }
         let app = DesktopApp(
             WindowSpec(
                 "Seline Read",
@@ -142,9 +210,11 @@ main(args: Array<String>): Int64 {
                 frameless: true,
                 cornerRadius: WINDOW_CORNER_RADIUS,
                 scaling: Some(WindowScaleSettings(followSystem: true, zoom: 1.0)),
-                supersample: 1
+                supersample: 1,
+                vsync: !options.noVsync
             ),
             theme: selineChuiTheme(),
+            hints: hintSettings,
             // 验收用：`--shot=<path>` 由框架在 present 之后从渲染器后备缓冲读回像素，
             // 与窗口是否在前台、有没有被遮挡无关；拍完自动关窗。
             capture: if (options.shotPath.isEmpty()) {
@@ -217,16 +287,24 @@ main(args: Array<String>): Int64 {
             }
         }
         writeDebugLog("window ready")
+        let perf = PerfStats(options.perf)
         app.run {
             // FrameHandler 必须在根部且每帧都跑：侧栏弹簧只在帧回调里推进。
             // 缺了这层，点「展开侧栏」永远不会动。
+            // 只在「侧栏动画中 / 验收截图 / perf」时持续请求帧：
+            // 静态页面交给 chui 的脏帧机制，避免空转重绘整棵树（首页 100 张卡
+            // 每帧重绘会直接吃满 CPU）。
             FrameHandler(onFrame: {info =>
                 railAdvance(state, Float32(info.deltaMs))
+                perf.onFrame(Float32(info.deltaMs))
+            }, keepsAlive: {=>
+                railAnimating(state) || options.perf || !options.shotPath.isEmpty()
             }) {
                 appShell(state)
             }
         }
         writeDebugLog("window closed")
+        perf.summary()
         state.shutdown()
         } catch (failure: Exception) {
             writeDebugLog("ui thread failed: ${failure.message}")

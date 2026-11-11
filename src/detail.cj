@@ -59,9 +59,15 @@ func detailPage(state: AppState): Unit {
                     }.hug().fillWidth()
                 }
 
-                // 评论（papi：eapi 没有评论接口）
+                // 评论（papi）：懒加载——滚到评论区才请求，且只渲染前 N 条
                 VStack(spacing: vp(SELINE_SPACE_XS)) {
-                    Label("评论").fontSize(theme.fontHeading).bold()
+                    Label(if (state.comments.value.isEmpty()) {
+                        "评论"
+                    } else {
+                        "评论 ${state.comments.value.size}"
+                    }).fontSize(theme.fontHeading).bold()
+                    // 哨兵：自己进入视口时才触发首次加载
+                    CommentsSentinel(state)
                     if (!state.commentsError.value.isEmpty()) {
                         errorBannerText(state.commentsError.value)
                     }
@@ -71,15 +77,24 @@ func detailPage(state: AppState): Unit {
                     if (state.commentsLoading.value && state.comments.value.isEmpty()) {
                         loadingBlock("正在加载评论…")
                     }
+                    var shown: Int64 = 0
                     for (comment in state.comments.value) {
+                        if (shown >= state.commentsVisible.value) {
+                            break
+                        }
                         commentRow(comment)
+                        shown += 1
                     }
                     if (!state.commentsLoading.value && state.comments.value.isEmpty() &&
                         state.commentsError.value.isEmpty() &&
                         !state.commentsDisabled.value) {
-                        Label("还没有评论").fontSize(theme.fontCaption).muted()
+                        Label("向下滚动加载评论").fontSize(theme.fontCaption).muted()
                     }
-                    if (state.commentsNextOffset.value > 0) {
+                    if (state.commentsVisible.value < Int64(state.comments.value.size)) {
+                        SelineButton("显示更多评论", {=> state.showMoreComments()},
+                            glyph: "chevron_down_fill", kind: SelineButtonKind.Ghost,
+                            compact: true)
+                    } else if (state.commentsNextOffset.value > 0) {
                         SelineButton("加载更多评论", {=> state.loadMoreComments()},
                             glyph: "refresh", kind: SelineButtonKind.Ghost,
                             compact: true, busy: state.commentsLoading.value)
@@ -223,4 +238,40 @@ func commentRow(comment: CommentCell): Unit {
     }.hug().fillWidth()
         .padding(10.0)
         .background(theme.palette.surfaceSunken, vp(8.0))
+}
+/** 评论区哨兵：进入视口时才触发首次评论加载（避免打开详情就拉 100 条评论）。 */
+class CommentsSentinel <: Widget {
+    private let state: AppState
+    private var frame = Rect.zero()
+
+    init(state: AppState) {
+        this.state = state
+        emit(this)
+    }
+
+    public func measure(_: UiContext, _: Size): Size {
+        Size(0.0, 1.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        if (frame.y < ctx.viewportHeight + 120.0) {
+            state.ensureCommentsLoaded()
+        }
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
 }

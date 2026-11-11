@@ -128,6 +128,16 @@ func railAdvance(state: AppState, deltaMs: Float32): Unit {
     }
 }
 
+/** 侧栏弹簧是否还在运动（决定是否继续请求帧）。 */
+func railAnimating(state: AppState): Bool {
+    match (railSpringCache) {
+        case Some(railSpring) =>
+            let target: Float32 = if (state.railExpanded.value) { 1.0 } else { 0.0 }
+            railSpring.spring.value != target
+        case None => false
+    }
+}
+
 /** 当前可见宽度（整像素）。 */
 func railVisibleWidth(): Float32 {
     let t = max(0.0, RAIL_PROGRESS.value)

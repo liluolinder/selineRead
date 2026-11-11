@@ -30,7 +30,10 @@ func homePage(state: AppState): Unit {
                 if (state.loading.value && state.popular.value.isEmpty()) {
                     loadingBlock("正在获取热门图书…")
                 }
-                bookGrid(state, state.popular.value)
+                bookGrid(state, state.popular.value, limit: state.popularVisible.value)
+                if (state.popularVisible.value < Int64(state.popular.value.size)) {
+                    PopularLoadMoreFooter(state)
+                }
                 if (!state.loading.value && state.popular.value.isEmpty() &&
                     state.error.value.isEmpty()) {
                     emptyBlock("cloud", "没有拿到热门图书", "检查站点状态后再试")
@@ -40,16 +43,69 @@ func homePage(state: AppState): Unit {
     }.fillWidth().fillHeight()
 }
 
-/** 书脊网格：列数随窗口宽度自适应。 */
-func bookGrid(state: AppState, items: ArrayList<BookCell>): Unit {
+/** 书脊网格：列数随窗口宽度自适应；`limit > 0` 时只渲染前 N 张（懒加载用）。 */
+func bookGrid(state: AppState, items: ArrayList<BookCell>, limit!: Int64 = -1): Unit {
     if (items.isEmpty()) {
         return
     }
+    let total = Int64(items.size)
+    let count = if (limit > 0 && limit < total) { limit } else { total }
     AdaptiveGrid(180.0, minColumns: 2, maxColumns: 6) {
+        var index: Int64 = 0
         for (item in items) {
+            if (index >= count) {
+                break
+            }
             BookCard(state, item)
+            index += 1
         }
     }.spacing(SELINE_SPACE_MD, SELINE_SPACE_MD)
+}
+
+/**
+ * 首页「继续向下滚动」footer：滚进视口才揭示下一批卡片。
+ *
+ * 用"画到自己了"当可见性判据（ScrollView 给子节点的 frame 是屏幕坐标），
+ * 同 seline_bili 的 LoadMoreFooter；幂等由 `popularVisible` 上限保证。
+ */
+class PopularLoadMoreFooter <: Widget {
+    private let state: AppState
+    private var frame = Rect.zero()
+
+    init(state: AppState) {
+        this.state = state
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, 56.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        if (frame.y < ctx.viewportHeight + 100.0) {
+            state.showMorePopular()
+        }
+        let theme = selineTheme()
+        paintText(ctx.renderer, "继续向下滚动加载更多",
+            Rect(frame.x, frame.centerY() - 9.0, frame.w, 20.0),
+            theme.palette.textFaint, theme.fontCaption, align: SelineTextAlign.Center)
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
 }
 
 /** 卡片圆角；封面圆角 = 卡片圆角 - 内边距，两段圆弧才同心。 */
