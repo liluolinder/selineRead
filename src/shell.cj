@@ -20,10 +20,11 @@ let TITLE_BAR_HEIGHT: Float32 = 52.0
 func appShell(state: AppState): Unit {
     let palette = selineTheme().palette
     VStack(spacing: vp(0.0)) {
+        // 主题同步探针必须是整棵树最先绘制的节点：
+        // 顶栏/侧栏/内容都按它对齐后的全局配色画，主题过渡两遍才各自正确。
+        ThemeSyncProbe()
         titleBar(state)
         ZStack {
-            // 主题同步探针（必须在最前面：先对齐全局配色再画内容）
-            ThemeSyncProbe()
             // 内容区：左边距 = 侧栏当前宽度（与侧栏同一帧、同一表达式）
             SelineContentPanel(palette.surface, 14.0, true) {
                 pageFor(state)
