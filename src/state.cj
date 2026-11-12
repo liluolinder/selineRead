@@ -1318,7 +1318,10 @@ public class AppState {
             seeds.add(seed)
         }
         if (seeds.isEmpty()) {
-            seeds.add(ZlibHost.DEFAULT_URL)
+            // 理论上 loadUserConfig 已经填过默认种子站；这里兜底
+            for (mirror in ZlibHost.MIRRORS) {
+                seeds.add(mirror)
+            }
         }
         writeDebugLog("bootstrap: base=${baseUrl} seeds=${seeds.size}")
         let created = try {
@@ -2581,6 +2584,35 @@ public class AppState {
     /* -------------------------------------------------- 设置 / 网络配置 */
 
     /** 启动时读回配置（主题 / 下载目录 / 站点）。 */
+    /**
+     * 首次运行（或配置里站点为空）时，把库内默认站点落盘。
+     *
+     * - `activeSite` 默认 `ZlibHost.DEFAULT_URL`；
+     * - `seedSites` 默认 = `ZlibHost.MIRRORS`（官方镜像候选，换站用）；
+     * - `officialSites` 是只读的官方候选列表（设置页展示/可直接点选）。
+     */
+    private func seedDefaultSitesIfNeeded(): Unit {
+        officialSites.value = ArrayList<String>()
+        for (mirror in ZlibHost.MIRRORS) {
+            officialSites.value.add(mirror)
+        }
+        var changed = false
+        if (activeSite.value.isEmpty()) {
+            activeSite.value = ZlibHost.DEFAULT_URL
+            changed = true
+        }
+        if (seedSites.value.isEmpty()) {
+            for (mirror in ZlibHost.MIRRORS) {
+                seedSites.value.add(mirror)
+            }
+            changed = true
+        }
+        if (changed) {
+            saveUserConfig()
+            writeDebugLog("seeded default sites: active=${activeSite.value} seeds=${seedSites.value.size}")
+        }
+    }
+
     private func loadUserConfig(): Unit {
         // 新格式：JSON（~/seline_read/config.json）
         let jsonText = readTextFile(Path(configJsonPath()))
@@ -2613,6 +2645,7 @@ public class AppState {
                     }
                 }
                 downloadPathInput.value = downloadDir.value
+                seedDefaultSitesIfNeeded()
                 writeDebugLog("config loaded(json): dark=${darkMode.value} sites=${customSites.value.size} seeds=${seedSites.value.size} active=${activeSite.value}")
                 return
             } catch (_: Exception) {
@@ -2668,6 +2701,7 @@ public class AppState {
             }
             writeDebugLog("legacy config migrated to json")
         }
+        seedDefaultSitesIfNeeded()
         downloadPathInput.value = downloadDir.value
         writeDebugLog("user config loaded: dark=${darkMode.value} sites=${customSites.value.size} seeds=${seedSites.value.size} active=${activeSite.value}")
     }

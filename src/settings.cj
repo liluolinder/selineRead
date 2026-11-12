@@ -289,18 +289,20 @@ func downloadSettings(state: AppState): Unit {
 func networkSettings(state: AppState): Unit {
     let theme = selineTheme()
     let palette = theme.palette
-    sectionCard("官方站点（预留，不可删除）") {
+    sectionCard("官方站点（默认镜像，不可删除）") {
         VStack(spacing: vp(SELINE_SPACE_XS)) {
-            Label("官方站占位，后续填入默认地址；也可以直接在下面添加自定义站。")
+            Label("来自 zlibraryAPI4CJ 的默认镜像列表；点一下设为当前站点。")
                 .fontSize(theme.fontCaption).muted().wrap()
-            for (index in 0..3) {
+            for (site in state.officialSites.value) {
                 HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    SelineIcon("cloud", size: 14.0, color: palette.textFaint)
-                    Label("官方站点 ${index + 1}（待配置）").fontSize(theme.fontBody).muted()
+                    SelineOptionRow(site, if (state.activeSite.value == site) {
+                        "当前使用"
+                    } else {
+                        "点击切换"
+                    }, state.activeSite.value == site,
+                        {=> state.selectActiveSite(site)}, width: 520.0)
                     Spacer()
                 }.hug().fillWidth()
-                    .padding(10.0)
-                    .background(palette.surfaceSunken, vp(8.0))
             }
         }.hug().fillWidth()
     }
