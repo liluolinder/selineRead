@@ -389,19 +389,22 @@ func sectionCard(title: String, body!: () -> Unit): Unit {
 
 func downloadsPage(state: AppState): Unit {
     // 下载页不要页头（标题 / 路径 / 清空已结束 三个都去掉）：侧栏「下载」已经表明页面，
-    // 列表直接从顶部开始，任务行自带状态与操作。
-    pageScrollView(scrollState: state.downloadsScroll) {
-        VStack(spacing: vp(SELINE_SPACE_SM)) {
-            if (state.downloadItems.value.isEmpty()) {
-                emptyBlock("download", "还没有下载",
-                    "打开一本书 → 详情页点「下载」（需要先在「账号」页登录）")
-            } else {
-                for (item in state.downloadItems.value) {
-                    downloadRow(state, item)
+    // 列表直接从顶部开始；右下角放一个圆形悬浮按钮打开下载文件夹。
+    ZStack {
+        pageScrollView(scrollState: state.downloadsScroll) {
+            VStack(spacing: vp(SELINE_SPACE_SM)) {
+                if (state.downloadItems.value.isEmpty()) {
+                    emptyBlock("download", "还没有下载",
+                        "打开一本书 → 详情页点「下载」（需要先在「账号」页登录）")
+                } else {
+                    for (item in state.downloadItems.value) {
+                        downloadRow(state, item)
+                    }
                 }
-            }
-        }.padding(PAGE_PAD, 16.0, PAGE_PAD, 32.0)
-    }.fillWidth().fillHeight()
+            }.padding(PAGE_PAD, 16.0, PAGE_PAD, 32.0)
+        }.fillWidth().fillHeight()
+        SelineFab("folder-open", {=> selineOpenFolder(state.downloadDir.value)})
+    }.alignment(Alignment.BottomTrailing).fillWidth().fillHeight()
 }
 
 /** 一条下载记录：标题 + 进度条 + 状态/速度 + 停止。 */
