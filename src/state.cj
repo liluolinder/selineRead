@@ -143,7 +143,7 @@ class BooklistsPayload {
             BooklistsPayload(Some(BooklistApi.list(client, page: page,
                 searchQuery: searchQuery)), "")
         } catch (failure: ZlibError) {
-            BooklistsPayload(Option<BooklistPage>.None, failure.detail)
+            BooklistsPayload(Option<BooklistPage>.None, friendlyErrorMessage(failure))
         }
     }
 
@@ -151,7 +151,7 @@ class BooklistsPayload {
         try {
             BooklistsPayload(Some(BooklistApi.my(client, page: page)), "")
         } catch (failure: ZlibError) {
-            BooklistsPayload(Option<BooklistPage>.None, failure.detail)
+            BooklistsPayload(Option<BooklistPage>.None, friendlyErrorMessage(failure))
         }
     }
 }
@@ -177,7 +177,7 @@ class BooklistBooksPayload {
             BooklistBooksPayload(cellsFromBooks(result.books, siteUrl),
                 result.totalPages, result.totalItems, "")
         } catch (failure: ZlibError) {
-            BooklistBooksPayload(ArrayList<BookCell>(), 0, 0, failure.detail)
+            BooklistBooksPayload(ArrayList<BookCell>(), 0, 0, friendlyErrorMessage(failure))
         }
     }
 }
@@ -267,7 +267,7 @@ class CommentsPayload {
             CommentsPayload(cells, page.commentsDisabled, next, "")
         } catch (failure: ZlibError) {
             writeDebugLog("comments failed: ${failure.detail}")
-            CommentsPayload(ArrayList<CommentCell>(), false, 0, failure.detail)
+            CommentsPayload(ArrayList<CommentCell>(), false, 0, friendlyErrorMessage(failure))
         }
     }
 }
@@ -380,7 +380,7 @@ class DetailPayload {
         try {
             info = Some(BookApi.info(client, id, hash))
         } catch (failure: ZlibError) {
-            error = failure.detail
+            error = friendlyErrorMessage(failure)
         }
         var formats = ArrayList<BookFormat>()
         try {
@@ -443,7 +443,7 @@ class LoginOutcome {
             LoginOutcome(true, "", Some(result.withClient(client)), Some(result.credential),
                 name, "${result.user.id}")
         } catch (failure: ZlibError) {
-            LoginOutcome(false, failure.detail, Option<ZlibClient>.None, Option<ZlibCredential>.None, "", "")
+            LoginOutcome(false, friendlyErrorMessage(failure), Option<ZlibClient>.None, Option<ZlibCredential>.None, "", "")
         }
     }
 }
@@ -726,6 +726,28 @@ func cellsFromBooks(books: ArrayList<BookInfo>, siteUrl: String): ArrayList<Book
  *
  * `window` 用 `?DesktopApp` 保存：它在建窗口之后才有值，而 State 在之前就构造了。
  */
+/**
+ * 把 `ZlibError` 翻成一句用户能看懂的话（不暴露 URL / attempts 等内部诊断）。
+ *
+ * 内部诊断仍然写 debug 日志；页面上只显示这一句。
+ */
+func friendlyErrorMessage(failure: ZlibError): String {
+    match (failure.kind) {
+        case ZlibErrorKind.BadResponse =>
+            "服务器返回了无法识别的内容（可能被风控或站点维护）"
+        case ZlibErrorKind.ApiFailure =>
+            if (failure.serverMessage.isEmpty()) {
+                "接口返回失败"
+            } else {
+                "接口返回失败：${failure.serverMessage}"
+            }
+        case ZlibErrorKind.NotLoggedIn => "需要登录后才能访问"
+        case ZlibErrorKind.NotFound => "内容不存在或已被删除"
+        case ZlibErrorKind.Forbidden => "访问被拒绝（可能是站点风控）"
+        case ZlibErrorKind.Closed => "客户端已关闭"
+        case ZlibErrorKind.Cangjie => "网络请求失败（当前站和种子站都无法访问）"
+    }
+}
 public class AppState {
     /** 当前一级页签：0 热门 / 1 搜索 / 2 下载 / 3 设置。 */
     public let tab = State<Int64>(0)
@@ -1056,7 +1078,7 @@ public class AppState {
                 seed: seed)
             this.client = Some(ClientBox(created))
         } catch (failure: ZlibError) {
-            loginMessage.value = "切换账号失败：${failure.detail}"
+            loginMessage.value = "切换账号失败：${friendlyErrorMessage(failure)}"
             return
         }
         loggedIn.value = true
@@ -1321,7 +1343,7 @@ public class AppState {
         let created = try {
             ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
         } catch (failure: ZlibError) {
-            error.value = "创建客户端失败：${failure.detail}"
+            error.value = "创建客户端失败：${friendlyErrorMessage(failure)}"
             status.value = "离线"
             writeDebugLog("bootstrap: create client failed: ${failure.detail}")
             return
@@ -1350,6 +1372,8 @@ public class AppState {
             return
         }
         loadPopularBlocking(created)
+        // 首屏请求可能触发了库内换站：把新站写回配置（下次启动直接用）
+        adoptRefreshedSite()
     }
 
     /**
@@ -1470,7 +1494,7 @@ public class AppState {
             error.value = ""
             writeDebugLog("popular loaded: ${popular.value.size}")
         } catch (failure: ZlibError) {
-            error.value = "加载热门失败：${failure.detail}"
+            error.value = "加载热门失败：${friendlyErrorMessage(failure)}"
             status.value = "加载失败"
             writeDebugLog("popular failed: ${failure.detail}")
         } catch (failure: Exception) {
@@ -1514,7 +1538,7 @@ public class AppState {
                 })
             } catch (failure: ZlibError) {
                 postToUi({=>
-                    error.value = "加载热门失败：${failure.detail}"
+                    error.value = "加载热门失败：${friendlyErrorMessage(failure)}"
                     loading.value = false
                 })
             }
@@ -1584,7 +1608,7 @@ public class AppState {
                         writeDebugLog("drop stale search error: ${keyword}")
                         return
                     }
-                    error.value = "搜索失败：${failure.detail}"
+                    error.value = "搜索失败：${friendlyErrorMessage(failure)}"
                     loading.value = false
                 })
             }
@@ -1820,7 +1844,7 @@ public class AppState {
         // 下载
         downloadMessage.value = ""
         // 设置/网络
-        networkMessage.value = "没有可用的种子站，或拉取失败"
+        networkMessage.value = "当前站和种子站都不可用，刷新失败"
         // 账号
         loginMessage.value = "登录失败：账号或密码错误"
         writeDebugLog("force error states for shot")
@@ -2241,7 +2265,7 @@ public class AppState {
                     if (generation != detailGeneration) {
                         return
                     }
-                    detailRelatedError.value = "相关书籍加载失败：${failure.detail}"
+                    detailRelatedError.value = "相关书籍加载失败：${friendlyErrorMessage(failure)}"
                     detailRelatedLoading.value = false
                 })
             }
@@ -2928,7 +2952,7 @@ public class AppState {
                     adoptRefreshedSite()
                     networkMessage.value = "站点已更新：${box.value.currentSiteUrl()}"
                 } else {
-                    networkMessage.value = "没有可用的种子站，或拉取失败"
+                    networkMessage.value = "当前站和种子站都不可用，刷新失败"
                 }
             case None => networkMessage.value = "客户端未就绪"
         }
@@ -3154,7 +3178,7 @@ public class AppState {
                     if (generation != favoritesGeneration) {
                         return
                     }
-                    favoritesError.value = "收藏加载失败：${failure.detail}"
+                    favoritesError.value = "收藏加载失败：${friendlyErrorMessage(failure)}"
                     favoritesLoading.value = false
                 })
             }
