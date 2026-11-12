@@ -39,7 +39,10 @@ func appShell(state: AppState): Unit {
                     state.downloadMenuX(), state.downloadMenuY(),
                     {=> state.closeDownloadMenu()}, width: 250.0,
                     closing: state.downloadMenuClosing.value,
-                    spring: state.downloadMenuSpring)
+                    spring: state.downloadMenuSpring,
+                    // 支点 = 「下载」按钮的右下角：菜单从按钮处展开（不是从左上角）
+                    pivotX: state.downloadAnchor.x + state.downloadAnchor.w,
+                    pivotY: state.downloadAnchor.y + state.downloadAnchor.h + 6.0)
             }
         }.alignment(Alignment.TopLeading)
             // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
