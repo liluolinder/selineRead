@@ -3103,6 +3103,17 @@ public class AppState {
         }
     }
 
+    /**
+     * 立即弹一条 toast，**不走文案去重**。
+     *
+     * `toastIfChanged` 是给"页面错误态"用的：同一句话只弹一次。
+     * 用户主动点按钮（如未登录点下载）每次都应该有反馈，用这个。
+     */
+    public func showToastNow(text: String): Unit {
+        lastToastedText = text
+        showToast(text)
+    }
+
     /** 点击/切换页面时立即收起 toast。 */
     public func dismissToast(): Unit {
         toastSeq += 1
@@ -3409,7 +3420,8 @@ public class AppState {
     /** 下载当前详情页选中的版本（走 selineDownload；zlib 不支持 Range，单线程）。 */
     public func downloadBook(): Unit {
         if (!loggedIn.value) {
-            detailError.value = "下载需要登录：请到「设置」页登录"
+            // 用户主动点击：每次都弹（不能走 toastIfChanged 的去重，否则第二次点击没反馈）
+            showToastNow("下载需要登录：请先在「账号」页登录")
             return
         }
         if (detailId.value <= 0 || detailHash.value.isEmpty()) {

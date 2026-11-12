@@ -330,6 +330,11 @@ main(args: Array<String>): Int64 {
                 }
             }
         }
+        if ((getVariable("SELINE_READ_TEST_DL_TWICE") ?? "") == "1") {
+            // 验收：未登录连点两次下载，应该弹两次 toast
+            state.downloadBook()
+            state.downloadBook()
+        }
         if ((getVariable("SELINE_READ_TEST_DL") ?? "") == "1") {
             state.runDownloadSelfTest()
         }
