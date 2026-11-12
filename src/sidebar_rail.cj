@@ -36,10 +36,11 @@ let TAB_ACCOUNT: Int64 = 5
 
 /** 内容页签（搜索不再是独立页签：结果直接显示在「热门」页签里）。 */
 let APP_TABS: Array<SelineRailItem> = [
-    SelineRailItem("热门", "home", "home_fill"),
-    SelineRailItem("收藏", "star", "star_fill"),
-    SelineRailItem("书单", "folder", "folder"),
-    SelineRailItem("下载", "download", "download")
+    // 图标语义：热门=火苗、收藏=星、书单=带书签的列表、下载=下载
+    SelineRailItem("热门", "flame", "flame_fill"),
+    SelineRailItem("收藏", "star-o", "star"),
+    SelineRailItem("书单", "list_book", "list_book_fill"),
+    SelineRailItem("下载", "download-o", "download")
 ]
 
 /** 侧栏进度的帧间通道：帧回调写入，构建/绘制读取。 */
@@ -233,7 +234,7 @@ func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
         // ---- 固定区 ----
         VStack(spacing: vp(0.0)) {
             ZStack { }.height(SELINE_SPACE_SM)
-            SidebarItem(if (expanded) { "chevron_down_fill" } else { "chevron_up_fill" },
+            SidebarItem(if (expanded) { "chevron_left" } else { "chevron_right" },
                 if (expanded) { "收起侧栏" } else { "展开侧栏" }, expanded, false,
                 {=> state.railExpanded.value = !state.railExpanded.value})
             ZStack { }.height(SELINE_SPACE_XS)
@@ -255,7 +256,8 @@ func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
             SidebarItem(if (state.darkMode.value) { "sun" } else { "moon" },
                 if (state.darkMode.value) { "浅色模式" } else { "深色模式" }, expanded, false,
                 {=> state.toggleTheme(0.0, 0.0)})
-            SidebarItem("clock_fill", "设置", expanded, selectedTab == TAB_SETTINGS,
+            SidebarItem(if (selectedTab == TAB_SETTINGS) { "settings" } else { "settings-o" },
+                "设置", expanded, selectedTab == TAB_SETTINGS,
                 {=> state.tabSelectFromRail(TAB_SETTINGS)})
             SidebarAccountChip(state, expanded, selectedTab == TAB_ACCOUNT)
             ZStack { }.height(SELINE_SPACE_SM)
