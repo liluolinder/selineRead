@@ -704,6 +704,12 @@ public class AppState {
     private var favoritesGeneration: Int64 = 0
     /** 账号资料代数（换号/登出时 +1，防止旧账号的 profile 覆盖新账号）。 */
     private var profileGeneration: Int64 = 0
+    /** 右下角 toast：当前文案（空 = 不显示）。 */
+    public let toastText = State<String>("")
+    /** toast 的弹出弹簧（应用持有，跨帧稳定）。 */
+    public let toastSpring = Spring(0.0, stiffness: 260.0, damping: 26.0)
+    private var toastSeq: Int64 = 0
+    private var lastToastedText: String = ""
     /** 是否停在图书详情页（二级页面）。 */
     public let detailOpen = State<Bool>(false)
     /** 详情页字段。 */
@@ -2533,6 +2539,55 @@ public class AppState {
             case None => ()
         }
         writeDebugLog("theme: switched dark=${nextDark}")
+    }
+
+    /* -------------------------------------------------- Toast */
+
+    /** 弹一条 toast（右下角），3.2 秒后自动消失。 */
+    public func showToast(text: String): Unit {
+        if (text.isEmpty()) {
+            return
+        }
+        toastSeq += 1
+        let seq = toastSeq
+        toastText.value = text
+        toastSpring.reset(0.0)
+        writeDebugLog("toast: ${text}")
+        let _ = spawn {=>
+            sleep(3200 * Duration.millisecond)
+            postToUi({=>
+                if (seq == toastSeq) {
+                    toastText.value = ""
+                }
+            })
+        }
+    }
+
+    /**
+     * 页面渲染时调用：错误文案变了才弹 toast（避免每帧重复弹）。
+     *
+     * 用 `spawn + postToUi` 延后到构建之外再写 State：构建期写 State 会触发重建。
+     */
+    public func toastIfChanged(text: String): Unit {
+        if (text.isEmpty()) {
+            lastToastedText = ""
+            return
+        }
+        if (text == lastToastedText) {
+            return
+        }
+        lastToastedText = text
+        let copy = text
+        let _ = spawn {=>
+            postToUi({=> showToast(copy) })
+        }
+    }
+
+    /** 点击/切换页面时立即收起 toast。 */
+    public func dismissToast(): Unit {
+        toastSeq += 1
+        toastText.value = ""
+        toastSpring.reset(0.0)
     }
 
     /* -------------------------------------------------- 收藏 */

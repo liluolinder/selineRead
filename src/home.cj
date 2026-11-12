@@ -34,8 +34,7 @@ func homePage(state: AppState): Unit {
                 if (true) {
                     // 列表已经有内容、只是这次刷新失败：紧凑横幅
                     if (failed) {
-                        errorBannerText(state.error.value,
-                            retry: Some({=> state.reloadPopular()}), busy: state.loading.value)
+                        state.toastIfChanged(state.error.value)
                     }
                     if (state.forceSkeleton.value ||
                         (state.loading.value && state.popular.value.isEmpty())) {

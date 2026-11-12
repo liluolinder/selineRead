@@ -60,30 +60,6 @@ func pageHeader(title: String, subtitle: String, trailing: () -> Unit): Unit {
 
 /** 错误提示条：红字 + 浅底，不弹窗（弹窗会打断用户）。 */
 /**
- * 分区级错误提示（紧凑行内）：图标 + 红字 + 可选「重试」。
- *
- * 用于"页面还能看、只有某一块失败"的情况（评论、相关书籍、热门的二次刷新）。
- * 页面整体失败用 [errorStateCard]。
- */
-func errorBannerText(text: String, retry!: Option<() -> Unit> = None,
-    busy!: Bool = false): Unit {
-    let theme = selineTheme()
-    let palette = theme.palette
-    HStack(spacing: vp(SELINE_SPACE_SM)) {
-        SelineIcon("warn", size: 15.0, color: palette.danger)
-        Label(text).fontSize(theme.fontLabel)
-            .foregroundColor(palette.danger)
-            .wrap()
-            .flex()
-        if (let Some(action) <- retry) {
-            SelineButton("重试", action, glyph: "refresh",
-                kind: SelineButtonKind.Ghost, compact: true, busy: busy)
-        }
-    }.hug().fillWidth()
-        .padding(0.0, 4.0, 0.0, 4.0)
-}
-
-/**
  * 去掉错误文案里的"xxx失败："前缀。
  *
  * 卡片已经有标题了，正文再重复一遍前缀会显得啰嗦。

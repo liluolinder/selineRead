@@ -41,9 +41,7 @@ func favoritesPage(state: AppState): Unit {
                 if (true) {
                     let failed = !state.favoritesError.value.isEmpty()
                     if (failed && !state.favorites.value.isEmpty()) {
-                        errorBannerText(state.favoritesError.value,
-                            retry: Some({=> state.loadFavorites()}),
-                            busy: state.favoritesLoading.value)
+                        state.toastIfChanged(state.favoritesError.value)
                     }
                     if (state.favoritesLoading.value || state.forceSkeleton.value) {
                         bookSkeletonGrid(count: 12)

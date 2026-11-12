@@ -34,6 +34,8 @@ func appShell(state: AppState): Unit {
             sidebarTabs(state)
 
             // 下载版本菜单：浮在最上层，点菜单外/切换页面自动关闭
+            // 底部右侧 toast：所有"横幅式"报错都走这里
+            ErrorToastOverlay(state)
             if (state.downloadMenuOpen.value || state.downloadMenuClosing.value) {
                 SelineContextMenuOverlay(state.downloadMenuItems(),
                     state.downloadMenuX(), state.downloadMenuY(),
@@ -143,6 +145,83 @@ class ThemeSyncProbe <: Widget {
     }
 
     public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
+}
+/**
+ * 右下角错误 toast。
+ *
+ * 之前错误是页面里的一条横幅（红字条），现在统一改成"浮在右下角的提示"：
+ * 从底部滑入 + 淡入，3.2 秒后自动消失；不打断操作（`handle` 永远返回 false）。
+ */
+class ErrorToastOverlay <: Widget {
+    private let state: AppState
+    private var frame = Rect.zero()
+
+    init(state: AppState) {
+        this.state = state
+        emit(this)
+    }
+
+    public func isFlexible(): Bool {
+        true
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, available.h)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        let text = state.toastText.value
+        let target: Float32 = if (text.isEmpty()) { 0.0 } else { 1.0 }
+        let progress = state.toastSpring.animate(ctx, target: target)
+        if (text.isEmpty() && progress < 0.02) {
+            return
+        }
+        let theme = selineTheme()
+        let palette = theme.palette
+        let viewportW = ctx.viewportWidth
+        let viewportH = ctx.viewportHeight
+        let margin: Float32 = 18.0
+        let maxWidth: Float32 = 380.0
+        let lines = wrapTextByWidth(ctx, text, maxWidth - 52.0, theme.fontLabel, theme.fontFamily)
+        let lineHeight: Float32 = theme.fontLabel + 5.0
+        let textHeight: Float32 = lineHeight * Float32(lines.size)
+        let boxH: Float32 = textHeight + 24.0
+        let boxW: Float32 = maxWidth
+        let alpha = clamp01(progress)
+        let one: Float32 = 1.0
+        let offset: Float32 = (one - alpha) * 16.0
+        let box = Rect(viewportW - margin - boxW, viewportH - margin - boxH + offset, boxW, boxH)
+        let a = Int64(Float64(alpha) * 255.0)
+        paintCard(ctx.renderer, box, palette.surfaceRaised.withAlpha(a), 12.0,
+            border: palette.borderStrong.withAlpha(a),
+            shadow: palette.shadow.withAlpha(Int64(Float32(palette.shadow.a) * alpha)),
+            shadowSpread: 16.0, shadowOffsetY: 3.0)
+        drawGlyph(ctx.renderer, "warn",
+            Rect(box.x + 14.0, box.y + (box.h - 16.0) * 0.5, 16.0, 16.0),
+            palette.danger.withAlpha(a), 1.0)
+        var y = box.y + 12.0
+        for (line in lines) {
+            paintText(ctx.renderer, line,
+                Rect(box.x + 40.0, y, box.w - 52.0, lineHeight),
+                palette.text.withAlpha(a), theme.fontLabel, family: theme.fontFamily)
+            y += lineHeight
+        }
+        if (progress > 0.0 && progress < 1.0) {
+            ctx.requestFrame()
+        }
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
         false
     }
 

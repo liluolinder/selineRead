@@ -34,9 +34,7 @@ func booklistsPage(state: AppState): Unit {
                     booklistSkeletonGrid(count: 6)
                 } else if (!state.booklists.value.isEmpty()) {
                     if (failed) {
-                        errorBannerText(state.booklistsError.value,
-                            retry: Some({=> state.loadBooklists()}),
-                            busy: state.booklistsLoading.value)
+                        state.toastIfChanged(state.booklistsError.value)
                     }
                     AdaptiveGrid(360.0, minColumns: 2, maxColumns: 3) {
                         for (cell in state.booklists.value) {

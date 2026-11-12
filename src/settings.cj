@@ -129,7 +129,7 @@ func accountCard(state: AppState): Unit {
                     Spacer()
                 }.hug().fillWidth()
                 if (state.loginMessage.value.contains("失败")) {
-                    errorBannerText(state.loginMessage.value)
+                    state.toastIfChanged(state.loginMessage.value)
                 }
             }.hug().fillWidth()
         }

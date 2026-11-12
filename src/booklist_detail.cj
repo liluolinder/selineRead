@@ -44,9 +44,7 @@ func booklistDetailPage(state: AppState): Unit {
                 }.hug().fillWidth()
                 let failed = !state.booklistError.value.isEmpty()
                 if (failed) {
-                    errorBannerText(state.booklistError.value,
-                        retry: Some({=> state.loadBooklistBooks(1)}),
-                        busy: state.booklistLoading.value)
+                    state.toastIfChanged(state.booklistError.value)
                 }
                 if (state.booklistLoading.value && state.booklistBooks.value.isEmpty()) {
                     bookSkeletonGrid(count: 12)
