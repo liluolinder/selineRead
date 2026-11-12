@@ -3254,11 +3254,21 @@ public class AppState {
             showToastNow("下载需要登录：请先在「账号」页登录")
             return
         }
+        if (detailLoading.value) {
+            showToastNow("正在获取中，请稍后")
+            return
+        }
         toggleDownloadMenu()
     }
 
     /** 用按钮当前矩形打开下载菜单（锚点只在打开瞬间取一次）。 */
     public func openDownloadMenu(): Unit {
+        // 详情还在加载：格式列表和下载链接都还没拿到，弹菜单只会给一个不可用的
+        // 「默认下载链接（原书）」，所以这里先提示「正在获取中」。
+        if (detailLoading.value) {
+            showToastNow("正在获取中，请稍后")
+            return
+        }
         menuAnchorX = downloadAnchor.x
         menuAnchorY = downloadAnchor.y + downloadAnchor.h + 6.0
         downloadMenuSpring.reset(0.0)
