@@ -1155,7 +1155,6 @@ public class AppState {
     public let downloadDir = State<String>("")
     public let downloads = State<ArrayList<DownloadEntry>>(ArrayList<DownloadEntry>())
     public let downloading = State<Bool>(false)
-    public let downloadMessage = State<String>("")
     /** 下载按钮弹出的「版本选择」菜单是否打开。 */
     public let downloadMenuOpen = State<Bool>(false)
     /** 菜单正在收起（播完反向动画再卸载）。 */
@@ -1869,7 +1868,6 @@ public class AppState {
         commentsError.value = "加载评论失败：服务器错误（500）"
         }
         // 下载
-        downloadMessage.value = ""
         // 设置/网络
         networkMessage.value = "当前站和种子站都不可用，刷新失败"
         // 账号
@@ -2106,7 +2104,6 @@ public class AppState {
         detailId.value = cell.id
         detailHash.value = cell.hash
         detailFormatIndex.value = 0
-        downloadMessage.value = ""
         comments.value = ArrayList<CommentCell>()
         commentsError.value = ""
         commentsDisabled.value = false
@@ -3507,7 +3504,7 @@ public class AppState {
             detailTitle.value
         }
         let taskId = startDownload(target.id, target.hash, title, cover: detailCover.value)
-        downloadMessage.value = "已加入下载队列（${taskId}）"
+        showToastNow("已加入下载队列（${taskId}）")
         detailError.value = ""
     }
 

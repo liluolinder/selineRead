@@ -399,10 +399,7 @@ func downloadsPage(state: AppState): Unit {
         })
         pageScrollView(scrollState: state.downloadsScroll) {
             VStack(spacing: vp(SELINE_SPACE_SM)) {
-                if (!state.downloadMessage.value.isEmpty()) {
-                    Label(state.downloadMessage.value).fontSize(theme.fontCaption)
-                        .foregroundColor(palette.accent)
-                }
+
                 if (state.downloadItems.value.isEmpty()) {
                     emptyBlock("download", "还没有下载",
                         "打开一本书 → 详情页点「下载」（需要先在「账号」页登录）")

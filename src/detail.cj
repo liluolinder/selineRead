@@ -75,10 +75,7 @@ func detailPage(state: AppState): Unit {
                         .padding(DETAIL_CARD_PAD)
                         .background(theme.palette.surfaceRaised, vp(DETAIL_CARD_RADIUS))
                 }.height(DETAIL_TOP_HEIGHT).fillWidth()
-                if (!state.downloadMessage.value.isEmpty()) {
-                    Label(state.downloadMessage.value).fontSize(theme.fontCaption)
-                        .foregroundColor(theme.palette.accent)
-                }
+
                 // 分段：书籍信息 / 书籍评论 / 相关书籍
                 HStack(spacing: vp(SELINE_SPACE_SM)) {
                     SelineSegmented(["书籍信息", "书籍评论", "相关书籍"],
