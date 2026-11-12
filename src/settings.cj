@@ -388,28 +388,19 @@ func sectionCard(title: String, body!: () -> Unit): Unit {
 /* -------------------------------------------------- 下载管理器页 */
 
 func downloadsPage(state: AppState): Unit {
-    let theme = selineTheme()
-    let palette = theme.palette
-    VStack(spacing: vp(0.0)) {
-        pageHeader("下载", state.downloadDir.value, {=>
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineButton("清空已结束", {=> state.clearFinishedDownloads()}, glyph: "close",
-                    kind: SelineButtonKind.Ghost, compact: true)
-            }
-        })
-        pageScrollView(scrollState: state.downloadsScroll) {
-            VStack(spacing: vp(SELINE_SPACE_SM)) {
-
-                if (state.downloadItems.value.isEmpty()) {
-                    emptyBlock("download", "还没有下载",
-                        "打开一本书 → 详情页点「下载」（需要先在「账号」页登录）")
-                } else {
-                    for (item in state.downloadItems.value) {
-                        downloadRow(state, item)
-                    }
+    // 下载页不要页头（标题 / 路径 / 清空已结束 三个都去掉）：侧栏「下载」已经表明页面，
+    // 列表直接从顶部开始，任务行自带状态与操作。
+    pageScrollView(scrollState: state.downloadsScroll) {
+        VStack(spacing: vp(SELINE_SPACE_SM)) {
+            if (state.downloadItems.value.isEmpty()) {
+                emptyBlock("download", "还没有下载",
+                    "打开一本书 → 详情页点「下载」（需要先在「账号」页登录）")
+            } else {
+                for (item in state.downloadItems.value) {
+                    downloadRow(state, item)
                 }
-            }.padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
-        }
+            }
+        }.padding(PAGE_PAD, 16.0, PAGE_PAD, 32.0)
     }.fillWidth().fillHeight()
 }
 
