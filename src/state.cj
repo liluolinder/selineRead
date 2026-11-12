@@ -702,6 +702,8 @@ public class AppState {
     private var booklistGeneration: Int64 = 0
     /** 收藏代数（登录/登出/重载时 +1）。 */
     private var favoritesGeneration: Int64 = 0
+    /** 账号资料代数（换号/登出时 +1，防止旧账号的 profile 覆盖新账号）。 */
+    private var profileGeneration: Int64 = 0
     /** 是否停在图书详情页（二级页面）。 */
     public let detailOpen = State<Bool>(false)
     /** 详情页字段。 */
@@ -1332,6 +1334,31 @@ public class AppState {
                     writeDebugLog("dlselftest: item ${item.taskId} status=${item.status} " +
                         "err=${item.error} progress=${item.percent()}")
                 }
+            })
+        }
+    }
+
+    /**
+     * 验收用（本地 mock eapi）：打开 111（服务端故意慢 4s）→ 150ms 后打开 222（立即返回）。
+     *
+     * 期望：最终详情是 222 / MOCK-B，111 的迟到响应被丢弃。
+     */
+    public func runMockRaceSelfTest(): Unit {
+        let _ = spawn {=>
+            sleep(900 * Duration.millisecond)
+            postToUi({=>
+                writeDebugLog("mockrace: open 111 (slow)")
+                openBookById(111, "mockhash")
+            })
+            sleep(150 * Duration.millisecond)
+            postToUi({=>
+                writeDebugLog("mockrace: open 222 (fast)")
+                openBookById(222, "mockhash")
+            })
+            sleep(7000 * Duration.millisecond)
+            postToUi({=>
+                writeDebugLog("mockrace result: id=${detailId.value} title=${detailTitle.value} " +
+                    "loading=${detailLoading.value} (expect 222 / MOCK-B")
             })
         }
     }
@@ -2034,6 +2061,7 @@ public class AppState {
         deleteCredential()
         loggedIn.value = false
         favoritesGeneration += 1
+        profileGeneration += 1
         favoritesLoaded = false
         favorites.value = ArrayList<BookCell>()
         favoritesNextPage.value = 0
@@ -2071,13 +2099,20 @@ public class AppState {
             case Some(value) => value
             case None => return
         }
+        profileGeneration += 1
+        let generation = profileGeneration
         let _ = spawn {=>
             let outcome = ProfileOutcome.load(clientBox.value)
-            postToUi({=> applyProfileOutcome(outcome) })
+            postToUi({=> applyProfileOutcome(outcome, generation) })
         }
     }
 
-    private func applyProfileOutcome(outcome: ProfileOutcome): Unit {
+    private func applyProfileOutcome(outcome: ProfileOutcome, generation: Int64): Unit {
+        // 期间换号/登出了：旧账号的资料不能写进来
+        if (generation != profileGeneration) {
+            writeDebugLog("drop stale profile: gen=${generation}")
+            return
+        }
         if (!outcome.ok) {
             // 凭证失效（改密码/风控）时提示用户重新登录，但不静默清掉本地状态
             loginMessage.value = "账号状态失效：${outcome.error}"
