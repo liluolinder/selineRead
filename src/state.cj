@@ -1341,6 +1341,8 @@ public class AppState {
             activeSite.value = created.currentSiteUrl()
         }
         adoptRefreshedSite()
+        // 入口站可能只是 3xx 跳转（如 zh.eva101.ru -> zh.tmdgoogle.ru）：直接把跳转目标落盘
+        adoptInitialRedirect()
         // 离线模式（UI 截图/开发用）：跳过阻塞式首屏请求
         if ((getVariable("SELINE_READ_OFFLINE") ?? "") == "1") {
             writeDebugLog("bootstrap: offline mode, skip popular")
@@ -1348,6 +1350,44 @@ public class AppState {
             return
         }
         loadPopularBlocking(created)
+    }
+
+    /**
+     * 启动时跟随站点入口的 3xx 跳转。
+     *
+     * Z-Library 的入口域名经常只是一层跳转（例如 `zh.eva101.ru` 302 到
+     * `zh.tmdgoogle.ru`）。客户端虽然会自动跟随重定向，但配置里仍写着旧域名，
+     * 每次请求都多一跳；这里探测一次，把 `Location` 直接提升为当前站并落盘。
+     */
+    private func adoptInitialRedirect(): Unit {
+        let current = activeSite.value
+        if (current.isEmpty()) {
+            return
+        }
+        let probe = probeSite(current, timeoutSeconds: 5)
+        if (!probe.isRedirect || probe.location.isEmpty()) {
+            return
+        }
+        let target = try {
+            ZlibHost.of(probe.location)
+        } catch (_: ZlibError) {
+            return
+        }
+        if (target.url == current) {
+            return
+        }
+        activeSite.value = target.url
+        match (this.client) {
+            case Some(box) =>
+                try {
+                    box.value.setCustomSite(target.url)
+                } catch (_: Exception) {
+                    ()
+                }
+            case None => ()
+        }
+        saveUserConfig()
+        writeDebugLog("startup redirect: ${current} -> ${target.url}")
     }
 
     /** 窗口建立后挂上；之后后台结果才回得来。 */
@@ -2886,6 +2926,8 @@ public class AppState {
                 }
                 if (refreshed) {
                     adoptRefreshedSite()
+        // 入口站可能只是 3xx 跳转（如 zh.eva101.ru -> zh.tmdgoogle.ru）：直接把跳转目标落盘
+        adoptInitialRedirect()
                     networkMessage.value = "站点已更新：${box.value.currentSiteUrl()}"
                 } else {
                     networkMessage.value = "没有可用的种子站，或拉取失败"
