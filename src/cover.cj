@@ -24,10 +24,12 @@ func drawBookCover(ctx: UiContext, state: AppState, url: String, frame: Rect,
     if (frame.w <= 0.0 || frame.h <= 0.0) {
         return
     }
-    // 先铺默认封面图：加载中/没有封面/解码失败时这就是最终显示
+    // 先铺默认封面图：加载中/没有封面/解码失败时这就是最终显示。
+    // 用拉伸铺满而不是等比 Contain：默认封面是 256x362，而卡片里的封面框是 2:3，
+    // 等比会上下各留一条缝（看起来像"图片顶部缺了一块"）。
     match (state.placeholderCoverTexture(ctx)) {
         case Some(texture) =>
-            drawFittedTexture(ctx.renderer, texture, frame)
+            texture.draw(ctx.renderer, frame)
         case None => ()
     }
     if (url.isEmpty()) {

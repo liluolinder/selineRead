@@ -2258,12 +2258,27 @@ public class AppState {
     }
 
     /** 菜单锚点（打开时锁定）。 */
+    /**
+     * 菜单左上角 X。
+     *
+     * 优先用按钮**当前**矩形（每帧 layout 上报）：锚点锁死在打开瞬间时，
+     * 只要那一帧按钮还没完成布局（宽高为 0）或窗口刚变过尺寸，菜单就会飘到别处。
+     * 按钮在固定工具栏里，位置本来就稳定，用实时值更安全。
+     */
     public func downloadMenuX(): Float32 {
-        menuAnchorX
+        if (downloadAnchor.w > 0.0) {
+            downloadAnchor.x
+        } else {
+            menuAnchorX
+        }
     }
 
     public func downloadMenuY(): Float32 {
-        menuAnchorY
+        if (downloadAnchor.w > 0.0) {
+            downloadAnchor.y + downloadAnchor.h + 6.0
+        } else {
+            menuAnchorY
+        }
     }
 
     /** 关闭下载菜单：先播收起动画，动画结束再卸载。 */
