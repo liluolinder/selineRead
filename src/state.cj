@@ -26,6 +26,8 @@ import zlibraryAPI4CJ.login.*
 import zlibraryAPI4CJ.user.*
 import zlibraryAPI4CJ.booklist.*
 import zlibraryAPI4CJ.comment.*
+import zlibraryAPI4CJ.core.*
+import stdx.encoding.json.*
 import selineDownload.*
 
 /**
@@ -533,14 +535,48 @@ private func legacyDataDir(): Path {
     Path(getVariable("TEMP") ?? ".").join("SelineRead")
 }
 
-/** 用户配置（主题 / 下载目录 / 站点）持久化文件：`~/seline_read/config.txt`。 */
-private func userConfigFilePath(): String {
+/** 用户配置（JSON）：`~/seline_read/config.json`。 */
+private func configJsonPath(): String {
+    appDataDir().join("config.json").toString()
+}
+
+/** 多账号存储（JSON）：`~/seline_read/accounts.json`。 */
+private func accountsJsonPath(): String {
+    appDataDir().join("accounts.json").toString()
+}
+
+/** 旧版（纯文本）配置：`~/seline_read/config.txt`，只用于一次性迁移。 */
+private func legacyConfigPath(): String {
     appDataDir().join("config.txt").toString()
 }
 
-/** 多账号存储文件：`~/seline_read/accounts.txt`。 */
-private func accountsFilePath(): String {
-    appDataDir().join("accounts.txt").toString()
+/** 旧版账号文件：`~/seline_read/account.txt` / `account-list.txt`。 */
+private func legacyAccountPath(name: String): String {
+    appDataDir().join(name).toString()
+}
+
+/** 读文本文件（不存在/读失败返回空串）。 */
+private func readTextFile(path: Path): String {
+    if (!exists(path)) {
+        return ""
+    }
+    try {
+        String.fromUtf8(File.readFrom(path))
+    } catch (_: Exception) {
+        ""
+    }
+}
+
+/** 写文本文件（自动建父目录）。 */
+private func writeTextFile(path: Path, text: String): Unit {
+    try {
+        if (!exists(path.parent)) {
+            Directory.create(path.parent, recursive: true)
+        }
+        File.writeTo(path, text.toArray())
+    } catch (failure: Exception) {
+        writeDebugLog("write ${path} failed: ${failure.message}")
+    }
 }
 
 /**
@@ -561,23 +597,16 @@ func ensureAppDataDir(): Unit {
     if (!exists(legacy)) {
         return
     }
-    migrateFile(legacy.join("user_config.txt"), dir.join("config.txt"))
-    // 旧版单账号文件：迁移成"一个默认账号"（没有邮箱/昵称，只有 uid + key）
-    let legacyAccount = legacy.join("account.txt")
-    let newAccounts = dir.join("accounts.txt")
-    if (exists(legacyAccount) && !exists(newAccounts)) {
-        try {
-            let text = String.fromUtf8(File.readFrom(legacyAccount)).trimAscii()
-            let parts = text.split("|")
-            if (parts.size >= 2 && !parts[0].isEmpty()) {
-                let language = if (parts.size >= 3) { parts[2] } else { "" }
-                let line = "|${parts[0]}|${parts[0]}|${parts[1]}|${language}|1\n"
-                File.writeTo(newAccounts, line.toArray())
-                writeDebugLog("migrated legacy account: uid=${parts[0]}")
-            }
-        } catch (_: Exception) {
-            ()
-        }
+    // 旧配置（config.txt / user_config.txt）与旧账号文件都先原样搬过来；
+    // 加载时会解析旧格式并自动改写成 JSON（见 loadUserConfig / loadAccounts）。
+    // 注意：只有在"新目录里既没有 JSON 也没有旧文本"时才搬，避免迁移完又被搬回来。
+    if (!exists(Path(configJsonPath())) && !exists(Path(legacyConfigPath()))) {
+        migrateFile(legacy.join("user_config.txt"), dir.join("config.txt"))
+    }
+    if (!exists(Path(accountsJsonPath())) &&
+        !exists(Path(legacyAccountPath("accounts.txt"))) &&
+        !exists(Path(legacyAccountPath("account.txt")))) {
+        migrateFile(legacy.join("account.txt"), dir.join("account.txt"))
     }
 }
 
@@ -596,7 +625,7 @@ private func migrateFile(from: Path, to: Path): Unit {
 /** 读回用户配置（不存在时返回空表）。 */
 private func readUserConfig(): HashMap<String, String> {
     let result = HashMap<String, String>()
-    let file = Path(userConfigFilePath())
+    let file = Path(legacyConfigPath())
     if (!exists(file)) {
         return result
     }
@@ -838,48 +867,96 @@ public class AppState {
     /** 读 `accounts.txt` 到内存；坏行直接跳过。 */
     private func loadAccounts(): Unit {
         accounts.value = ArrayList<AccountEntry>()
-        let path = Path(accountsFilePath())
-        if (!exists(path)) {
-            return
-        }
-        try {
-            let text = String.fromUtf8(File.readFrom(path))
-            for (line in text.split("\n")) {
-                let trimmed = line.trimAscii()
-                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-                    continue
+        // 新格式：JSON（~/seline_read/accounts.json）
+        let jsonText = readTextFile(Path(accountsJsonPath()))
+        if (!jsonText.trimAscii().isEmpty()) {
+            try {
+                let root = parseJsonObject(jsonText, path: "accounts.json")
+                for (item in arrayFieldOf(root, "accounts")) {
+                    try {
+                        let obj = item.asObject()
+                        let userId = readString(obj, "userId")
+                        if (userId.isEmpty()) {
+                            continue
+                        }
+                        accounts.value.add(AccountEntry(
+                            readString(obj, "email"),
+                            readString(obj, "name"),
+                            userId,
+                            readString(obj, "userKey"),
+                            readString(obj, "language"),
+                            readBoolOr(obj, "default", false)))
+                    } catch (_: Exception) {
+                        () // 单条坏数据跳过
+                    }
                 }
-                let parts = trimmed.split("|")
-                if (parts.size < 4) {
-                    continue
-                }
-                let language = if (parts.size >= 5) { parts[4] } else { "" }
-                let isDefault = if (parts.size >= 6) { parts[5] == "1" } else { false }
-                accounts.value.add(AccountEntry(parts[0], parts[1], parts[2], parts[3],
-                    language, isDefault))
+                writeDebugLog("accounts loaded(json): ${accounts.value.size}")
+                return
+            } catch (_: Exception) {
+                writeDebugLog("accounts.json unreadable; falling back to legacy")
             }
-        } catch (_: Exception) {
-            ()
+        }
+        // 旧格式：单账号 account.txt（uid|key|lang）或 accounts.txt（pipe 分隔多行）
+        let legacyText = readTextFile(Path(legacyAccountPath("accounts.txt")))
+        let singleText = readTextFile(Path(legacyAccountPath("account.txt")))
+        let source = if (!legacyText.trimAscii().isEmpty()) {
+            legacyText
+        } else {
+            singleText
+        }
+        if (!source.trimAscii().isEmpty()) {
+            if (!legacyText.trimAscii().isEmpty()) {
+                for (line in source.split("\n")) {
+                    let trimmed = line.trimAscii()
+                    if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                        continue
+                    }
+                    let parts = trimmed.split("|")
+                    if (parts.size < 4) {
+                        continue
+                    }
+                    let language = if (parts.size >= 5) { parts[4] } else { "" }
+                    let isDefault = if (parts.size >= 6) { parts[5] == "1" } else { false }
+                    accounts.value.add(AccountEntry(parts[0], parts[1], parts[2], parts[3],
+                        language, isDefault))
+                }
+            } else {
+                let parts = source.trimAscii().split("|")
+                if (parts.size >= 2 && !parts[0].isEmpty()) {
+                    let language = if (parts.size >= 3) { parts[2] } else { "" }
+                    accounts.value.add(AccountEntry("", "", parts[0], parts[1], language, true))
+                }
+            }
+            saveAccounts()
+            try {
+                remove(Path(legacyAccountPath("accounts.txt")))
+                remove(Path(legacyAccountPath("account.txt")))
+            } catch (_: Exception) {
+                ()
+            }
+            writeDebugLog("legacy accounts migrated to json: ${accounts.value.size}")
         }
         writeDebugLog("accounts loaded: ${accounts.value.size}")
     }
 
-    /** 把内存里的账号写回 `accounts.txt`。 */
+    /** 把内存里的账号写回 `accounts.json`。 */
     public func saveAccounts(): Unit {
         ensureAppDataDir()
-        let builder = StringBuilder()
-        builder.append("# email|name|userId|userKey|language|default\n")
+        let root = JsonObject()
+        let list = JsonArray()
         for (entry in accounts.value) {
-            builder.append(entry.toLine())
-            builder.append("\n")
+            let obj = JsonObject()
+            obj.put("email", JsonString(entry.email))
+            obj.put("name", JsonString(entry.name))
+            obj.put("userId", JsonString(entry.userId))
+            obj.put("userKey", JsonString(entry.userKey))
+            obj.put("language", JsonString(entry.language))
+            obj.put("default", JsonBool(entry.isDefault))
+            list.add(obj)
         }
-        try {
-            File.writeTo(Path(accountsFilePath()), builder.toString().toArray())
-        } catch (failure: Exception) {
-            writeDebugLog("save accounts failed: ${failure.message}")
-        }
+        root.put("accounts", list)
+        writeTextFile(Path(accountsJsonPath()), root.toJsonString())
     }
-
     /** 默认账号（启动时只自动登录它）。 */
     public func defaultAccount(): ?AccountEntry {
         for (entry in accounts.value) {
@@ -2505,7 +2582,47 @@ public class AppState {
 
     /** 启动时读回配置（主题 / 下载目录 / 站点）。 */
     private func loadUserConfig(): Unit {
-        let config = readUserConfig()
+        // 新格式：JSON（~/seline_read/config.json）
+        let jsonText = readTextFile(Path(configJsonPath()))
+        if (!jsonText.trimAscii().isEmpty()) {
+            try {
+                let obj = parseJsonObject(jsonText, path: "config.json")
+                let theme = readString(obj, "theme")
+                if (!theme.isEmpty()) {
+                    let dark = theme != "light"
+                    darkMode.value = dark
+                    setSelineTheme(if (dark) { SelineTheme.dark() } else { SelineTheme.light() })
+                }
+                let dir = readString(obj, "downloadDir")
+                if (!dir.isEmpty()) {
+                    downloadDir.value = dir
+                }
+                activeSite.value = readString(obj, "activeSite")
+                customSites.value = ArrayList<String>()
+                for (item in arrayFieldOf(obj, "customSites")) {
+                    let text = item.asString().getValue().trimAscii()
+                    if (!text.isEmpty()) {
+                        customSites.value.add(text)
+                    }
+                }
+                seedSites.value = ArrayList<String>()
+                for (item in arrayFieldOf(obj, "seedSites")) {
+                    let text = item.asString().getValue().trimAscii()
+                    if (!text.isEmpty()) {
+                        seedSites.value.add(text)
+                    }
+                }
+                downloadPathInput.value = downloadDir.value
+                writeDebugLog("config loaded(json): dark=${darkMode.value} sites=${customSites.value.size} seeds=${seedSites.value.size} active=${activeSite.value}")
+                return
+            } catch (_: Exception) {
+                writeDebugLog("config.json unreadable; falling back to legacy config.txt")
+            }
+        }
+        // 旧格式：key=value 文本，读一次后改写成 JSON
+        let legacyText = readTextFile(Path(legacyConfigPath()))
+        if (!legacyText.trimAscii().isEmpty()) {
+            let config = readUserConfig()
         match (config.get("theme")) {
             case Some(value) =>
                 let dark = value != "light"
@@ -2543,40 +2660,36 @@ public class AppState {
             }
             case None => ()
         }
+            saveUserConfig()
+            try {
+                remove(Path(legacyConfigPath()))
+            } catch (_: Exception) {
+                ()
+            }
+            writeDebugLog("legacy config migrated to json")
+        }
+        downloadPathInput.value = downloadDir.value
         writeDebugLog("user config loaded: dark=${darkMode.value} sites=${customSites.value.size} seeds=${seedSites.value.size} active=${activeSite.value}")
     }
 
-    /** 把当前配置写回磁盘。 */
+    /** 把当前配置写回磁盘（JSON：`~/seline_read/config.json`）。 */
     public func saveUserConfig(): Unit {
-        let builder = StringBuilder()
-        builder.append("theme=${if (darkMode.value) { "dark" } else { "light" }}\n")
-        builder.append("downloadDir=${downloadDir.value}\n")
-        builder.append("activeSite=${activeSite.value}\n")
-        let sites = StringBuilder()
-        for (index in 0..customSites.value.size) {
-            if (index > 0) {
-                sites.append("|")
-            }
-            sites.append(customSites.value[index])
+        let obj = JsonObject()
+        obj.put("theme", JsonString(if (darkMode.value) { "dark" } else { "light" }))
+        obj.put("downloadDir", JsonString(downloadDir.value))
+        obj.put("activeSite", JsonString(activeSite.value))
+        let custom = JsonArray()
+        for (site in customSites.value) {
+            custom.add(JsonString(site))
         }
-        builder.append("customSites=${sites.toString()}\n")
-        let seeds = StringBuilder()
-        for (index in 0..seedSites.value.size) {
-            if (index > 0) {
-                seeds.append("|")
-            }
-            seeds.append(seedSites.value[index])
+        obj.put("customSites", custom)
+        let seeds = JsonArray()
+        for (seed in seedSites.value) {
+            seeds.add(JsonString(seed))
         }
-        builder.append("seedSites=${seeds.toString()}\n")
-        try {
-            let file = Path(userConfigFilePath())
-            Directory.create(file.parent, recursive: true)
-            File.writeTo(file, builder.toString().toArray())
-        } catch (failure: Exception) {
-            writeDebugLog("save user config failed: ${failure.message}")
-        }
+        obj.put("seedSites", seeds)
+        writeTextFile(Path(configJsonPath()), obj.toJsonString())
     }
-
     /** 设置页页签切换。 */
     public func selectSettingsTab(index: Int64): Unit {
         if (index >= 0 && index <= 2) {

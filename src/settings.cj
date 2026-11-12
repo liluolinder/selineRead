@@ -124,8 +124,8 @@ func accountPage(state: AppState): Unit {
                     }.hug().fillWidth()
                 }
                 sectionCard("说明") {
-                    Label("账号凭证保存在 ~/seline_read/accounts.txt，不会上传；" +
-                        "「默认账号」随应用启动自动登录。")
+                    Label("账号凭证保存在 ~/seline_read/accounts.json（配置在同目录 config.json），" +
+                        "不会上传；「默认账号」随应用启动自动登录。")
                         .fontSize(theme.fontCaption).muted().wrap()
                 }
             }.hug().fillWidth().padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
