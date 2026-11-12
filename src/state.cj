@@ -2305,6 +2305,15 @@ public class AppState {
         openBook(BookCell(id, hash, "（加载中…）", "", "", ""))
     }
 
+    /** 验收用：按热门列表下标打开一本书（走真实卡片路径，带封面）。 */
+    public func openPopularForTest(index: Int64): Unit {
+        if (index < 0 || index >= Int64(popular.value.size)) {
+            writeDebugLog("openPopularForTest: index ${index} out of range ${popular.value.size}")
+            return
+        }
+        openBook(popular.value[index])
+    }
+
     /** 关闭详情页，回到来处。 */
     public func closeDetail(): Unit {
         detailGeneration += 1
@@ -3497,7 +3506,7 @@ public class AppState {
         } else {
             detailTitle.value
         }
-        let taskId = startDownload(target.id, target.hash, title)
+        let taskId = startDownload(target.id, target.hash, title, cover: detailCover.value)
         downloadMessage.value = "已加入下载队列（${taskId}）"
         detailError.value = ""
     }
@@ -3508,10 +3517,11 @@ public class AppState {
      * 阻塞的「换下载链接 + 下载」都在后台线程；进度通过 `postToUi` 写回。
      * 返回 taskId（下载页用它停止任务）。
      */
-    public func startDownload(bookId: Int64, hash: String, title: String): String {
+    public func startDownload(bookId: Int64, hash: String, title: String,
+        cover!: String = ""): String {
         downloadSeq += 1
         let taskId = "${bookId}-${downloadSeq}"
-        let item = DownloadItem(taskId, title)
+        let item = DownloadItem(taskId, title, cover: cover)
         downloadItems.value.add(item)
         downloadsTick.value += 1
         writeDebugLog("download start: ${taskId} ${title}")

@@ -23,6 +23,8 @@ let DL_FAILED: String = "失败"
 public class DownloadItem <: ToString {
     public let taskId: String
     public let title: String
+    /** 封面 URL：下载页左侧缩略图用；空串时画默认封面。 */
+    public let cover: String
     public var fileName: String
     public var totalBytes: Int64
     public var downloadedBytes: Int64
@@ -30,9 +32,10 @@ public class DownloadItem <: ToString {
     public var status: String
     public var error: String
 
-    public init(taskId: String, title: String) {
+    public init(taskId: String, title: String, cover!: String = "") {
         this.taskId = taskId
         this.title = title
+        this.cover = cover
         this.fileName = ""
         this.totalBytes = 0
         this.downloadedBytes = 0

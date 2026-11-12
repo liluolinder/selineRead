@@ -421,14 +421,8 @@ func downloadRow(state: AppState, item: DownloadItem): Unit {
     let theme = selineTheme()
     let palette = theme.palette
     HStack(spacing: vp(SELINE_SPACE_MD)) {
-        SelineIcon(if (item.status == DL_COMPLETED) { "check" } else { "download" },
-            size: 16.0, color: if (item.status == DL_FAILED) {
-                palette.danger
-            } else if (item.status == DL_COMPLETED) {
-                palette.accent
-            } else {
-                palette.textMuted
-            })
+        // 左侧书本封面缩略图（2:3）：没有封面 URL 时 drawBookCover 会画默认封面
+        DownloadCoverThumb(state, item.cover, 44.0)
         VStack(spacing: vp(4.0)) {
             HStack(spacing: vp(SELINE_SPACE_SM)) {
                 Label(item.title).fontSize(theme.fontBody).bold()
@@ -454,6 +448,45 @@ func downloadRow(state: AppState, item: DownloadItem): Unit {
     }.hug().fillWidth()
         .padding(12.0)
         .background(palette.surfaceRaised, vp(10.0))
+}
+
+/** 下载行左侧的小封面（2:3，与书籍卡片同一套封面管线）。 */
+class DownloadCoverThumb <: Widget {
+    private let state: AppState
+    private let url: String
+    private let thumbWidth: Float32
+    private var frame = Rect.zero()
+
+    init(state: AppState, url: String, width: Float32) {
+        this.state = state
+        this.url = url
+        this.thumbWidth = width
+        emit(this)
+    }
+
+    public func measure(_: UiContext, _: Size): Size {
+        Size(thumbWidth, thumbWidth / BOOK_COVER_ASPECT)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        drawBookCover(ctx, state, url, frame, 6.0)
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
 }
 
 /** 细进度条。 */

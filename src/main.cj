@@ -321,6 +321,10 @@ main(args: Array<String>): Int64 {
         if (!openMenuMs.isEmpty()) {
             state.scheduleOpenDownloadMenuForTest(Int64.parse(openMenuMs))
         }
+        let popularIndexEnv = getVariable("SELINE_READ_OPEN_POPULAR_INDEX") ?? ""
+        if (!popularIndexEnv.isEmpty()) {
+            state.openPopularForTest(Int64.parse(popularIndexEnv))
+        }
         if (!options.bookTarget.isEmpty()) {
             let parts = options.bookTarget.split("|")
             if (parts.size >= 2) {
