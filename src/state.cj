@@ -1363,6 +1363,64 @@ public class AppState {
         }
     }
 
+    /**
+     * 验收用：把所有页面的错误/空态一次性摆出来（截图给设计看）。
+     *
+     * 只是往 State 里写文案，不请求网络。
+     */
+    public func forceErrorStatesForShot(mode: String): Unit {
+        let site = "zh.eva101.ru"
+        detailOpen.value = false
+        booklistOpen.value = false
+        // 首页 / 搜索
+        error.value = "加载热门失败：站点 ${site} 返回 503 Service Unavailable，可能是站方维护或网络被阻断"
+        loading.value = false
+        popular.value = ArrayList<BookCell>()
+        lastKeyword.value = "三体"
+        results.value = ArrayList<BookCell>()
+        // 收藏（未登录态 + 错误态都摆上）
+        favoritesError.value = "收藏加载失败：请求超时（${site} 30s 无响应）"
+        favoritesLoading.value = false
+        favorites.value = ArrayList<BookCell>()
+        // 书单
+        booklistsError.value = "书单加载失败：服务器返回 502 Bad Gateway"
+        booklistsLoading.value = false
+        booklists.value = ArrayList<BooklistCell>()
+        // 书单详情（只在 mode=booklist 时打开，否则会盖住别的页面）
+        if (mode == "booklist") {
+        booklistOpen.value = true
+        }
+        if (mode == "booklist") {
+        booklistId.value = 424242
+        booklistTitle.value = "科幻小说精选"
+        booklistAuthor.value = "mock"
+        booklistDescription.value = ""
+        booklistBooks.value = ArrayList<BookCell>()
+        booklistError.value = "加载书单内容失败：网络连接被重置"
+        booklistLoading.value = false
+        }
+        // 详情（只在 mode=detail 时打开）
+        if (mode == "detail") {
+        detailOpen.value = true
+        detailId.value = 24126585
+        detailHash.value = "217fd6"
+        detailTitle.value = "毛泽东选集(1-7卷)"
+        detailAuthor.value = "毛泽东"
+        detailMeta.value = "epub · 2.78 MB"
+        detailLoading.value = false
+        detailError.value = "加载详情失败：下载链接签名过期，请刷新站点后重试"
+        detailRelatedError.value = "相关书籍加载失败：429 Too Many Requests"
+        commentsError.value = "加载评论失败：服务器错误（500）"
+        }
+        // 下载
+        downloadMessage.value = ""
+        // 设置/网络
+        networkMessage.value = "没有可用的种子站，或拉取失败"
+        // 账号
+        loginMessage.value = "登录失败：账号或密码错误"
+        writeDebugLog("force error states for shot")
+    }
+
     /** 验收用（离线可跑）：造一批假搜索结果，用来截图确认「加载更多」页脚渲染。 */
     public func forceFakeSearchForShot(): Unit {
         lastKeyword.value = "fake"

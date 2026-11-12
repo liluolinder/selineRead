@@ -333,6 +333,10 @@ main(args: Array<String>): Int64 {
         if ((getVariable("SELINE_READ_TEST_DL") ?? "") == "1") {
             state.runDownloadSelfTest()
         }
+        let forceErrorsMode = getVariable("SELINE_READ_FORCE_ERRORS") ?? ""
+        if (!forceErrorsMode.isEmpty()) {
+            state.forceErrorStatesForShot(forceErrorsMode)
+        }
         if ((getVariable("SELINE_READ_TEST_MOCK_RACE") ?? "") == "1") {
             state.runMockRaceSelfTest()
         }
