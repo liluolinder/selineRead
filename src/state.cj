@@ -1203,6 +1203,8 @@ public class AppState {
     private let imageQueue = ArrayList<ImageJob>()
     private let imageQueueLock = Mutex()
     private var imageWorkersStarted = false
+    /** 图片 worker 的 Future：退出时 join，避免运行时回收线程时踩已释放内存。 */
+    private let imageWorkerFutures = ArrayList<Future<Unit>>()
     private var imageWorkersStopped = false
     /** 正在下载的图片数（仅 UI 线程读写）。 */
     private var activeFetches: Int64 = 0
@@ -1281,6 +1283,11 @@ public class AppState {
         match (placeholderDecoded) {
             case Some(image) =>
                 let texture = SelineImageTexture(ctx.renderer, image)
+                // 纹理属于渲染器：交给 app 管理，chui 会在 window.close() 之前 close()
+                match (this.app) {
+                    case Some(value) => value.manage(texture)
+                    case None => ()
+                }
                 placeholderTexture = Some(texture)
                 Some(texture)
             case None => None
@@ -1424,31 +1431,35 @@ public class AppState {
         refreshProfile()
     }
 
-    /** 窗口关闭后释放纹理与网络客户端。 */
+    /**
+     * 窗口关闭后收尾。
+     *
+     * **不要在这里 close 纹理**：`app.run` 返回时窗口与渲染器已经销毁，
+     * 此时再 `SDL_DestroyTexture` 会访问已释放的渲染器，退出时随机触发
+     * `0xc0000374` 堆损坏。纹理通过 `app.manage()` 交给 chui，在
+     * `window.close()` **之前**统一释放。
+     */
     public func shutdown(): Unit {
-        for ((_, texture) in coverTextures) {
+        writeDebugLog("shutdown: begin")
+        synchronized(imageQueueLock) {
+            imageWorkersStopped = true
+        }
+        // 等所有图片 worker 真正退出：主线程返回时若它们还活着，Cangjie 运行时
+        // 回收线程对象会踩到已释放内存（PageHeap 已抓到 CJ_CJThreadFree 内的 AV）。
+        for (worker in imageWorkerFutures) {
             try {
-                texture.close()
+                worker.get()
             } catch (_: Exception) {
                 ()
             }
         }
-        synchronized(imageQueueLock) {
-            imageWorkersStopped = true
-        }
+        writeDebugLog("shutdown: workers joined")
+        writeDebugLog("shutdown: workers flagged")
         coverTextures.clear()
         decodedImages.clear()
         pendingImages.clear()
-        match (placeholderTexture) {
-            case Some(texture) =>
-                try {
-                    texture.close()
-                } catch (_: Exception) {
-                    ()
-                }
-                placeholderTexture = None
-            case None => ()
-        }
+        placeholderTexture = None
+        writeDebugLog("shutdown: closing client")
         match (client) {
             case Some(box) =>
                 try {
@@ -1459,6 +1470,8 @@ public class AppState {
                 client = None
             case None => ()
         }
+        writeDebugLog("shutdown: client closed")
+        writeDebugLog("shutdown: end")
     }
 
     /** 取窗口；未 attach 时返回 None（调用即 bug，页面里打印一次即可）。 */
@@ -3624,6 +3637,12 @@ public class AppState {
 
     /** 记住新纹理（同时清掉下载标记）。 */
     public func rememberCoverTexture(url: String, texture: SelineImageTexture): Unit {
+        // 纹理的生命周期归 chui 的 managed resources：它在 window.close() **之前**
+        // 统一 close()，避免渲染器销毁后再 SDL_DestroyTexture（会导致堆损坏）。
+        match (this.app) {
+            case Some(value) => value.manage(texture)
+            case None => ()
+        }
         coverTextures[url] = texture
         pendingImages.remove(url)
     }
@@ -3672,7 +3691,8 @@ public class AppState {
         writeDebugLog("image workers: ${IMAGE_WORKERS} (fetch limit ${IMAGE_FETCH_LIMIT})")
         var index: Int64 = 0
         while (index < IMAGE_WORKERS) {
-            let _ = spawn {=> imageWorkerLoop() }
+            let worker = spawn {=> imageWorkerLoop() }
+            imageWorkerFutures.add(worker)
             index += 1
         }
     }

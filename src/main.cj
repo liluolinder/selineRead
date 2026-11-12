@@ -456,6 +456,12 @@ main(args: Array<String>): Int64 {
         writeDebugLog("window closed")
         perf.summary()
         state.shutdown()
+        // 直接结束进程，不走「main 返回 → Cangjie 运行时线程收尾」这条路径：
+        // 退出时仍有 spawn 出去的后台线程存活，运行时回收线程时会在
+        // libcangjie-runtime 的 CJ_CJThreadFree 里踩到已释放内存
+        // （0xc0000374 / 0xc0000005，PageHeap 抓包已确认）。
+        // 窗口/纹理/渲染器已由 chui 在 window.close() 之前释放。
+        terminateSelf(0)
         } catch (failure: Exception) {
             writeDebugLog("ui thread failed: ${failure.message}")
         }
