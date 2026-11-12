@@ -1459,18 +1459,11 @@ public class AppState {
         decodedImages.clear()
         pendingImages.clear()
         placeholderTexture = None
-        writeDebugLog("shutdown: closing client")
-        match (client) {
-            case Some(box) =>
-                try {
-                    box.value.close()
-                } catch (_: Exception) {
-                    ()
-                }
-                client = None
-            case None => ()
-        }
-        writeDebugLog("shutdown: client closed")
+        // 不在这里 close 网络客户端：有在途图片请求时 LinderHttp 的
+        // close() 会等待连接回收，实测能挂住几十秒（窗口已关、进程却退不掉）。
+        // 进程马上就被 terminateSelf 结束，socket 交给系统回收。
+        client = None
+        writeDebugLog("shutdown: client dropped")
         writeDebugLog("shutdown: end")
     }
 
