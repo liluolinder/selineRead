@@ -39,8 +39,7 @@ func appShell(state: AppState): Unit {
                     state.downloadMenuX(), state.downloadMenuY(),
                     {=> state.closeDownloadMenu()}, width: 250.0,
                     closing: state.downloadMenuClosing.value,
-                    progress: state.downloadMenuProgress.value,
-                    onProgress: {value => state.downloadMenuProgress.value = value})
+                    spring: state.downloadMenuSpring)
             }
         }.alignment(Alignment.TopLeading)
             // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
