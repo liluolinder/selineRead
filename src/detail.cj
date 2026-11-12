@@ -31,9 +31,6 @@ func detailPage(state: AppState): Unit {
             SelineButton("返回", {=> state.closeDetail()}, glyph: "home",
                 kind: SelineButtonKind.Ghost, compact: true)
             Spacer()
-            if (!state.loggedIn.value) {
-                Label("下载需要先登录").fontSize(theme.fontCaption).muted()
-            }
             DownloadMenuButton(state)
         }.hug().fillWidth().padding(PAGE_PAD, 10.0, PAGE_PAD, 2.0)
         pageScrollView(scrollState: state.detailScroll) {
@@ -293,7 +290,7 @@ class DownloadMenuButton <: Widget {
                 frame.contains(x, y)
             case UiEvent.MouseUp(MouseButton.Left, x, y) =>
                 if (frame.contains(x, y)) {
-                    state.toggleDownloadMenu()
+                    state.toggleDownloadMenuOrPrompt()
                     true
                 } else {
                     false

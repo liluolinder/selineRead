@@ -303,6 +303,17 @@ class DetailSnapshot {
     let extension: String
     let filesize: String
     let scroll: Float32
+    /** 相关书籍：返回时直接复用，不再重新请求。 */
+    let related: ArrayList<BookCell>
+    let relatedLoaded: Bool
+    /** 评论：同样复用，保留已展开的条数与分页偏移。 */
+    let comments: ArrayList<CommentCell>
+    let commentsLoaded: Bool
+    let commentsDisabled: Bool
+    let commentsNextOffset: Int64
+    let commentsVisible: Int64
+    /** 当时选中的下载版本。 */
+    let formatIndex: Int64
 
     init(state: AppState) {
         this.id = state.detailId.value
@@ -324,6 +335,14 @@ class DetailSnapshot {
         this.extension = state.detailExtension.value
         this.filesize = state.detailFilesize.value
         this.scroll = state.detailScroll.value
+        this.related = state.detailRelated.value
+        this.relatedLoaded = state.detailRelatedLoaded
+        this.comments = state.comments.value
+        this.commentsLoaded = state.commentsLoaded
+        this.commentsDisabled = state.commentsDisabled.value
+        this.commentsNextOffset = state.commentsNextOffset.value
+        this.commentsVisible = state.commentsVisible.value
+        this.formatIndex = state.detailFormatIndex.value
     }
 }
 
@@ -870,7 +889,8 @@ public class AppState {
     public let detailRelated = State<ArrayList<BookCell>>(ArrayList<BookCell>())
     public let detailRelatedLoading = State<Bool>(false)
     public let detailRelatedError = State<String>("")
-    private var detailRelatedLoaded = false
+    /** 相关书籍是否已加载（详情页快照要读，故非 private）。 */
+    var detailRelatedLoaded = false
 
     /* ---- 账号 ---- */
     public let loggedIn = State<Bool>(false)
@@ -1179,7 +1199,8 @@ public class AppState {
     /** 下一段评论的 offset；0 表示没有更多。 */
     public let commentsNextOffset = State<Int64>(0)
     /** 评论是否已经发起过加载（懒加载：滚到评论区才请求）。 */
-    private var commentsLoaded: Bool = false
+    /** 评论是否已加载（详情页快照要读，故非 private）。 */
+    var commentsLoaded: Bool = false
     /** 当前渲染多少条评论，超出时「显示更多」再追加。 */
     public let commentsVisible = State<Int64>(20)
     /** 已加载评论的 id -> 单元格索引（跨页解析「回复」的原评论）。 */
@@ -2251,6 +2272,7 @@ public class AppState {
             return
         }
         let generation = detailGeneration
+        writeDebugLog("loadRelated: id=${id} gen=${generation}")
         detailRelatedLoading.value = true
         detailRelatedError.value = ""
         let _ = spawn {=>
@@ -2320,18 +2342,22 @@ public class AppState {
         detailScroll.value = snapshot.scroll
         detailLoading.value = false
         detailError.value = ""
-        detailRelated.value = ArrayList<BookCell>()
+        detailFormatIndex.value = snapshot.formatIndex
+        // 相关书籍 / 评论直接复用快照：不再清空重拉，返回时页面内容与滚动位置保持不变。
+        detailRelated.value = snapshot.related
         detailRelatedError.value = ""
-        detailRelatedLoaded = false
-        comments.value = ArrayList<CommentCell>()
+        detailRelatedLoading.value = false
+        detailRelatedLoaded = snapshot.relatedLoaded
+        comments.value = snapshot.comments
         commentsError.value = ""
-        commentsNextOffset.value = 0
-        commentsVisible.value = 20
-        commentsLoaded = false
-        commentIndex.clear()
-        if (snapshot.section == 1) {
+        commentsDisabled.value = snapshot.commentsDisabled
+        commentsNextOffset.value = snapshot.commentsNextOffset
+        commentsVisible.value = snapshot.commentsVisible
+        commentsLoaded = snapshot.commentsLoaded
+        // 只有当时还没加载过的分段才补一次请求
+        if (snapshot.section == 1 && !snapshot.commentsLoaded) {
             ensureCommentsLoaded()
-        } else if (snapshot.section == 2) {
+        } else if (snapshot.section == 2 && !snapshot.relatedLoaded) {
             ensureRelatedLoaded()
         }
         writeDebugLog("detail back: ${snapshot.id} ${snapshot.title}")
@@ -3213,6 +3239,18 @@ public class AppState {
         openDownloadMenu()
     }
 
+    /**
+     * 点「下载」按钮：未登录时直接提示（详情页不再常驻「下载需要先登录」文案），
+     * 已登录才展开下载菜单。
+     */
+    public func toggleDownloadMenuOrPrompt(): Unit {
+        if (!loggedIn.value) {
+            showToastNow("下载需要登录：请先在「账号」页登录")
+            return
+        }
+        toggleDownloadMenu()
+    }
+
     /** 用按钮当前矩形打开下载菜单（锚点只在打开瞬间取一次）。 */
     public func openDownloadMenu(): Unit {
         menuAnchorX = downloadAnchor.x
@@ -3410,6 +3448,22 @@ public class AppState {
         DownloadTarget(detailId.value, detailHash.value)
     }
 
+    /** 验收用：延迟后点一次「下载」按钮（未登录走提示，已登录开菜单）。 */
+    public func scheduleClickDownloadForTest(delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=> toggleDownloadMenuOrPrompt() })
+        }
+    }
+
+    /** 验收用：延迟后调用 downloadBook（验证「正在获取中，请稍后」提示）。 */
+    public func scheduleDownloadBookForTest(delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=> downloadBook() })
+        }
+    }
+
     /** 验收/脚本用：直接按 id + hash 下载（会走与详情页按钮完全相同的路径）。 */
     public func downloadById(id: Int64, hash: String): Unit {
         detailId.value = id
@@ -3430,10 +3484,13 @@ public class AppState {
             showToastNow("下载需要登录：请先在「账号」页登录")
             return
         }
-        if (detailId.value <= 0 || detailHash.value.isEmpty()) {
-            detailError.value = "详情还没加载完，请稍候"
+        if (detailId.value <= 0 || detailHash.value.isEmpty() || detailLoading.value) {
+            // 详情还没回来：下载链接还在路上
+            showToastNow("正在获取中，请稍后")
             return
         }
+        // 链接由后台线程换（BookApi.file），先给即时反馈
+        showToastNow("正在获取中，请稍后")
         let target = chosenTarget()
         let title = if (detailTitle.value.isEmpty()) {
             "书籍 ${target.id}"

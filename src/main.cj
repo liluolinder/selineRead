@@ -330,6 +330,18 @@ main(args: Array<String>): Int64 {
                 }
             }
         }
+        if ((getVariable("SELINE_READ_FAKE_LOGGED_IN") ?? "") == "1") {
+            state.loggedIn.value = true
+            writeDebugLog("test: fake logged in")
+        }
+        let clickDownloadMs = getVariable("SELINE_READ_CLICK_DOWNLOAD_MS") ?? ""
+        if (!clickDownloadMs.isEmpty()) {
+            state.scheduleClickDownloadForTest(Int64.parse(clickDownloadMs))
+        }
+        let downloadBookMs = getVariable("SELINE_READ_DOWNLOAD_BOOK_MS") ?? ""
+        if (!downloadBookMs.isEmpty()) {
+            state.scheduleDownloadBookForTest(Int64.parse(downloadBookMs))
+        }
         if ((getVariable("SELINE_READ_TEST_DL_TWICE") ?? "") == "1") {
             // 验收：未登录连点两次下载，应该弹两次 toast
             state.downloadBook()
