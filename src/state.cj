@@ -691,6 +691,17 @@ public class AppState {
     public let lastKeyword = State<String>("")
     /** 搜索请求序号：只接受最后一次搜索的返回，A/B 竞态时丢弃过期的 A。 */
     private var searchGeneration: Int64 = 0
+    /** 搜索结果已加载到第几页（1 起）。 */
+    private var searchPage: Int64 = 1
+    /** 搜索结果还有下一页吗（滚到底自动取）。 */
+    public let searchHasMore = State<Bool>(false)
+    public let searchLoadingMore = State<Bool>(false)
+    /** 详情页代数：每次打开/关闭/回退都 +1，过期的网络结果直接丢弃（修 A→B 串内容）。 */
+    private var detailGeneration: Int64 = 0
+    /** 书单详情代数（同上）。 */
+    private var booklistGeneration: Int64 = 0
+    /** 收藏代数（登录/登出/重载时 +1）。 */
+    private var favoritesGeneration: Int64 = 0
     /** 是否停在图书详情页（二级页面）。 */
     public let detailOpen = State<Bool>(false)
     /** 详情页字段。 */
@@ -895,6 +906,15 @@ public class AppState {
         }
     }
 
+    /** 清空搜索态（含分页标记）。 */
+    private func resetSearchState(): Unit {
+        lastKeyword.value = ""
+        results.value = ArrayList<BookCell>()
+        searchPage = 1
+        searchHasMore.value = false
+        searchLoadingMore.value = false
+    }
+
     /** 侧栏导航：切一级页签，并退出详情页。 */
     public func tabSelectFromRail(index: Int64): Unit {
         writeDebugLog("rail tab -> ${index}")
@@ -905,8 +925,7 @@ public class AppState {
         // 点「热门」= 退出搜索态，回到推荐墙
         if (index == TAB_HOME && !lastKeyword.value.isEmpty()) {
             searchGeneration += 1
-            lastKeyword.value = ""
-            results.value = ArrayList<BookCell>()
+            resetSearchState()
         }
         tab.value = index
     }
@@ -1113,8 +1132,7 @@ public class AppState {
         }
         searchGeneration += 1
         if (keyword.isEmpty()) {
-            lastKeyword.value = ""
-            results.value = ArrayList<BookCell>()
+            resetSearchState()
             tab.value = TAB_HOME
             return
         }
@@ -1131,6 +1149,9 @@ public class AppState {
         tab.value = TAB_HOME
         lastKeyword.value = keyword
         results.value = ArrayList<BookCell>()
+        searchPage = 1
+        searchHasMore.value = false
+        searchLoadingMore.value = false
         loading.value = true
         error.value = ""
         let _ = spawn {=>
@@ -1144,6 +1165,8 @@ public class AppState {
                         return
                     }
                     results.value = cells
+                    searchPage = 1
+                    searchHasMore.value = page.pagination.hasMore()
                     lastKeyword.value = keyword
                     status.value = "搜索「${keyword}」：${cells.size} 本"
                     loading.value = false
@@ -1156,6 +1179,62 @@ public class AppState {
                     }
                     error.value = "搜索失败：${failure.detail}"
                     loading.value = false
+                })
+            }
+        }
+    }
+
+    /**
+     * 搜索结果「滚到底」：取下一页并追加。
+     *
+     * 搜索接口支持 `page`，但之前只取了第一页，所以往下滚没有更多内容。
+     * 和 `submitSearch` 共用 `searchGeneration`：期间换了关键词，旧页结果直接丢。
+     */
+    public func loadMoreSearch(): Unit {
+        if (loading.value || searchLoadingMore.value || !searchHasMore.value) {
+            return
+        }
+        let keyword = lastKeyword.value
+        if (keyword.isEmpty()) {
+            return
+        }
+        let clientBox = match (this.client) {
+            case Some(value) => value
+            case None => return
+        }
+        let generation = searchGeneration
+        let nextPage = searchPage + 1
+        searchLoadingMore.value = true
+        let _ = spawn {=>
+            try {
+                let page = SearchApi.search(clientBox.value, keyword, page: nextPage, limit: 20)
+                let cells = cellsFromBooks(page.books, clientBox.value.currentSiteUrl())
+                postToUi({=>
+                    if (generation != searchGeneration) {
+                        writeDebugLog("drop stale search page: ${keyword} #${nextPage}")
+                        return
+                    }
+                    searchPage = nextPage
+                    searchHasMore.value = page.pagination.hasMore()
+                    searchLoadingMore.value = false
+                    if (cells.isEmpty()) {
+                        searchHasMore.value = false
+                        return
+                    }
+                    for (cell in cells) {
+                        results.value.add(cell)
+                    }
+                    status.value = "搜索「${keyword}」：已加载 ${results.value.size} 本"
+                })
+            } catch (failure: ZlibError) {
+                postToUi({=>
+                    if (generation != searchGeneration) {
+                        return
+                    }
+                    searchLoadingMore.value = false
+                    // 出错不自动重试，避免滚到底反复请求；把「还有更多」关掉即可
+                    searchHasMore.value = false
+                    writeDebugLog("search page failed: ${failure.detail}")
                 })
             }
         }
@@ -1197,8 +1276,7 @@ public class AppState {
         }
         if (!lastKeyword.value.isEmpty()) {
             searchGeneration += 1
-            lastKeyword.value = ""
-            results.value = ArrayList<BookCell>()
+            resetSearchState()
             tab.value = TAB_HOME
         }
     }
@@ -1213,6 +1291,18 @@ public class AppState {
                     openBook(detailRelated.value[0])
                 }
             })
+        }
+    }
+
+    /** 验收用：延迟后设置任意页面的滚动位置（内容加载完再滚）。 */
+    public func postScrollForTest(target: State<Float32>, value: Float32): Unit {
+        match (app) {
+            case Some(appRef) =>
+                let _ = appRef.postToUi({=>
+                    target.value = value
+                    writeDebugLog("scroll -> ${value}")
+                })
+            case None => ()
         }
     }
 
@@ -1242,6 +1332,144 @@ public class AppState {
                     writeDebugLog("dlselftest: item ${item.taskId} status=${item.status} " +
                         "err=${item.error} progress=${item.percent()}")
                 }
+            })
+        }
+    }
+
+    /** 验收用（离线可跑）：造一批假搜索结果，用来截图确认「加载更多」页脚渲染。 */
+    public func forceFakeSearchForShot(): Unit {
+        lastKeyword.value = "fake"
+        tab.value = TAB_HOME
+        detailOpen.value = false
+        loading.value = false
+        let cells = ArrayList<BookCell>()
+        for (index in 0..20) {
+            cells.add(BookCell(Int64(index + 1), "fake${index}", "测试书籍 ${index + 1}",
+                "作者 ${index + 1}", "epub · 1.2 MB", ""))
+        }
+        results.value = cells
+        searchPage = 1
+        searchHasMore.value = true
+        searchLoadingMore.value = false
+        status.value = "搜索「fake」：${cells.size} 本"
+    }
+
+    /**
+     * 验收用（离线可跑）：搜索分页的状态机不能在失败后卡死。
+     *
+     * 手动把 hasMore 置真 → loadMoreSearch（站点 503 时会失败）→
+     * 期望 loadingMore 归位、hasMore 关掉，不会无限重试。
+     */
+    public func runSearchPagingOfflineTest(): Unit {
+        let _ = spawn {=>
+            sleep(900 * Duration.millisecond)
+            postToUi({=>
+                lastKeyword.value = "selftest"
+                searchPage = 1
+                searchHasMore.value = true
+                searchLoadingMore.value = false
+                writeDebugLog("searchpaging: before hasMore=${searchHasMore.value}")
+                loadMoreSearch()
+            })
+            sleep(15000 * Duration.millisecond)
+            postToUi({=>
+                writeDebugLog("searchpaging: after loadingMore=${searchLoadingMore.value} " +
+                    "hasMore=${searchHasMore.value} (expect false/false)")
+            })
+        }
+    }
+
+    /**
+     * 验收用（离线可跑）：直接喂一个「上一本书」的过期详情结果，验证它会被丢弃。
+     *
+     * 步骤：开 A → 记录代数 → 开 B → 用 A 的代数调用 applyDetailPayload，
+     * 期望栏目仍然是 B；再用当前代数调一次，期望这次真的生效。
+     */
+    public func runStalePayloadSelfTest(): Unit {
+        let _ = spawn {=>
+            sleep(700 * Duration.millisecond)
+            postToUi({=>
+                openBook(BookCell(111, "hashA", "书 A", "作者 A", "", ""))
+                let staleGeneration = detailGeneration
+                openBook(BookCell(222, "hashB", "书 B", "作者 B", "", ""))
+                // 伪造 A 的迟到响应
+                let info = BookInfo()
+                info.title = "STALE-A"
+                let payload = DetailPayload(Some(info), ArrayList<BookFormat>(), "")
+                applyDetailPayload(payload, staleGeneration)
+                writeDebugLog("staletest: after stale apply title=${detailTitle.value} " +
+                    "id=${detailId.value} (expect 书 B / 222)")
+                // 同代数再喂一次：应当生效（证明守卫没有一刀切）
+                let info2 = BookInfo()
+                info2.title = "FRESH-B"
+                let payload2 = DetailPayload(Some(info2), ArrayList<BookFormat>(), "")
+                applyDetailPayload(payload2, detailGeneration)
+                writeDebugLog("staletest: after fresh apply title=${detailTitle.value} " +
+                    "id=${detailId.value} (expect FRESH-B / 222)")
+                // 评论：过期分页结果同样必须被丢弃
+                comments.value = ArrayList<CommentCell>()
+                let staleComments = CommentsPayload(ArrayList<CommentCell>(), false, 20, "")
+                applyComments(staleComments, true, staleGeneration)
+                writeDebugLog("staletest: after stale comments commentError='${commentsError.value}' " +
+                    "loading=${commentsLoading.value} (expect empty/false)")
+            })
+        }
+    }
+
+    /**
+     * 验收用：自检「A 未返回就点 B」的竞态。
+     *
+     * 等首页加载完 → 打开第 1 本 → 150ms 后立刻打开第 2 本 →
+     * 等两本书的请求都回来，看最终显示的是不是 B。
+     */
+    public func runDetailRaceSelfTest(): Unit {
+        let _ = spawn {=>
+            sleep(3000 * Duration.millisecond)
+            postToUi({=>
+                if (popular.value.size < 2) {
+                    writeDebugLog("race test: popular not enough (${popular.value.size})")
+                    return
+                }
+                let a = popular.value[0]
+                let b = popular.value[1]
+                writeDebugLog("race test: A=${a.id} ${a.title} | B=${b.id} ${b.title}")
+                openBook(a)
+            })
+            sleep(150 * Duration.millisecond)
+            postToUi({=>
+                if (popular.value.size >= 2) {
+                    let b = popular.value[1]
+                    writeDebugLog("race test: opening B=${b.id} ${b.title}")
+                    openBook(b)
+                }
+            })
+            sleep(8000 * Duration.millisecond)
+            postToUi({=>
+                let expected = if (popular.value.size >= 2) { popular.value[1].id } else { -1 }
+                writeDebugLog("race result: id=${detailId.value} expected=${expected} " +
+                    "title=${detailTitle.value} descLen=${detailDescription.value.size} " +
+                    "loading=${detailLoading.value}")
+            })
+        }
+    }
+
+    /** 验收用：自检搜索结果分页（第 1 页 → 自动加载第 2 页）。 */
+    public func runSearchPagingSelfTest(keyword: String): Unit {
+        let _ = spawn {=>
+            sleep(1200 * Duration.millisecond)
+            postToUi({=>
+                searchText.value = keyword
+                submitSearch()
+            })
+            sleep(4000 * Duration.millisecond)
+            postToUi({=>
+                writeDebugLog("search paging: page1 count=${results.value.size} hasMore=${searchHasMore.value}")
+                loadMoreSearch()
+            })
+            sleep(4000 * Duration.millisecond)
+            postToUi({=>
+                writeDebugLog("search paging: after page2 count=${results.value.size} " +
+                    "hasMore=${searchHasMore.value} loadingMore=${searchLoadingMore.value}")
             })
         }
     }
@@ -1311,6 +1539,9 @@ public class AppState {
         searchGeneration += 1
         lastKeyword.value = ""
         results.value.clear()
+        searchPage = 1
+        searchHasMore.value = false
+        searchLoadingMore.value = false
         tab.value = TAB_HOME
     }
 
@@ -1319,6 +1550,8 @@ public class AppState {
     /** 打开图书详情页（二级页面）。 */
     public func openBook(cell: BookCell): Unit {
         writeDebugLog("openBook: ${cell.id} ${cell.title}")
+        // 先让上一本书还在路上的请求全部作废（见 applyDetailPayload 的 generation 检查）
+        detailGeneration += 1
         // 已经在详情页（从「相关书籍」点进来）：把上一本压栈，返回可回退
         if (detailOpen.value && detailId.value > 0) {
             detailHistory.add(DetailSnapshot(this))
@@ -1367,16 +1600,26 @@ public class AppState {
                 return
         }
         // 详情页首帧来自列表项，网络数据随后补上（不阻塞 UI）
+        let generation = detailGeneration
         let id = cell.id
         let hash = cell.hash
         let _ = spawn {=>
             let payload = DetailPayload.load(clientBox.value, id, hash)
-            postToUi({=> applyDetailPayload(payload) })
+            postToUi({=> applyDetailPayload(payload, generation) })
         }
     }
 
-    /** 把后台详情结果写回 State（UI 线程）。 */
-    private func applyDetailPayload(payload: DetailPayload): Unit {
+    /**
+     * 把后台详情结果写回 State（UI 线程）。
+     *
+     * `generation` 必须仍是当前详情代数：A 还没返回就点开 B 时，A 的结果要丢掉，
+     * 否则会把 B 的页面覆盖成 A 的内容。
+     */
+    private func applyDetailPayload(payload: DetailPayload, generation: Int64): Unit {
+        if (generation != detailGeneration) {
+            writeDebugLog("drop stale detail payload: gen=${generation} current=${detailGeneration}")
+            return
+        }
         match (payload.info) {
             case Some(info) =>
                 detailTitle.value = info.title
@@ -1470,6 +1713,7 @@ public class AppState {
         if (id <= 0 || hash.isEmpty()) {
             return
         }
+        let generation = detailGeneration
         detailRelatedLoading.value = true
         detailRelatedError.value = ""
         let _ = spawn {=>
@@ -1477,7 +1721,8 @@ public class AppState {
                 let briefs = BookApi.similar(clientBox.value, id, hash)
                 let cells = cellsFromBriefs(briefs, clientBox.value.currentSiteUrl())
                 postToUi({=>
-                    if (detailId.value != id) {
+                    if (generation != detailGeneration) {
+                        writeDebugLog("drop stale related: gen=${generation}")
                         return
                     }
                     detailRelated.value = cells
@@ -1486,7 +1731,7 @@ public class AppState {
                 })
             } catch (failure: ZlibError) {
                 postToUi({=>
-                    if (detailId.value != id) {
+                    if (generation != detailGeneration) {
                         return
                     }
                     detailRelatedError.value = "相关书籍加载失败：${failure.detail}"
@@ -1503,6 +1748,7 @@ public class AppState {
 
     /** 关闭详情页，回到来处。 */
     public func closeDetail(): Unit {
+        detailGeneration += 1
         downloadMenuOpen.value = false
         if (!detailHistory.isEmpty()) {
             let previous = detailHistory[detailHistory.size - 1]
@@ -1515,6 +1761,7 @@ public class AppState {
 
     /** 恢复上一本详情（不重新请求；评论按需重新加载）。 */
     private func restoreDetail(snapshot: DetailSnapshot): Unit {
+        detailGeneration += 1
         detailId.value = snapshot.id
         detailHash.value = snapshot.hash
         detailTitle.value = snapshot.title
@@ -1641,6 +1888,7 @@ public class AppState {
 
     /** 打开一份书单（二级页面）。 */
     public func openBooklist(cell: BooklistCell): Unit {
+        booklistGeneration += 1
         booklistOpen.value = true
         booklistId.value = cell.id
         booklistTitle.value = cell.title
@@ -1655,6 +1903,7 @@ public class AppState {
 
     /** 关闭书单详情。 */
     public func closeBooklist(): Unit {
+        booklistGeneration += 1
         booklistOpen.value = false
     }
 
@@ -1671,14 +1920,20 @@ public class AppState {
                 return
         }
         let site = currentSite()
+        let generation = booklistGeneration
         booklistLoading.value = true
         let _ = spawn {=>
             let payload = BooklistBooksPayload.load(clientBox.value, readlistId, page, site)
-            postToUi({=> applyBooklistBooks(payload, page) })
+            postToUi({=> applyBooklistBooks(payload, page, generation) })
         }
     }
 
-    private func applyBooklistBooks(payload: BooklistBooksPayload, page: Int64): Unit {
+    private func applyBooklistBooks(payload: BooklistBooksPayload, page: Int64, generation: Int64): Unit {
+        // 期间点开了别的书单：这批结果属于上一个书单，丢掉
+        if (generation != booklistGeneration) {
+            writeDebugLog("drop stale booklist books: gen=${generation} page=${page}")
+            return
+        }
         booklistLoading.value = false
         if (!payload.error.isEmpty()) {
             booklistError.value = "加载书单内容失败：${payload.error}"
@@ -1741,6 +1996,7 @@ public class AppState {
             return
         }
         loggedIn.value = true
+        favoritesGeneration += 1
         favoritesLoaded = false
         favorites.value = ArrayList<BookCell>()
         favoritesNextPage.value = 0
@@ -1777,6 +2033,7 @@ public class AppState {
     public func logout(): Unit {
         deleteCredential()
         loggedIn.value = false
+        favoritesGeneration += 1
         favoritesLoaded = false
         favorites.value = ArrayList<BookCell>()
         favoritesNextPage.value = 0
@@ -2198,6 +2455,8 @@ public class AppState {
         if (target <= 0) {
             return
         }
+        favoritesGeneration += 1
+        let generation = favoritesGeneration
         favoritesLoading.value = true
         if (reset) {
             favoritesError.value = ""
@@ -2209,6 +2468,11 @@ public class AppState {
                 writeDebugLog("favorites loaded: page=${target} count=${cells.size} " +
                     "current=${page.pagination.current} total=${page.pagination.totalItems}")
                 postToUi({=>
+                    // 期间登出/换号/重载了：这批结果已过期
+                    if (generation != favoritesGeneration) {
+                        writeDebugLog("drop stale favorites: gen=${generation}")
+                        return
+                    }
                     if (reset) {
                         favorites.value = cells
                     } else {
@@ -2226,6 +2490,9 @@ public class AppState {
                 })
             } catch (failure: ZlibError) {
                 postToUi({=>
+                    if (generation != favoritesGeneration) {
+                        return
+                    }
                     favoritesError.value = "收藏加载失败：${failure.detail}"
                     favoritesLoading.value = false
                 })
@@ -2349,15 +2616,21 @@ public class AppState {
             case None => return
         }
         let offset = if (reset) { 0 } else { comments.value.size }
+        let generation = detailGeneration
         commentsLoading.value = true
         commentsError.value = ""
         let _ = spawn {=>
             let payload = CommentsPayload.load(clientBox.value, bookId, offset)
-            postToUi({=> applyComments(payload, reset) })
+            postToUi({=> applyComments(payload, reset, generation) })
         }
     }
 
-    private func applyComments(payload: CommentsPayload, reset: Bool): Unit {
+    private func applyComments(payload: CommentsPayload, reset: Bool, generation: Int64): Unit {
+        // 期间换了书：这批评论属于上一本，丢掉
+        if (generation != detailGeneration) {
+            writeDebugLog("drop stale comments: gen=${generation} current=${detailGeneration}")
+            return
+        }
         commentsLoading.value = false
         if (!payload.error.isEmpty()) {
             commentsError.value = "加载评论失败：${payload.error}"

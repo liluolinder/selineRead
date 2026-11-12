@@ -333,6 +333,20 @@ main(args: Array<String>): Int64 {
         if ((getVariable("SELINE_READ_TEST_DL") ?? "") == "1") {
             state.runDownloadSelfTest()
         }
+        if ((getVariable("SELINE_READ_FAKE_SEARCH") ?? "") == "1") {
+            state.forceFakeSearchForShot()
+        }
+        if ((getVariable("SELINE_READ_TEST_STALE") ?? "") == "1") {
+            state.runStalePayloadSelfTest()
+            state.runSearchPagingOfflineTest()
+        }
+        if ((getVariable("SELINE_READ_TEST_RACE") ?? "") == "1") {
+            state.runDetailRaceSelfTest()
+        }
+        let searchPagingKeyword = getVariable("SELINE_READ_TEST_SEARCH_PAGING") ?? ""
+        if (!searchPagingKeyword.isEmpty()) {
+            state.runSearchPagingSelfTest(searchPagingKeyword)
+        }
         if ((getVariable("SELINE_READ_TEST_NAV") ?? "") == "1") {
             state.runNavStackSelfTest()
         }
@@ -353,6 +367,15 @@ main(args: Array<String>): Int64 {
             let _ = spawn {=>
                 sleep(delayMs * Duration.millisecond)
                 state.postDetailScrollForTest(value)
+            }
+        }
+        let searchScrollEnv = getVariable("SELINE_READ_SEARCH_SCROLL") ?? ""
+        if (!scrollAfterEnv.isEmpty() && !searchScrollEnv.isEmpty()) {
+            let delayMs = Int64.parse(scrollAfterEnv)
+            let value = Float32.parse(searchScrollEnv)
+            let _ = spawn {=>
+                sleep(delayMs * Duration.millisecond)
+                state.postScrollForTest(state.searchScroll, value)
             }
         }
         let homeScrollEnv = getVariable("SELINE_READ_HOME_SCROLL") ?? ""
