@@ -2926,8 +2926,6 @@ public class AppState {
                 }
                 if (refreshed) {
                     adoptRefreshedSite()
-        // 入口站可能只是 3xx 跳转（如 zh.eva101.ru -> zh.tmdgoogle.ru）：直接把跳转目标落盘
-        adoptInitialRedirect()
                     networkMessage.value = "站点已更新：${box.value.currentSiteUrl()}"
                 } else {
                     networkMessage.value = "没有可用的种子站，或拉取失败"
