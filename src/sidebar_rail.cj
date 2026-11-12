@@ -186,7 +186,7 @@ class RailShell <: Widget {
             return
         }
         // 在 draw 时取色：主题过渡分两遍绘制，构建期抓色会让侧栏瞬时换色
-        ctx.renderer.fill(frame, selineTheme().palette.surfaceSunken)
+        ctx.renderer.fill(frame, selineTheme().palette.window)
         ctx.renderer.pushClip(frame)
         try {
             content.draw(ctx)
