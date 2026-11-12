@@ -752,7 +752,8 @@ public class AppState {
     /** 网络设置：3 个官方站（占位，留空但不可删）+ 自定义站 + 种子站 + 当前选中站。 */
     public let officialSites = State<ArrayList<String>>(ArrayList<String>())
     public let customSites = State<ArrayList<String>>(ArrayList<String>())
-    public let seedSites = State<ArrayList<String>>(ArrayList<String>())
+    /** 种子站：单个「引导站」，只用来问出新域名（它的响应头会带 Location 重定向）。 */
+    public let seedSite = State<String>("")
     public let activeSite = State<String>("")
     /** 新站输入框内容（自定义站 / 种子站）。 */
     public let siteInput = State<String>("")
@@ -1046,10 +1047,9 @@ public class AppState {
             activeSite.value
         }
         var seeds = ArrayList<String>()
-        for (seed in seedSites.value) {
-            seeds.add(seed)
-        }
-        if (seeds.isEmpty()) {
+        if (!seedSite.value.isEmpty()) {
+            seeds.add(seedSite.value)
+        } else {
             seeds.add(ZlibHost.DEFAULT_URL)
         }
         try {
@@ -1314,16 +1314,13 @@ public class AppState {
             activeSite.value
         }
         var seeds = ArrayList<String>()
-        for (seed in seedSites.value) {
-            seeds.add(seed)
+        if (!seedSite.value.isEmpty()) {
+            seeds.add(seedSite.value)
         }
         if (seeds.isEmpty()) {
-            // 理论上 loadUserConfig 已经填过默认种子站；这里兜底
-            for (mirror in ZlibHost.MIRRORS) {
-                seeds.add(mirror)
-            }
+            seeds.add(ZlibHost.DEFAULT_URL)
         }
-        writeDebugLog("bootstrap: base=${baseUrl} seeds=${seeds.size}")
+        writeDebugLog("bootstrap: base=${baseUrl} seed=${seeds[0]}")
         let created = try {
             ZlibClient.create(baseUrl: baseUrl, credential: credential,
                 seeds: seeds.toArray())
@@ -2601,15 +2598,13 @@ public class AppState {
             activeSite.value = ZlibHost.DEFAULT_URL
             changed = true
         }
-        if (seedSites.value.isEmpty()) {
-            for (mirror in ZlibHost.MIRRORS) {
-                seedSites.value.add(mirror)
-            }
+        if (seedSite.value.isEmpty()) {
+            seedSite.value = ZlibHost.DEFAULT_URL
             changed = true
         }
         if (changed) {
             saveUserConfig()
-            writeDebugLog("seeded default sites: active=${activeSite.value} seeds=${seedSites.value.size}")
+            writeDebugLog("seeded default sites: active=${activeSite.value} seed=${seedSite.value}")
         }
     }
 
@@ -2637,16 +2632,17 @@ public class AppState {
                         customSites.value.add(text)
                     }
                 }
-                seedSites.value = ArrayList<String>()
-                for (item in arrayFieldOf(obj, "seedSites")) {
-                    let text = item.asString().getValue().trimAscii()
-                    if (!text.isEmpty()) {
-                        seedSites.value.add(text)
+                // 单个种子站；兼容旧版 seedSites 数组（取第一个）
+                seedSite.value = readString(obj, "seedSite")
+                if (seedSite.value.isEmpty()) {
+                    let legacySeeds = arrayFieldOf(obj, "seedSites")
+                    if (!legacySeeds.isEmpty()) {
+                        seedSite.value = legacySeeds[0].asString().getValue().trimAscii()
                     }
                 }
                 downloadPathInput.value = downloadDir.value
                 seedDefaultSitesIfNeeded()
-                writeDebugLog("config loaded(json): dark=${darkMode.value} sites=${customSites.value.size} seeds=${seedSites.value.size} active=${activeSite.value}")
+                writeDebugLog("config loaded(json): dark=${darkMode.value} sites=${customSites.value.size} seed=${seedSite.value} active=${activeSite.value}")
                 return
             } catch (_: Exception) {
                 writeDebugLog("config.json unreadable; falling back to legacy config.txt")
@@ -2687,9 +2683,15 @@ public class AppState {
         match (config.get("seedSites")) {
             case Some(value) => for (item in value.split("|")) {
                 let trimmed = item.trimAscii()
-                if (!trimmed.isEmpty()) {
-                    seedSites.value.add(trimmed)
+                if (!trimmed.isEmpty() && seedSite.value.isEmpty()) {
+                    seedSite.value = trimmed
                 }
+            }
+            case None => ()
+        }
+        match (config.get("seedSite")) {
+            case Some(value) => if (!value.trimAscii().isEmpty()) {
+                seedSite.value = value.trimAscii()
             }
             case None => ()
         }
@@ -2703,7 +2705,7 @@ public class AppState {
         }
         seedDefaultSitesIfNeeded()
         downloadPathInput.value = downloadDir.value
-        writeDebugLog("user config loaded: dark=${darkMode.value} sites=${customSites.value.size} seeds=${seedSites.value.size} active=${activeSite.value}")
+        writeDebugLog("user config loaded: dark=${darkMode.value} sites=${customSites.value.size} seed=${seedSite.value} active=${activeSite.value}")
     }
 
     /** 把当前配置写回磁盘（JSON：`~/seline_read/config.json`）。 */
@@ -2717,11 +2719,7 @@ public class AppState {
             custom.add(JsonString(site))
         }
         obj.put("customSites", custom)
-        let seeds = JsonArray()
-        for (seed in seedSites.value) {
-            seeds.add(JsonString(seed))
-        }
-        obj.put("seedSites", seeds)
+        obj.put("seedSite", JsonString(seedSite.value))
         writeTextFile(Path(configJsonPath()), obj.toJsonString())
     }
     /** 设置页页签切换。 */
@@ -2786,36 +2784,47 @@ public class AppState {
         }
     }
 
-    /** 添加种子站。 */
-    public func addSeedSite(): Unit {
-        let value = normalizeSiteInput(seedInput.value)
+    /** 保存种子站（单个引导站）。 */
+    public func applySeedSite(): Unit {
+        var value = normalizeSiteInput(seedInput.value)
         if (value.isEmpty()) {
-            networkMessage.value = "种子站地址不能为空"
-            return
+            value = seedSite.value
         }
-        for (existing in seedSites.value) {
-            if (existing == value) {
-                networkMessage.value = "种子站已在列表里：${value}"
-                return
-            }
+        if (value.isEmpty()) {
+            value = ZlibHost.DEFAULT_URL
         }
-        seedSites.value.add(value)
+        seedSite.value = value
         seedInput.value = ""
-        networkMessage.value = "已添加种子站：${value}"
         saveUserConfig()
+        rebuildClientWithSeed()
+        networkMessage.value = "种子站已保存：${value}"
+        writeDebugLog("seed site -> ${value}")
     }
 
-    public func removeSeedSite(url: String): Unit {
-        for (index in 0..seedSites.value.size) {
-            if (seedSites.value[index] == url) {
-                seedSites.value.remove(at: index)
-                networkMessage.value = "已删除种子站：${url}"
-                saveUserConfig()
-                return
-            }
+    /** 种子站变了要重建客户端（ZlibSites 的种子列表只在创建时传入）。 */
+    private func rebuildClientWithSeed(): Unit {
+        let box = match (this.client) {
+            case Some(value) => value
+            case None => return
+        }
+        let current = box.value
+        let baseUrl = current.sites.customUrl()
+        let credential = current.credential
+        var seeds = ArrayList<String>()
+        if (!seedSite.value.isEmpty()) {
+            seeds.add(seedSite.value)
+        } else {
+            seeds.add(ZlibHost.DEFAULT_URL)
+        }
+        try {
+            let rebuilt = ZlibClient.create(baseUrl: baseUrl, credential: credential,
+                seeds: seeds.toArray())
+            current.close()
+            this.client = Some(ClientBox(rebuilt))
+        } catch (failure: ZlibError) {
+            writeDebugLog("rebuild client for seed failed: ${failure.detail}")
         }
     }
-
     /** 用单选框选中某个站点：立刻切到它并持久化。 */
     public func selectActiveSite(url: String): Unit {
         activeSite.value = url

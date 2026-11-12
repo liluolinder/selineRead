@@ -335,31 +335,28 @@ func networkSettings(state: AppState): Unit {
             }.hug().fillWidth()
         }.hug().fillWidth()
     }
-    sectionCard("种子站（自定义站访问失败时用它换新地址）") {
+    sectionCard("种子站（引导站：向它问最新域名）") {
         VStack(spacing: vp(SELINE_SPACE_SM)) {
-            Label("回退成功后，种子站返回的新地址会覆盖当前的自定义站点，" +
-                "下次启动直接用新地址。")
+            Label("种子站是「引导站」：自定义站访问失败时，向它发请求拿最新域名" +
+                "（响应头的 Location 重定向 / 域名列表），成功后覆盖当前自定义站，下次启动直接用新地址。")
                 .fontSize(theme.fontCaption).muted().wrap()
-            if (state.seedSites.value.isEmpty()) {
-                Label("没有配置种子站（默认使用官方站）").fontSize(theme.fontCaption).muted()
-            }
-            for (seed in state.seedSites.value) {
-                HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    SelineIcon("cloud", size: 14.0, color: palette.accent)
-                    Label(seed).fontSize(theme.fontBody)
-                    Spacer()
-                    SelineButton("删除", {=> state.removeSeedSite(seed)}, glyph: "close",
-                        kind: SelineButtonKind.Ghost, compact: true)
-                }.hug().fillWidth()
-                    .padding(10.0)
-                    .background(palette.surfaceSunken, vp(8.0))
-            }
+            HStack(spacing: vp(SELINE_SPACE_SM)) {
+                SelineIcon("cloud", size: 14.0, color: palette.accent)
+                Label(if (state.seedSite.value.isEmpty()) {
+                    "未配置（使用默认站）"
+                } else {
+                    state.seedSite.value
+                }).fontSize(theme.fontBody)
+                Spacer()
+            }.hug().fillWidth()
+                .padding(10.0)
+                .background(palette.surfaceSunken, vp(8.0))
             HStack(spacing: vp(SELINE_SPACE_SM)) {
                 SelineTextField(state.seedInput.value,
                     {text => state.seedInput.value = text},
-                    placeholder: "https://seed.example.com", glyph: "cloud", height: 36.0,
-                    width: 320.0, onSubmit: {=> state.addSeedSite()})
-                SelineButton("添加种子站", {=> state.addSeedSite()}, glyph: "plus",
+                    placeholder: state.seedSite.value, glyph: "cloud", height: 36.0,
+                    width: 320.0, onSubmit: {=> state.applySeedSite()})
+                SelineButton("保存种子站", {=> state.applySeedSite()}, glyph: "check",
                     kind: SelineButtonKind.Secondary, compact: true)
                 Spacer()
             }.hug().fillWidth()
