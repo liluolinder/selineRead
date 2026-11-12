@@ -512,16 +512,85 @@ class DownloadOutcome {
     }
 }
 
-/** 账号持久化文件：`%TEMP%/SelineRead/account.txt`。 */
-private func accountFilePath(): String {
-    let temp = getVariable("TEMP") ?? "."
-    Path(temp).join("SelineRead").join("account.txt").toString()
+/**
+ * 应用数据目录：`~/seline_read`。
+ *
+ * 设置、账号这类**需要长期保留**的东西放这里；图片缓存仍然放临时目录（可丢）。
+ */
+func appDataDir(): Path {
+    let home = if (let Some(value) <- getVariable("USERPROFILE")) {
+        value
+    } else if (let Some(value) <- getVariable("HOME")) {
+        value
+    } else {
+        "."
+    }
+    Path(home).join("seline_read")
 }
 
-/** 用户配置（主题 / 下载目录 / 站点）持久化文件：`%TEMP%/SelineRead/user_config.txt`。 */
+/** 旧版数据目录（`%TEMP%/SelineRead`），只用于一次性迁移。 */
+private func legacyDataDir(): Path {
+    Path(getVariable("TEMP") ?? ".").join("SelineRead")
+}
+
+/** 用户配置（主题 / 下载目录 / 站点）持久化文件：`~/seline_read/config.txt`。 */
 private func userConfigFilePath(): String {
-    let temp = getVariable("TEMP") ?? "."
-    Path(temp).join("SelineRead").join("user_config.txt").toString()
+    appDataDir().join("config.txt").toString()
+}
+
+/** 多账号存储文件：`~/seline_read/accounts.txt`。 */
+private func accountsFilePath(): String {
+    appDataDir().join("accounts.txt").toString()
+}
+
+/**
+ * 建目录 + 把旧版（`%TEMP%/SelineRead`）的配置/账号迁移过来。
+ *
+ * 只迁移一次（新位置已有文件就不动）。
+ */
+func ensureAppDataDir(): Unit {
+    let dir = appDataDir()
+    if (!exists(dir)) {
+        try {
+            Directory.create(dir, recursive: true)
+        } catch (_: Exception) {
+            ()
+        }
+    }
+    let legacy = legacyDataDir()
+    if (!exists(legacy)) {
+        return
+    }
+    migrateFile(legacy.join("user_config.txt"), dir.join("config.txt"))
+    // 旧版单账号文件：迁移成"一个默认账号"（没有邮箱/昵称，只有 uid + key）
+    let legacyAccount = legacy.join("account.txt")
+    let newAccounts = dir.join("accounts.txt")
+    if (exists(legacyAccount) && !exists(newAccounts)) {
+        try {
+            let text = String.fromUtf8(File.readFrom(legacyAccount)).trimAscii()
+            let parts = text.split("|")
+            if (parts.size >= 2 && !parts[0].isEmpty()) {
+                let language = if (parts.size >= 3) { parts[2] } else { "" }
+                let line = "|${parts[0]}|${parts[0]}|${parts[1]}|${language}|1\n"
+                File.writeTo(newAccounts, line.toArray())
+                writeDebugLog("migrated legacy account: uid=${parts[0]}")
+            }
+        } catch (_: Exception) {
+            ()
+        }
+    }
+}
+
+private func migrateFile(from: Path, to: Path): Unit {
+    if (!exists(from) || exists(to)) {
+        return
+    }
+    try {
+        File.writeTo(to, File.readFrom(from))
+        writeDebugLog("migrated ${from} -> ${to}")
+    } catch (_: Exception) {
+        ()
+    }
 }
 
 /** 读回用户配置（不存在时返回空表）。 */
@@ -550,54 +619,57 @@ private func readUserConfig(): HashMap<String, String> {
 }
 
 /** 读回上次保存的凭证；没有/损坏时返回游客凭证。 */
-private func loadSavedCredential(): ZlibCredential {
-    let path = accountFilePath()
-    if (!exists(Path(path))) {
-        return ZlibCredential.anonymous()
+/**
+ * 一个已保存的账号（`~/seline_read/accounts.txt` 里的一行）。
+ *
+ * 行格式：`email|name|userId|userKey|language|default(1/0)`
+ */
+public class AccountEntry <: ToString {
+    public var email: String
+    public var name: String
+    public var userId: String
+    public var userKey: String
+    public var language: String
+    public var isDefault: Bool
+
+    public init(email: String, name: String, userId: String, userKey: String,
+        language: String, isDefault: Bool) {
+        this.email = email
+        this.name = name
+        this.userId = userId
+        this.userKey = userKey
+        this.language = language
+        this.isDefault = isDefault
     }
-    try {
-        let text = String.fromUtf8(File.readFrom(Path(path))).trimAscii()
-        let parts = text.split("|")
-        if (parts.size < 2 || parts[0].isEmpty() || parts[1].isEmpty()) {
-            return ZlibCredential.anonymous()
+
+    /** 展示名：昵称 > 邮箱 > uid。 */
+    public func label(): String {
+        if (!name.isEmpty()) {
+            return name
         }
-        let language = if (parts.size >= 3 && !parts[2].isEmpty()) {
-            parts[2]
-        } else {
+        if (!email.isEmpty()) {
+            return email
+        }
+        userId
+    }
+
+    /** 转成 zlib 凭证。 */
+    public func credential(): ZlibCredential {
+        let lang = if (language.isEmpty()) {
             ZlibCredential.anonymous().language
+        } else {
+            language
         }
-        ZlibCredential(userId: parts[0], userKey: parts[1], siteLanguage: language)
-    } catch (_: Exception) {
-        ZlibCredential.anonymous()
+        ZlibCredential(userId: userId, userKey: userKey, siteLanguage: lang)
     }
-}
 
-/** 把登录凭证落盘（只保存 userId/userKey/siteLanguage）。 */
-private func saveCredential(credential: ZlibCredential): Unit {
-    if (!credential.isLoggedIn) {
-        return
+    public func toLine(): String {
+        let flag = if (isDefault) { "1" } else { "0" }
+        "${email}|${name}|${userId}|${userKey}|${language}|${flag}"
     }
-    try {
-        let dir = Path(getVariable("TEMP") ?? ".").join("SelineRead")
-        if (!exists(dir)) {
-            Directory.create(dir, recursive: true)
-        }
-        let text = "${credential.userId}|${credential.userKey}|${credential.language}"
-        File.writeTo(Path(accountFilePath()), text.toArray())
-    } catch (failure: Exception) {
-        writeDebugLog("save credential failed: ${failure.message}")
-    }
-}
 
-/** 删除落盘凭证。 */
-private func deleteCredential(): Unit {
-    try {
-        let path = Path(accountFilePath())
-        if (exists(path)) {
-            remove(path)
-        }
-    } catch (_: Exception) {
-        ()
+    public func toString(): String {
+        "${label()} (${userId})${if (isDefault) { " [默认]" } else { "" }}"
     }
 }
 
@@ -756,6 +828,209 @@ public class AppState {
     public let loginPassword = State<String>("")
     public let loginBusy = State<Bool>(false)
     public let loginMessage = State<String>("")
+    /** 已保存的账号（多账号切换）。 */
+    public let accounts = State<ArrayList<AccountEntry>>(ArrayList<AccountEntry>())
+    /** 登录弹窗是否打开。 */
+    public let loginDialogOpen = State<Bool>(false)
+
+    /* ---- 多账号 ---- */
+
+    /** 读 `accounts.txt` 到内存；坏行直接跳过。 */
+    private func loadAccounts(): Unit {
+        accounts.value = ArrayList<AccountEntry>()
+        let path = Path(accountsFilePath())
+        if (!exists(path)) {
+            return
+        }
+        try {
+            let text = String.fromUtf8(File.readFrom(path))
+            for (line in text.split("\n")) {
+                let trimmed = line.trimAscii()
+                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                    continue
+                }
+                let parts = trimmed.split("|")
+                if (parts.size < 4) {
+                    continue
+                }
+                let language = if (parts.size >= 5) { parts[4] } else { "" }
+                let isDefault = if (parts.size >= 6) { parts[5] == "1" } else { false }
+                accounts.value.add(AccountEntry(parts[0], parts[1], parts[2], parts[3],
+                    language, isDefault))
+            }
+        } catch (_: Exception) {
+            ()
+        }
+        writeDebugLog("accounts loaded: ${accounts.value.size}")
+    }
+
+    /** 把内存里的账号写回 `accounts.txt`。 */
+    public func saveAccounts(): Unit {
+        ensureAppDataDir()
+        let builder = StringBuilder()
+        builder.append("# email|name|userId|userKey|language|default\n")
+        for (entry in accounts.value) {
+            builder.append(entry.toLine())
+            builder.append("\n")
+        }
+        try {
+            File.writeTo(Path(accountsFilePath()), builder.toString().toArray())
+        } catch (failure: Exception) {
+            writeDebugLog("save accounts failed: ${failure.message}")
+        }
+    }
+
+    /** 默认账号（启动时只自动登录它）。 */
+    public func defaultAccount(): ?AccountEntry {
+        for (entry in accounts.value) {
+            if (entry.isDefault) {
+                return Some(entry)
+            }
+        }
+        if (accounts.value.isEmpty()) {
+            None
+        } else {
+            Some(accounts.value[0])
+        }
+    }
+
+    /** 当前会话使用的账号（可能不在列表里，比如刚登录还没保存）。 */
+    public func currentAccount(): ?AccountEntry {
+        for (entry in accounts.value) {
+            if (entry.userId == accountId.value) {
+                return Some(entry)
+            }
+        }
+        None
+    }
+
+    /** 设为默认账号（单选）。 */
+    public func setDefaultAccount(userId: String): Unit {
+        for (entry in accounts.value) {
+            entry.isDefault = entry.userId == userId
+        }
+        saveAccounts()
+        writeDebugLog("default account -> ${userId}")
+    }
+
+    /** 添加/更新一个账号；`makeDefault` 为真时把它设成默认。 */
+    public func upsertAccount(credential: ZlibCredential, email: String, name: String,
+        makeDefault!: Bool = false): Unit {
+        if (!credential.isLoggedIn) {
+            return
+        }
+        var found = false
+        for (entry in accounts.value) {
+            if (entry.userId == credential.userId) {
+                entry.userKey = credential.userKey
+                entry.language = credential.language
+                if (!email.isEmpty()) {
+                    entry.email = email
+                }
+                if (!name.isEmpty()) {
+                    entry.name = name
+                }
+                found = true
+                break
+            }
+        }
+        if (!found) {
+            let defaultEntry = defaultAccount()
+            let hasDefault = match (defaultEntry) {
+                case Some(entry) => entry.isDefault
+                case None => false
+            }
+            accounts.value.add(AccountEntry(email, name, credential.userId,
+                credential.userKey, credential.language, makeDefault || !hasDefault))
+        }
+        if (makeDefault) {
+            setDefaultAccount(credential.userId)
+        } else {
+            saveAccounts()
+        }
+    }
+
+    /** 用指定账号切换会话（不重新登录：直接用保存的 userId/userKey 建客户端）。 */
+    public func switchToAccount(userId: String): Unit {
+        var target: ?AccountEntry = None
+        for (entry in accounts.value) {
+            if (entry.userId == userId) {
+                target = Some(entry)
+                break
+            }
+        }
+        let entry = match (target) {
+            case Some(value) => value
+            case None => return
+        }
+        let baseUrl = if (activeSite.value.isEmpty()) {
+            ZlibHost.DEFAULT_URL
+        } else {
+            activeSite.value
+        }
+        var seeds = ArrayList<String>()
+        for (seed in seedSites.value) {
+            seeds.add(seed)
+        }
+        if (seeds.isEmpty()) {
+            seeds.add(ZlibHost.DEFAULT_URL)
+        }
+        try {
+            let created = ZlibClient.create(baseUrl: baseUrl, credential: entry.credential(),
+                seeds: seeds.toArray())
+            this.client = Some(ClientBox(created))
+        } catch (failure: ZlibError) {
+            loginMessage.value = "切换账号失败：${failure.detail}"
+            return
+        }
+        loggedIn.value = true
+        accountId.value = entry.userId
+        accountName.value = entry.label()
+        // 换号后所有"按账号"的数据都要重来
+        favoritesGeneration += 1
+        favoritesLoaded = false
+        favorites.value = ArrayList<BookCell>()
+        favoritesNextPage.value = 0
+        favoritesError.value = ""
+        detailGeneration += 1
+        detailOpen.value = false
+        detailHistory.clear()
+        loginMessage.value = "已切换到 ${entry.label()}"
+        writeDebugLog("switched account -> ${entry.userId}")
+        refreshProfile()
+    }
+
+    /** 从列表删除账号；删的是当前账号就退出登录。 */
+    public func removeAccount(userId: String): Unit {
+        let kept = ArrayList<AccountEntry>()
+        var wasDefault = false
+        for (entry in accounts.value) {
+            if (entry.userId == userId) {
+                wasDefault = entry.isDefault
+                continue
+            }
+            kept.add(entry)
+        }
+        accounts.value = kept
+        if (wasDefault && !kept.isEmpty()) {
+            kept[0].isDefault = true
+        }
+        if (accountId.value == userId) {
+            logout()
+        }
+        saveAccounts()
+    }
+
+    /** 打开/关闭登录弹窗。 */
+    public func openLoginDialog(): Unit {
+        loginMessage.value = ""
+        loginDialogOpen.value = true
+    }
+
+    public func closeLoginDialog(): Unit {
+        loginDialogOpen.value = false
+        loginPassword.value = ""
+    }
 
     /* ---- 下载 ---- */
     /** 下载目录（`%USERPROFILE%/Downloads/SelineRead`）。 */
@@ -945,8 +1220,16 @@ public class AppState {
      * 而阻塞调用会让运行时把当前线程挪走。
      */
     public func bootstrap(): Unit {
-        let credential = loadSavedCredential()
+        // 持久化设置/账号都放 ~/seline_read（旧版 %TEMP%/SelineRead 会自动迁移）
+        ensureAppDataDir()
         loadUserConfig()
+        loadAccounts()
+        // 启动只自动登录"默认账号"，其它账号作为备选（在账号页手动切换）
+        let defaultEntry = defaultAccount()
+        let credential = match (defaultEntry) {
+            case Some(entry) => entry.credential()
+            case None => ZlibCredential.anonymous()
+        }
         // 自定义站点 / 种子站：用户配置优先，没配置就用官方默认站
         let baseUrl = if (activeSite.value.isEmpty()) {
             ZlibHost.DEFAULT_URL
@@ -974,8 +1257,11 @@ public class AppState {
         if (credential.isLoggedIn) {
             loggedIn.value = true
             accountId.value = credential.userId
-            accountName.value = credential.userId
-            writeDebugLog("credential restored: uid=${credential.userId}")
+            accountName.value = match (defaultEntry) {
+                case Some(entry) => entry.label()
+                case None => credential.userId
+            }
+            writeDebugLog("credential restored (default account): uid=${credential.userId}")
         }
         writeDebugLog("bootstrap: site=${created.currentSiteUrl()}")
         if (activeSite.value.isEmpty()) {
@@ -2113,10 +2399,16 @@ public class AppState {
         accountId.value = outcome.uid
         loginMessage.value = "登录成功"
         loginPassword.value = ""
+        let loginEmailValue = loginEmail.value
         match (outcome.credential) {
-            case Some(credential) => saveCredential(credential)
+            case Some(credential) =>
+                // 新账号加入账号列表；列表里还没有默认账号时它就是默认
+                upsertAccount(credential, loginEmailValue, outcome.name)
             case None => ()
         }
+        loginDialogOpen.value = false
+        loginPassword.value = ""
+        loginMessage.value = "登录成功"
         refreshProfile()
         triggerAutoDownload()
     }
@@ -2139,7 +2431,7 @@ public class AppState {
 
     /** 退出登录：删凭证、换回游客客户端。 */
     public func logout(): Unit {
-        deleteCredential()
+        // 只退出当前会话；已保存的账号仍留在列表里（下次可切换回来）
         loggedIn.value = false
         favoritesGeneration += 1
         profileGeneration += 1
@@ -2539,6 +2831,20 @@ public class AppState {
             case None => ()
         }
         writeDebugLog("theme: switched dark=${nextDark}")
+    }
+
+    /** 验收用：造几个假账号，用来截图账号页/登录弹窗。 */
+    public func forceFakeAccountsForShot(openDialog: Bool): Unit {
+        accounts.value = ArrayList<AccountEntry>()
+        accounts.value.add(AccountEntry("liluo@example.com", "liluo", "43928338",
+            "fakekey1", "zh", true))
+        accounts.value.add(AccountEntry("work@example.com", "工作账号", "51234001",
+            "fakekey2", "zh", false))
+        accounts.value.add(AccountEntry("", "", "33445566", "fakekey3", "en", false))
+        if (openDialog) {
+            loginDialogOpen.value = true
+        }
+        writeDebugLog("fake accounts for shot: ${accounts.value.size}")
     }
 
     /* -------------------------------------------------- Toast */

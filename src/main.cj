@@ -333,6 +333,10 @@ main(args: Array<String>): Int64 {
         if ((getVariable("SELINE_READ_TEST_DL") ?? "") == "1") {
             state.runDownloadSelfTest()
         }
+        let fakeAccounts = getVariable("SELINE_READ_FAKE_ACCOUNTS") ?? ""
+        if (!fakeAccounts.isEmpty()) {
+            state.forceFakeAccountsForShot(fakeAccounts == "dialog")
+        }
         let forceErrorsMode = getVariable("SELINE_READ_FORCE_ERRORS") ?? ""
         if (!forceErrorsMode.isEmpty()) {
             state.forceErrorStatesForShot(forceErrorsMode)

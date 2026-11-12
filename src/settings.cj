@@ -67,75 +67,198 @@ func displaySettings(state: AppState): Unit {
     }
 }
 
-/** 账号页：登录 / 已登录信息（从设置页独立出来的）。 */
+/** 账号页：多账号列表 + 默认账号选择 + 登录弹窗入口。 */
 func accountPage(state: AppState): Unit {
     let theme = selineTheme()
+    let palette = theme.palette
     VStack(spacing: vp(0.0)) {
-        pageHeader("账号", "", {=> ()})
+        pageHeader("账号", "", {=>
+            SelineButton("添加账号", {=> state.openLoginDialog()}, glyph: "plus",
+                kind: SelineButtonKind.Secondary, compact: true)
+        })
         pageScrollView(scrollState: state.accountScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
-                accountCard(state)
+                // 当前会话
+                sectionCard("当前账号") {
+                    if (state.loggedIn.value) {
+                        VStack(spacing: vp(4.0)) {
+                            Label(if (state.accountName.value.isEmpty()) {
+                                "已登录"
+                            } else {
+                                state.accountName.value
+                            }).fontSize(theme.fontBody).bold()
+                            Label("uid ${state.accountId.value}").fontSize(theme.fontCaption).muted()
+                            HStack(spacing: vp(SELINE_SPACE_SM)) {
+                                SelineButton("刷新配额", {=> state.refreshProfile()},
+                                    glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true)
+                                SelineButton("退出登录", {=> state.logout()},
+                                    glyph: "person_fill", kind: SelineButtonKind.Ghost, compact: true)
+                                Spacer()
+                            }.hug().fillWidth()
+                        }.hug().fillWidth()
+                    } else {
+                        HStack(spacing: vp(SELINE_SPACE_SM)) {
+                            Label("未登录").fontSize(theme.fontBody).muted()
+                            Spacer()
+                            SelineButton("登录", {=> state.openLoginDialog()},
+                                glyph: "person_fill", kind: SelineButtonKind.Secondary, compact: true)
+                        }.hug().fillWidth()
+                    }
+                }
+                // 账号列表
+                sectionCard("账号列表") {
+                    VStack(spacing: vp(SELINE_SPACE_SM)) {
+                        Label("选一个「默认账号」：启动应用时只自动登录它，其它账号作为备选。")
+                            .fontSize(theme.fontCaption).muted().wrap()
+                        if (state.accounts.value.isEmpty()) {
+                            Label("还没有保存的账号").fontSize(theme.fontBody).muted()
+                        }
+                        for (entry in state.accounts.value) {
+                            accountRow(state, entry)
+                        }
+                        HStack(spacing: vp(SELINE_SPACE_SM)) {
+                            Spacer()
+                            SelineButton("添加账号", {=> state.openLoginDialog()}, glyph: "plus",
+                                kind: SelineButtonKind.Ghost, compact: true)
+                        }.hug().fillWidth()
+                    }.hug().fillWidth()
+                }
                 sectionCard("说明") {
-                    Label("登录后可下载图书；凭证保存在本机，不会上传。").fontSize(theme.fontCaption)
-                        .muted().wrap()
+                    Label("账号凭证保存在 ~/seline_read/accounts.txt，不会上传；" +
+                        "「默认账号」随应用启动自动登录。")
+                        .fontSize(theme.fontCaption).muted().wrap()
                 }
             }.hug().fillWidth().padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
         }
     }.fillWidth().fillHeight()
 }
 
-/** 账号卡片：登录 / 退出。 */
-func accountCard(state: AppState): Unit {
+/** 一条账号：默认单选框 + 名称/邮箱 + 切换/删除。 */
+func accountRow(state: AppState, entry: AccountEntry): Unit {
     let theme = selineTheme()
     let palette = theme.palette
-    sectionCard("登录信息") {
-        if (state.loggedIn.value) {
-            VStack(spacing: vp(4.0)) {
-                Label(if (state.accountName.value.isEmpty()) {
-                    "已登录"
-                } else {
-                    state.accountName.value
-                }).fontSize(theme.fontBody).bold()
-                Label("uid ${state.accountId.value}").fontSize(theme.fontCaption).muted()
-                if (!state.loginMessage.value.isEmpty()) {
-                    Label(state.loginMessage.value).fontSize(theme.fontCaption).muted()
+    let isCurrent = state.loggedIn.value && state.accountId.value == entry.userId
+    HStack(spacing: vp(SELINE_SPACE_SM)) {
+        // 默认账号：单选（点一下即设为默认）
+        SelineButton(if (entry.isDefault) { "默认" } else { "设为默认" },
+            {=> state.setDefaultAccount(entry.userId)},
+            kind: if (entry.isDefault) {
+                SelineButtonKind.Secondary
+            } else {
+                SelineButtonKind.Ghost
+            }, compact: true)
+        VStack(spacing: vp(2.0)) {
+            HStack(spacing: vp(SELINE_SPACE_XS)) {
+                Label(entry.label()).fontSize(theme.fontBody).bold()
+                if (isCurrent) {
+                    Label("当前").fontSize(theme.fontCaption)
+                        .foregroundColor(palette.accent)
                 }
-                HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    SelineButton("刷新配额", {=> state.refreshProfile()}, glyph: "refresh",
-                        kind: SelineButtonKind.Ghost, compact: true)
-                    SelineButton("退出登录", {=> state.logout()}, glyph: "person_fill",
-                        kind: SelineButtonKind.Ghost, compact: true)
-                    Spacer()
-                }.hug().fillWidth()
+            }.hug()
+            Label(if (entry.email.isEmpty()) {
+                "uid ${entry.userId}"
+            } else {
+                "${entry.email} · uid ${entry.userId}"
+            }).fontSize(theme.fontCaption).muted()
+        }.hug()
+        Spacer()
+        if (!isCurrent) {
+            SelineButton("切换", {=> state.switchToAccount(entry.userId)},
+                glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true)
+        }
+        SelineButton("删除", {=> state.removeAccount(entry.userId)},
+            glyph: "close", kind: SelineButtonKind.Ghost, compact: true)
+    }.hug().fillWidth()
+        .padding(10.0)
+        .background(palette.surfaceSunken, vp(10.0))
+}
+
+/**
+ * 登录弹窗。
+ *
+ * 半透明遮罩铺满窗口（同时吞掉底层点击），中间一张卡片：
+ * 邮箱 / 密码 / 登录 / 取消。登录成功后由状态层写账号列表并自动关闭。
+ */
+func loginDialogPanel(state: AppState): Unit {
+    let theme = selineTheme()
+    let palette = theme.palette
+    ZStack {
+        DialogScrim({=> state.closeLoginDialog()})
+        VStack(spacing: vp(0.0)) {
+            Spacer()
+            HStack(spacing: vp(0.0)) {
+            Spacer()
+            VStack(spacing: vp(SELINE_SPACE_MD)) {
+                Label("登录 Z-Library").fontSize(theme.fontHeading).bold()
+            Label("登录后可下载图书；账号会保存到 ~/seline_read，可随时切换。")
+                .fontSize(theme.fontCaption).muted().wrap()
+            SelineTextField(state.loginEmail.value,
+                {text => state.loginEmail.value = text},
+                placeholder: "邮箱", glyph: "person_fill", height: 38.0, width: 340.0)
+            SelineTextField(state.loginPassword.value,
+                {text => state.loginPassword.value = text},
+                placeholder: "密码", glyph: "clock_fill", height: 38.0, width: 340.0,
+                secure: true, onSubmit: {=> state.submitLogin()})
+            if (!state.loginMessage.value.isEmpty() && state.loginMessage.value.contains("失败")) {
+                Label(state.loginMessage.value).fontSize(theme.fontCaption)
+                    .foregroundColor(palette.danger).wrap()
+            }
+            HStack(spacing: vp(SELINE_SPACE_SM)) {
+                Spacer()
+                SelineButton("取消", {=> state.closeLoginDialog()}, kind: SelineButtonKind.Ghost,
+                    compact: true)
+                SelineButton("登录", {=> state.submitLogin()}, glyph: "person_fill",
+                    kind: SelineButtonKind.Secondary, compact: true, busy: state.loginBusy.value)
             }.hug().fillWidth()
-        } else {
-            VStack(spacing: vp(SELINE_SPACE_SM)) {
-                Label("用 Z-Library 账号登录后可下载图书（凭证保存在本机临时目录）")
-                    .fontSize(theme.fontCaption).muted().wrap()
-                SelineTextField(state.loginEmail.value, {text => state.loginEmail.value = text},
-                    placeholder: "邮箱", glyph: "person_fill", height: 38.0, width: 360.0)
-                SelineTextField(state.loginPassword.value,
-                    {text => state.loginPassword.value = text},
-                    placeholder: "密码", glyph: "clock_fill", height: 38.0,
-                    width: 360.0, secure: true, onSubmit: {=> state.submitLogin()})
-                HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    SelineButton("登录", {=> state.submitLogin()}, glyph: "person_fill",
-                        kind: SelineButtonKind.Secondary, compact: true,
-                        busy: state.loginBusy.value)
-                    if (!state.loginMessage.value.isEmpty() &&
-                        !state.loginMessage.value.contains("失败")) {
-                        Label(state.loginMessage.value).fontSize(theme.fontCaption).muted()
-                    }
-                    Spacer()
-                }.hug().fillWidth()
-                if (state.loginMessage.value.contains("失败")) {
-                    state.toastIfChanged(state.loginMessage.value)
-                }
+            }.hug().width(400.0)
+                .padding(24.0, 22.0, 24.0, 22.0)
+                .background(palette.surfaceRaised, vp(16.0))
+            Spacer()
             }.hug().fillWidth()
+            Spacer()
+        }.fillWidth().fillHeight()
+    }.fillWidth().fillHeight()
+}
+
+/** 弹窗遮罩：画一层 scrim，并且吞掉点击（点空白处关闭）。 */
+class DialogScrim <: Widget {
+    private let onDismiss: () -> Unit
+    private var frame = Rect.zero()
+
+    init(onDismiss: () -> Unit) {
+        this.onDismiss = onDismiss
+        emit(this)
+    }
+
+    public func isFlexible(): Bool {
+        true
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, available.h)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        if (frame.w > 0.0 && frame.h > 0.0) {
+            ctx.renderer.fill(frame, selineTheme().palette.scrim)
+        }
+    }
+
+    public func handle(_: UiContext, event: UiEvent): Bool {
+        match (event) {
+            case UiEvent.MouseDown(MouseButton.Left, _, _) =>
+                onDismiss()
+                true
+            case UiEvent.MouseUp(_, _, _) => true
+            case UiEvent.MouseWheel(_, _, _, _) => true
+            case _ => false
         }
     }
 }
-
 /** 下载设置：下载目录。 */
 func downloadSettings(state: AppState): Unit {
     let theme = selineTheme()

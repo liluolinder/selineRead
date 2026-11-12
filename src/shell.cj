@@ -34,6 +34,10 @@ func appShell(state: AppState): Unit {
             sidebarTabs(state)
 
             // 下载版本菜单：浮在最上层，点菜单外/切换页面自动关闭
+            // 登录弹窗（最上层，遮罩会吞掉底层点击）
+            if (state.loginDialogOpen.value) {
+                loginDialogPanel(state)
+            }
             // 底部右侧 toast：所有"横幅式"报错都走这里
             ErrorToastOverlay(state)
             if (state.downloadMenuOpen.value || state.downloadMenuClosing.value) {
