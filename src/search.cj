@@ -15,10 +15,12 @@ func searchPage(state: AppState): Unit {
         pageScrollView(scrollState: state.searchScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
 
-                if (!state.error.value.isEmpty()) {
-                    errorBannerText(state.error.value)
-                }
-                if (state.loading.value || state.forceSkeleton.value) {
+                let failed = !state.error.value.isEmpty()
+                if (failed && !state.loading.value) {
+                    // 搜索失败：整块错误卡片（不再同时显示"没有找到匹配的书"）
+                    errorStateCard("搜索失败", state.error.value,
+                        retry: Some({=> state.submitSearch()}), busy: state.loading.value)
+                } else if (state.loading.value || state.forceSkeleton.value) {
                     bookSkeletonGrid(count: 12)
                 } else {
                     bookGrid(state, state.results.value)

@@ -1376,7 +1376,7 @@ public class AppState {
         error.value = "加载热门失败：站点 ${site} 返回 503 Service Unavailable，可能是站方维护或网络被阻断"
         loading.value = false
         popular.value = ArrayList<BookCell>()
-        lastKeyword.value = "三体"
+        lastKeyword.value = if (mode == "search") { "三体" } else { "" }
         results.value = ArrayList<BookCell>()
         // 收藏（未登录态 + 错误态都摆上）
         favoritesError.value = "收藏加载失败：请求超时（${site} 30s 无响应）"
@@ -1779,6 +1779,23 @@ public class AppState {
     }
 
     /** 「重新加载」按钮：清掉错误后重试。 */
+    /** 详情加载失败后的「重试」：按当前 id/hash 重新拉一次详情。 */
+    public func retryDetail(): Unit {
+        if (detailId.value <= 0 || detailHash.value.isEmpty()) {
+            return
+        }
+        detailError.value = ""
+        openBookById(detailId.value, detailHash.value)
+    }
+
+    /** 评论加载失败后的「重试」。 */
+    public func retryComments(): Unit {
+        commentsError.value = ""
+        commentsLoaded = false
+        commentsLoading.value = false
+        ensureCommentsLoaded()
+    }
+
     public func reloadRelated(): Unit {
         detailRelatedError.value = ""
         detailRelatedLoaded = false

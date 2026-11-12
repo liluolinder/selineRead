@@ -18,21 +18,20 @@ func favoritesPage(state: AppState): Unit {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.loggedIn.value) {
                     emptyBlock("user", "登录后查看收藏",
-                        "去「设置」页登录 Z-Library，就能在这里看到收藏的书籍")
-                    HStack(spacing: vp(SELINE_SPACE_SM)) {
-                        SelineButton("去设置登录", {=> state.tabSelectFromRail(TAB_SETTINGS)},
-                            glyph: "person_fill", kind: SelineButtonKind.Ghost, compact: true)
-                        Spacer()
-                    }.hug().fillWidth()
+                        "去「账号」页登录 Z-Library，就能在这里看到收藏的书籍",
+                        actionLabel: "去账号页登录",
+                        onAction: Some({=> state.tabSelectFromRail(TAB_ACCOUNT)}))
                 } else {
-                    if (!state.favoritesError.value.isEmpty()) {
-                        errorBannerText(state.favoritesError.value)
-                        HStack(spacing: vp(SELINE_SPACE_SM)) {
-                            SelineButton("重新加载", {=> state.loadFavorites()},
-                                glyph: "refresh", kind: SelineButtonKind.Ghost,
-                                compact: true, busy: state.favoritesLoading.value)
-                            Spacer()
-                        }.hug().fillWidth()
+                    let failed = !state.favoritesError.value.isEmpty()
+                    if (failed && state.favorites.value.isEmpty() && !state.favoritesLoading.value) {
+                        errorStateCard("收藏加载失败", state.favoritesError.value,
+                            retry: Some({=> state.loadFavorites()}),
+                            busy: state.favoritesLoading.value)
+                    }
+                    if (failed && !state.favorites.value.isEmpty()) {
+                        errorBannerText(state.favoritesError.value,
+                            retry: Some({=> state.loadFavorites()}),
+                            busy: state.favoritesLoading.value)
                     }
                     if (state.favoritesLoading.value || state.forceSkeleton.value) {
                         bookSkeletonGrid(count: 12)

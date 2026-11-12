@@ -59,27 +59,130 @@ func pageHeader(title: String, subtitle: String, trailing: () -> Unit): Unit {
 
 
 /** 错误提示条：红字 + 浅底，不弹窗（弹窗会打断用户）。 */
-func errorBannerText(text: String): Unit {
-    let palette = selineTheme().palette
+/**
+ * 分区级错误提示（紧凑行内）：图标 + 红字 + 可选「重试」。
+ *
+ * 用于"页面还能看、只有某一块失败"的情况（评论、相关书籍、热门的二次刷新）。
+ * 页面整体失败用 [errorStateCard]。
+ */
+func errorBannerText(text: String, retry!: Option<() -> Unit> = None,
+    busy!: Bool = false): Unit {
+    let theme = selineTheme()
+    let palette = theme.palette
     HStack(spacing: vp(SELINE_SPACE_SM)) {
         SelineIcon("warn", size: 15.0, color: palette.danger)
-        Label(text).fontSize(selineTheme().fontLabel).foregroundColor(palette.danger)
-    }.hug()
-        .fillWidth()
+        Label(text).fontSize(theme.fontLabel)
+            .foregroundColor(palette.danger)
+            .wrap()
+            .flex()
+        if (let Some(action) <- retry) {
+            SelineButton("重试", action, glyph: "refresh",
+                kind: SelineButtonKind.Ghost, compact: true, busy: busy)
+        }
+    }.hug().fillWidth()
         .padding(12.0)
-        .background(palette.surfaceSunken, vp(8.0))
+        .background(palette.danger.withAlpha(18), vp(10.0))
 }
 
-/** 空状态：图标 + 标题 + 说明。 */
-func emptyBlock(glyph: String, title: String, detail: String): Unit {
+/**
+ * 去掉错误文案里的"xxx失败："前缀。
+ *
+ * 卡片已经有标题了，正文再重复一遍前缀会显得啰嗦。
+ */
+private func stripErrorPrefix(text: String): String {
+    for (colon in ["：", ": "]) {
+        let index = text.indexOf(colon)
+        if (let Some(at) <- index) {
+            if (at > 0 && at + colon.size < text.size) {
+                return text[at + colon.size..].trimAscii()
+            }
+        }
+    }
+    text
+}
+
+/**
+ * 页面级错误态：居中的错误卡片（圆形图标底 + 标题 + 具体原因 + 重试）。
+ *
+ * 用于"整页数据都没拿到"的情况 —— 比原来一条红字横幅更能表达"这里出错了"。
+ */
+func errorStateCard(title: String, detail: String, retry!: Option<() -> Unit> = None,
+    busy!: Bool = false): Unit {
+    let theme = selineTheme()
+    let palette = theme.palette
+    // 固定宽度的卡片 + 两侧 Spacer 水平居中（否则 wrap 文本会把卡片撑满整行）
+    HStack(spacing: vp(0.0)) {
+        Spacer()
+        VStack(spacing: vp(SELINE_SPACE_SM)) {
+            // 图标与标题居中（VStack 默认左对齐，用 Spacer 包一层）
+            HStack(spacing: vp(0.0)) {
+                Spacer()
+                ZStack {
+                    SelineIcon("warn", size: 22.0, color: palette.danger)
+                }.width(52.0).height(52.0)
+                    .background(palette.danger.withAlpha(22), vp(26.0))
+                Spacer()
+            }.hug().fillWidth()
+            HStack(spacing: vp(0.0)) {
+                Spacer()
+                Label(title).fontSize(theme.fontHeading).bold()
+                Spacer()
+            }.hug().fillWidth()
+            Label(stripErrorPrefix(detail)).fontSize(theme.fontCaption).muted()
+                .wrap().textAlign(TextAlign.Center)
+            if (let Some(action) <- retry) {
+                HStack(spacing: vp(0.0)) {
+                    Spacer()
+                    SelineButton("重试", action, glyph: "refresh",
+                        kind: SelineButtonKind.Secondary, compact: true, busy: busy)
+                    Spacer()
+                }.hug().fillWidth()
+                    .padding(0.0, SELINE_SPACE_MD, 0.0, 0.0)
+            }
+        }.hug().width(520.0)
+            .padding(28.0, 32.0, 28.0, 32.0)
+            .background(palette.surfaceRaised, vp(16.0))
+        Spacer()
+    }.hug().fillWidth()
+        .padding(0.0, 32.0, 0.0, 0.0)
+}
+
+/**
+ * 空状态：图标 + 标题 + 说明 + 可选动作按钮。
+ *
+ * 中性配色（不是错误），只表达"这里现在没有内容"。
+ */
+func emptyBlock(glyph: String, title: String, detail: String,
+    actionLabel!: String = "", onAction!: Option<() -> Unit> = None): Unit {
     let theme = selineTheme()
     VStack(spacing: vp(SELINE_SPACE_SM)) {
-        SelineIcon(glyph, size: 34.0, color: theme.palette.textFaint)
-        Label(title).fontSize(theme.fontBody).bold()
+        HStack(spacing: vp(0.0)) {
+            Spacer()
+            ZStack {
+                SelineIcon(glyph, size: 24.0, color: theme.palette.textFaint)
+            }.width(56.0).height(56.0)
+                .background(theme.palette.surfaceSunken, vp(28.0))
+            Spacer()
+        }.hug().fillWidth()
+        HStack(spacing: vp(0.0)) {
+            Spacer()
+            Label(title).fontSize(theme.fontBody).bold()
+            Spacer()
+        }.hug().fillWidth()
         Label(detail).fontSize(theme.fontCaption).muted().wrap()
+            .textAlign(TextAlign.Center)
+        if (!actionLabel.isEmpty() && (let Some(action) <- onAction)) {
+            HStack(spacing: vp(0.0)) {
+                Spacer()
+                SelineButton(actionLabel, action, glyph: "person_fill",
+                    kind: SelineButtonKind.Secondary, compact: true)
+                Spacer()
+            }.hug().fillWidth()
+                .padding(0.0, SELINE_SPACE_SM, 0.0, 0.0)
+        }
     }.hug()
         .fillWidth()
-        .padding(0.0, 48.0, 0.0, 48.0)
+        .padding(0.0, 56.0, 0.0, 48.0)
 }
 
 /** 解 HTML 常见命名实体。 */

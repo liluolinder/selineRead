@@ -122,11 +122,15 @@ func accountCard(state: AppState): Unit {
                     SelineButton("登录", {=> state.submitLogin()}, glyph: "person_fill",
                         kind: SelineButtonKind.Secondary, compact: true,
                         busy: state.loginBusy.value)
-                    if (!state.loginMessage.value.isEmpty()) {
+                    if (!state.loginMessage.value.isEmpty() &&
+                        !state.loginMessage.value.contains("失败")) {
                         Label(state.loginMessage.value).fontSize(theme.fontCaption).muted()
                     }
                     Spacer()
                 }.hug().fillWidth()
+                if (state.loginMessage.value.contains("失败")) {
+                    errorBannerText(state.loginMessage.value)
+                }
             }.hug().fillWidth()
         }
     }
@@ -279,7 +283,7 @@ func downloadsPage(state: AppState): Unit {
                 }
                 if (state.downloadItems.value.isEmpty()) {
                     emptyBlock("download", "还没有下载",
-                        "打开一本书 → 详情页点「下载」（需要先在设置页登录）")
+                        "打开一本书 → 详情页点「下载」（需要先在「账号」页登录）")
                 } else {
                     for (item in state.downloadItems.value) {
                         downloadRow(state, item)

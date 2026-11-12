@@ -39,7 +39,8 @@ func detailPage(state: AppState): Unit {
         pageScrollView(scrollState: state.detailScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 if (!state.detailError.value.isEmpty()) {
-                    errorBannerText(state.detailError.value)
+                    errorBannerText(state.detailError.value,
+                        retry: Some({=> state.retryDetail()}), busy: state.detailLoading.value)
                 }
                 // 两张卡片（都圆角、都有底色）：
                 //   左：封面 + 书名 + 作者/元信息
@@ -148,7 +149,8 @@ func commentsSection(state: AppState): Unit {
             "评论 ${state.comments.value.size}"
         }).fontSize(theme.fontHeading).bold()
         if (!state.commentsError.value.isEmpty()) {
-            errorBannerText(state.commentsError.value)
+            errorBannerText(state.commentsError.value,
+                retry: Some({=> state.retryComments()}), busy: state.commentsLoading.value)
         }
         if (state.commentsDisabled.value) {
             Label("本书已关闭评论").fontSize(theme.fontCaption).muted()
@@ -183,13 +185,9 @@ func relatedSection(state: AppState): Unit {
     VStack(spacing: vp(SELINE_SPACE_MD)) {
         Label("相关书籍").fontSize(theme.fontHeading).bold()
         if (!state.detailRelatedError.value.isEmpty()) {
-            errorBannerText(state.detailRelatedError.value)
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineButton("重新加载", {=> state.reloadRelated()}, glyph: "refresh",
-                    kind: SelineButtonKind.Ghost, compact: true,
-                    busy: state.detailRelatedLoading.value)
-                Spacer()
-            }.hug().fillWidth()
+            errorBannerText(state.detailRelatedError.value,
+                retry: Some({=> state.reloadRelated()}), busy: state.detailRelatedLoading.value)
+
         }
         if (state.detailRelatedLoading.value && state.detailRelated.value.isEmpty()) {
             bookSkeletonGrid(count: 12)

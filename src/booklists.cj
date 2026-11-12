@@ -18,19 +18,20 @@ func booklistsPage(state: AppState): Unit {
     VStack(spacing: vp(0.0)) {
         pageScrollView(scrollState: state.booklistsScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
-                if (!state.booklistsError.value.isEmpty()) {
-                    errorBannerText(state.booklistsError.value)
-                    HStack(spacing: vp(SELINE_SPACE_SM)) {
-                        SelineButton("重新加载", {=> state.loadBooklists()},
-                            glyph: "refresh", kind: SelineButtonKind.Ghost,
-                            compact: true, busy: state.booklistsLoading.value)
-                        Spacer()
-                    }.hug().fillWidth()
-                }
-                if (state.forceSkeleton.value ||
+                let failed = !state.booklistsError.value.isEmpty()
+                if (failed && state.booklists.value.isEmpty() && !state.booklistsLoading.value) {
+                    errorStateCard("书单加载失败", state.booklistsError.value,
+                        retry: Some({=> state.loadBooklists()}),
+                        busy: state.booklistsLoading.value)
+                } else if (state.forceSkeleton.value ||
                     (state.booklistsLoading.value && state.booklists.value.isEmpty())) {
                     booklistSkeletonGrid(count: 6)
                 } else if (!state.booklists.value.isEmpty()) {
+                    if (failed) {
+                        errorBannerText(state.booklistsError.value,
+                            retry: Some({=> state.loadBooklists()}),
+                            busy: state.booklistsLoading.value)
+                    }
                     AdaptiveGrid(360.0, minColumns: 2, maxColumns: 3) {
                         for (cell in state.booklists.value) {
                             BooklistCard(state, cell)
@@ -39,8 +40,7 @@ func booklistsPage(state: AppState): Unit {
                     if (state.booklistsNextPage.value > 0) {
                         BooklistsLoadMoreFooter(state)
                     }
-                } else if (!state.booklistsLoading.value &&
-                    state.booklistsError.value.isEmpty()) {
+                } else if (!state.booklistsLoading.value && !failed) {
                     emptyBlock("folder", "没有找到书单", "换个关键词，或稍后重试")
                 }
             }.padding(PAGE_PAD, SELINE_SPACE_MD, PAGE_PAD, 32.0)

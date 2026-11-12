@@ -31,18 +31,27 @@ func booklistDetailPage(state: AppState): Unit {
                             .fontSize(theme.fontBody).muted().wrap()
                     }
                 }.hug().fillWidth()
-                if (!state.booklistError.value.isEmpty()) {
-                    errorBannerText(state.booklistError.value)
+                let failed = !state.booklistError.value.isEmpty()
+                if (failed && state.booklistBooks.value.isEmpty() && !state.booklistLoading.value) {
+                    errorStateCard("书单内容加载失败", state.booklistError.value,
+                        retry: Some({=> state.loadBooklistBooks(1)}),
+                        busy: state.booklistLoading.value)
+                } else {
+                    if (failed) {
+                        errorBannerText(state.booklistError.value,
+                            retry: Some({=> state.loadBooklistBooks(1)}),
+                            busy: state.booklistLoading.value)
+                    }
+                    if (state.booklistLoading.value && state.booklistBooks.value.isEmpty()) {
+                        bookSkeletonGrid(count: 12)
+                    }
+                    bookGrid(state, state.booklistBooks.value)
+                    if (state.booklistBooks.value.isEmpty() &&
+                        !state.booklistLoading.value && !failed) {
+                        emptyBlock("star_fill", "这份书单还没有书", "可能已被作者清空")
+                    }
                 }
-                if (state.booklistLoading.value && state.booklistBooks.value.isEmpty()) {
-                    bookSkeletonGrid(count: 12)
-                }
-                bookGrid(state, state.booklistBooks.value)
-                if (state.booklistBooks.value.isEmpty() &&
-                    !state.booklistLoading.value && state.booklistError.value.isEmpty()) {
-                    emptyBlock("star_fill", "这份书单还没有书", "可能已被作者清空")
-                }
-                if (state.booklistNextPage.value > 0) {
+                if (state.booklistNextPage.value > 0 && state.booklistError.value.isEmpty()) {
                     SelineButton("加载更多", {=> state.loadMoreBooklistBooks()},
                         glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true,
                         busy: state.booklistLoading.value)

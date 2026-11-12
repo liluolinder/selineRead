@@ -18,27 +18,29 @@ func homePage(state: AppState): Unit {
     VStack(spacing: vp(0.0)) {
         pageScrollView(scrollState: state.homeScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
-                if (!state.error.value.isEmpty()) {
-                    errorBannerText(state.error.value)
-                    HStack(spacing: vp(SELINE_SPACE_SM)) {
-                        SelineButton("重新加载", {=> state.reloadPopular()},
-                            glyph: "refresh", kind: SelineButtonKind.Ghost,
-                            compact: true, busy: state.loading.value)
-                        Spacer()
-                    }.hug().fillWidth()
-                }
-                if (state.forceSkeleton.value ||
-                    (state.loading.value && state.popular.value.isEmpty())) {
-                    bookSkeletonGrid(count: 12)
+                let failed = !state.error.value.isEmpty()
+                if (failed && state.popular.value.isEmpty() && !state.loading.value) {
+                    // 整页失败：居中错误卡片（图标 + 原因 + 重试）
+                    errorStateCard("没能加载热门图书", state.error.value,
+                        retry: Some({=> state.reloadPopular()}), busy: state.loading.value)
                 } else {
-                    bookGrid(state, state.popular.value, limit: state.popularVisible.value)
-                }
-                if (state.popularVisible.value < Int64(state.popular.value.size)) {
-                    PopularLoadMoreFooter(state)
-                }
-                if (!state.loading.value && state.popular.value.isEmpty() &&
-                    state.error.value.isEmpty()) {
-                    emptyBlock("cloud", "没有拿到热门图书", "检查站点状态后再试")
+                    // 列表已经有内容、只是这次刷新失败：紧凑横幅
+                    if (failed) {
+                        errorBannerText(state.error.value,
+                            retry: Some({=> state.reloadPopular()}), busy: state.loading.value)
+                    }
+                    if (state.forceSkeleton.value ||
+                        (state.loading.value && state.popular.value.isEmpty())) {
+                        bookSkeletonGrid(count: 12)
+                    } else {
+                        bookGrid(state, state.popular.value, limit: state.popularVisible.value)
+                    }
+                    if (state.popularVisible.value < Int64(state.popular.value.size)) {
+                        PopularLoadMoreFooter(state)
+                    }
+                    if (!state.loading.value && state.popular.value.isEmpty() && !failed) {
+                        emptyBlock("cloud", "没有拿到热门图书", "检查站点状态后再试")
+                    }
                 }
             }.padding(PAGE_PAD, SELINE_SPACE_MD, PAGE_PAD, 32.0)
         }
