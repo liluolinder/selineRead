@@ -80,8 +80,7 @@ func errorBannerText(text: String, retry!: Option<() -> Unit> = None,
                 kind: SelineButtonKind.Ghost, compact: true, busy: busy)
         }
     }.hug().fillWidth()
-        .padding(12.0)
-        .background(palette.danger.withAlpha(18), vp(10.0))
+        .padding(0.0, 4.0, 0.0, 4.0)
 }
 
 /**
@@ -110,17 +109,13 @@ func errorStateCard(title: String, detail: String, retry!: Option<() -> Unit> = 
     busy!: Bool = false): Unit {
     let theme = selineTheme()
     let palette = theme.palette
-    // 固定宽度的卡片 + 两侧 Spacer 水平居中（否则 wrap 文本会把卡片撑满整行）
+    // 不加底板：裸内容 + 整体居中（不靠背景块区分层级）
     HStack(spacing: vp(0.0)) {
         Spacer()
         VStack(spacing: vp(SELINE_SPACE_SM)) {
-            // 图标与标题居中（VStack 默认左对齐，用 Spacer 包一层）
             HStack(spacing: vp(0.0)) {
                 Spacer()
-                ZStack {
-                    SelineIcon("warn", size: 22.0, color: palette.danger)
-                }.width(52.0).height(52.0)
-                    .background(palette.danger.withAlpha(22), vp(26.0))
+                SelineIcon("warn", size: 34.0, color: palette.danger)
                 Spacer()
             }.hug().fillWidth()
             HStack(spacing: vp(0.0)) {
@@ -141,10 +136,8 @@ func errorStateCard(title: String, detail: String, retry!: Option<() -> Unit> = 
             }
         }.hug().width(520.0)
             .padding(28.0, 32.0, 28.0, 32.0)
-            .background(palette.surfaceRaised, vp(16.0))
         Spacer()
     }.hug().fillWidth()
-        .padding(0.0, 32.0, 0.0, 0.0)
 }
 
 /**
@@ -158,10 +151,7 @@ func emptyBlock(glyph: String, title: String, detail: String,
     VStack(spacing: vp(SELINE_SPACE_SM)) {
         HStack(spacing: vp(0.0)) {
             Spacer()
-            ZStack {
-                SelineIcon(glyph, size: 24.0, color: theme.palette.textFaint)
-            }.width(56.0).height(56.0)
-                .background(theme.palette.surfaceSunken, vp(28.0))
+            SelineIcon(glyph, size: 34.0, color: theme.palette.textFaint)
             Spacer()
         }.hug().fillWidth()
         HStack(spacing: vp(0.0)) {

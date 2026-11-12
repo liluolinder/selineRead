@@ -15,15 +15,21 @@ import zlibraryAPI4CJ.core.*
 /** 书单页：没有页头/没有「我的书单」开关，滚动到底自动加载下一页。 */
 func booklistsPage(state: AppState): Unit {
     state.ensureBooklistsLoaded()
+    if (!state.booklistsError.value.isEmpty() && state.booklists.value.isEmpty() &&
+        !state.booklistsLoading.value) {
+        VStack(spacing: vp(0.0)) {
+            Spacer()
+            errorStateCard("书单加载失败", state.booklistsError.value,
+                retry: Some({=> state.loadBooklists()}), busy: state.booklistsLoading.value)
+            Spacer()
+        }.fillWidth().fillHeight()
+        return
+    }
     VStack(spacing: vp(0.0)) {
         pageScrollView(scrollState: state.booklistsScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 let failed = !state.booklistsError.value.isEmpty()
-                if (failed && state.booklists.value.isEmpty() && !state.booklistsLoading.value) {
-                    errorStateCard("书单加载失败", state.booklistsError.value,
-                        retry: Some({=> state.loadBooklists()}),
-                        busy: state.booklistsLoading.value)
-                } else if (state.forceSkeleton.value ||
+                if (state.forceSkeleton.value ||
                     (state.booklistsLoading.value && state.booklists.value.isEmpty())) {
                     booklistSkeletonGrid(count: 6)
                 } else if (!state.booklists.value.isEmpty()) {
