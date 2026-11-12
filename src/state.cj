@@ -1046,15 +1046,14 @@ public class AppState {
         } else {
             activeSite.value
         }
-        var seeds = ArrayList<String>()
-        if (!seedSite.value.isEmpty()) {
-            seeds.add(seedSite.value)
+        let seed = if (seedSite.value.isEmpty()) {
+            ZlibHost.DEFAULT_URL
         } else {
-            seeds.add(ZlibHost.DEFAULT_URL)
+            seedSite.value
         }
         try {
             let created = ZlibClient.create(baseUrl: baseUrl, credential: entry.credential(),
-                seeds: seeds.toArray())
+                seed: seed)
             this.client = Some(ClientBox(created))
         } catch (failure: ZlibError) {
             loginMessage.value = "切换账号失败：${failure.detail}"
@@ -1313,17 +1312,14 @@ public class AppState {
         } else {
             activeSite.value
         }
-        var seeds = ArrayList<String>()
-        if (!seedSite.value.isEmpty()) {
-            seeds.add(seedSite.value)
+        let seed = if (seedSite.value.isEmpty()) {
+            ZlibHost.DEFAULT_URL
+        } else {
+            seedSite.value
         }
-        if (seeds.isEmpty()) {
-            seeds.add(ZlibHost.DEFAULT_URL)
-        }
-        writeDebugLog("bootstrap: base=${baseUrl} seed=${seeds[0]}")
+        writeDebugLog("bootstrap: base=${baseUrl} seed=${seed}")
         let created = try {
-            ZlibClient.create(baseUrl: baseUrl, credential: credential,
-                seeds: seeds.toArray())
+            ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
         } catch (failure: ZlibError) {
             error.value = "创建客户端失败：${failure.detail}"
             status.value = "离线"
@@ -2533,7 +2529,7 @@ public class AppState {
             case None => ()
         }
         let anonymous = try {
-            ZlibClient.create(baseUrl: site, seeds: [site])
+            ZlibClient.create(baseUrl: site, seed: site)
         } catch (_: ZlibError) {
             ZlibClient.create()
         }
@@ -2810,15 +2806,13 @@ public class AppState {
         let current = box.value
         let baseUrl = current.sites.customUrl()
         let credential = current.credential
-        var seeds = ArrayList<String>()
-        if (!seedSite.value.isEmpty()) {
-            seeds.add(seedSite.value)
+        let seed = if (seedSite.value.isEmpty()) {
+            ZlibHost.DEFAULT_URL
         } else {
-            seeds.add(ZlibHost.DEFAULT_URL)
+            seedSite.value
         }
         try {
-            let rebuilt = ZlibClient.create(baseUrl: baseUrl, credential: credential,
-                seeds: seeds.toArray())
+            let rebuilt = ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
             current.close()
             this.client = Some(ClientBox(rebuilt))
         } catch (failure: ZlibError) {
