@@ -747,6 +747,8 @@ public class AppState {
     public let downloadMenuOpen = State<Bool>(false)
     /** 菜单正在收起（播完反向动画再卸载）。 */
     public let downloadMenuClosing = State<Bool>(false)
+    /** 菜单弹出进度 0..1（由应用持有，避免每帧重建时动画重启导致抖动）。 */
+    public let downloadMenuProgress = State<Float32>(0.0)
     /** 下载按钮在窗口里的矩形（由按钮每帧 layout 写入）。 */
     public let downloadAnchor = DownloadMenuAnchor()
     /** 打开菜单时锁定的锚点（滚动/布局变化时菜单不跟着动，避免反复缩放）。 */
@@ -2245,6 +2247,7 @@ public class AppState {
     public func openDownloadMenu(): Unit {
         menuAnchorX = downloadAnchor.x
         menuAnchorY = downloadAnchor.y + downloadAnchor.h + 6.0
+        downloadMenuProgress.value = 0.0
         downloadMenuClosing.value = false
         downloadMenuOpen.value = true
     }

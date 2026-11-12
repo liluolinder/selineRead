@@ -38,7 +38,9 @@ func appShell(state: AppState): Unit {
                 SelineContextMenuOverlay(state.downloadMenuItems(),
                     state.downloadMenuX(), state.downloadMenuY(),
                     {=> state.closeDownloadMenu()}, width: 250.0,
-                    closing: state.downloadMenuClosing.value)
+                    closing: state.downloadMenuClosing.value,
+                    progress: state.downloadMenuProgress.value,
+                    onProgress: {value => state.downloadMenuProgress.value = value})
             }
         }.alignment(Alignment.TopLeading)
             // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
