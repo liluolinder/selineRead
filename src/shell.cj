@@ -104,6 +104,10 @@ func pageFor(state: AppState): Unit {
         settingsPage(state)
         return
     }
+    if (tab == TAB_ACCOUNT) {
+        accountPage(state)
+        return
+    }
     // 搜索不再是独立页签：提交搜索后结果就显示在「热门」页签里
     if (!state.lastKeyword.value.isEmpty()) {
         searchPage(state)

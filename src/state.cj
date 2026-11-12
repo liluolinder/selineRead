@@ -672,6 +672,7 @@ public class AppState {
     public let detailScroll = State<Float32>(0.0)
     public let settingsScroll = State<Float32>(0.0)
     public let downloadsScroll = State<Float32>(0.0)
+    public let accountScroll = State<Float32>(0.0)
     /** 详情页返回栈：从「相关书籍」再点进另一本时，返回能回到上一本。 */
     private let detailHistory = ArrayList<DetailSnapshot>()
     /** 深色模式（false = 浅色）。 */

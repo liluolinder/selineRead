@@ -32,6 +32,7 @@ let TAB_FAVORITES: Int64 = 1
 let TAB_BOOKLISTS: Int64 = 2
 let TAB_DOWNLOADS: Int64 = 3
 let TAB_SETTINGS: Int64 = 4
+let TAB_ACCOUNT: Int64 = 5
 
 /** 内容页签（搜索不再是独立页签：结果直接显示在「热门」页签里）。 */
 let APP_TABS: Array<SelineRailItem> = [
@@ -256,7 +257,7 @@ func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
                 {=> state.toggleTheme(0.0, 0.0)})
             SidebarItem("clock_fill", "设置", expanded, selectedTab == TAB_SETTINGS,
                 {=> state.tabSelectFromRail(TAB_SETTINGS)})
-            SidebarAccountChip(state, expanded)
+            SidebarAccountChip(state, expanded, selectedTab == TAB_ACCOUNT)
             ZStack { }.height(SELINE_SPACE_SM)
         }.hug()
     }.width(RAIL_EXPANDED)

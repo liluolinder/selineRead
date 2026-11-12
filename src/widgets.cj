@@ -44,7 +44,10 @@ func pageHeader(title: String, subtitle: String, trailing: () -> Unit): Unit {
     HStack(spacing: vp(SELINE_SPACE_MD)) {
         VStack(spacing: vp(2.0)) {
             Label(title).fontSize(selineTheme().fontTitle).bold()
-            Label(subtitle).fontSize(selineTheme().fontCaption).muted()
+            // 副标题留空时不占高度（有些页面只要标题）
+            if (!subtitle.isEmpty()) {
+                Label(subtitle).fontSize(selineTheme().fontCaption).muted()
+            }
         }.hug()
         Spacer()
         HStack(spacing: vp(SELINE_SPACE_SM)) {

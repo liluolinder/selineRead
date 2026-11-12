@@ -201,13 +201,15 @@ class SidebarGroupHeader <: Widget {
 class SidebarAccountChip <: Widget {
     private let state: AppState
     private let expanded: Bool
+    private let selected: Bool
     private let id: String
     private var frame = Rect.zero()
     private var hot = false
 
-    init(state: AppState, expanded: Bool) {
+    init(state: AppState, expanded: Bool, selected: Bool) {
         this.state = state
         this.expanded = expanded
+        this.selected = selected
         this.id = focusableControlIdentity("SidebarAccountChip")
         emit(this)
     }
@@ -229,7 +231,9 @@ class SidebarAccountChip <: Widget {
             (RAIL_COLLAPSED - 16.0)) * t
         let block = Rect(frame.x + (visible - blockW) * 0.5, frame.y + 4.0, blockW,
             frame.h - 8.0)
-        if (hot) {
+        if (selected) {
+            paintSurface(ctx.renderer, block, palette.accentSoft, theme.radiusControl)
+        } else if (hot) {
             paintSurface(ctx.renderer, block, palette.surfaceHover, theme.radiusControl)
         }
         let avatarSide: Float32 = 28.0
@@ -272,7 +276,7 @@ class SidebarAccountChip <: Widget {
                 hit(x, y)
             case UiEvent.MouseUp(MouseButton.Left, x, y) =>
                 if (hit(x, y)) {
-                    state.tabSelectFromRail(TAB_SETTINGS)
+                    state.tabSelectFromRail(TAB_ACCOUNT)
                     true
                 } else {
                     false

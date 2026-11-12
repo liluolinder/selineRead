@@ -22,12 +22,13 @@ let SETTINGS_TABS: Array<SelineRailItem> = [
 func settingsPage(state: AppState): Unit {
     let theme = selineTheme()
     VStack(spacing: vp(0.0)) {
-        pageHeader("设置", "显示 · 下载 · 网络", {=> ()})
+        pageHeader("设置", "", {=> ()})
         HStack(spacing: vp(SELINE_SPACE_LG)) {
             VStack(spacing: vp(0.0)) {
+                // 图标列：文字只在悬浮时以 tooltip 出现（showLabels = false）
                 SelineVerticalTabs(SETTINGS_TABS, state.settingsTab.value,
-                    {index => state.selectSettingsTab(index)}, width: 150.0,
-                    itemHeight: 44.0, showLabels: true, stretch: false)
+                    {index => state.selectSettingsTab(index)}, width: 56.0,
+                    itemHeight: 46.0, showLabels: false, stretch: false)
                 Spacer()
             }.hug()
             pageScrollView(scrollState: state.settingsScroll) {
@@ -64,14 +65,30 @@ func displaySettings(state: AppState): Unit {
                 }, minSegment: 70.0)
         }.hug().fillWidth()
     }
-    accountCard(state)
+}
+
+/** 账号页：登录 / 已登录信息（从设置页独立出来的）。 */
+func accountPage(state: AppState): Unit {
+    let theme = selineTheme()
+    VStack(spacing: vp(0.0)) {
+        pageHeader("账号", "", {=> ()})
+        pageScrollView(scrollState: state.accountScroll) {
+            VStack(spacing: vp(SELINE_SPACE_MD)) {
+                accountCard(state)
+                sectionCard("说明") {
+                    Label("登录后可下载图书；凭证保存在本机，不会上传。").fontSize(theme.fontCaption)
+                        .muted().wrap()
+                }
+            }.hug().fillWidth().padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
+        }
+    }.fillWidth().fillHeight()
 }
 
 /** 账号卡片：登录 / 退出。 */
 func accountCard(state: AppState): Unit {
     let theme = selineTheme()
     let palette = theme.palette
-    sectionCard("账号") {
+    sectionCard("登录信息") {
         if (state.loggedIn.value) {
             VStack(spacing: vp(4.0)) {
                 Label(if (state.accountName.value.isEmpty()) {
