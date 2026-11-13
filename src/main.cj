@@ -221,8 +221,10 @@ main(args: Array<String>): Int64 {
             writeDebugLog("window icon: asset missing")
         }
         state.attach(app)
+
         // 窗口摆到主显示器可用区域正中（以前由系统默认放在右下角）
         centerWindowOnDisplay(app, options)
+        startResizeCursorLoop(state)
         // 启动第二步：窗口已经能显示，网络（建客户端/首屏）放到后台补
         state.startBackgroundBootstrap()
         // 启动期验收/诊断探针（仅 debug 构建编译进去）

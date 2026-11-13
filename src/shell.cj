@@ -13,7 +13,6 @@ import std.core.sleep
 import std.math.*
 import chui.*
 import seline_ui.*
-import seline_read.platform.*
 
 /** 标题栏高度（窗口按钮、居中搜索框都按它对齐）。 */
 let TITLE_BAR_HEIGHT: Float32 = 52.0
@@ -21,6 +20,7 @@ let TITLE_BAR_HEIGHT: Float32 = 52.0
 /** 整个窗口的树。 */
 func appShell(state: AppState): Unit {
     let palette = selineTheme().palette
+    ZStack {
     VStack(spacing: vp(0.0)) {
         // 主题同步探针必须是整棵树最先绘制的节点：
         // 顶栏/侧栏/内容都按它对齐后的全局配色画，主题过渡两遍才各自正确。
@@ -53,29 +53,48 @@ func appShell(state: AppState): Unit {
                     pivotX: state.downloadAnchor.x + state.downloadAnchor.w,
                     pivotY: state.downloadAnchor.y + state.downloadAnchor.h + 6.0)
             }
-            // 无边框窗口的边缘缩放：只吃「窗口边缘 6px 内」的按下，其余事件下传
-            WindowResizeEdges(state)
 
         }.alignment(Alignment.TopLeading)
             // `.flex()` 只声明"吃掉剩余高度"，不污染测量值
             .fillWidth().flex()
     }.fillWidth().fillHeight()
+    // 全窗口覆盖：边缘 6px 内按下进入缩放，其余事件下传（不挡标题栏/按钮）
+    WindowResizeEdges(state)
+    }.alignment(Alignment.TopLeading).fillWidth().fillHeight()
 }
 
+/** 边缘缩放的感应带宽（逻辑像素）。 */
+private let RESIZE_EDGE_BAND: Float32 = 6.0
+
+/** 最近一次布局得到的窗口逻辑尺寸/当前光标模式（0 默认，1 水平，2 垂直）。 */
+private var resizeWindowWidth: Float32 = 0.0
+private var resizeWindowHeight: Float32 = 0.0
+private var resizeCursorMode: Int64 = 0
+private var resizeDisplayScale: Float32 = 1.0
+
+/* 命中边/角的标识（只是本地常量，和 Win32 无关）。 */
+private let EDGE_LEFT: Int64 = 1
+private let EDGE_RIGHT: Int64 = 2
+private let EDGE_TOP: Int64 = 3
+private let EDGE_BOTTOM: Int64 = 4
+private let EDGE_TOPLEFT: Int64 = 5
+private let EDGE_TOPRIGHT: Int64 = 6
+private let EDGE_BOTTOMLEFT: Int64 = 7
+private let EDGE_BOTTOMRIGHT: Int64 = 8
 /**
  * 无边框窗口的边缘缩放。
  *
- * frameless 窗口没有系统边框、也没有缩放光标，这里自己实现：
- *   1. 在窗口边缘 6 个逻辑像素内按下 → 记录起始尺寸/光标；
- *   2. 起一个轮询循环（约 12ms）跟踪鼠标：按住期间按位移算新尺寸并调
- *      `setWindowSize`（拖左/上边时同时移动窗口，保持被拖的边跟手）；
- *      松开鼠标结束。
- *   3. 非边缘区域返回 false，事件继续下传，不挡普通点击。
+ * frameless 窗口没有系统边框，也没有缩放光标，这里自己补：
+ *   1. 在窗口边缘 6 个逻辑像素内按下 → 进入缩放态，起 12ms 轮询循环跟踪鼠标；
+ *   2. 拖动期间只改窗口**尺寸**（左上角固定，不动位置）；
+ *   3. 悬停在边缘时用 chui 的 `ctx.claimHover` 申请缩放光标（SDL 光标）；
+ *   4. 非边缘区域返回 false，事件继续下传，不挡标题栏拖动和普通点击。
  */
 class WindowResizeEdges <: Widget {
     private let state: AppState
     private var frame = Rect.zero()
     private let edgeSize: Float32 = 6.0
+
 
     init(state: AppState) {
         this.state = state
@@ -90,14 +109,24 @@ class WindowResizeEdges <: Widget {
         Size(available.w, available.h)
     }
 
-    public func layout(_: UiContext, rect: Rect): Unit {
+    public func layout(ctx: UiContext, rect: Rect): Unit {
         frame = rect
+        // 用视口逻辑尺寸（= 整个窗口），不用 rect：ZStack 在测量阶段可能给它
+        // 一个更小的临时高度（例如扣掉标题栏的 768），按矩形算会误判边缘。
+        resizeWindowWidth = ctx.viewportWidth
+        resizeWindowHeight = ctx.viewportHeight
+        resizeDisplayScale = if (ctx.displayScale > Float32(0.1)) { ctx.displayScale } else { Float32(1.0) }
     }
 
-    public func draw(_: UiContext): Unit {}
+    public func draw(ctx: UiContext): Unit {
+        syncWindowResizeCursor(state, ctx)
+    }
 
     public func handle(ctx: UiContext, event: UiEvent): Bool {
         match (event) {
+            case UiEvent.MouseMove(_, _) =>
+                syncWindowResizeCursor(state, ctx)
+                false
             case UiEvent.MouseDown(MouseButton.Left, x, y) =>
                 match (hitTest(x, y)) {
                     case Some(code) =>
@@ -109,15 +138,12 @@ class WindowResizeEdges <: Widget {
         }
     }
 
-    /** 开始一次缩放：轮询鼠标位移直到松开。 */
+    /** 开始一次缩放：轮询鼠标位移直到松开；窗口位置保持不变。 */
     private func startResize(ctx: UiContext, code: Int64): Unit {
         let app = state.window()
-        let pos = app.windowPosition()
         let global = Mouse.globalState()
         let startGlobalX = global.x
         let startGlobalY = global.y
-        let startPosX = pos.x
-        let startPosY = pos.y
         let startWidth = ctx.viewportWidth
         let startHeight = ctx.viewportHeight
         let scale = if (ctx.displayScale > Float32(0.1)) {
@@ -125,38 +151,26 @@ class WindowResizeEdges <: Widget {
         } else {
             Float32(1.0)
         }
-        let left = code == HT_LEFT || code == HT_TOPLEFT || code == HT_BOTTOMLEFT
-        let right = code == HT_RIGHT || code == HT_TOPRIGHT || code == HT_BOTTOMRIGHT
-        let top = code == HT_TOP || code == HT_TOPLEFT || code == HT_TOPRIGHT
-        let bottom = code == HT_BOTTOM || code == HT_BOTTOMLEFT || code == HT_BOTTOMRIGHT
+        let left = code == EDGE_LEFT || code == EDGE_TOPLEFT || code == EDGE_BOTTOMLEFT
+        let right = code == EDGE_RIGHT || code == EDGE_TOPRIGHT || code == EDGE_BOTTOMRIGHT
+        let top = code == EDGE_TOP || code == EDGE_TOPLEFT || code == EDGE_TOPRIGHT
+        let bottom = code == EDGE_BOTTOM || code == EDGE_BOTTOMLEFT || code == EDGE_BOTTOMRIGHT
         let _ = spawn {=>
             while (Mouse.state().left) {
                 let cur = Mouse.globalState()
-                let dPhysX = cur.x - startGlobalX
-                let dPhysY = cur.y - startGlobalY
+                let dLogX = (cur.x - startGlobalX) / scale
+                let dLogY = (cur.y - startGlobalY) / scale
                 var newW = startWidth
                 var newH = startHeight
-                if (left) { newW = startWidth - dPhysX / scale }
-                if (right) { newW = startWidth + dPhysX / scale }
-                if (top) { newH = startHeight - dPhysY / scale }
-                if (bottom) { newH = startHeight + dPhysY / scale }
+                if (left) { newW = startWidth - dLogX }
+                if (right) { newW = startWidth + dLogX }
+                if (top) { newH = startHeight - dLogY }
+                if (bottom) { newH = startHeight + dLogY }
                 if (newW < 900.0) { newW = 900.0 }
                 if (newH < 600.0) { newH = 600.0 }
-                var newPosX = startPosX
-                var newPosY = startPosY
-                if (left) { newPosX = startPosX + Int32(dPhysX) }
-                if (top) { newPosY = startPosY + Int32(dPhysY) }
-                let movePos = newPosX != startPosX || newPosY != startPosY
                 let wInt = Int32(newW)
                 let hInt = Int32(newH)
-                let px = newPosX
-                let py = newPosY
-                app.postToUi({=>
-                    if (movePos) {
-                        app.setWindowPosition(px, py)
-                    }
-                    app.setWindowSize(wInt, hInt)
-                })
+                app.postToUi({=> app.setWindowSize(wInt, hInt) })
                 sleep(12 * Duration.millisecond)
             }
         }
@@ -171,17 +185,20 @@ class WindowResizeEdges <: Widget {
         let nearRight = frame.right() - x <= edgeSize
         let nearTop = y - frame.y <= edgeSize
         let nearBottom = frame.bottom() - y <= edgeSize
-        if (nearLeft && nearTop) { return Some(HT_TOPLEFT) }
-        if (nearRight && nearTop) { return Some(HT_TOPRIGHT) }
-        if (nearLeft && nearBottom) { return Some(HT_BOTTOMLEFT) }
-        if (nearRight && nearBottom) { return Some(HT_BOTTOMRIGHT) }
-        if (nearLeft) { return Some(HT_LEFT) }
-        if (nearRight) { return Some(HT_RIGHT) }
-        if (nearTop) { return Some(HT_TOP) }
-        if (nearBottom) { return Some(HT_BOTTOM) }
+        if (nearLeft && nearTop) { return Some(EDGE_TOPLEFT) }
+        if (nearRight && nearTop) { return Some(EDGE_TOPRIGHT) }
+        if (nearLeft && nearBottom) { return Some(EDGE_BOTTOMLEFT) }
+        if (nearRight && nearBottom) { return Some(EDGE_BOTTOMRIGHT) }
+        if (nearLeft) { return Some(EDGE_LEFT) }
+        if (nearRight) { return Some(EDGE_RIGHT) }
+        if (nearTop) { return Some(EDGE_TOP) }
+        if (nearBottom) { return Some(EDGE_BOTTOM) }
         None
     }
 }
+
+
+
 
 
 /**
@@ -307,8 +324,13 @@ class ErrorToastOverlay <: Widget {
         Size(available.w, available.h)
     }
 
-    public func layout(_: UiContext, rect: Rect): Unit {
+    public func layout(ctx: UiContext, rect: Rect): Unit {
         frame = rect
+        // 用视口逻辑尺寸（= 整个窗口），不用 rect：ZStack 在测量阶段可能给它
+        // 一个更小的临时高度（例如扣掉标题栏的 768），按矩形算会误判边缘。
+        resizeWindowWidth = ctx.viewportWidth
+        resizeWindowHeight = ctx.viewportHeight
+        resizeDisplayScale = if (ctx.displayScale > Float32(0.1)) { ctx.displayScale } else { Float32(1.0) }
     }
 
     public func draw(ctx: UiContext): Unit {
@@ -370,5 +392,90 @@ class ErrorToastOverlay <: Widget {
 
     public func acceptsStretch(_: Axis): Bool {
         false
+    }
+}
+/** 按当前鼠标位置（ctx 坐标，事件驱动，和 SDL 输入一致）同步边缘光标。 */
+func syncWindowResizeCursor(state: AppState, ctx: UiContext): Unit {
+    if (resizeWindowWidth <= Float32(1.0) || resizeWindowHeight <= Float32(1.0)) {
+        return
+    }
+    let mouseX = ctx.mouseX
+    let mouseY = ctx.mouseY
+    let inside = mouseX >= Float32(0.0) && mouseX <= resizeWindowWidth &&
+        mouseY >= Float32(0.0) && mouseY <= resizeWindowHeight
+    var mode: Int64 = 0
+    if (inside) {
+        let nearLeft = mouseX <= RESIZE_EDGE_BAND
+        let nearRight = resizeWindowWidth - mouseX <= RESIZE_EDGE_BAND
+        let nearTop = mouseY <= RESIZE_EDGE_BAND
+        let nearBottom = resizeWindowHeight - mouseY <= RESIZE_EDGE_BAND
+        if (nearLeft || nearRight) {
+            mode = 1
+        } else if (nearTop || nearBottom) {
+            mode = 2
+        }
+    }
+    if (mode == resizeCursorMode) {
+        return
+    }
+    resizeCursorMode = mode
+    let app = state.window()
+    if (mode == 1) {
+        app.useBaseCursor(SystemCursor.EwResize)
+    } else if (mode == 2) {
+        app.useBaseCursor(SystemCursor.NsResize)
+    } else {
+        app.useBaseCursor(SystemCursor.Default)
+    }
+}
+/**
+ * 后台轮询全局鼠标位置来切换边缘缩放光标。
+ *
+ * 不用 `Mouse.state()`：SDL 只在窗口持有鼠标焦点时更新它，窗口未聚焦时会给出
+ * 陈旧坐标。`Mouse.globalState()` 是桌面坐标，配合窗口位置/DPI 缩放换算成
+ * 窗口内逻辑坐标，任何情况下都准。切换用 `DesktopApp.useBaseCursor`（SDL 光标）。
+ */
+func startResizeCursorLoop(state: AppState): Unit {
+    let app = state.window()
+    let _ = spawn {=>
+        while (true) {
+            sleep(30 * Duration.millisecond)
+            if (resizeWindowWidth <= Float32(1.0) || resizeWindowHeight <= Float32(1.0)) {
+                continue
+            }
+            let scale = resizeDisplayScale
+            let windowPos = app.windowPosition()
+            let global = Mouse.globalState()
+            let lx = (global.x - Float32(windowPos.x)) / scale
+            let ly = (global.y - Float32(windowPos.y)) / scale
+            let inside = lx >= Float32(0.0) && lx <= resizeWindowWidth &&
+                ly >= Float32(0.0) && ly <= resizeWindowHeight
+            var mode: Int64 = 0
+            if (inside) {
+                let nearLeft = lx <= RESIZE_EDGE_BAND
+                let nearRight = resizeWindowWidth - lx <= RESIZE_EDGE_BAND
+                let nearTop = ly <= RESIZE_EDGE_BAND
+                let nearBottom = resizeWindowHeight - ly <= RESIZE_EDGE_BAND
+                if (nearLeft || nearRight) {
+                    mode = 1
+                } else if (nearTop || nearBottom) {
+                    mode = 2
+                }
+            }
+            if (mode == resizeCursorMode) {
+                continue
+            }
+            resizeCursorMode = mode
+            let target = mode
+            app.postToUi({=>
+                if (target == 1) {
+                    app.useBaseCursor(SystemCursor.EwResize)
+                } else if (target == 2) {
+                    app.useBaseCursor(SystemCursor.NsResize)
+                } else {
+                    app.useBaseCursor(SystemCursor.Default)
+                }
+            })
+        }
     }
 }
