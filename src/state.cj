@@ -597,19 +597,31 @@ class DownloadOutcome {
 }
 
 /**
- * 应用数据目录：`~/seline_read`。
- *
- * 设置、账号这类**需要长期保留**的东西放这里；图片缓存仍然放临时目录（可丢）。
+ * 用户主目录（`%USERPROFILE%`，没有就用 `$HOME`）。
  */
-func appDataDir(): Path {
-    let home = if (let Some(value) <- getVariable("USERPROFILE")) {
+func homeDir(): String {
+    if (let Some(value) <- getVariable("USERPROFILE")) {
         value
     } else if (let Some(value) <- getVariable("HOME")) {
         value
     } else {
         "."
     }
-    Path(home).join("seline_read")
+}
+
+/**
+ * 应用数据目录：`~/.seline-app/SelineRead`。
+ *
+ * 设置、账号这类**需要长期保留**的东西放这里；图片缓存仍然放临时目录（可丢）。
+ * 更早的版本放在 `~/seline_read`，启动时会自动迁移过去并删掉旧目录。
+ */
+func appDataDir(): Path {
+    Path(homeDir()).join(".seline-app").join("SelineRead")
+}
+
+/** 旧版配置目录（`~/seline_read`）：启动时一次性搬到新目录并删除。 */
+func legacyHomeDataDir(): Path {
+    Path(homeDir()).join("seline_read")
 }
 
 /** 旧版数据目录（`%TEMP%/SelineRead`），只用于一次性迁移。 */
@@ -667,6 +679,8 @@ private func writeTextFile(path: Path, text: String): Unit {
  * 只迁移一次（新位置已有文件就不动）。
  */
 func ensureAppDataDir(): Unit {
+    // 旧位置 ~/seline_read → 新位置 ~/.selineAPP/seline_read（搬完删掉旧目录）
+    migrateFromLegacyHomeDir()
     let dir = appDataDir()
     if (!exists(dir)) {
         try {
@@ -689,6 +703,66 @@ func ensureAppDataDir(): Unit {
         !exists(Path(legacyAccountPath("accounts.txt"))) &&
         !exists(Path(legacyAccountPath("account.txt")))) {
         migrateFile(legacy.join("account.txt"), dir.join("account.txt"))
+    }
+}
+
+/**
+ * 把旧版配置目录 `~/seline_read` 搬到 `~/.seline-app/SelineRead`，搬完删掉旧目录。
+ *
+ * 只在"新位置还没有同名文件"时搬，避免覆盖新数据。旧目录里只会有本应用的配置
+ * 文件（config/accounts 及其旧文本格式），所以搬完直接整目录删除。
+ */
+private func migrateFromLegacyHomeDir(): Unit {
+    let oldDir = legacyHomeDataDir()
+    if (!exists(oldDir)) {
+        return
+    }
+    let dir = appDataDir()
+    for (name in ["config.json", "accounts.json", "config.txt", "account.txt",
+        "account-list.txt", "accounts.txt"]) {
+        let from = oldDir.join(name)
+        let to = dir.join(name)
+        if (!exists(from) || exists(to)) {
+            continue
+        }
+        try {
+            if (!exists(dir)) {
+                Directory.create(dir, recursive: true)
+            }
+            File.writeTo(to, File.readFrom(from))
+            writeDebugLog("migrated config: ${from} -> ${to}")
+        } catch (_: Exception) {
+            ()
+        }
+    }
+    removeDirectoryRecursive(oldDir)
+    writeDebugLog("removed legacy config dir: ${oldDir}")
+}
+
+/** 递归删除目录（std.fs 没有现成的 recursive delete）。 */
+private func removeDirectoryRecursive(path: Path): Unit {
+    if (!exists(path)) {
+        return
+    }
+    try {
+        for (entry in Directory.readFrom(path)) {
+            if (entry.isDirectory()) {
+                removeDirectoryRecursive(entry.path)
+            } else {
+                try {
+                    remove(entry.path)
+                } catch (_: Exception) {
+                    ()
+                }
+            }
+        }
+    } catch (_: Exception) {
+        ()
+    }
+    try {
+        remove(path)
+    } catch (_: Exception) {
+        ()
     }
 }
 
@@ -1434,7 +1508,7 @@ public class AppState {
      * 而阻塞调用会让运行时把当前线程挪走。
      */
     public func bootstrapLocal(): Unit {
-        // 持久化设置/账号都放 ~/seline_read（旧版 %TEMP%/SelineRead 会自动迁移）
+        // 持久化设置/账号都放 ~/.seline-app/SelineRead（旧位置会自动迁移）
         ensureAppDataDir()
         loadUserConfig()
         loadAccounts()

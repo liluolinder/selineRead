@@ -258,7 +258,7 @@ func loginDialogPanel(state: AppState): Unit {
             Spacer()
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 Label("登录 Z-Library").fontSize(theme.fontHeading).bold()
-            Label("登录后可下载图书；账号会保存到 ~/seline_read，可随时切换。")
+            Label("登录后可下载图书；账号会保存到 ~/.seline-app/SelineRead，可随时切换。")
                 .fontSize(theme.fontCaption).muted().wrap()
             SelineTextField(state.loginEmail.value,
                 {text => state.loginEmail.value = text},
