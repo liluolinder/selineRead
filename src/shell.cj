@@ -144,6 +144,9 @@ class WindowResizeEdges <: Widget {
         let global = Mouse.globalState()
         let startGlobalX = global.x
         let startGlobalY = global.y
+        let startPos = app.windowPosition()
+        let startPosX = startPos.x
+        let startPosY = startPos.y
         let startWidth = ctx.viewportWidth
         let startHeight = ctx.viewportHeight
         let scale = if (ctx.displayScale > Float32(0.1)) {
@@ -168,9 +171,21 @@ class WindowResizeEdges <: Widget {
                 if (bottom) { newH = startHeight + dLogY }
                 if (newW < 900.0) { newW = 900.0 }
                 if (newH < 600.0) { newH = 600.0 }
+                var newPosX = startPosX
+                var newPosY = startPosY
+                if (left) { newPosX = startPosX + Int32(dLogX * scale) }
+                if (top) { newPosY = startPosY + Int32(dLogY * scale) }
                 let wInt = Int32(newW)
                 let hInt = Int32(newH)
-                app.postToUi({=> app.setWindowSize(wInt, hInt) })
+                let px = newPosX
+                let py = newPosY
+                let movePos = left || top
+                app.postToUi({=>
+                    if (movePos) {
+                        app.setWindowPosition(px, py)
+                    }
+                    app.setWindowSize(wInt, hInt)
+                })
                 sleep(12 * Duration.millisecond)
             }
         }
@@ -466,6 +481,7 @@ func startResizeCursorLoop(state: AppState): Unit {
                 continue
             }
             resizeCursorMode = mode
+
             let target = mode
             app.postToUi({=>
                 if (target == 1) {
