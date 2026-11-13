@@ -1463,7 +1463,7 @@ public class AppState {
      */
     public func startBackgroundBootstrap(): Unit {
         // 离线模式（UI 截图/开发用）：跳过全部网络
-        if ((getVariable("SELINE_READ_OFFLINE") ?? "") == "1") {
+        if (offlineMode()) {
             writeDebugLog("bootstrap: offline mode, skip network")
             status.value = "离线模式"
             loading.value = false
@@ -1637,7 +1637,7 @@ public class AppState {
     /** 窗口建立后挂上；之后后台结果才回得来。 */
     public func attach(app: DesktopApp): Unit {
         this.app = app
-        if ((getVariable("SELINE_READ_OFFLINE") ?? "") == "1") {
+        if (offlineMode()) {
             return
         }
         // 恢复出来的凭证要真的打一次接口才知道还有效（改密码/风控会让旧 key 失效）
@@ -1949,6 +1949,7 @@ public class AppState {
     }
 
     /** 验收用：延迟 delayMs 后打开「相关书籍」里的第一本（验证详情返回栈）。 */
+    @When[debug]
     public func scheduleOpenFirstRelatedForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -1962,6 +1963,7 @@ public class AppState {
     }
 
     /** 验收用：延迟后设置任意页面的滚动位置（内容加载完再滚）。 */
+    @When[debug]
     public func postScrollForTest(target: State<Float32>, value: Float32): Unit {
         match (app) {
             case Some(appRef) =>
@@ -1974,6 +1976,7 @@ public class AppState {
     }
 
     /** 验收用：延迟后设置详情页滚动位置（内容加载完再滚）。 */
+    @When[debug]
     public func postDetailScrollForTest(value: Float32): Unit {
         match (app) {
             case Some(appRef) =>
@@ -1986,6 +1989,7 @@ public class AppState {
     }
 
     /** 验收用：自检下载管理器（离线时应显示「失败」而不是崩溃）。 */
+    @When[debug]
     public func runDownloadSelfTest(): Unit {
         let _ = spawn {=>
             sleep(800 * Duration.millisecond)
@@ -2008,6 +2012,7 @@ public class AppState {
      *
      * 期望：最终详情是 222 / MOCK-B，111 的迟到响应被丢弃。
      */
+    @When[debug]
     public func runMockRaceSelfTest(): Unit {
         let _ = spawn {=>
             sleep(900 * Duration.millisecond)
@@ -2033,6 +2038,7 @@ public class AppState {
      *
      * 只是往 State 里写文案，不请求网络。
      */
+    @When[debug]
     public func forceErrorStatesForShot(mode: String): Unit {
         let site = "zh.eva101.ru"
         detailOpen.value = false
@@ -2086,6 +2092,7 @@ public class AppState {
     }
 
     /** 验收用（离线可跑）：造一批假搜索结果，用来截图确认「加载更多」页脚渲染。 */
+    @When[debug]
     public func forceFakeSearchForShot(): Unit {
         lastKeyword.value = "fake"
         tab.value = TAB_HOME
@@ -2109,6 +2116,7 @@ public class AppState {
      * 手动把 hasMore 置真 → loadMoreSearch（站点 503 时会失败）→
      * 期望 loadingMore 归位、hasMore 关掉，不会无限重试。
      */
+    @When[debug]
     public func runSearchPagingOfflineTest(): Unit {
         let _ = spawn {=>
             sleep(900 * Duration.millisecond)
@@ -2134,6 +2142,7 @@ public class AppState {
      * 步骤：开 A → 记录代数 → 开 B → 用 A 的代数调用 applyDetailPayload，
      * 期望栏目仍然是 B；再用当前代数调一次，期望这次真的生效。
      */
+    @When[debug]
     public func runStalePayloadSelfTest(): Unit {
         let _ = spawn {=>
             sleep(700 * Duration.millisecond)
@@ -2171,6 +2180,7 @@ public class AppState {
      * 等首页加载完 → 打开第 1 本 → 150ms 后立刻打开第 2 本 →
      * 等两本书的请求都回来，看最终显示的是不是 B。
      */
+    @When[debug]
     public func runDetailRaceSelfTest(): Unit {
         let _ = spawn {=>
             sleep(3000 * Duration.millisecond)
@@ -2203,6 +2213,7 @@ public class AppState {
     }
 
     /** 验收用：自检搜索结果分页（第 1 页 → 自动加载第 2 页）。 */
+    @When[debug]
     public func runSearchPagingSelfTest(keyword: String): Unit {
         let _ = spawn {=>
             sleep(1200 * Duration.millisecond)
@@ -2224,6 +2235,7 @@ public class AppState {
     }
 
     /** 验收用：自检详情返回栈（离线也能跑，不依赖网络数据）。 */
+    @When[debug]
     public func runNavStackSelfTest(): Unit {
         let _ = spawn {=>
             sleep(900 * Duration.millisecond)
@@ -2251,6 +2263,7 @@ public class AppState {
     }
 
     /** 验收用：延迟 delayMs 后点「返回」。 */
+    @When[debug]
     public func scheduleCloseDetailForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -2262,6 +2275,7 @@ public class AppState {
     }
 
     /** 验收用：延迟 delayMs 后清空搜索框，验证「清空即回热门」。 */
+    @When[debug]
     public func scheduleClearSearchForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -2273,6 +2287,7 @@ public class AppState {
     }
 
     /** 验收用：延迟 delayMs 后自动搜索一次（模拟「A 未返回时又搜 B」的竞态）。 */
+    @When[debug]
     public func scheduleSearchForTest(keyword: String, delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -2563,6 +2578,7 @@ public class AppState {
     }
 
     /** 验收用：延迟后点一次「收藏」按钮。 */
+    @When[debug]
     public func scheduleToggleFavoriteForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -2632,6 +2648,7 @@ public class AppState {
     }
 
     /** 验收用：按热门列表下标打开一本书（走真实卡片路径，带封面）。 */
+    @When[debug]
     public func openPopularForTest(index: Int64): Unit {
         if (index < 0 || index >= Int64(popular.value.size)) {
             writeDebugLog("openPopularForTest: index ${index} out of range ${popular.value.size}")
@@ -2641,6 +2658,7 @@ public class AppState {
     }
 
     /** 验收用：延时切换侧栏展开状态（观察动画）。 */
+    @When[debug]
     public func scheduleRailToggleForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -2649,6 +2667,7 @@ public class AppState {
     }
 
     /** 验收用：等搜索结果出来后打开第 index 本。 */
+    @When[debug]
     public func openSearchResultForTest(index: Int64): Unit {
         let _ = spawn {=>
             var tries: Int64 = 0
@@ -2665,6 +2684,7 @@ public class AppState {
     }
 
     /** 验收用：切到收藏页，等收藏加载完后打开第 index 本。 */
+    @When[debug]
     public func openFavoriteForTest(index: Int64): Unit {
         tab.value = TAB_FAVORITES
         let _ = spawn {=>
@@ -2752,6 +2772,7 @@ public class AppState {
     }
 
     /** 验收用：书单列表第一次加载成功后自动打开第一份。 */
+    @When[debug]
     public func setAutoOpenFirstBooklist(): Unit {
         autoOpenFirstBooklist = true
     }
@@ -3424,7 +3445,7 @@ public class AppState {
         themeTargetDark = nextDark
         themeSwitching = true
         // 注意：**不立刻**改 darkMode —— 点击这一帧要按旧主题构建，chui 才会冻出正确的"旧帧"
-        let ms = Int64.parse(getVariable("SELINE_READ_THEME_MS") ?? "620")
+        let ms = themeTransitionMs()
         writeDebugLog("theme: transition -> dark=${nextDark} (${ms}ms)")
         match (app) {
             case Some(value) =>
@@ -3448,6 +3469,7 @@ public class AppState {
 
 
     /** 验收用：从侧栏主题按钮位置触发一次切换。 */
+    @When[debug]
     public func postThemeToggleForTest(): Unit {
         let appRef = match (app) {
             case Some(value) => value
@@ -3474,6 +3496,7 @@ public class AppState {
     }
 
     /** 验收用：造几个假账号，用来截图账号页/登录弹窗。 */
+    @When[debug]
     public func forceFakeAccountsForShot(openDialog: Bool): Unit {
         accounts.value = ArrayList<AccountEntry>()
         accounts.value.add(AccountEntry("liluo@example.com", "liluo", "43928338",
@@ -3542,6 +3565,7 @@ public class AppState {
     }
 
     /** 验收用：延时弹一条指定语义的 toast（截图/联调用）。 */
+    @When[debug]
     public func showToastAfterForTest(delayMs: Int64, text: String, kind!: ToastKind): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -3550,6 +3574,7 @@ public class AppState {
     }
 
     /** 验收用：循环弹同一条 toast，保证截图时一定能拍到。 */
+    @When[debug]
     public func startToastLoopForTest(text: String, kind!: ToastKind): Unit {
         let _ = spawn {=>
             while (true) {
@@ -3688,6 +3713,7 @@ public class AppState {
     }
 
     /** 验收用：延迟 delayMs 后打开下载菜单（等按钮完成 layout）。 */
+    @When[debug]
     public func scheduleOpenDownloadMenuForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -3876,6 +3902,7 @@ public class AppState {
     }
 
     /** 验收用：延迟后点一次「下载」按钮（未登录走提示，已登录开菜单）。 */
+    @When[debug]
     public func scheduleClickDownloadForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -3884,6 +3911,7 @@ public class AppState {
     }
 
     /** 验收用：延迟后调用 downloadBook（验证「正在获取中，请稍后」提示）。 */
+    @When[debug]
     public func scheduleDownloadBookForTest(delayMs: Int64): Unit {
         let _ = spawn {=>
             sleep(delayMs * Duration.millisecond)
@@ -3908,6 +3936,7 @@ public class AppState {
     }
 
     /** 验收用：登录成功后自动下载指定书。 */
+    @When[debug]
     public func setAutoDownload(id: Int64, hash: String): Unit {
         autoDownloadTarget = "${id}|${hash}"
     }

@@ -27,9 +27,13 @@
 
 [target]
 [target.x86_64-w64-mingw32]
-compile-option = "--cfg \"ohos=false\""
+compile-option = "--cfg \"ohos=false\" --static"
 # `--subsystem windows` 让双击不弹命令行；此时进程没有控制台，
 # 需要自己挂一个隐藏控制台给子进程继承（见 src/platform/console.cj）。
 link-option = "-lcrypt32 --subsystem windows --entry mainCRTStartup"
 [target.x86_64-w64-mingw32.bin-dependencies]
 path-option = ["${CANGJIE_STDX_PATH}/windows_x86_64_cjnative/static/stdx"]
+# 构建优化：全量 LTO（跨包内联/死代码消除）。
+# 注意：cjpm 1.2 目前只对 Linux/OHOS 目标生效，Windows 构建会 warning 并忽略。
+[profile.build]
+  lto = "full"

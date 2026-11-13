@@ -51,9 +51,16 @@ public func attachHiddenConsole(): Unit {
     }
 }
 
+/** 是否禁止挂隐藏控制台（`SELINE_READ_NO_HIDDEN_CONSOLE`，仅 debug 构建支持）。 */
+@When[debug]
 private func hiddenConsoleDisabled(): Bool {
     match (getVariable("SELINE_READ_NO_HIDDEN_CONSOLE")) {
         case Some(value) => value == "1"
         case None => false
     }
+}
+
+@When[!debug]
+private func hiddenConsoleDisabled(): Bool {
+    false
 }

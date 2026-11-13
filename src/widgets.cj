@@ -18,7 +18,7 @@ let PAGE_PAD: Float32 = SELINE_PAGE_MARGIN
  * 滚轮响应更跟手；也支持 `SELINE_READ_SCROLL=immediate` 直接无动画。
  */
 func appScrollOptions(): ScrollOptions {
-    let mode = getVariable("SELINE_READ_SCROLL") ?? ""
+    let mode = scrollModeOverride()
     if (mode == "immediate") {
         return ScrollOptions.immediate(wheelStep: 96.0)
     }

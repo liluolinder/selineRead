@@ -6,6 +6,7 @@
  */
 package seline_read
 
+import std.convert.*
 import std.env.getVariable
 import std.fs.{File, Path, exists}
 
@@ -35,7 +36,7 @@ public func writeDebugLog(text: String): Unit {
  * 返回空串表示没找到（调用方回退到占位/默认绘制）。
  */
 public func findAsset(name: String): String {
-    let custom = getVariable("SELINE_READ_ASSETS") ?? ""
+    let custom = customAssetsDir()
     if (!custom.isEmpty()) {
         let path = Path(custom).join(name).toString()
         if (exists(Path(path))) {
@@ -54,3 +55,63 @@ public func findAsset(name: String): String {
     }
     ""
 }
+
+/*
+ * 调试专用的运行时覆盖项。
+ *
+ * 每个都提供 debug / release 两版实现：release 版直接返回默认值，
+ * 调用点不携带环境变量名字符串，产物里搜不到这些探针。
+ */
+@When[debug]
+public func offlineMode(): Bool {
+    (getVariable("SELINE_READ_OFFLINE") ?? "") == "1"
+}
+
+@When[!debug]
+public func offlineMode(): Bool {
+    false
+}
+
+/** 滚动动画模式覆盖（`immediate` 关闭弹簧）。 */
+@When[debug]
+public func scrollModeOverride(): String {
+    getVariable("SELINE_READ_SCROLL") ?? ""
+}
+
+@When[!debug]
+public func scrollModeOverride(): String {
+    ""
+}
+
+/** 自定义资源目录（`SELINE_READ_ASSETS`）。 */
+@When[debug]
+public func customAssetsDir(): String {
+    getVariable("SELINE_READ_ASSETS") ?? ""
+}
+
+@When[!debug]
+public func customAssetsDir(): String {
+    ""
+}
+
+/** 自定义 CJK 回退字体（`SELINE_READ_FALLBACK_FONT`）。 */
+@When[debug]
+public func customFallbackFont(): String {
+    getVariable("SELINE_READ_FALLBACK_FONT") ?? ""
+}
+
+@When[!debug]
+public func customFallbackFont(): String {
+    ""
+}
+/** 主题过渡时长（debug 可用 `SELINE_READ_THEME_MS` 覆盖，release 固定 620ms）。 */
+@When[debug]
+public func themeTransitionMs(): Int64 {
+    Int64.parse(getVariable("SELINE_READ_THEME_MS") ?? "620")
+}
+
+@When[!debug]
+public func themeTransitionMs(): Int64 {
+    620
+}
+

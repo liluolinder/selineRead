@@ -158,3 +158,14 @@ $env:SELINE_READ_DETAIL_SCROLL="1400"; $env:SELINE_READ_SCROLL_AFTER_MS="2500"  
 $env:SELINE_READ_TEST_NAV="1"             # 自检详情返回栈（日志 navselftest）
 $env:SELINE_READ_TEST_DL="1"              # 自检下载管理器（真实下载一本书，日志 dlselftest）
 ```
+## 构建配置（release / debug）
+
+- `cjpm build`：**release**（`target/release`），静态链接仓颉运行时（`--static`），
+  产物不包含任何验收/诊断探针（`SELINE_READ_*` 只存在于 debug）。
+- `cjpm build -g`：**debug**（`target/debug`），才编译 `src/probes.cj` 里的
+  `SELINE_READ_*` / `--shot` 验收钩子和自测入口；截图、验收、内存排查都用它。
+- `cjpm.toml` 已开 `[profile.build] lto = "full"`；cjpm 1.2 的 LTO 目前只支持
+  Linux/OHOS 目标，Windows 构建会提示 warning 并跳过（无副作用）。
+- 打包：`pwsh -File scripts\package_release.ps1` → `dist/SelineRead-<ver>-<hash>-win64.zip`。
+  运行时 DLL 只剩 SDL3/SDL3_ttf、OpenSSL 3（libssl/libcrypto）；
+  仓颉运行时已静态链接进 `SelineRead.exe`。

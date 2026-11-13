@@ -1,4 +1,4 @@
-# 打包一个「双击即可运行」的 Windows release。
+﻿# 打包一个「双击即可运行」的 Windows release。
 #
 # 产出：
 #   dist\SelineRead-<version>-win64\      （可直接拷走的目录）
@@ -71,9 +71,8 @@ if ((Test-Path $iconPng) -and (Test-Path $embedPy)) {
     Write-Warning "skip icon: assets\SR.png or scripts\embed_icon.py missing"
 }
 
-# 仓颉运行时
-Copy-Needed (Join-Path $runtime "libcangjie-runtime.dll")
-Copy-Needed (Join-Path $runtime "libboundscheck.dll")
+# 仓颉运行时已用 `--static` 静态链进 exe（cjpm.toml），这里不再分发运行时 DLL。
+# 只保留运行期 dlopen 的第三方库：
 
 # SDL
 Copy-Needed (Join-Path $sdl "SDL3.dll")
@@ -83,8 +82,8 @@ Copy-Needed (Join-Path $sdl "SDL3_ttf.dll")
 Copy-Needed (Join-Path $system32 "libssl-3-x64.dll")
 Copy-Needed (Join-Path $system32 "libcrypto-3-x64.dll")
 
-# VC 运行时（OpenSSL 依赖）
-Copy-Needed (Join-Path $system32 "VCRUNTIME140.dll")
+# 说明：OpenSSL 的导入表写了 VCRUNTIME140.dll，但 Win10/11 目标机实测通常已带
+# （系统组件或已装 VC++ Redist）；按用户要求不再随包分发，缩小体积。
 
 # 资源
 $assets = Join-Path $root "assets"
@@ -100,8 +99,8 @@ $readme = @"
 Seline Read $version ($hash)
 
 == 运行 ==
-双击 SelineRead.exe 即可。本目录里的 DLL 已包含全部运行库（仓颉运行时、SDL、OpenSSL、VC 运行时），
-不需要安装仓颉 SDK，也不要移动或删除这些 DLL。
+双击 SelineRead.exe 即可。仓颉运行时已静态链接进 exe，不需要安装仓颉 SDK；
+同目录的 SDL / OpenSSL DLL 是运行期依赖，请勿移动或删除。
 
 == 要求 ==
 Windows 10 / 11 64 位。
