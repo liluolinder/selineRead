@@ -199,15 +199,15 @@ main(args: Array<String>): Int64 {
 
     let state = AppState()
     state.prepareImageStore()
-    // 网络首屏全部阻塞式完成，且在建窗口之前
+    // 启动第一步：只读本地配置/账号（**不做任何网络**），窗口立刻能出来
     writeDebugLog("bootstrap: begin")
     try {
-        state.bootstrap()
+        state.bootstrapLocal()
     } catch (failure: Exception) {
         writeDebugLog("bootstrap failed: ${failure.message}")
         state.error.value = "初始化失败：${failure.message}"
     }
-    writeDebugLog("bootstrap: done")
+    writeDebugLog("bootstrap: local done")
     if (options.initialTab > 0) {
         state.tab.value = options.initialTab
     }
@@ -257,6 +257,8 @@ main(args: Array<String>): Int64 {
             writeDebugLog("window icon: asset missing")
         }
         state.attach(app)
+        // 启动第二步：窗口已经能显示，网络（建客户端/首屏）放到后台补
+        state.startBackgroundBootstrap()
         if ((getVariable("SELINE_READ_SKELETON") ?? "") == "1") {
             state.forceSkeleton.value = true
         }
@@ -323,7 +325,8 @@ main(args: Array<String>): Int64 {
         }
         let popularIndexEnv = getVariable("SELINE_READ_OPEN_POPULAR_INDEX") ?? ""
         if (!popularIndexEnv.isEmpty()) {
-            state.openPopularForTest(Int64.parse(popularIndexEnv))
+            let index = Int64.parse(popularIndexEnv)
+            state.whenClientReady({=> state.openPopularForTest(index) })
         }
         // 验收用：延时展开/收起侧栏（动画观测）
         let railToggleMs = getVariable("SELINE_READ_RAIL_TOGGLE_MS") ?? ""

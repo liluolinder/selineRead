@@ -454,6 +454,45 @@ func cellsFromBriefs(briefs: ArrayList<BookInfoBrief>, siteUrl: String): ArrayLi
     cells
 }
 
+/**
+ * 首页书墙数据源：登录用「个性化推荐」，未登录或推荐失败回退「热门」。
+ *
+ * 该函数不读 UI State，后台线程可直接调用（启动期首屏走的就是这条）。
+ */
+func landingBriefsFor(client: ZlibClient,
+    loggedIn: Bool): (ArrayList<BookInfoBrief>, String) {
+    if (loggedIn) {
+        try {
+            return (UserApi.recommended(client), "个性化推荐")
+        } catch (_: ZlibError) {
+            () // 未登录态/接口受限：静默回退热门
+        }
+    }
+    (SearchApi.mostPopular(client), "热门")
+}
+
+/** 首屏数据（后台线程构造好再回投 UI，闭包只捕获不可变值）。 */
+class LandingResult {
+    let briefs: ArrayList<BookInfoBrief>
+    let label: String
+    let error: String
+
+    init(briefs: ArrayList<BookInfoBrief>, label: String, error: String) {
+        this.briefs = briefs
+        this.label = label
+        this.error = error
+    }
+
+    static func load(client: ZlibClient, loggedIn: Bool): LandingResult {
+        try {
+            let (briefs, label) = landingBriefsFor(client, loggedIn)
+            LandingResult(briefs, label, "")
+        } catch (failure: ZlibError) {
+            LandingResult(ArrayList<BookInfoBrief>(), "", friendlyErrorMessage(failure))
+        }
+    }
+}
+
 /** 登录后台结果（不可变，方便回投闭包捕获）。 */
 class LoginOutcome {
     let ok: Bool
@@ -1248,6 +1287,15 @@ public class AppState {
 
     private var client: ?ClientBox = None
     private var app: ?DesktopApp = None
+    /* ---- 启动期网络异步：客户端就绪前发生的动作先排队，就绪后补跑 ---- */
+    private var clientReadyFired: Bool = false
+    private var clientReadyHooks: ArrayList<() -> Unit> = ArrayList<() -> Unit>()
+    private var pendingSearchKeyword: String = ""
+    private var pendingBookId: Int64 = 0
+    private var pendingBookHash: String = ""
+    private var pendingDownloadId: Int64 = 0
+    private var pendingDownloadHash: String = ""
+    private var pendingLogin: Bool = false
     private var store: ?SelineImageStore = None
 
     /** URL → 已上传的纹理（UI 线程）。 */
@@ -1385,17 +1433,52 @@ public class AppState {
      * 必须在建窗口之前完成：窗口会记下创建它的原生线程，之后拒绝别的线程轮询；
      * 而阻塞调用会让运行时把当前线程挪走。
      */
-    public func bootstrap(): Unit {
+    public func bootstrapLocal(): Unit {
         // 持久化设置/账号都放 ~/seline_read（旧版 %TEMP%/SelineRead 会自动迁移）
         ensureAppDataDir()
         loadUserConfig()
         loadAccounts()
         // 启动只自动登录"默认账号"，其它账号作为备选（在账号页手动切换）
+        match (defaultAccount()) {
+            case Some(entry) =>
+                let credential = entry.credential()
+                if (credential.isLoggedIn) {
+                    loggedIn.value = true
+                    accountId.value = credential.userId
+                    accountName.value = entry.label()
+                    writeDebugLog("credential restored (default account): uid=${credential.userId}")
+                }
+            case None => ()
+        }
+        loading.value = true
+        status.value = "正在加载…"
+        writeDebugLog("bootstrap: local done (window can show now)")
+    }
+
+    /**
+     * 启动第二步：**窗口显示之后**才做网络（建客户端、探测站点、拉首屏）。
+     *
+     * 建客户端/首屏请求可能要几秒甚至十几秒（网络差时），放在窗口之前会把
+     * 启动卡成白屏；现在窗口先出来，首屏数据后台补，回投 UI。
+     */
+    public func startBackgroundBootstrap(): Unit {
+        // 离线模式（UI 截图/开发用）：跳过全部网络
+        if ((getVariable("SELINE_READ_OFFLINE") ?? "") == "1") {
+            writeDebugLog("bootstrap: offline mode, skip network")
+            status.value = "离线模式"
+            loading.value = false
+            return
+        }
         let defaultEntry = defaultAccount()
         let credential = match (defaultEntry) {
             case Some(entry) => entry.credential()
             case None => ZlibCredential.anonymous()
         }
+        let displayName = match (defaultEntry) {
+            case Some(entry) => entry.label()
+            case None => credential.userId
+        }
+        let isLoggedIn = credential.isLoggedIn
         // 自定义站点 / 种子站：用户配置优先，没配置就用官方默认站
         let baseUrl = if (activeSite.value.isEmpty()) {
             ZlibHost.DEFAULT_URL
@@ -1407,41 +1490,60 @@ public class AppState {
         } else {
             seedSite.value
         }
-        writeDebugLog("bootstrap: base=${baseUrl} seed=${seed}")
-        let created = try {
-            ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
-        } catch (failure: ZlibError) {
-            error.value = "创建客户端失败：${friendlyErrorMessage(failure)}"
-            status.value = "离线"
-            writeDebugLog("bootstrap: create client failed: ${failure.detail}")
-            return
-        }
-        client = Some(ClientBox(created))
-        if (credential.isLoggedIn) {
-            loggedIn.value = true
-            accountId.value = credential.userId
-            accountName.value = match (defaultEntry) {
-                case Some(entry) => entry.label()
-                case None => credential.userId
+        writeDebugLog("bootstrap: begin (background) base=${baseUrl} seed=${seed}")
+        let _ = spawn {=>
+            let created = try {
+                ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
+            } catch (failure: ZlibError) {
+                postToUi({=>
+                    error.value = "创建客户端失败：${friendlyErrorMessage(failure)}"
+                    status.value = "离线"
+                    loading.value = false
+                    writeDebugLog("bootstrap: create client failed: ${failure.detail}")
+                })
+                return
             }
-            writeDebugLog("credential restored (default account): uid=${credential.userId}")
+            let site = created.currentSiteUrl()
+            // 首屏列表（登录态优先个性化推荐）
+            let landing = LandingResult.load(created, isLoggedIn)
+            postToUi({=>
+                client = Some(ClientBox(created))
+                if (isLoggedIn) {
+                    loggedIn.value = true
+                    accountId.value = credential.userId
+                    accountName.value = displayName
+                }
+                if (activeSite.value.isEmpty()) {
+                    activeSite.value = site
+                }
+                adoptRefreshedSite()
+                if (landing.error.isEmpty()) {
+                    popular.value = cellsFromBriefs(landing.briefs, site)
+                    popularVisible.value = 12
+                    status.value = "${landing.label} ${popular.value.size} 本 · ${site}"
+                    error.value = ""
+                    writeDebugLog("popular loaded: ${popular.value.size} (${landing.label})")
+                    if (!popular.value.isEmpty()) {
+                        let first = popular.value[0]
+                        writeDebugLog("first book: id=${first.id} hash=${first.hash}")
+                        writeDebugLog("first cover url: ${first.cover}")
+                        if (!first.cover.isEmpty()) {
+                            let _ = imagePath(first.cover, SelineImageKind.Cover)
+                        }
+                    }
+                } else {
+                    error.value = "加载失败：${landing.error}"
+                    status.value = "加载失败"
+                }
+                loading.value = false
+                writeDebugLog("bootstrap: site=${site}")
+                // 后台探测入口站 3xx（不阻塞 UI），探到再把新站写回配置
+                startRedirectProbe(site)
+                // 客户端就绪：补跑启动期排队的用户动作 + 刷新账号资料
+                fireClientReady()
+                refreshProfile()
+            })
         }
-        writeDebugLog("bootstrap: site=${created.currentSiteUrl()}")
-        if (activeSite.value.isEmpty()) {
-            activeSite.value = created.currentSiteUrl()
-        }
-        adoptRefreshedSite()
-        // 入口站可能只是 3xx 跳转（如 zh.eva101.ru -> zh.tmdgoogle.ru）：直接把跳转目标落盘
-        adoptInitialRedirect()
-        // 离线模式（UI 截图/开发用）：跳过阻塞式首屏请求
-        if ((getVariable("SELINE_READ_OFFLINE") ?? "") == "1") {
-            writeDebugLog("bootstrap: offline mode, skip popular")
-            status.value = "离线模式"
-            return
-        }
-        loadPopularBlocking(created)
-        // 首屏请求可能触发了库内换站：把新站写回配置（下次启动直接用）
-        adoptRefreshedSite()
     }
 
     /**
@@ -1451,21 +1553,29 @@ public class AppState {
      * `zh.tmdgoogle.ru`）。客户端虽然会自动跟随重定向，但配置里仍写着旧域名，
      * 每次请求都多一跳；这里探测一次，把 `Location` 直接提升为当前站并落盘。
      */
-    private func adoptInitialRedirect(): Unit {
-        let current = activeSite.value
-        if (current.isEmpty()) {
+    /** 后台探测入口站 3xx（如 zh.eva101.ru -> zh.tmdgoogle.ru），不阻塞 UI。 */
+    private func startRedirectProbe(site: String): Unit {
+        if (site.isEmpty()) {
             return
         }
-        let probe = probeSite(current, timeoutSeconds: 5)
-        if (!probe.isRedirect || probe.location.isEmpty()) {
-            return
+        let _ = spawn {=>
+            let probe = probeSite(site, timeoutSeconds: 5)
+            if (!probe.isRedirect || probe.location.isEmpty()) {
+                return
+            }
+            let location = probe.location
+            postToUi({=> applySiteRedirect(site, location) })
         }
+    }
+
+    /** 应用 3xx 探测结果：把跳转目标作为当前站（写配置 + State）。 */
+    private func applySiteRedirect(current: String, location: String): Unit {
         let target = try {
-            ZlibHost.of(probe.location)
+            ZlibHost.of(location)
         } catch (_: ZlibError) {
             return
         }
-        if (target.url == current) {
+        if (target.url == current || target.url == activeSite.value) {
             return
         }
         activeSite.value = target.url
@@ -1480,6 +1590,48 @@ public class AppState {
         }
         saveUserConfig()
         writeDebugLog("startup redirect: ${current} -> ${target.url}")
+    }
+
+    /** 客户端就绪后执行（启动期网络在后台，依赖网络的验收钩子要用这个排队）。 */
+    public func whenClientReady(handler: () -> Unit): Unit {
+        if (clientReadyFired) {
+            handler()
+            return
+        }
+        clientReadyHooks.add(handler)
+    }
+
+    /** 客户端已可用：补跑启动期排队的动作（UI 线程）。 */
+    private func fireClientReady(): Unit {
+        clientReadyFired = true
+        if (pendingLogin) {
+            pendingLogin = false
+            submitLogin()
+        }
+        if (!pendingSearchKeyword.isEmpty()) {
+            let keyword = pendingSearchKeyword
+            pendingSearchKeyword = ""
+            searchText.value = keyword
+            submitSearch()
+        }
+        if (pendingBookId > 0) {
+            let id = pendingBookId
+            let hash = pendingBookHash
+            pendingBookId = 0
+            pendingBookHash = ""
+            openBookById(id, hash)
+        }
+        if (pendingDownloadId > 0) {
+            let id = pendingDownloadId
+            let hash = pendingDownloadHash
+            pendingDownloadId = 0
+            pendingDownloadHash = ""
+            downloadById(id, hash)
+        }
+        for (handler in clientReadyHooks) {
+            handler()
+        }
+        clientReadyHooks.clear()
     }
 
     /** 窗口建立后挂上；之后后台结果才回得来。 */
@@ -1557,14 +1709,7 @@ public class AppState {
      * 两个接口返回的都是精简列表（id/hash/标题/作者/封面），卡片点击后再补详情。
      */
     private func fetchLandingBriefs(clientValue: ZlibClient): (ArrayList<BookInfoBrief>, String) {
-        if (loggedIn.value) {
-            try {
-                return (UserApi.recommended(clientValue), "个性化推荐")
-            } catch (_: ZlibError) {
-                () // 未登录态/接口受限：静默回退热门
-            }
-        }
-        (SearchApi.mostPopular(clientValue), "热门")
+        landingBriefsFor(clientValue, loggedIn.value)
     }
 
     private func loadPopularBlocking(clientValue: ZlibClient): Unit {
@@ -1634,6 +1779,14 @@ public class AppState {
     public func submitSearch(): Unit {
         let keyword = searchText.value.trimAscii()
         writeDebugLog("submitSearch: '${keyword}'")
+        // 启动期客户端还在后台创建：先排队，等客户端就绪再真正搜
+        match (this.client) {
+            case None =>
+                pendingSearchKeyword = keyword
+                writeDebugLog("search queued until client ready")
+                return
+            case Some(_) => ()
+        }
         // 「书单」页签下，标题栏搜索框搜的是书单，不是书
         if (tab.value == TAB_BOOKLISTS) {
             booklistQuery.value = keyword
@@ -2467,6 +2620,14 @@ public class AppState {
 
     /** 验收/脚本用：没有列表项时按 id + hash 直接打开详情页。 */
     public func openBookById(id: Int64, hash: String): Unit {
+        match (this.client) {
+            case None =>
+                pendingBookId = id
+                pendingBookHash = hash
+                writeDebugLog("openBook queued until client ready: id=${id}")
+                return
+            case Some(_) => ()
+        }
         openBook(BookCell(id, hash, "（加载中…）", "", "", ""))
     }
 
@@ -2751,7 +2912,10 @@ public class AppState {
         let clientBox = match (this.client) {
             case Some(value) => value
             case None =>
-                loginMessage.value = "客户端未就绪"
+                // 启动期客户端还在后台创建：先记下，就绪后自动重试
+                pendingLogin = true
+                loginMessage.value = "正在连接…"
+                writeDebugLog("login queued until client ready")
                 return
         }
         loginBusy.value = true
@@ -3729,6 +3893,14 @@ public class AppState {
 
     /** 验收/脚本用：直接按 id + hash 下载（会走与详情页按钮完全相同的路径）。 */
     public func downloadById(id: Int64, hash: String): Unit {
+        match (this.client) {
+            case None =>
+                pendingDownloadId = id
+                pendingDownloadHash = hash
+                writeDebugLog("download queued until client ready: id=${id}")
+                return
+            case Some(_) => ()
+        }
         detailId.value = id
         detailHash.value = hash
         detailFormatIndex.value = 0
