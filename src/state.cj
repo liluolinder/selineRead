@@ -2479,6 +2479,14 @@ public class AppState {
         openBook(popular.value[index])
     }
 
+    /** 验收用：延时切换侧栏展开状态（观察动画）。 */
+    public func scheduleRailToggleForTest(delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=> railExpanded.value = !railExpanded.value })
+        }
+    }
+
     /** 验收用：等搜索结果出来后打开第 index 本。 */
     public func openSearchResultForTest(index: Int64): Unit {
         let _ = spawn {=>

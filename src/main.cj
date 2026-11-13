@@ -325,6 +325,11 @@ main(args: Array<String>): Int64 {
         if (!popularIndexEnv.isEmpty()) {
             state.openPopularForTest(Int64.parse(popularIndexEnv))
         }
+        // 验收用：延时展开/收起侧栏（动画观测）
+        let railToggleMs = getVariable("SELINE_READ_RAIL_TOGGLE_MS") ?? ""
+        if (!railToggleMs.isEmpty()) {
+            state.scheduleRailToggleForTest(Int64.parse(railToggleMs))
+        }
         let searchIndexEnv = getVariable("SELINE_READ_OPEN_SEARCH_INDEX") ?? ""
         if (!searchIndexEnv.isEmpty()) {
             state.openSearchResultForTest(Int64.parse(searchIndexEnv))

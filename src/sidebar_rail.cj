@@ -11,6 +11,7 @@
  */
 package seline_read
 
+
 import chui.*
 import seline_ui.*
 
@@ -24,7 +25,7 @@ let SIDEBAR_INSET: Float32 = 8.0
 let SIDEBAR_GROUP_HEADER_HEIGHT: Float32 = 32.0
 let SIDEBAR_ZONE_ROW_HEIGHT: Float32 = 35.0
 /** 弹簧步长（毫秒）。 */
-let RAIL_STEP_MS: Float32 = 33.0
+let RAIL_STEP_MS: Float32 = 8.0
 
 /** 页签下标：内容页在前，设置固定在底部。 */
 let TAB_HOME: Int64 = 0
@@ -59,7 +60,8 @@ class RailSpring {
 
     init() {
         this.spring = rememberState<Spring>("rail.spring") {
-            Spring(0.0, stiffness: 140.0, damping: 12.0)
+            // 阻尼比 ~0.9：快速收住、不来回弹，低帧率下也不显得"卡"
+            Spring(0.0, stiffness: 260.0, damping: 29.0)
         }.value
         this.pendingMs = rememberState<State<Float32>>("rail.pending") {
             State<Float32>(0.0)
