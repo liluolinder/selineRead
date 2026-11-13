@@ -346,6 +346,14 @@ main(args: Array<String>): Int64 {
         if (!downloadBookMs.isEmpty()) {
             state.scheduleDownloadBookForTest(Int64.parse(downloadBookMs))
         }
+        let favoriteMs = getVariable("SELINE_READ_FAVORITE_MS") ?? ""
+        if (!favoriteMs.isEmpty()) {
+            state.scheduleToggleFavoriteForTest(Int64.parse(favoriteMs))
+        }
+        let favorite2Ms = getVariable("SELINE_READ_FAVORITE2_MS") ?? ""
+        if (!favorite2Ms.isEmpty()) {
+            state.scheduleToggleFavoriteForTest(Int64.parse(favorite2Ms))
+        }
         if ((getVariable("SELINE_READ_TEST_DL_TWICE") ?? "") == "1") {
             // 验收：未登录连点两次下载，应该弹两次 toast
             state.downloadBook()

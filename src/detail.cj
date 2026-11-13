@@ -31,6 +31,15 @@ func detailPage(state: AppState): Unit {
             SelineButton("返回", {=> state.closeDetail()}, glyph: "home",
                 kind: SelineButtonKind.Ghost, compact: true)
             Spacer()
+            // 收藏：星形图标 + 文案，已收藏用实心星并高亮
+            SelineButton(if (state.detailSaved.value) { "已收藏" } else { "收藏" },
+                {=> state.toggleDetailFavorite()},
+                glyph: if (state.detailSaved.value) { "star" } else { "star-o" },
+                kind: if (state.detailSaved.value) {
+                    SelineButtonKind.Secondary
+                } else {
+                    SelineButtonKind.Ghost
+                }, compact: true)
             DownloadMenuButton(state)
         }.hug().fillWidth().padding(PAGE_PAD, 10.0, PAGE_PAD, 2.0)
         pageScrollView(scrollState: state.detailScroll) {

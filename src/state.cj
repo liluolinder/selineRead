@@ -314,6 +314,8 @@ class DetailSnapshot {
     let commentsVisible: Int64
     /** 当时选中的下载版本。 */
     let formatIndex: Int64
+    /** 当时是否已收藏。 */
+    let saved: Bool
 
     init(state: AppState) {
         this.id = state.detailId.value
@@ -343,6 +345,7 @@ class DetailSnapshot {
         this.commentsNextOffset = state.commentsNextOffset.value
         this.commentsVisible = state.commentsVisible.value
         this.formatIndex = state.detailFormatIndex.value
+        this.saved = state.detailSaved.value
     }
 }
 
@@ -473,13 +476,18 @@ class ProfileOutcome {
     let name: String
     let uid: String
     let quota: String
+    let today: Int64
+    let limit: Int64
     let error: String
 
-    init(ok: Bool, name: String, uid: String, quota: String, error: String) {
+    init(ok: Bool, name: String, uid: String, quota: String, today: Int64, limit: Int64,
+        error: String) {
         this.ok = ok
         this.name = name
         this.uid = uid
         this.quota = quota
+        this.today = today
+        this.limit = limit
         this.error = error
     }
 
@@ -487,9 +495,10 @@ class ProfileOutcome {
         try {
             let user = UserApi.profile(client)
             ProfileOutcome(true, user.name, "${user.id}",
-                "今日 ${user.downloadsToday}/${user.downloadsLimit}", "")
+                "今日 ${user.downloadsToday}/${user.downloadsLimit}",
+                user.downloadsToday, user.downloadsLimit, "")
         } catch (failure: ZlibError) {
-            ProfileOutcome(false, "", "", "", failure.detail)
+            ProfileOutcome(false, "", "", "", 0, 0, failure.detail)
         }
     }
 }
@@ -862,6 +871,10 @@ public class AppState {
     public let detailDescription = State<String>("")
     public let detailCover = State<String>("")
     public let detailLoading = State<Bool>(false)
+    /** 详情页「收藏」状态（来自详情接口的 _isUserSavedBook）。 */
+    public let detailSaved = State<Bool>(false)
+    /** 收藏请求进行中（防止连点）。 */
+    public let favoriteBusy = State<Bool>(false)
     public let detailError = State<String>("")
     public let detailFormats = State<ArrayList<BookFormat>>(ArrayList<BookFormat>())
     /** 当前详情页的 id / hash（下载要用）。 */
@@ -896,6 +909,12 @@ public class AppState {
     public let loggedIn = State<Bool>(false)
     public let accountName = State<String>("")
     public let accountId = State<String>("")
+    /** 今日已下载 / 每日上限（来自 /user/profile，账号页展示）。 */
+    public let quotaToday = State<Int64>(0)
+    public let quotaLimit = State<Int64>(0)
+    /** 是否已经成功拿到过配额（没拿到时不显示 0/0）。 */
+    public let quotaKnown = State<Bool>(false)
+    public let quotaLoading = State<Bool>(false)
     public let loginEmail = State<String>("")
     public let loginPassword = State<String>("")
     public let loginBusy = State<Bool>(false)
@@ -1113,6 +1132,9 @@ public class AppState {
         detailGeneration += 1
         detailOpen.value = false
         detailHistory.clear()
+        quotaKnown.value = false
+        quotaToday.value = 0
+        quotaLimit.value = 0
         loginMessage.value = "已切换到 ${entry.label()}"
         writeDebugLog("switched account -> ${entry.userId}")
         refreshProfile()
@@ -2104,6 +2126,8 @@ public class AppState {
         detailId.value = cell.id
         detailHash.value = cell.hash
         detailFormatIndex.value = 0
+        detailSaved.value = false
+        favoriteBusy.value = false
         comments.value = ArrayList<CommentCell>()
         commentsError.value = ""
         commentsDisabled.value = false
@@ -2187,6 +2211,7 @@ public class AppState {
                 detailExtension.value = info.extension
                 detailFilesize.value = info.filesizeString
                 detailCover.value = normalizeCoverUrl(info.cover, currentSite())
+                detailSaved.value = info.saved()
                 detailError.value = ""
             case None =>
                 detailError.value = "加载详情失败：${payload.error}"
@@ -2247,6 +2272,77 @@ public class AppState {
         commentsLoaded = false
         commentsLoading.value = false
         ensureCommentsLoaded()
+    }
+
+    /* -------------------------------------------------- 收藏 */
+
+    /**
+     * 详情页「收藏 / 取消收藏」。
+     *
+     * 收藏只需要 book id；失败时用 toast 说明原因（登录过期会被明确提示）。
+     * 成功后让「收藏」页下次进入时重新拉取。
+     */
+    public func toggleDetailFavorite(): Unit {
+        if (!loggedIn.value) {
+            showToastNow("收藏需要登录：请先在「账号」页登录")
+            return
+        }
+        if (detailLoading.value) {
+            showToastNow("正在获取中，请稍后")
+            return
+        }
+        if (favoriteBusy.value || detailId.value <= 0) {
+            return
+        }
+        let clientBox = match (this.client) {
+            case Some(value) => value
+            case None =>
+                showToastNow("客户端未就绪")
+                return
+        }
+        let id = detailId.value
+        let saving = !detailSaved.value
+        favoriteBusy.value = true
+        let _ = spawn {=>
+            try {
+                if (saving) {
+                    BookApi.save(clientBox.value, id)
+                } else {
+                    BookApi.unsave(clientBox.value, id)
+                }
+                postToUi({=>
+                    favoriteBusy.value = false
+                    // 请求期间换了书：不要改动当前详情页的收藏态
+                    if (detailId.value == id) {
+                        detailSaved.value = saving
+                    }
+                    invalidateFavorites()
+                    showToastNow(if (saving) { "已收藏" } else { "已取消收藏" })
+                })
+            } catch (failure: ZlibError) {
+                postToUi({=>
+                    favoriteBusy.value = false
+                    showToastNow("收藏失败：${friendlyErrorMessage(failure)}")
+                })
+            }
+        }
+    }
+
+    /** 收藏变了：收藏页下次进入时重新拉一次。 */
+    public func invalidateFavorites(): Unit {
+        favoritesLoaded = false
+        favoritesNextPage.value = 0
+        if (!favoritesLoading.value) {
+            favorites.value = ArrayList<BookCell>()
+        }
+    }
+
+    /** 验收用：延迟后点一次「收藏」按钮。 */
+    public func scheduleToggleFavoriteForTest(delayMs: Int64): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=> toggleDetailFavorite() })
+        }
     }
 
     public func reloadRelated(): Unit {
@@ -2349,6 +2445,8 @@ public class AppState {
         detailLoading.value = false
         detailError.value = ""
         detailFormatIndex.value = snapshot.formatIndex
+        detailSaved.value = snapshot.saved
+        favoriteBusy.value = false
         // 相关书籍 / 评论直接复用快照：不再清空重拉，返回时页面内容与滚动位置保持不变。
         detailRelated.value = snapshot.related
         detailRelatedError.value = ""
@@ -2616,6 +2714,10 @@ public class AppState {
         favoritesError.value = ""
         accountName.value = ""
         accountId.value = ""
+        quotaKnown.value = false
+        quotaToday.value = 0
+        quotaLimit.value = 0
+        quotaLoading.value = false
         loginMessage.value = "已退出登录"
         let site = match (this.client) {
             case Some(box) => box.value.currentSiteUrl()
@@ -2649,6 +2751,7 @@ public class AppState {
         }
         profileGeneration += 1
         let generation = profileGeneration
+        quotaLoading.value = true
         let _ = spawn {=>
             let outcome = ProfileOutcome.load(clientBox.value)
             postToUi({=> applyProfileOutcome(outcome, generation) })
@@ -2661,11 +2764,15 @@ public class AppState {
             writeDebugLog("drop stale profile: gen=${generation}")
             return
         }
+        quotaLoading.value = false
         if (!outcome.ok) {
             // 凭证失效（改密码/风控）时提示用户重新登录，但不静默清掉本地状态
             loginMessage.value = "账号状态失效：${outcome.error}"
             return
         }
+        quotaToday.value = outcome.today
+        quotaLimit.value = outcome.limit
+        quotaKnown.value = true
         if (!outcome.name.isEmpty()) {
             accountName.value = outcome.name
         }
