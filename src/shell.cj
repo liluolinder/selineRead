@@ -63,6 +63,11 @@ func appShell(state: AppState): Unit {
     }.alignment(Alignment.TopLeading).fillWidth().fillHeight()
 }
 
+
+
+
+
+
 /** 边缘缩放的感应带宽（逻辑像素）。 */
 private let RESIZE_EDGE_BAND: Float32 = 6.0
 
@@ -118,14 +123,11 @@ class WindowResizeEdges <: Widget {
         resizeDisplayScale = if (ctx.displayScale > Float32(0.1)) { ctx.displayScale } else { Float32(1.0) }
     }
 
-    public func draw(ctx: UiContext): Unit {
-        syncWindowResizeCursor(state, ctx)
-    }
+    public func draw(_: UiContext): Unit {}
 
     public func handle(ctx: UiContext, event: UiEvent): Bool {
         match (event) {
             case UiEvent.MouseMove(_, _) =>
-                syncWindowResizeCursor(state, ctx)
                 false
             case UiEvent.MouseDown(MouseButton.Left, x, y) =>
                 match (hitTest(x, y)) {
@@ -407,40 +409,6 @@ class ErrorToastOverlay <: Widget {
 
     public func acceptsStretch(_: Axis): Bool {
         false
-    }
-}
-/** 按当前鼠标位置（ctx 坐标，事件驱动，和 SDL 输入一致）同步边缘光标。 */
-func syncWindowResizeCursor(state: AppState, ctx: UiContext): Unit {
-    if (resizeWindowWidth <= Float32(1.0) || resizeWindowHeight <= Float32(1.0)) {
-        return
-    }
-    let mouseX = ctx.mouseX
-    let mouseY = ctx.mouseY
-    let inside = mouseX >= Float32(0.0) && mouseX <= resizeWindowWidth &&
-        mouseY >= Float32(0.0) && mouseY <= resizeWindowHeight
-    var mode: Int64 = 0
-    if (inside) {
-        let nearLeft = mouseX <= RESIZE_EDGE_BAND
-        let nearRight = resizeWindowWidth - mouseX <= RESIZE_EDGE_BAND
-        let nearTop = mouseY <= RESIZE_EDGE_BAND
-        let nearBottom = resizeWindowHeight - mouseY <= RESIZE_EDGE_BAND
-        if (nearLeft || nearRight) {
-            mode = 1
-        } else if (nearTop || nearBottom) {
-            mode = 2
-        }
-    }
-    if (mode == resizeCursorMode) {
-        return
-    }
-    resizeCursorMode = mode
-    let app = state.window()
-    if (mode == 1) {
-        app.useBaseCursor(SystemCursor.EwResize)
-    } else if (mode == 2) {
-        app.useBaseCursor(SystemCursor.NsResize)
-    } else {
-        app.useBaseCursor(SystemCursor.Default)
     }
 }
 /**
