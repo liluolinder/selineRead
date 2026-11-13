@@ -67,8 +67,10 @@ func displaySettings(state: AppState): Unit {
     }
 }
 
-/** 账号页：当前账号（含今日下载额度）+ 已保存账号列表。 */
+/** 账号页：一个列表管所有账号，当前账号高亮。 */
 func accountPage(state: AppState): Unit {
+    let theme = selineTheme()
+    let palette = theme.palette
     VStack(spacing: vp(0.0)) {
         pageHeader("账号", "", {=>
             SelineButton("添加账号", {=> state.openLoginDialog()}, glyph: "plus",
@@ -76,169 +78,108 @@ func accountPage(state: AppState): Unit {
         })
         pageScrollView(scrollState: state.accountScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
-                currentAccountCard(state)
-                savedAccountsCard(state)
-                sectionCard("说明") {
-                    Label("账号凭证保存在 ~/seline_read/accounts.json（配置在同目录 config.json），" +
-                        "不会上传；「默认账号」随应用启动自动登录。")
-                        .fontSize(selineTheme().fontCaption).muted().wrap()
-                }
+                VStack(spacing: vp(SELINE_SPACE_SM)) {
+                    if (state.accounts.value.isEmpty()) {
+                        HStack(spacing: vp(SELINE_SPACE_MD)) {
+                            AccountAvatar("", 44.0)
+                            VStack(spacing: vp(2.0)) {
+                                Label("还没有保存的账号").fontSize(theme.fontBody).bold()
+                                Label("点右上角「添加账号」登录 Z-Library")
+                                    .fontSize(theme.fontCaption).muted()
+                            }.hug()
+                            Spacer()
+                            SelineButton("登录", {=> state.openLoginDialog()},
+                                glyph: "person_fill", kind: SelineButtonKind.Secondary,
+                                compact: true)
+                        }.hug().fillWidth().padding(12.0)
+                    }
+                    for (entry in state.accounts.value) {
+                        accountRow(state, entry)
+                    }
+                }.hug().fillWidth()
             }.hug().fillWidth().padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
         }
     }.fillWidth().fillHeight()
 }
 
-/** 当前登录账号：头像 + 身份 + 今日下载额度。 */
-func currentAccountCard(state: AppState): Unit {
+/** 一条账号：头像 + 身份 + 当前账号的额度；当前项高亮（底色 + 强调色）。 */
+func accountRow(state: AppState, entry: AccountEntry): Unit {
     let theme = selineTheme()
     let palette = theme.palette
-    sectionCard("当前账号") {
-        if (state.loggedIn.value) {
-            VStack(spacing: vp(SELINE_SPACE_MD)) {
-                HStack(spacing: vp(SELINE_SPACE_MD)) {
-                    AccountAvatar(state.accountName.value, 48.0, accent: true)
-                    VStack(spacing: vp(2.0)) {
-                        Label(if (state.accountName.value.isEmpty()) {
-                            "已登录"
+    let isCurrent = state.loggedIn.value && state.accountId.value == entry.userId
+    VStack(spacing: vp(SELINE_SPACE_SM)) {
+        HStack(spacing: vp(SELINE_SPACE_MD)) {
+            AccountAvatar(entry.label(), 44.0, accent: isCurrent)
+            VStack(spacing: vp(2.0)) {
+                HStack(spacing: vp(SELINE_SPACE_XS)) {
+                    Label(entry.label()).fontSize(theme.fontBody).bold()
+                    if (entry.isDefault) {
+                        Label("默认").fontSize(theme.fontCaption)
+                            .foregroundColor(palette.accent)
+                    }
+                    if (isCurrent) {
+                        Label("当前").fontSize(theme.fontCaption)
+                            .foregroundColor(palette.accent)
+                    }
+                }.hug()
+                Label(if (entry.email.isEmpty()) {
+                    "uid ${entry.userId}"
+                } else {
+                    "${entry.email} · uid ${entry.userId}"
+                }).fontSize(theme.fontCaption).muted()
+            }.hug()
+            Spacer()
+            if (!isCurrent) {
+                SelineButton("切换", {=> state.switchToAccount(entry.userId)},
+                    glyph: "refresh", kind: SelineButtonKind.Secondary, compact: true)
+            }
+            if (!entry.isDefault) {
+                SelineButton("设为默认", {=> state.setDefaultAccount(entry.userId)},
+                    kind: SelineButtonKind.Ghost, compact: true)
+            }
+            // 当前账号也用「删除」：删掉当前账号会自动退出登录
+            SelineButton("删除", {=> state.removeAccount(entry.userId)},
+                glyph: "close", kind: SelineButtonKind.Ghost, compact: true)
+        }.hug().fillWidth()
+        if (isCurrent) {
+            // 当前账号的今日额度：数字 + 进度条 + 刷新
+            VStack(spacing: vp(6.0)) {
+                HStack(spacing: vp(SELINE_SPACE_SM)) {
+                    SelineIcon("download", size: 15.0, color: palette.accent)
+                    Label(if (state.quotaKnown.value) {
+                        "今日下载 ${state.quotaToday.value} / ${state.quotaLimit.value}"
+                    } else if (state.quotaLoading.value) {
+                        "正在获取额度…"
+                    } else {
+                        "今日下载 — / —"
+                    }).fontSize(theme.fontCaption).muted()
+                    if (state.quotaKnown.value && state.quotaLimit.value > 0) {
+                        let left = if (state.quotaLimit.value > state.quotaToday.value) {
+                            state.quotaLimit.value - state.quotaToday.value
                         } else {
-                            state.accountName.value
-                        }).fontSize(theme.fontHeading).bold()
-                        Label("uid ${state.accountId.value}").fontSize(theme.fontCaption).muted()
-                    }.hug()
+                            0
+                        }
+                        Label("剩余 ${left} 次").fontSize(theme.fontCaption).muted()
+                    }
                     Spacer()
                     SelineButton("刷新", {=> state.refreshProfile()}, glyph: "refresh",
                         kind: SelineButtonKind.Ghost, compact: true,
                         busy: state.quotaLoading.value)
                 }.hug().fillWidth()
-                downloadQuotaBlock(state)
-                HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    Spacer()
-                    SelineButton("退出登录", {=> state.logout()}, glyph: "person_fill",
-                        kind: SelineButtonKind.Ghost, compact: true)
-                }.hug().fillWidth()
-            }.hug().fillWidth()
-        } else {
-            HStack(spacing: vp(SELINE_SPACE_MD)) {
-                AccountAvatar("", 44.0)
-                VStack(spacing: vp(2.0)) {
-                    Label("未登录").fontSize(theme.fontBody).bold()
-                    Label("登录后可下载图书、收藏书籍").fontSize(theme.fontCaption).muted()
-                }.hug()
-                Spacer()
-                SelineButton("登录", {=> state.openLoginDialog()}, glyph: "person_fill",
-                    kind: SelineButtonKind.Secondary, compact: true)
-            }.hug().fillWidth()
-        }
-    }
-}
-
-/** 今日下载额度：数字 + 进度条 + 剩余次数。 */
-func downloadQuotaBlock(state: AppState): Unit {
-    let theme = selineTheme()
-    let palette = theme.palette
-    let today = state.quotaToday.value
-    let limit = state.quotaLimit.value
-    let known = state.quotaKnown.value
-    VStack(spacing: vp(8.0)) {
-        HStack(spacing: vp(SELINE_SPACE_SM)) {
-            SelineIcon("download", size: 16.0, color: palette.accent)
-            Label("今日下载额度").fontSize(theme.fontBody).bold()
-            Spacer()
-            if (state.quotaLoading.value) {
-                Label("获取中…").fontSize(theme.fontCaption).muted()
-            } else if (known) {
-                Label("${today} / ${limit}").fontSize(theme.fontBody).bold()
-            } else {
-                Label("—").fontSize(theme.fontBody).muted()
-            }
-        }.hug().fillWidth()
-        if (known && limit > 0) {
-            DownloadProgressBar(percent: Float32(today) / Float32(limit) * 100.0, height: 8.0,
-                track: palette.border)
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                let left = if (limit > today) { limit - today } else { 0 }
-                Label("剩余 ${left} 次").fontSize(theme.fontCaption).muted()
-                Spacer()
-                if (today >= limit) {
-                    Label("今日额度已用完，下载可能受限").fontSize(theme.fontCaption)
-                        .foregroundColor(palette.danger)
+                if (state.quotaKnown.value && state.quotaLimit.value > 0) {
+                    DownloadProgressBar(
+                        percent: Float32(state.quotaToday.value) /
+                            Float32(state.quotaLimit.value) * 100.0,
+                        height: 6.0, track: palette.border)
                 }
-            }.hug().fillWidth()
-        } else if (!state.quotaLoading.value) {
-            Label("点「刷新」从账号资料读取今日下载次数").fontSize(theme.fontCaption).muted()
+            }.hug().fillWidth().padding(10.0)
+                .background(palette.surfaceSunken, vp(8.0))
         }
     }.hug().fillWidth()
         .padding(12.0)
-        .background(palette.surfaceSunken, vp(10.0))
+        .background(if (isCurrent) { palette.accentSoft } else { palette.surfaceRaised },
+            vp(10.0))
 }
-
-/** 已保存账号列表（多账号）。 */
-func savedAccountsCard(state: AppState): Unit {
-    let theme = selineTheme()
-    sectionCard("已保存的账号") {
-        VStack(spacing: vp(SELINE_SPACE_SM)) {
-            Label("「默认账号」启动时自动登录，其它账号可随时切换。")
-                .fontSize(theme.fontCaption).muted().wrap()
-            if (state.accounts.value.isEmpty()) {
-                Label("还没有保存的账号").fontSize(theme.fontBody).muted()
-            }
-            for (entry in state.accounts.value) {
-                accountRow(state, entry)
-            }
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                Spacer()
-                SelineButton("添加账号", {=> state.openLoginDialog()}, glyph: "plus",
-                    kind: SelineButtonKind.Ghost, compact: true)
-            }.hug().fillWidth()
-        }.hug().fillWidth()
-    }
-}
-
-/** 一条账号：头像 + 名称 + 默认/当前标记 + 额度 + 切换/删除。 */
-func accountRow(state: AppState, entry: AccountEntry): Unit {
-    let theme = selineTheme()
-    let palette = theme.palette
-    let isCurrent = state.loggedIn.value && state.accountId.value == entry.userId
-    HStack(spacing: vp(SELINE_SPACE_MD)) {
-        AccountAvatar(entry.label(), 40.0, accent: isCurrent)
-        VStack(spacing: vp(2.0)) {
-            HStack(spacing: vp(SELINE_SPACE_XS)) {
-                Label(entry.label()).fontSize(theme.fontBody).bold()
-                if (entry.isDefault) {
-                    Label("默认").fontSize(theme.fontCaption)
-                        .foregroundColor(palette.accent)
-                }
-                if (isCurrent) {
-                    Label("当前").fontSize(theme.fontCaption)
-                        .foregroundColor(palette.success)
-                }
-            }.hug()
-            Label(if (entry.email.isEmpty()) {
-                "uid ${entry.userId}"
-            } else {
-                "${entry.email} · uid ${entry.userId}"
-            }).fontSize(theme.fontCaption).muted()
-            if (isCurrent && state.quotaKnown.value) {
-                Label("今日已下载 ${state.quotaToday.value} / ${state.quotaLimit.value}")
-                    .fontSize(theme.fontCaption).foregroundColor(palette.accent)
-            }
-        }.hug()
-        Spacer()
-        if (!entry.isDefault) {
-            SelineButton("设为默认", {=> state.setDefaultAccount(entry.userId)},
-                kind: SelineButtonKind.Ghost, compact: true)
-        }
-        if (!isCurrent) {
-            SelineButton("切换", {=> state.switchToAccount(entry.userId)},
-                glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true)
-        }
-        SelineButton("删除", {=> state.removeAccount(entry.userId)},
-            glyph: "close", kind: SelineButtonKind.Ghost, compact: true)
-    }.hug().fillWidth()
-        .padding(10.0)
-        .background(palette.surfaceSunken, vp(10.0))
-}
-
 /** 圆形账号头像：取名字首字，没有名字就画人形图标。 */
 class AccountAvatar <: Widget {
     private let name: String
