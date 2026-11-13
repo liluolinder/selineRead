@@ -1155,6 +1155,8 @@ public class AppState {
         loginMessage.value = "已切换到 ${entry.label()}"
         writeDebugLog("switched account -> ${entry.userId}")
         refreshProfile()
+        // 换号后首页推荐也应跟着账号变
+        reloadPopular()
     }
 
     /** 从列表删除账号；删的是当前账号就退出登录。 */
@@ -1549,15 +1551,31 @@ public class AppState {
 
     /* -------------------------------------------------- 热门 */
 
+    /**
+     * 首页书墙数据源：登录后用「个性化推荐」，未登录或推荐接口失败回退「热门」。
+     *
+     * 两个接口返回的都是精简列表（id/hash/标题/作者/封面），卡片点击后再补详情。
+     */
+    private func fetchLandingBriefs(clientValue: ZlibClient): (ArrayList<BookInfoBrief>, String) {
+        if (loggedIn.value) {
+            try {
+                return (UserApi.recommended(clientValue), "个性化推荐")
+            } catch (_: ZlibError) {
+                () // 未登录态/接口受限：静默回退热门
+            }
+        }
+        (SearchApi.mostPopular(clientValue), "热门")
+    }
+
     private func loadPopularBlocking(clientValue: ZlibClient): Unit {
         loading.value = true
         try {
-            let briefs = SearchApi.mostPopular(clientValue)
+            let (briefs, sourceLabel) = fetchLandingBriefs(clientValue)
             popular.value = cellsFromBriefs(briefs, clientValue.currentSiteUrl())
             popularVisible.value = 12
-            status.value = "热门 ${popular.value.size} 本 · ${clientValue.currentSiteUrl()}"
+            status.value = "${sourceLabel} ${popular.value.size} 本 · ${clientValue.currentSiteUrl()}"
             error.value = ""
-            writeDebugLog("popular loaded: ${popular.value.size}")
+            writeDebugLog("popular loaded: ${popular.value.size} (${sourceLabel})")
         } catch (failure: ZlibError) {
             error.value = "加载热门失败：${friendlyErrorMessage(failure)}"
             status.value = "加载失败"
@@ -1592,12 +1610,12 @@ public class AppState {
         error.value = ""
         let _ = spawn {=>
             try {
-                let briefs = SearchApi.mostPopular(clientBox.value)
+                let (briefs, sourceLabel) = fetchLandingBriefs(clientBox.value)
                 let cells = cellsFromBriefs(briefs, clientBox.value.currentSiteUrl())
                 postToUi({=>
                     popular.value = cells
                     popularVisible.value = 12
-                    status.value = "热门 ${cells.size} 本 · ${clientBox.value.currentSiteUrl()}"
+                    status.value = "${sourceLabel} ${cells.size} 本 · ${clientBox.value.currentSiteUrl()}"
                     loading.value = false
                     error.value = ""
                 })
@@ -2770,6 +2788,8 @@ public class AppState {
         loginPassword.value = ""
         loginMessage.value = "登录成功"
         refreshProfile()
+        // 登录后首页从「热门」换成「个性化推荐」
+        reloadPopular()
         triggerAutoDownload()
     }
 
@@ -2825,6 +2845,8 @@ public class AppState {
             ZlibClient.create()
         }
         this.client = Some(ClientBox(anonymous))
+        // 回到游客态：首页换回热门
+        reloadPopular()
     }
 
     /** 拉一次 `/user/profile`，补全昵称与下载配额。 */
