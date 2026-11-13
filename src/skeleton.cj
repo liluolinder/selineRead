@@ -101,7 +101,7 @@ class SkeletonBookCard <: Widget {
 
 /** 书籍网格骨架。 */
 func bookSkeletonGrid(count!: Int64 = 12): Unit {
-    AdaptiveGrid(180.0, minColumns: 2, maxColumns: 6) {
+    AdaptiveGrid(176.0, minColumns: 2, maxColumns: 10) {
         var index: Int64 = 0
         while (index < count) {
             SkeletonBookCard()

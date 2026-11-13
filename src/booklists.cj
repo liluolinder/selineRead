@@ -36,7 +36,7 @@ func booklistsPage(state: AppState): Unit {
                     if (failed) {
                         state.toastIfChanged(state.booklistsError.value)
                     }
-                    AdaptiveGrid(360.0, minColumns: 2, maxColumns: 3) {
+                    AdaptiveGrid(340.0, minColumns: 2, maxColumns: 5) {
                         for (cell in state.booklists.value) {
                             BooklistCard(state, cell)
                         }

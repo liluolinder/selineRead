@@ -221,6 +221,8 @@ main(args: Array<String>): Int64 {
             writeDebugLog("window icon: asset missing")
         }
         state.attach(app)
+        // 窗口摆到主显示器可用区域正中（以前由系统默认放在右下角）
+        centerWindowOnDisplay(app, options)
         // 启动第二步：窗口已经能显示，网络（建客户端/首屏）放到后台补
         state.startBackgroundBootstrap()
         // 启动期验收/诊断探针（仅 debug 构建编译进去）
@@ -304,6 +306,32 @@ func fitWindowToDisplay(width: Float32, height: Float32): (Float32, Float32) {
         (width, height)
     }
 }
+/** 把窗口摆到主显示器可用区域的正中（坐标是物理像素）。 */
+func centerWindowOnDisplay(app: DesktopApp, options: LaunchOptions): Unit {
+    try {
+        let info = primaryDisplayInfo()
+        let scale = if (info.geometry.contentScale > Float32(0.1)) {
+            info.geometry.contentScale
+        } else {
+            Float32(1.0)
+        }
+        let (logicalW, logicalH) = if (options.plainWindow) {
+            fitWindowToDisplay(1200.0, 780.0)
+        } else {
+            fitWindowToDisplay(1280.0, 820.0)
+        }
+        let windowW = Float32(Int32(logicalW)) * scale
+        let windowH = Float32(Int32(logicalH)) * scale
+        let area = info.geometry.usableBounds
+        let x = Int32(area.x + (area.w - windowW) * Float32(0.5))
+        let y = Int32(area.y + (area.h - windowH) * Float32(0.5))
+        app.setWindowPosition(x, y)
+        writeDebugLog("window centered: (${x}, ${y}) window=${windowW}x${windowH} area=${area.w}x${area.h}")
+    } catch (_: Exception) {
+        ()
+    }
+}
+
 func windowSpecFor(options: LaunchOptions): WindowSpec {
     if (options.plainWindow) {
         let (plainW, plainH) = fitWindowToDisplay(1200.0, 780.0)

@@ -61,7 +61,7 @@ func bookGrid(state: AppState, items: ArrayList<BookCell>, limit!: Int64 = -1): 
     }
     let total = Int64(items.size)
     let count = if (limit > 0 && limit < total) { limit } else { total }
-    AdaptiveGrid(180.0, minColumns: 2, maxColumns: 6) {
+    AdaptiveGrid(176.0, minColumns: 2, maxColumns: 10) {
         var index: Int64 = 0
         for (item in items) {
             if (index >= count) {
