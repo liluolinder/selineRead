@@ -1,2 +1,5 @@
 target/
 *.log
+
+# 打包产物（由 scripts/package_release.ps1 生成）
+dist/
