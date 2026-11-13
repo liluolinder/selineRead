@@ -1,4 +1,4 @@
-﻿# 打包一个「双击即可运行」的 Windows release。
+# 打包一个「双击即可运行」的 Windows release。
 #
 # 产出：
 #   dist\SelineRead-<version>-win64\      （可直接拷走的目录）
@@ -56,6 +56,20 @@ function Copy-Needed([string]$source, [string]$targetName = "") {
 
 # 主程序（改个像样的名字；资源按 exe 同目录的 assets\ 解析，与文件名无关）
 Copy-Needed (Join-Path $bin "main.exe") "SelineRead.exe"
+
+# 嵌入 exe 图标（资源管理器/任务栏显示；运行时窗口图标仍由 SDL 设置）
+$iconPng = Join-Path $root "assets\SR.png"
+$embedPy = Join-Path $PSScriptRoot "embed_icon.py"
+if ((Test-Path $iconPng) -and (Test-Path $embedPy)) {
+    try {
+        & python $embedPy (Join-Path $stage "SelineRead.exe") $iconPng
+        if ($LASTEXITCODE -ne 0) { Write-Warning "icon embed failed (exit $LASTEXITCODE)" }
+    } catch {
+        Write-Warning ("icon embed failed: " + $_.Exception.Message)
+    }
+} else {
+    Write-Warning "skip icon: assets\SR.png or scripts\embed_icon.py missing"
+}
 
 # 仓颉运行时
 Copy-Needed (Join-Path $runtime "libcangjie-runtime.dll")

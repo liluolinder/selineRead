@@ -1352,7 +1352,7 @@ public class AppState {
         let books = Path(profile).join("Downloads").join("SelineRead").toString()
         downloadDir.value = books
         // 随 exe 分发的资源：应用图标 / 默认封面
-        iconAsset = findAsset("zlib.png")
+        iconAsset = findAsset("SR.png")
         placeholderAsset = findAsset("default_cover.png")
         writeDebugLog("assets: icon=${iconAsset} placeholder=${placeholderAsset}")
     }
