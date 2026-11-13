@@ -207,7 +207,7 @@ main(args: Array<String>): Int64 {
                 Some(DesktopCaptureRequest(options.shotPath, settleFrames: options.settleFrames))
             }
         )
-        app.setMinimumSize(1000, 680)
+        app.setMinimumSize(900, 600)
         // 任务栏/窗口图标：从 assets/SR.png 读入 PNG Surface
         let iconPath = state.iconPath()
         if (!iconPath.isEmpty()) {
@@ -235,6 +235,7 @@ main(args: Array<String>): Int64 {
             // 静态页面交给 chui 的脏帧机制，避免空转重绘整棵树（首页 100 张卡
             // 每帧重绘会直接吃满 CPU）。
             FrameHandler(onFrame: {info =>
+
                 railAdvance(state, Float32(info.deltaMs))
                 perf.onFrame(Float32(info.deltaMs))
             }, keepsAlive: {=>
@@ -266,14 +267,53 @@ main(args: Array<String>): Int64 {
 }
 
 /** 窗口规格：默认无边框 + 透明圆角（自绘标题栏）；`--plain-window` 用系统边框做诊断。 */
+/**
+ * 把窗口默认尺寸收敛到「显示器可用区域」内（逻辑像素）。
+ *
+ * 高分屏（如 150%/200% 缩放）下 1280x820 的逻辑尺寸会换算成超过屏幕物理尺寸的
+ * 窗口，底部/右侧被裁掉；这里按 `可用物理尺寸 / DPI 缩放` 算出可用逻辑尺寸，
+ * 留 6% 边距后取较小值。查不到显示器信息时退回原尺寸。
+ */
+func fitWindowToDisplay(width: Float32, height: Float32): (Float32, Float32) {
+    try {
+        let info = primaryDisplayInfo()
+        let scale = if (info.geometry.contentScale > Float32(0.1)) {
+            info.geometry.contentScale
+        } else {
+            Float32(1.0)
+        }
+        let usableW = info.geometry.usableBounds.w / scale
+        let usableH = info.geometry.usableBounds.h / scale
+        if (usableW <= Float32(1.0) || usableH <= Float32(1.0)) {
+            return (width, height)
+        }
+        let margin: Float32 = Float32(0.94)
+        var fitW = width
+        var fitH = height
+        let maxW = usableW * margin
+        let maxH = usableH * margin
+        if (fitW > maxW) {
+            fitW = maxW
+        }
+        if (fitH > maxH) {
+            fitH = maxH
+        }
+        writeDebugLog("window fit: usable=${usableW}x${usableH} logical -> ${fitW}x${fitH}")
+        (fitW, fitH)
+    } catch (_: Exception) {
+        (width, height)
+    }
+}
 func windowSpecFor(options: LaunchOptions): WindowSpec {
     if (options.plainWindow) {
-        return WindowSpec("Seline Read", 1200, 780, resizable: true,
+        let (plainW, plainH) = fitWindowToDisplay(1200.0, 780.0)
+        return WindowSpec("Seline Read", Int32(plainW), Int32(plainH), resizable: true,
             frameless: false, decorated: true, transparent: false, cornerRadius: 0.0,
             scaling: Some(WindowScaleSettings(followSystem: true, zoom: 1.0)),
             supersample: 1, vsync: true)
     }
-    WindowSpec("Seline Read", 1280, 820,
+    let (fitW, fitH) = fitWindowToDisplay(1280.0, 820.0)
+    WindowSpec("Seline Read", Int32(fitW), Int32(fitH),
         // 自绘标题栏：系统不能再画一条
         frameless: true,
         cornerRadius: WINDOW_CORNER_RADIUS,
@@ -307,3 +347,4 @@ func resolveFallbackFont(): ?String {
     }
     None<String>
 }
+
