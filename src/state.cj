@@ -30,6 +30,13 @@ import zlibraryAPI4CJ.core.*
 import stdx.encoding.json.*
 import selineDownload.*
 
+/** toast 语义：决定图标与颜色。 */
+public enum ToastKind {
+    | Info
+    | Success
+    | Error
+}
+
 /**
  * 网格里的一本书（列表项的 ViewModel）。
  *
@@ -858,6 +865,8 @@ public class AppState {
     private var profileGeneration: Int64 = 0
     /** 右下角 toast：当前文案（空 = 不显示）。 */
     public let toastText = State<String>("")
+    /** toast 语义：决定图标与颜色（信息/成功/错误）。 */
+    public let toastKind = State<ToastKind>(ToastKind.Info)
     /** toast 的弹出弹簧（应用持有，跨帧稳定）。 */
     public let toastSpring = Spring(0.0, stiffness: 260.0, damping: 26.0)
     private var toastSeq: Int64 = 0
@@ -2297,7 +2306,7 @@ public class AppState {
         let clientBox = match (this.client) {
             case Some(value) => value
             case None =>
-                showToastNow("客户端未就绪")
+                showToastNow("客户端未就绪", kind: ToastKind.Error)
                 return
         }
         let id = detailId.value
@@ -2317,12 +2326,13 @@ public class AppState {
                         detailSaved.value = saving
                     }
                     invalidateFavorites()
-                    showToastNow(if (saving) { "已收藏" } else { "已取消收藏" })
+                    showToastNow(if (saving) { "已收藏" } else { "已取消收藏" },
+                kind: if (saving) { ToastKind.Success } else { ToastKind.Info })
                 })
             } catch (failure: ZlibError) {
                 postToUi({=>
                     favoriteBusy.value = false
-                    showToastNow("收藏失败：${friendlyErrorMessage(failure)}")
+                    showToastNow("收藏失败：${friendlyErrorMessage(failure)}", kind: ToastKind.Error)
                 })
             }
         }
@@ -3208,14 +3218,15 @@ public class AppState {
 
     /* -------------------------------------------------- Toast */
 
-    /** 弹一条 toast（右下角），3.2 秒后自动消失。 */
-    public func showToast(text: String): Unit {
+    /** 弹一条 toast（右下角），3.2 秒后自动消失；`kind` 决定图标与颜色。 */
+    public func showToast(text: String, kind!: ToastKind = ToastKind.Info): Unit {
         if (text.isEmpty()) {
             return
         }
         toastSeq += 1
         let seq = toastSeq
         toastText.value = text
+        toastKind.value = kind
         toastSpring.reset(0.0)
         writeDebugLog("toast: ${text}")
         let _ = spawn {=>
@@ -3244,7 +3255,7 @@ public class AppState {
         lastToastedText = text
         let copy = text
         let _ = spawn {=>
-            postToUi({=> showToast(copy) })
+            postToUi({=> showToast(copy, kind: ToastKind.Error) })
         }
     }
 
@@ -3254,9 +3265,27 @@ public class AppState {
      * `toastIfChanged` 是给"页面错误态"用的：同一句话只弹一次。
      * 用户主动点按钮（如未登录点下载）每次都应该有反馈，用这个。
      */
-    public func showToastNow(text: String): Unit {
+    public func showToastNow(text: String, kind!: ToastKind = ToastKind.Info): Unit {
         lastToastedText = text
-        showToast(text)
+        showToast(text, kind: kind)
+    }
+
+    /** 验收用：延时弹一条指定语义的 toast（截图/联调用）。 */
+    public func showToastAfterForTest(delayMs: Int64, text: String, kind!: ToastKind): Unit {
+        let _ = spawn {=>
+            sleep(delayMs * Duration.millisecond)
+            postToUi({=> showToastNow(text, kind: kind) })
+        }
+    }
+
+    /** 验收用：循环弹同一条 toast，保证截图时一定能拍到。 */
+    public func startToastLoopForTest(text: String, kind!: ToastKind): Unit {
+        let _ = spawn {=>
+            while (true) {
+                sleep(1200 * Duration.millisecond)
+                postToUi({=> showToastNow(text, kind: kind) })
+            }
+        }
     }
 
     /** 点击/切换页面时立即收起 toast。 */
@@ -3621,7 +3650,7 @@ public class AppState {
             detailTitle.value
         }
         let taskId = startDownload(target.id, target.hash, title, cover: detailCover.value)
-        showToastNow("已加入下载队列（${taskId}）")
+        showToastNow("已加入下载队列（${taskId}）", kind: ToastKind.Success)
         detailError.value = ""
     }
 

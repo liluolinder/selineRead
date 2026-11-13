@@ -346,6 +346,16 @@ main(args: Array<String>): Int64 {
         if (!downloadBookMs.isEmpty()) {
             state.scheduleDownloadBookForTest(Int64.parse(downloadBookMs))
         }
+        // 验收用：SELINE_READ_TOAST_TEST=info|success|error，启动后弹一条对应语义的 toast
+        let toastTest = getVariable("SELINE_READ_TOAST_TEST") ?? ""
+        if (!toastTest.isEmpty()) {
+            let (text, kind) = match (toastTest) {
+                case "success" => ("已加入下载队列（5731855-1）", ToastKind.Success)
+                case "error" => ("收藏失败：网络连接不可用", ToastKind.Error)
+                case _ => ("正在获取中，请稍后", ToastKind.Info)
+            }
+            state.startToastLoopForTest(text, kind: kind)
+        }
         let favoriteMs = getVariable("SELINE_READ_FAVORITE_MS") ?? ""
         if (!favoriteMs.isEmpty()) {
             state.scheduleToggleFavoriteForTest(Int64.parse(favoriteMs))

@@ -210,9 +210,20 @@ class ErrorToastOverlay <: Widget {
             border: palette.borderStrong.withAlpha(a),
             shadow: palette.shadow.withAlpha(Int64(Float32(palette.shadow.a) * alpha)),
             shadowSpread: 16.0, shadowOffsetY: 3.0)
-        drawGlyph(ctx.renderer, "warn",
+        // 图标/颜色跟随 toast 语义：成功=绿勾，错误=红叹号，信息=蓝叹号
+        let kind = state.toastKind.value
+        let glyph = match (kind) {
+            case ToastKind.Success => "check"
+            case _ => "warn"
+        }
+        let tone = match (kind) {
+            case ToastKind.Success => palette.success
+            case ToastKind.Error => palette.danger
+            case ToastKind.Info => palette.info
+        }
+        drawGlyph(ctx.renderer, glyph,
             Rect(box.x + 14.0, box.y + (box.h - 16.0) * 0.5, 16.0, 16.0),
-            palette.danger.withAlpha(a), 1.0)
+            tone.withAlpha(a), 1.0)
         var y = box.y + 12.0
         for (line in lines) {
             paintText(ctx.renderer, line,
