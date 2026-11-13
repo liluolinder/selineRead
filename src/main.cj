@@ -325,6 +325,14 @@ main(args: Array<String>): Int64 {
         if (!popularIndexEnv.isEmpty()) {
             state.openPopularForTest(Int64.parse(popularIndexEnv))
         }
+        let searchIndexEnv = getVariable("SELINE_READ_OPEN_SEARCH_INDEX") ?? ""
+        if (!searchIndexEnv.isEmpty()) {
+            state.openSearchResultForTest(Int64.parse(searchIndexEnv))
+        }
+        let favIndexEnv = getVariable("SELINE_READ_OPEN_FAVORITE_INDEX") ?? ""
+        if (!favIndexEnv.isEmpty()) {
+            state.openFavoriteForTest(Int64.parse(favIndexEnv))
+        }
         if (!options.bookTarget.isEmpty()) {
             let parts = options.bookTarget.split("|")
             if (parts.size >= 2) {

@@ -50,15 +50,23 @@ public class BookCell {
     public let author: String
     public let cover: String
     public let meta: String
+    /**
+     * 列表接口顺带返回的完整书籍信息（搜索/收藏的接口本身就给全量字段）。
+     *
+     * 有它时详情页可以直接渲染，不必再请求一次 `/book/{id}/{hash}`；
+     * 热门/相似这类「精简列表」没有该值，走网络补详情。
+     */
+    public let info: ?BookInfo
 
     public init(id: Int64, hash: String, title: String, author: String, cover: String,
-        meta: String) {
+        meta: String, info!: ?BookInfo = None) {
         this.id = id
         this.hash = hash
         this.title = title
         this.author = author
         this.cover = cover
         this.meta = meta
+        this.info = info
     }
 }
 
@@ -751,7 +759,7 @@ func cellsFromBooks(books: ArrayList<BookInfo>, siteUrl: String): ArrayList<Book
             "${book.extension} · ${book.filesizeString}"
         }
         cells.add(BookCell(book.id, book.hash, book.title, author,
-            normalizeCoverUrl(book.cover, siteUrl), meta))
+            normalizeCoverUrl(book.cover, siteUrl), meta, info: Some(book)))
     }
     cells
 }
@@ -2174,9 +2182,23 @@ public class AppState {
         let generation = detailGeneration
         let id = cell.id
         let hash = cell.hash
-        let _ = spawn {=>
-            let payload = DetailPayload.load(clientBox.value, id, hash)
-            postToUi({=> applyDetailPayload(payload, generation) })
+        match (cell.info) {
+            case Some(info) =>
+                // 搜索/收藏接口本来就返回完整书籍信息：直接渲染，不再请求详情。
+                writeDebugLog("detail: from list (no fetch) id=${id}")
+                // 只后台补「可选格式」（下载版本菜单需要，详情页本身不需要）。
+                applyBookInfo(info)
+                detailLoading.value = false
+                let _ = spawn {=>
+                    let formats = loadFormatsSafely(clientBox.value, id, hash)
+                    postToUi({=> applyDetailFormats(formats, generation) })
+                }
+            case None =>
+                writeDebugLog("detail: fetch required id=${id}")
+                let _ = spawn {=>
+                    let payload = DetailPayload.load(clientBox.value, id, hash)
+                    postToUi({=> applyDetailPayload(payload, generation) })
+                }
         }
     }
 
@@ -2193,40 +2215,62 @@ public class AppState {
         }
         match (payload.info) {
             case Some(info) =>
-                detailTitle.value = info.title
-                var author = ""
-                if (let Some(value) <- info.author) {
-                    author = value
-                }
-                detailAuthor.value = author
-                detailMeta.value = "${info.extension} · ${info.filesizeString}"
-                detailDescription.value = info.description
-                detailYear.value = if (info.year > 0) { info.year.toString() } else { "" }
-                detailPublisher.value = match (info.publisher) {
-                    case Some(value) => value
-                    case None => ""
-                }
-                detailIdentifier.value = match (info.identifier) {
-                    case Some(value) => value
-                    case None => ""
-                }
-                detailLanguage.value = info.language
-                detailPages.value = if (info.pages > 0) { info.pages.toString() } else { "" }
-                detailEdition.value = match (info.edition) {
-                    case Some(value) => value
-                    case None => ""
-                }
-                detailSeries.value = info.series
-                detailExtension.value = info.extension
-                detailFilesize.value = info.filesizeString
-                detailCover.value = normalizeCoverUrl(info.cover, currentSite())
-                detailSaved.value = info.saved()
-                detailError.value = ""
+                applyBookInfo(info)
             case None =>
                 detailError.value = "加载详情失败：${payload.error}"
         }
         detailFormats.value = payload.formats
         detailLoading.value = false
+    }
+
+    /** 把一本书的完整信息写进详情页 State（列表已经带全量数据时直接渲染）。 */
+    private func applyBookInfo(info: BookInfo): Unit {
+        detailTitle.value = info.title
+        var author = ""
+        if (let Some(value) <- info.author) {
+            author = value
+        }
+        detailAuthor.value = author
+        detailMeta.value = "${info.extension} · ${info.filesizeString}"
+        detailDescription.value = info.description
+        detailYear.value = if (info.year > 0) { info.year.toString() } else { "" }
+        detailPublisher.value = match (info.publisher) {
+            case Some(value) => value
+            case None => ""
+        }
+        detailIdentifier.value = match (info.identifier) {
+            case Some(value) => value
+            case None => ""
+        }
+        detailLanguage.value = info.language
+        detailPages.value = if (info.pages > 0) { info.pages.toString() } else { "" }
+        detailEdition.value = match (info.edition) {
+            case Some(value) => value
+            case None => ""
+        }
+        detailSeries.value = info.series
+        detailExtension.value = info.extension
+        detailFilesize.value = info.filesizeString
+        detailCover.value = normalizeCoverUrl(info.cover, currentSite())
+        detailSaved.value = info.saved()
+        detailError.value = ""
+    }
+
+    /** 拉「可选格式」：失败时返回空列表（详情页本身不受影响）。 */
+    private func loadFormatsSafely(client: ZlibClient, id: Int64, hash: String): ArrayList<BookFormat> {
+        try {
+            BookApi.formats(client, id, hash)
+        } catch (_: ZlibError) {
+            ArrayList<BookFormat>()
+        }
+    }
+
+    /** 后台补「可选格式」的结果（列表已给详情时只差这一项）。 */
+    private func applyDetailFormats(formats: ArrayList<BookFormat>, generation: Int64): Unit {
+        if (generation != detailGeneration) {
+            return
+        }
+        detailFormats.value = formats
     }
 
     /** 详情页分段切换：评论/相关书籍第一次点开才加载。 */
@@ -2415,6 +2459,39 @@ public class AppState {
             return
         }
         openBook(popular.value[index])
+    }
+
+    /** 验收用：等搜索结果出来后打开第 index 本。 */
+    public func openSearchResultForTest(index: Int64): Unit {
+        let _ = spawn {=>
+            var tries: Int64 = 0
+            while (tries < 240) {
+                sleep(50 * Duration.millisecond)
+                tries += 1
+                postToUi({=>
+                    if (!detailOpen.value && results.value.size > index) {
+                        openBook(results.value[index])
+                    }
+                })
+            }
+        }
+    }
+
+    /** 验收用：切到收藏页，等收藏加载完后打开第 index 本。 */
+    public func openFavoriteForTest(index: Int64): Unit {
+        tab.value = TAB_FAVORITES
+        let _ = spawn {=>
+            var tries: Int64 = 0
+            while (tries < 200) {
+                sleep(50 * Duration.millisecond)
+                tries += 1
+                postToUi({=>
+                    if (!detailOpen.value && favorites.value.size > index) {
+                        openBook(favorites.value[index])
+                    }
+                })
+            }
+        }
     }
 
     /** 关闭详情页，回到来处。 */
@@ -3334,6 +3411,10 @@ public class AppState {
         let _ = spawn {=>
             try {
                 let page = UserApi.saved(clientBox.value, page: target, limit: 20)
+                // 收藏接口的元素不带 `_isUserSavedBook`，但这个列表本身就是已收藏
+                for (book in page.books) {
+                    book.isUserSavedBook = Some(true)
+                }
                 let cells = cellsFromBooks(page.books, clientBox.value.currentSiteUrl())
                 writeDebugLog("favorites loaded: page=${target} count=${cells.size} " +
                     "current=${page.pagination.current} total=${page.pagination.totalItems}")
