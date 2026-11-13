@@ -173,10 +173,12 @@ class WindowResizeEdges <: Widget {
                 if (bottom) { newH = startHeight + dLogY }
                 if (newW < 900.0) { newW = 900.0 }
                 if (newH < 600.0) { newH = 600.0 }
+                // 位置只跟随**实际**尺寸变化（不是原始拖动量）：
+                // 尺寸被最小尺寸夹住后，这条边就不再跟手，窗口也不能继续被拖走。
                 var newPosX = startPosX
                 var newPosY = startPosY
-                if (left) { newPosX = startPosX + Int32(dLogX * scale) }
-                if (top) { newPosY = startPosY + Int32(dLogY * scale) }
+                if (left) { newPosX = startPosX + Int32((startWidth - newW) * scale) }
+                if (top) { newPosY = startPosY + Int32((startHeight - newH) * scale) }
                 let wInt = Int32(newW)
                 let hInt = Int32(newH)
                 let px = newPosX
