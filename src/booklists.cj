@@ -105,13 +105,15 @@ class BooklistCard <: Widget {
         let fill = if (hovered) { palette.surfaceHover } else { palette.surfaceRaised }
         paintSurface(ctx.renderer, frame, fill, BOOKLIST_CARD_RADIUS)
         // 左侧预览封面（最多 3 张）
+        // 垂直居中：上下留白相等（之前固定贴顶，底部空 36px、顶部只有 10px，
+        // 看起来封面整体偏上、和右侧文字也不对齐）
+        let coverTop = frame.y + (frame.h - BOOKLIST_PREVIEW_H) * 0.5
         let coverCount = if (cell.covers.size > 3) { 3 } else { cell.covers.size }
         var index: Int64 = 0
         while (index < coverCount) {
             let x = frame.x + BOOKLIST_CARD_PAD +
                 Float32(index) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP)
-            let cover = Rect(x, frame.y + BOOKLIST_CARD_PAD, BOOKLIST_PREVIEW_W,
-                BOOKLIST_PREVIEW_H)
+            let cover = Rect(x, coverTop, BOOKLIST_PREVIEW_W, BOOKLIST_PREVIEW_H)
             drawBookCover(ctx, state, cell.covers[index], cover, 6.0)
             index += 1
         }
