@@ -11,6 +11,8 @@ import chui.*
 import zlibraryAPI4CJ.core.*
 import seline_ui.*
 
+let BOOK_CELL_W: Float32 = 167.0
+
 /** 热门页：页头 + 自适应网格。 */
 func homePage(state: AppState): Unit {
     // 首页不要页头、不要常驻刷新按钮：直接一墙封面。
@@ -58,7 +60,7 @@ func bookGrid(state: AppState, items: ArrayList<BookCell>, limit!: Int64 = -1): 
     }
     let total = Int64(items.size)
     let count = if (limit > 0 && limit < total) { limit } else { total }
-    AdaptiveGrid(176.0, minColumns: 2, maxColumns: 10) {
+    AdaptiveGrid(BOOK_CELL_W, minColumns: 2, maxColumns: 10) {
         var index: Int64 = 0
         for (item in items) {
             if (index >= count) {
@@ -74,6 +76,10 @@ func bookGrid(state: AppState, items: ArrayList<BookCell>, limit!: Int64 = -1): 
 
 /** 卡片圆角；封面圆角 = 卡片圆角 - 内边距，两段圆弧才同心。 */
 let BOOK_CARD_RADIUS: Float32 = 14.0
+/**
+ * 卡片列宽（见书单页同名注释）：167 让侧栏收起/展开都是 6 列，
+ * 切换侧栏时列表不会重排、也不会有一批新卡片进入视口触发文字首绘。
+ */
 let BOOK_CARD_PAD: Float32 = 8.0
 
 /** 一本书的卡片。 */

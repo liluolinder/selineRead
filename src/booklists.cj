@@ -12,6 +12,8 @@ import chui.*
 import seline_ui.*
 import zlibraryAPI4CJ.core.*
 
+let BOOKLIST_CELL_W: Float32 = 320.0
+
 /**
  * 书单页：没有页头/没有「我的书单」开关，滚动到底自动加载下一页。
  *
@@ -35,7 +37,7 @@ func booklistsPage(state: AppState): Unit {
                     if (failed) {
                         state.toastIfChanged(state.booklistsError.value)
                     }
-                    AdaptiveGrid(340.0, minColumns: 2, maxColumns: 5) {
+                    AdaptiveGrid(BOOKLIST_CELL_W, minColumns: 2, maxColumns: 5) {
                         for (cell in cells) {
                             BooklistCard(state, cell)
                         }
@@ -65,6 +67,14 @@ func booklistsPage(state: AppState): Unit {
 
 /** 书单卡片：左侧预览封面，右侧文字。 */
 let BOOKLIST_CARD_RADIUS: Float32 = 12.0
+/**
+ * 卡片列宽。
+ *
+ * 选 320 是为了**列数稳定**：内容区在侧栏收起时约 1168、展开时约 1004，
+ * `1168/320 = 3.65 → 3 列`、`1004/320 = 3.14 → 3 列`，两种状态都是 3 列。
+ * 之前是 340（3 列 ↔ 2 列来回跳），每跳一次整页重排、还让一批新卡片进入视口
+ * 触发文字首绘 —— 侧栏展开时那几帧 40~50ms 的卡顿就是这么来的。
+ */
 let BOOKLIST_CARD_PAD: Float32 = 10.0
 let BOOKLIST_PREVIEW_W: Float32 = 46.0
 let BOOKLIST_PREVIEW_H: Float32 = 66.0
