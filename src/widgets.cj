@@ -3,7 +3,6 @@
  */
 package seline_read
 
-import std.env.getVariable
 import chui.*
 import seline_ui.*
 
@@ -36,6 +35,63 @@ func pageScrollView(scrollState!: ?State<Float32> = None, body!: () -> Unit): Sc
     match (scrollState) {
         case Some(value) => view.scrollState(value)
         case None => view
+    }
+}
+
+/**
+ * 绘制裁剪：卡片是否与当前视口相交。
+ *
+ * `ScrollView` 会把整棵内容树都画一遍（视口外只是被裁掉像素），长列表滚动时
+ * 视口外几十张卡片每帧仍在做圆角/文字/贴图绘制。卡片自己的 `draw` 里用这个
+ * 判断先退出，能省掉绝大部分无效绘制。
+ */
+func visibleInViewport(ctx: UiContext, frame: Rect, margin!: Float32 = 96.0): Bool {
+
+    if (frame.h <= Float32(0.0) || frame.w <= Float32(0.0)) {
+        return false
+    }
+    frame.bottom() > -margin && frame.y < ctx.viewportHeight + margin
+}
+
+/**
+ * 「滚进视口就加载更多」的哨兵。
+ *
+ * 页面里**不再画任何提示文字**（"继续向下滚动"/"正在加载更多"都去掉），只保留
+ * 一个薄薄的触发区；加载状态由调用方用 Toast 反馈。
+ */
+class LoadMoreNotice <: Widget {
+    private let trigger: () -> Unit
+    private var frame = Rect.zero()
+
+    init(trigger!: () -> Unit) {
+        this.trigger = trigger
+        emit(this)
+    }
+
+    public func measure(_: UiContext, available: Size): Size {
+        Size(available.w, 24.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        if (frame.y < ctx.viewportHeight + 120.0) {
+            trigger()
+        }
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
     }
 }
 

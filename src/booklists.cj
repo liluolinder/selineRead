@@ -12,86 +12,56 @@ import chui.*
 import seline_ui.*
 import zlibraryAPI4CJ.core.*
 
-/** 书单页：没有页头/没有「我的书单」开关，滚动到底自动加载下一页。 */
+/**
+ * 书单页：没有页头/没有「我的书单」开关，滚动到底自动加载下一页。
+ *
+ * 三种状态（加载中/有数据/出错）**都放在同一个滚动容器里**：这样无论客户端是不是
+ * 已经就绪、侧栏有没有展开，页面始终能滚到内容底部，不会出现"这一屏根本滚不动"。
+ * 「加载更多」不再画在页面里，改由右下角 Toast 反馈。
+ */
 func booklistsPage(state: AppState): Unit {
     state.ensureBooklistsLoaded()
-    if (!state.booklistsError.value.isEmpty() && state.booklists.value.isEmpty() &&
-        !state.booklistsLoading.value) {
-        VStack(spacing: vp(0.0)) {
-            Spacer()
-            errorStateCard("书单加载失败", state.booklistsError.value,
-                retry: Some({=> state.loadBooklists()}), busy: state.booklistsLoading.value)
-            Spacer()
-        }.fillWidth().fillHeight()
-        return
-    }
+    let loading = state.booklistsLoading.value
+    let failed = !state.booklistsError.value.isEmpty()
+    let cells = state.booklists.value
     VStack(spacing: vp(0.0)) {
         pageScrollView(scrollState: state.booklistsScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
-                let failed = !state.booklistsError.value.isEmpty()
-                if (state.forceSkeleton.value ||
-                    (state.booklistsLoading.value && state.booklists.value.isEmpty())) {
-                    booklistSkeletonGrid(count: 6)
-                } else if (!state.booklists.value.isEmpty()) {
+                if (state.forceSkeleton.value || !state.isClientReady() ||
+                    (loading && cells.isEmpty())) {
+                    // 骨架铺满一屏：加载中页面看起来仍是"满"的，底部也能滚到。
+                    booklistSkeletonGrid(count: 18)
+                } else if (!cells.isEmpty()) {
                     if (failed) {
                         state.toastIfChanged(state.booklistsError.value)
                     }
                     AdaptiveGrid(340.0, minColumns: 2, maxColumns: 5) {
-                        for (cell in state.booklists.value) {
+                        for (cell in cells) {
                             BooklistCard(state, cell)
                         }
                     }.spacing(SELINE_SPACE_MD, SELINE_SPACE_MD)
                     if (state.booklistsNextPage.value > 0) {
-                        BooklistsLoadMoreFooter(state)
+                        LoadMoreNotice(trigger: {=>
+                            if (!state.booklistsLoading.value) {
+                                // 只有用户真的滚动过才提示，避免启动/首屏自动补一页时弹 toast
+                                if (state.booklistsScroll.value > 8.0) {
+                                    state.showToastNow("正在加载更多书单…", kind: ToastKind.Info)
+                                }
+                                state.loadBooklists(reset: false)
+                            }
+                        })
                     }
-                } else if (!state.booklistsLoading.value && !failed) {
+                } else if (failed) {
+                    VStack(spacing: vp(0.0)) {
+                        errorStateCard("书单加载失败", state.booklistsError.value,
+                            retry: Some({=> state.loadBooklists()}), busy: loading)
+                    }.padding(0.0, 72.0, 0.0, 0.0)
+                } else if (!loading) {
                     emptyBlock("folder", "没有找到书单", "换个关键词，或稍后重试")
                 }
             }.padding(PAGE_PAD, SELINE_SPACE_MD, PAGE_PAD, 32.0)
         }
     }.fillWidth().fillHeight()
-}
-
-/** 书单页 footer：滚进视口就自动加载下一页。 */
-class BooklistsLoadMoreFooter <: Widget {
-    private let state: AppState
-    private var frame = Rect.zero()
-
-    init(state: AppState) {
-        this.state = state
-        emit(this)
-    }
-
-    public func measure(_: UiContext, available: Size): Size {
-        Size(available.w, 56.0)
-    }
-
-    public func layout(_: UiContext, rect: Rect): Unit {
-        frame = rect
-    }
-
-    public func draw(ctx: UiContext): Unit {
-        if (!state.booklistsLoading.value && frame.y < ctx.viewportHeight + 100.0) {
-            state.loadBooklists(reset: false)
-        }
-        let theme = selineTheme()
-        paintText(ctx.renderer,
-            if (state.booklistsLoading.value) { "正在加载更多书单…" } else { "继续向下滚动加载更多" },
-            Rect(frame.x, frame.centerY() - 9.0, frame.w, 20.0),
-            theme.palette.textFaint, theme.fontCaption, align: SelineTextAlign.Center)
-    }
-
-    public func handle(_: UiContext, _: UiEvent): Bool {
-        false
-    }
-
-    public func isFlexible(): Bool {
-        false
-    }
-
-    public func acceptsStretch(_: Axis): Bool {
-        false
-    }
 }
 
 /** 书单卡片：左侧预览封面，右侧文字。 */
@@ -127,6 +97,10 @@ class BooklistCard <: Widget {
     }
 
     public func draw(ctx: UiContext): Unit {
+        // 视口外的卡片不画：滚动时列表里可能已经有几十张卡，全画一遍很贵。
+        if (!visibleInViewport(ctx, frame)) {
+            return
+        }
         let theme = selineTheme()
         let palette = theme.palette
         let fill = if (hovered) { palette.surfaceHover } else { palette.surfaceRaised }
@@ -160,14 +134,14 @@ class BooklistCard <: Widget {
                 Rect(textX, frame.y + 50.0, textW, 16.0), palette.textFaint,
                 theme.fontCaption, family: theme.fontFamily)
         }
+        // 统计行已经是 fittedText（一定放得下），不需要再 pushClip/popClip：
+        // 每次裁剪都是一次渲染状态切换，卡片多了这开销很可观。
         let meta = state.fittedText(ctx,
             "${cell.booksCount} 本 · 浏览 ${cell.viewsCount} · 收藏 ${cell.favoritesCount}",
             textW, theme.fontCaption, false, theme.fontFamily)
-        ctx.renderer.pushClip(Rect(textX, frame.y, textW, frame.h))
         paintText(ctx.renderer, meta,
             Rect(textX, frame.bottom() - 26.0, textW, 16.0), palette.textFaint,
             theme.fontCaption, family: theme.fontFamily)
-        ctx.renderer.popClip()
     }
 
     public func handle(_: UiContext, event: UiEvent): Bool {

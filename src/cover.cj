@@ -42,14 +42,17 @@ func drawBookCover(ctx: UiContext, state: AppState, url: String, frame: Rect,
             return
         case None => ()
     }
-    // 2) 后台已解出像素 → 本帧上传纹理
-    match (state.takeDecodedImage(url)) {
-        case Some(image) =>
-            let texture = SelineImageTexture(ctx.renderer, image)
-            state.rememberCoverTexture(url, texture)
-            drawFittedTexture(ctx.renderer, texture, frame)
-            return
-        case None => ()
+    // 2) 后台已解出像素 → 本帧上传纹理（每帧限量，避免一帧上传几十张造成卡顿）
+    if (state.canUploadTextureThisFrame()) {
+        match (state.takeDecodedImage(url)) {
+            case Some(image) =>
+                state.noteTextureUpload()
+                let texture = SelineImageTexture(ctx.renderer, image)
+                state.rememberCoverTexture(url, texture)
+                drawFittedTexture(ctx.renderer, texture, frame)
+                return
+            case None => ()
+        }
     }
     // 3) 都没有 → 确保后台任务已排上
     let _ = state.imagePath(url, SelineImageKind.Cover)

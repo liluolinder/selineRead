@@ -16,6 +16,7 @@ import chui.*
 import seline_ui.*
 import seline_read.platform.*
 
+
 /** 普通窗口态的圆角（最大化时框架会保留，后续可跟随窗口状态归零）。 */
 let WINDOW_CORNER_RADIUS: Float32 = 12.0
 
@@ -232,6 +233,7 @@ main(args: Array<String>): Int64 {
 
         writeDebugLog("window ready")
         let perf = PerfStats(options.perf)
+
         app.run {
             // FrameHandler 必须在根部且每帧都跑：侧栏弹簧只在帧回调里推进。
             // 缺了这层，点「展开侧栏」永远不会动。
@@ -240,6 +242,7 @@ main(args: Array<String>): Int64 {
             // 每帧重绘会直接吃满 CPU）。
             FrameHandler(onFrame: {info =>
 
+                state.beginFrameTextureBudget()
                 railAdvance(state, Float32(info.deltaMs))
                 perf.onFrame(Float32(info.deltaMs))
             }, keepsAlive: {=>

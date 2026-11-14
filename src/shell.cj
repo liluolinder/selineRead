@@ -293,6 +293,8 @@ func pageFor(state: AppState): Unit {
  * `ctx.theme`；因为 `ZStack` 按子节点顺序绘制，探针先画，后面所有内容就是
  * 该遍对应的配色 —— 圆形揭示时颜色才会跟着辐射边界走。
  */
+private var shellDriverLogged: Bool = false
+
 class ThemeSyncProbe <: Widget {
     init() {
         emit(this)
@@ -306,6 +308,11 @@ class ThemeSyncProbe <: Widget {
 
     public func draw(ctx: UiContext): Unit {
         setSelineTheme(selineThemeForChuiTheme(ctx.theme))
+        // 临时诊断：记一次渲染后端
+        if (!shellDriverLogged) {
+            shellDriverLogged = true
+            writeDebugLog("renderer: ${ctx.renderer.driverName()} size=${Int64(ctx.viewportWidth)}x${Int64(ctx.viewportHeight)} scale=${ctx.displayScale}")
+        }
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {

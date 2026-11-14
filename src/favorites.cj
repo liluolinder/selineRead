@@ -49,7 +49,14 @@ func favoritesPage(state: AppState): Unit {
                         bookGrid(state, state.favorites.value)
                     }
                     if (state.favoritesNextPage.value > 0) {
-                        FavoritesLoadMoreFooter(state)
+                        LoadMoreNotice(trigger: {=>
+                            if (!state.favoritesLoading.value) {
+                                if (state.favoritesScroll.value > 8.0) {
+                                    state.showToastNow("正在加载更多收藏…", kind: ToastKind.Info)
+                                }
+                                state.loadFavorites(reset: false)
+                            }
+                        })
                     }
                     if (!state.favoritesLoading.value && state.favorites.value.isEmpty() &&
                         state.favoritesError.value.isEmpty()) {
@@ -61,44 +68,3 @@ func favoritesPage(state: AppState): Unit {
     }.fillWidth().fillHeight()
 }
 
-/** 收藏页 footer：滚进视口就自动加载下一页。 */
-class FavoritesLoadMoreFooter <: Widget {
-    private let state: AppState
-    private var frame = Rect.zero()
-
-    init(state: AppState) {
-        this.state = state
-        emit(this)
-    }
-
-    public func measure(_: UiContext, available: Size): Size {
-        Size(available.w, 56.0)
-    }
-
-    public func layout(_: UiContext, rect: Rect): Unit {
-        frame = rect
-    }
-
-    public func draw(ctx: UiContext): Unit {
-        if (!state.favoritesLoading.value && frame.y < ctx.viewportHeight + 100.0) {
-            state.loadFavorites(reset: false)
-        }
-        let theme = selineTheme()
-        paintText(ctx.renderer,
-            if (state.favoritesLoading.value) { "正在加载更多收藏…" } else { "继续向下滚动加载更多" },
-            Rect(frame.x, frame.centerY() - 9.0, frame.w, 20.0),
-            theme.palette.textFaint, theme.fontCaption, align: SelineTextAlign.Center)
-    }
-
-    public func handle(_: UiContext, _: UiEvent): Bool {
-        false
-    }
-
-    public func isFlexible(): Bool {
-        false
-    }
-
-    public func acceptsStretch(_: Axis): Bool {
-        false
-    }
-}

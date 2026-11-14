@@ -1182,6 +1182,8 @@ public class AppState {
     private var app: ?DesktopApp = None
     /* ---- 启动期网络异步：客户端就绪前发生的动作先排队，就绪后补跑 ---- */
     private var clientReadyFired: Bool = false
+    /** 书单页在等客户端就绪（避免重复排队）。 */
+    private var booklistsWaitingClient: Bool = false
     private var clientReadyHooks: ArrayList<() -> Unit> = ArrayList<() -> Unit>()
     private var pendingSearchKeyword: String = ""
     private var pendingBookId: Int64 = 0
@@ -1262,12 +1264,19 @@ public class AppState {
     /** 按可用宽度截断文本（带缓存，避免每帧对每张卡片重复测量）。 */
     public func fittedText(ctx: UiContext, text: String, maxWidth: Float32,
         pointSize: Float32, bold: Bool, family: String): String {
-        let key = "${Int64(maxWidth)}|${pointSize}|${bold}|${text}"
+        // 宽度按 8px 分桶（向下取整）：侧栏展开/窗口缩放时宽度每帧都在变，
+        // 按像素做 key 会让每一帧都 miss 一次、把所有卡片文字重新测量一遍。
+        // 分桶后宽度小幅变化直接命中缓存，文字略窄一点（≤8px）但完全看不出。
+        let bucket = Int64(maxWidth / 8.0) * 8
+        let key = "${bucket}|${pointSize}|${bold}|${text}"
         match (fittedTextCache.get(key)) {
             case Some(value) => return value
             case None => ()
         }
-        let fitted = fitTextWidth(ctx, text, maxWidth, pointSize,
+        if (fittedTextCache.size > 4096) {
+            fittedTextCache.clear()
+        }
+        let fitted = fitTextWidth(ctx, text, Float32(bucket), pointSize,
             selineFontStyle(bold: bold), family)
         fittedTextCache[key] = fitted
         fitted
@@ -2656,9 +2665,26 @@ public class AppState {
 
     /* -------------------------------------------------- 书单 */
 
+    /** 客户端是否已就绪（网络 bootstrap 在后台跑，窗口先出来）。 */
+    public func isClientReady(): Bool {
+        client.isSome()
+    }
+
     /** 构建期懒加载：第一次进入「书单」页签时拉一次列表。 */
     public func ensureBooklistsLoaded(): Unit {
         if (booklistsLoaded || booklistsLoading.value || !booklistsError.value.isEmpty()) {
+            return
+        }
+        // 客户端还没建好（启动后几百毫秒内）：先排队，就绪后自动补拉，
+        // 不要写成「客户端未就绪」错误 —— 那会把书单页钉死在错误卡片上。
+        if (client.isNone()) {
+            if (!booklistsWaitingClient) {
+                booklistsWaitingClient = true
+                whenClientReady({=>
+                    booklistsWaitingClient = false
+                    ensureBooklistsLoaded()
+                })
+            }
             return
         }
         loadBooklists()
@@ -2674,9 +2700,8 @@ public class AppState {
     public func loadBooklists(reset!: Bool = true): Unit {
         let clientBox = match (this.client) {
             case Some(value) => value
-            case None =>
-                booklistsError.value = "客户端未就绪"
-                return
+            // 就绪前的调用直接忽略（ensureBooklistsLoaded 会在就绪后补拉），不写错误态。
+            case None => return
         }
         let targetPage = if (reset) { 1 } else { booklistsNextPage.value }
         if (targetPage <= 0) {
@@ -2732,6 +2757,7 @@ public class AppState {
                 booklistsNextPage.value = page.nextPage
                 booklistsError.value = ""
                 booklistsLoaded = true
+                writeDebugLog("booklists: cells=${booklists.value.size} nextPage=${page.nextPage}")
             case None =>
                 booklistsError.value = "加载书单失败：${payload.error}"
         }
@@ -3972,6 +3998,29 @@ public class AppState {
     /** 已建好的封面纹理。 */
     public func coverTexture(url: String): Option<SelineImageTexture> {
         coverTextures.get(url)
+    }
+
+    /*
+     * 纹理上传预算：一屏几十张封面同时解好时，若同一帧全部上传，单帧会被
+     * 纹理创建/拷贝拖到几十毫秒（滚动时就表现为一顿一顿的）。每帧只上传
+     * 固定数量，其余先画占位图、下一帧继续，帧时间就平稳了。
+     */
+    private var textureUploadsThisFrame: Int64 = 0
+    private let TEXTURE_UPLOADS_PER_FRAME: Int64 = 3
+
+    /** 帧回调开头调用：重置本帧纹理上传预算。 */
+    public func beginFrameTextureBudget(): Unit {
+        textureUploadsThisFrame = 0
+    }
+
+    /** 本帧是否还能再上传一张纹理（用于封面/头像等按需纹理）。 */
+    public func canUploadTextureThisFrame(): Bool {
+        textureUploadsThisFrame < TEXTURE_UPLOADS_PER_FRAME
+    }
+
+    /** 记一次本帧纹理上传。 */
+    public func noteTextureUpload(): Unit {
+        textureUploadsThisFrame += 1
     }
 
     /** 取后台解好的像素（取出即删，避免长期占内存）。 */

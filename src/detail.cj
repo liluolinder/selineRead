@@ -174,7 +174,16 @@ func commentsSection(state: AppState): Unit {
         // 滚到底自动加载：先揭示已加载的，再拉下一段
         if (state.commentsVisible.value < Int64(state.comments.value.size) ||
             state.commentsNextOffset.value > 0) {
-            CommentsLoadMoreFooter(state)
+            LoadMoreNotice(trigger: {=>
+                if (!state.commentsLoading.value) {
+                    if (state.commentsVisible.value < Int64(state.comments.value.size)) {
+                        state.showMoreComments()
+                    } else if (state.commentsNextOffset.value > 0) {
+                        state.showToastNow("正在加载更多评论…", kind: ToastKind.Info)
+                        state.loadMoreComments()
+                    }
+                }
+            })
         }
     }.hug().fillWidth()
 }
@@ -488,49 +497,4 @@ func runesSlice(runes: Array<Rune>, start: Int64, end: Int64): String {
         index += 1
     }
     builder.toString()
-}
-/** 评论底部哨兵：进入视口就自动揭示更多/加载下一页（不需要点按钮）。 */
-class CommentsLoadMoreFooter <: Widget {
-    private let state: AppState
-    private var frame = Rect.zero()
-
-    init(state: AppState) {
-        this.state = state
-        emit(this)
-    }
-
-    public func measure(_: UiContext, available: Size): Size {
-        Size(available.w, 48.0)
-    }
-
-    public func layout(_: UiContext, rect: Rect): Unit {
-        frame = rect
-    }
-
-    public func draw(ctx: UiContext): Unit {
-        if (!state.commentsLoading.value && frame.y < ctx.viewportHeight + 120.0) {
-            if (state.commentsVisible.value < Int64(state.comments.value.size)) {
-                state.showMoreComments()
-            } else if (state.commentsNextOffset.value > 0) {
-                state.loadMoreComments()
-            }
-        }
-        let theme = selineTheme()
-        paintText(ctx.renderer,
-            if (state.commentsLoading.value) { "正在加载更多评论…" } else { "继续向下滚动加载更多评论" },
-            Rect(frame.x, frame.centerY() - 9.0, frame.w, 20.0),
-            theme.palette.textFaint, theme.fontCaption, align: SelineTextAlign.Center)
-    }
-
-    public func handle(_: UiContext, _: UiEvent): Bool {
-        false
-    }
-
-    public func isFlexible(): Bool {
-        false
-    }
-
-    public func acceptsStretch(_: Axis): Bool {
-        false
-    }
 }
