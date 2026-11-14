@@ -12,6 +12,7 @@
 package seline_read
 
 import std.convert.*
+import std.runtime.{getGCCount, getGCTime, getGCFreedSize}
 
 /** 心跳间隔（帧）。 */
 private let DIAG_HEARTBEAT_FRAMES: Int64 = 60
@@ -67,9 +68,10 @@ public func diagFrame(state: AppState, tick: Int64, deltaMs: Float32): Unit {
     let page = diagPageName(state)
     let loading = state.loading.value || state.booklistsLoading.value || state.favoritesLoading.value ||
         state.searchLoadingMore.value || state.booklistLoading.value
+    // GC 计数也一起记：慢帧如果伴随 GC 次数/耗时增长，就能直接坐实"GC 停顿"
     writeDebugLog("FRAME tick=${tick} ms=${Int64(deltaMs)} page=${page} rail=${state.railExpanded.value} " +
         "scroll=${Int64(state.homeScroll.value)} cells=${state.popular.value.size}/${state.booklists.value.size}/${state.favorites.value.size} " +
-        "loading=${loading} slow=${slow}")
+        "loading=${loading} slow=${slow} gcc=${getGCCount()} gct=${getGCTime()} freed=${getGCFreedSize()}")
 }
 
 /** 关键事件标记（侧栏开关、数据到达、用户操作）。 */

@@ -124,7 +124,8 @@ class BooklistCard <: Widget {
             let x = frame.x + BOOKLIST_CARD_PAD +
                 Float32(index) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP)
             let cover = Rect(x, coverTop, BOOKLIST_PREVIEW_W, BOOKLIST_PREVIEW_H)
-            drawBookCover(ctx, state, cell.covers[index], cover, 6.0)
+            // 三张预览共用一块底板（第一张时画），少两次圆角填充/卡
+            drawBookCover(ctx, state, cell.covers[index], cover, 6.0, backdrop: index == 0)
             index += 1
         }
 

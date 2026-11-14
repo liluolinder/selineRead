@@ -11,6 +11,7 @@
 package seline_read
 
 import chui.*
+import std.env.getVariable
 import seline_ui.*
 
 /** 书本封面比例：宽 / 高 = 2 / 3。 */
@@ -18,49 +19,58 @@ let BOOK_COVER_ASPECT: Float32 = 2.0 / 3.0
 
 /** 画一张网络封面（未就绪时画占位块）。 */
 func drawBookCover(ctx: UiContext, state: AppState, url: String, frame: Rect,
-    radius: Float32): Unit {
+    radius: Float32, backdrop!: Bool = true): Unit {
     let palette = selineTheme().palette
-    paintSurface(ctx.renderer, frame, palette.surfaceSunken, radius)
     if (frame.w <= 0.0 || frame.h <= 0.0) {
         return
     }
-    // 先铺默认封面图：加载中/没有封面/解码失败时这就是最终显示。
-    // 用拉伸铺满而不是等比 Contain：默认封面是 256x362，而卡片里的封面框是 2:3，
-    // 等比会上下各留一条缝（看起来像"图片顶部缺了一块"）。
+    // 有真封面：只画"底板 + 真图"两次，**不再先铺占位图再盖上去**。
+    // chui 的每次 textured/rounded 绘制都会分配一批几何数据（实测单次 ~40~80KB），
+    // 一屏 69 张封面就是 3 次绘制/张 ≈ 13MB/帧 的分配量 —— 直接喂给 GC，
+    // 交互中就会出现 200~350ms 的停顿。少画一次就是少一份分配。
+    if (!url.isEmpty()) {
+        match (state.coverTexture(url)) {
+            case Some(texture) =>
+                if (backdrop) {
+                    paintSurface(ctx.renderer, frame, palette.surfaceSunken, radius)
+                }
+                drawFittedTexture(ctx.renderer, texture, frame, radius)
+                return
+            case None => ()
+        }
+        if (state.canUploadTextureThisFrame()) {
+            match (state.takeDecodedImage(url)) {
+                case Some(image) =>
+                    state.noteTextureUpload()
+                    let texture = SelineImageTexture(ctx.renderer, image)
+                    state.rememberCoverTexture(url, texture)
+                    if (backdrop) {
+                        paintSurface(ctx.renderer, frame, palette.surfaceSunken, radius)
+                    }
+                    drawFittedTexture(ctx.renderer, texture, frame, radius)
+                    return
+                case None => ()
+            }
+        }
+    }
+    // 没有真封面（加载中/没有封面/解码失败）：底板 + 默认封面图
+    if (backdrop) {
+        paintSurface(ctx.renderer, frame, palette.surfaceSunken, radius)
+    }
     match (state.placeholderCoverTexture(ctx)) {
         case Some(texture) =>
             texture.draw(ctx.renderer, frame)
         case None => ()
     }
-    if (url.isEmpty()) {
-        return
+    if (!url.isEmpty()) {
+        // 确保后台任务已排上
+        let _ = state.imagePath(url, SelineImageKind.Cover)
     }
-    // 1) 纹理已就绪
-    match (state.coverTexture(url)) {
-        case Some(texture) =>
-            drawFittedTexture(ctx.renderer, texture, frame)
-            return
-        case None => ()
-    }
-    // 2) 后台已解出像素 → 本帧上传纹理（每帧限量，避免一帧上传几十张造成卡顿）
-    if (state.canUploadTextureThisFrame()) {
-        match (state.takeDecodedImage(url)) {
-            case Some(image) =>
-                state.noteTextureUpload()
-                let texture = SelineImageTexture(ctx.renderer, image)
-                state.rememberCoverTexture(url, texture)
-                drawFittedTexture(ctx.renderer, texture, frame)
-                return
-            case None => ()
-        }
-    }
-    // 3) 都没有 → 确保后台任务已排上
-    let _ = state.imagePath(url, SelineImageKind.Cover)
 }
 
 /** 等比放进矩形（Contain），多余部分留白。 */
 private func drawFittedTexture(renderer: Renderer, texture: SelineImageTexture,
-    frame: Rect): Unit {
+    frame: Rect, radius: Float32): Unit {
     let sourceW = Float32(texture.width)
     let sourceH = Float32(texture.height)
     if (sourceW <= 0.0 || sourceH <= 0.0) {
@@ -73,7 +83,11 @@ private func drawFittedTexture(renderer: Renderer, texture: SelineImageTexture,
     let w = sourceW * scale
     let h = sourceH * scale
     let target = Rect(frame.x + (frame.w - w) * 0.5, frame.y + (frame.h - h) * 0.5, w, h)
-    texture.draw(renderer, target)
+    if (radius > 0.5) {
+        texture.drawRounded(renderer, target, radius)
+    } else {
+        texture.draw(renderer, target)
+    }
 }
 
 /**
