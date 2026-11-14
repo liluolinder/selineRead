@@ -152,16 +152,7 @@ class WindowResizeEdges <: Widget {
 
     public func handle(ctx: UiContext, event: UiEvent): Bool {
         match (event) {
-            case UiEvent.MouseWheel(_, wheelY, pointerX, pointerY) =>
-                // 旁听滚轮给惯性积累初速：不消费事件（返回 false），
-                // 滚动本身仍由内容区的 ScrollView 处理。
-                if (abs(wheelY) > 0.0 && pointerX >= railVisibleWidth()) {
-                    match (state.currentPageScroll()) {
-                        case Some(offset) => scrollInertia.onWheel(offset, wheelY)
-                        case None => ()
-                    }
-                }
-                false
+
             case UiEvent.MouseMove(_, _) =>
                 false
             case UiEvent.MouseDown(MouseButton.Left, x, y) =>

@@ -21,24 +21,24 @@ let PAGE_PAD: Float32 = SELINE_PAGE_MARGIN
  *
  * 也支持 `SELINE_READ_SCROLL=immediate` 直接无动画（验收/低配机用）。
  */
-/** 滚轮每格的基础位移（像素，立即生效）。 */
-let SCROLL_BASE_STEP: Float32 = 110.0
-/** 每格额外的惯性滑行距离（像素，由 `scrollInertia` 在后续帧补齐）。 */
-let SCROLL_GLIDE_STEP: Float32 = 70.0
-/** 每格总位移（基础 + 滑行），手感主要看这个数。 */
-let SCROLL_WHEEL_STEP: Float32 = SCROLL_BASE_STEP + SCROLL_GLIDE_STEP
+/**
+ * 滚轮每格位移（像素）。
+ *
+ * 手感经过几轮实测：chui 默认 72 太慢、200 太快；110 左右最合适。
+ */
+let SCROLL_WHEEL_STEP: Float32 = 110.0
 
+/**
+ * 全局滚动手感：**只用 chui 自带的平滑动画**。
+ *
+ * 之前加的自绘惯性会每帧改写滚动偏移，而 chui 的 `ScrollMotion.advance()` 一旦
+ * 发现偏移被外部改写就会 `cancel()` 当前目标 —— 结果是动画被打断、位移丢失，
+ * 表现为"步长改了没变化 / 一顿一顿"。所以现在把动画交还给 chui：
+ * 220ms + ease-out，每格平滑推进 110px，连续滚轮会自然叠成连贯滑动。
+ */
 func appScrollOptions(): ScrollOptions {
-    // **必须 immediate**：chui 的 Smooth 动画里有 `syncExternal()` —— 一旦发现
-    // 滚动偏移被外部改写（我们的惯性每帧都在写），就 cancel 当前目标、丢掉本轮
-    // 动画剩余位移。之前"步长 72→140→200 却感觉一样慢"的真凶就是这个：
-    // 滚轮一开始动画，第一帧就被惯性打断，实际只走了惯性那十几像素。
-    //
-    // 现在：基础位移立即生效（120px/格，稳定可预期），平滑和惯性交给
-    // `scrollInertia` 在后续帧补 80px，合计 ≈200px/格。
-    ScrollOptions.immediate(wheelStep: SCROLL_BASE_STEP)
+    ScrollOptions.web(wheelStep: SCROLL_WHEEL_STEP, duration: 220, easing: Easing.EaseOutCubic)
 }
-
 /**
  * 页面级滚动容器：统一使用 appScrollOptions（各页面滚动都不再用默认手感）。
  *
