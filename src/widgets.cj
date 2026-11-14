@@ -4,6 +4,8 @@
 package seline_read
 
 import chui.*
+import std.env.getVariable
+import std.convert.*
 import seline_ui.*
 
 /** 内容区左右留白，各页面共用。 */
@@ -19,10 +21,31 @@ let PAGE_PAD: Float32 = SELINE_PAGE_MARGIN
  *
  * 也支持 `SELINE_READ_SCROLL=immediate` 直接无动画（验收/低配机用）。
  */
+/** 滚轮每格基础步长（像素）；`SELINE_READ_SCROLL_STEP` 可覆盖（8~800）。 */
+private var scrollStepCache: Float32 = -1.0
+
+func scrollStepValue(): Float32 {
+    if (scrollStepCache < 0.0) {
+        scrollStepCache = 140.0
+        let raw = getVariable("SELINE_READ_SCROLL_STEP") ?? ""
+        if (!raw.isEmpty()) {
+            try {
+                let parsed = Float32.parse(raw)
+                if (parsed > 8.0 && parsed < 800.0) {
+                    scrollStepCache = parsed
+                }
+            } catch (_: Exception) {
+                ()
+            }
+        }
+    }
+    scrollStepCache
+}
+
 func appScrollOptions(): ScrollOptions {
-    // 基础：120ms 的短缓动（比原来的 200ms 更跟手），保证滚轮"立刻有反应"；
-    // 惯性（`scrollInertia`）在此基础上继续叠加滑行，两者同向、不会打架。
-    ScrollOptions.web(wheelStep: 72.0, duration: 120, easing: Easing.EaseOutCubic)
+    // 基础：110ms 短缓动（立刻有反应、不拖沓）；惯性（`scrollInertia`）再叠加滑行。
+    // 每格 140px ≈ 2~3 行卡片，比 chui 默认（72px）快一倍。
+    ScrollOptions.web(wheelStep: scrollStepValue(), duration: 110, easing: Easing.EaseOutCubic)
 }
 
 /**

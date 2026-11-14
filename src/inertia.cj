@@ -19,15 +19,15 @@ import std.env.getVariable
 import chui.*
 
 /** 一个滚轮格在基础位移之外额外带来的初速系数。 */
-private let INERTIA_GAIN: Float32 = 0.10
+private let INERTIA_GAIN: Float32 = 0.08
 /** 每 16.7ms 速度衰减比例（越小停得越快）。 */
-private let INERTIA_DECAY: Float32 = 0.82
+private let INERTIA_DECAY: Float32 = 0.84
 /** 低于该速度（px/帧）视为停止。 */
 private let INERTIA_MIN_SPEED: Float32 = 0.5
 /** 速度上限，防止连续滚动后飞太远。 */
-private let INERTIA_MAX_SPEED: Float32 = 120.0
+private let INERTIA_MAX_SPEED: Float32 = 160.0
 /** 惯性使用的滚轮步长（与 `appScrollOptions` 的基础步长保持一致）。 */
-private let INERTIA_STEP: Float32 = 72.0
+
 
 /** 验收探针开关（`SELINE_READ_INERTIA_TEST=1`）。 */
 private var inertiaProbeFlag: Int64 = -1
@@ -49,7 +49,7 @@ class ScrollInertia {
     func onWheel(offset: State<Float32>, wheelY: Float32): Unit {
         target = offset
         lastOffset = offset.value
-        var next = velocity + (-wheelY) * INERTIA_STEP * INERTIA_GAIN
+        var next = velocity + (-wheelY) * scrollStepValue() * INERTIA_GAIN
         if (next > INERTIA_MAX_SPEED) {
             next = INERTIA_MAX_SPEED
         } else if (next < -INERTIA_MAX_SPEED) {
@@ -122,10 +122,3 @@ class ScrollInertia {
 
 /** 全局惯性状态（由 `main` 的帧回调推进）。 */
 let scrollInertia: ScrollInertia = ScrollInertia()
-
-/**
- * 给 `ScrollView` 旁听滚轮事件并驱动惯性。
- *
- * 不拦截事件：`handle` 先记录速度，再把事件原样交给内部的 `ScrollView`，
- * 所以基础滚动、边界夹紧、滚动条拖动都保持 chui 原本的行为。
- */
