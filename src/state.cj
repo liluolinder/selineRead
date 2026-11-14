@@ -1302,6 +1302,41 @@ public class AppState {
     private let pendingTextMeasures = ArrayList<PendingTextMeasure>()
 
 
+    /**
+     * 当前显示页面的滚动偏移。
+     *
+     * 惯性滚动需要知道"滚的是谁" —— 这里按 `pageFor` 的分发顺序给出同一个页面的
+     * 偏移 State，保证滚轮惯性始终作用在用户正在看的那个列表上。
+     */
+    public func currentPageScroll(): ?State<Float32> {
+        if (detailOpen.value) {
+            return Some(detailScroll)
+        }
+        if (booklistOpen.value) {
+            return Some(booklistDetailScroll)
+        }
+        let tab = this.tab.value
+        if (tab == TAB_FAVORITES) {
+            return Some(favoritesScroll)
+        }
+        if (tab == TAB_BOOKLISTS) {
+            return Some(booklistsScroll)
+        }
+        if (tab == TAB_DOWNLOADS) {
+            return Some(downloadsScroll)
+        }
+        if (tab == TAB_SETTINGS) {
+            return Some(settingsScroll)
+        }
+        if (tab == TAB_ACCOUNT) {
+            return Some(accountScroll)
+        }
+        if (!lastKeyword.value.isEmpty()) {
+            return Some(searchScroll)
+        }
+        Some(homeScroll)
+    }
+
     /** 帧回调开头调用：重置本帧文本测量预算。 */
     public func beginFrameTextBudget(): Unit {
         textMeasuresThisFrame = 0

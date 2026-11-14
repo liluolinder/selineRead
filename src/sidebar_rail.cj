@@ -61,7 +61,7 @@ class RailSpring {
     init() {
         this.spring = rememberState<Spring>("rail.spring") {
             // 阻尼比 ~0.9：快速收住、不来回弹，低帧率下也不显得"卡"
-            Spring(0.0, stiffness: 260.0, damping: 29.0)
+            Spring(0.0, stiffness: 620.0, damping: 46.0)
         }.value
         this.pendingMs = rememberState<State<Float32>>("rail.pending") {
             State<Float32>(0.0)
