@@ -24,8 +24,6 @@ let SIDEBAR_INSET: Float32 = 8.0
 /** 「分区」组标题行高与子项行高。 */
 let SIDEBAR_GROUP_HEADER_HEIGHT: Float32 = 32.0
 let SIDEBAR_ZONE_ROW_HEIGHT: Float32 = 35.0
-/** 弹簧步长（毫秒）。 */
-let RAIL_STEP_MS: Float32 = 8.0
 
 /** 页签下标：内容页在前，设置固定在底部。 */
 let TAB_HOME: Int64 = 0
@@ -56,7 +54,6 @@ let RAIL_PROGRESS: RailProgress = RailProgress()
  */
 class RailSpring {
     let spring: Spring
-    let pendingMs: State<Float32>
 
     init() {
         this.spring = rememberState<Spring>("rail.spring") {
@@ -64,28 +61,22 @@ class RailSpring {
             // 动画时长放到 ~230ms（原来 ~150ms 只有 9 帧，看起来发"跳"）。
             Spring(0.0, stiffness: 360.0, damping: 34.0)
         }.value
-        this.pendingMs = rememberState<State<Float32>>("rail.pending") {
-            State<Float32>(0.0)
-        }.value
     }
 
-    /** 推进一帧；返回 `true` 表示已经到位。 */
+    /**
+     * 推进一帧；返回 `true` 表示已经到位。
+     *
+     * **直接按本帧真实 deltaMs 积分**，不再量化成固定 8ms 步长：
+     * 窗口没有 vsync 时一帧只有 5~6ms，8ms 的定量步长会让弹簧每帧走 0 或 1 步，
+     * 于是宽度序列像 0、8、8、16、16…ms 这样跳，视觉上就是"一顿一顿"。
+     * chui 的 `Spring.tick` 内部已把步长夹到 40ms，直接喂真实 delta 是稳定的。
+     */
     func advance(target: Float32, deltaMs: Float32): Bool {
         if (spring.value == target) {
             return true
         }
-        if (deltaMs > 0.0) {
-            pendingMs.value += deltaMs
-        }
-        var stepped = false
-        while (pendingMs.value >= RAIL_STEP_MS) {
-            pendingMs.value -= RAIL_STEP_MS
-            let _ = spring.animate(target: target, deltaMs: UInt64(RAIL_STEP_MS))
-            stepped = true
-        }
-        if (!stepped) {
-            let _ = spring.animate(target: target, deltaMs: 0)
-        }
+        let stepMs = if (deltaMs < 1.0) { UInt64(1) } else { UInt64(Int64(deltaMs)) }
+        let _ = spring.animate(target: target, deltaMs: stepMs)
         spring.value == target
     }
 }
@@ -114,6 +105,14 @@ func railAdvance(state: AppState, deltaMs: Float32): Unit {
             let _ = railSpring.advance(target, deltaMs)
             if (RAIL_PROGRESS.value != railSpring.spring.value) {
                 RAIL_PROGRESS.value = railSpring.spring.value
+            }
+            // 像素宽度已经到位就立刻吸附到目标值：
+            // 弹簧的收敛阈值是 5e-4（对 0..1 的进度来说远小于 1 像素），否则浮点会
+            // 继续"爬"好几百帧（实测一次切换要 ~4~5 秒才真正停下），
+            // 期间 `railAnimating` 恒为真 → 应用一直按满帧率空转重绘。
+            if (railVisibleWidth() == railWidthAt(target)) {
+                railSpring.spring.reset(target)
+                RAIL_PROGRESS.value = target
             }
             if (railSpring.spring.value == target && state.railProgress.value != target) {
                 state.railProgress.value = target
@@ -144,6 +143,12 @@ func railAnimating(state: AppState): Bool {
  */
 func railContentPadding(state: AppState): Float32 {
     if (state.railExpanded.value) { RAIL_EXPANDED } else { RAIL_COLLAPSED }
+}
+
+/** 进度 `t` 对应的整像素宽度（用于判断"视觉上已经到位"）。 */
+func railWidthAt(t: Float32): Float32 {
+    let clamped = clamp01(t)
+    Float32(Int64(RAIL_COLLAPSED + (RAIL_EXPANDED - RAIL_COLLAPSED) * clamped))
 }
 
 /** 当前可见宽度（整像素）。 */
