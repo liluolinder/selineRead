@@ -193,6 +193,7 @@ main(args: Array<String>): Int64 {
     attachHiddenConsole()
 
     let state = AppState()
+    diagSessionStart()
     state.prepareImageStore()
     // 启动第一步：只读本地配置/账号（**不做任何网络**），窗口立刻能出来
     writeDebugLog("bootstrap: begin")
@@ -287,10 +288,11 @@ main(args: Array<String>): Int64 {
             // 静态页面交给 chui 的脏帧机制，避免空转重绘整棵树（首页 100 张卡
             // 每帧重绘会直接吃满 CPU）。
             FrameHandler(onFrame: {info =>
+                traceState.tick += 1
+                // 手动测试诊断：慢帧逐帧记录 + 每秒心跳（见 src/diag.cj）
+                diagFrame(state, traceState.tick, Float32(info.deltaMs))
                 if (frameTrace) {
-                    traceState.tick += 1
                     writeDebugLog("F ${traceState.tick} ${info.deltaMs}")
-
                 }
                 state.lastFrameDeltaMs = Float32(info.deltaMs)
                 state.beginFrameTextureBudget()

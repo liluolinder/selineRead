@@ -105,6 +105,8 @@ func railAdvance(state: AppState, deltaMs: Float32): Unit {
             let _ = railSpring.advance(target, deltaMs)
             if (RAIL_PROGRESS.value != railSpring.spring.value) {
                 RAIL_PROGRESS.value = railSpring.spring.value
+                // 手动测试诊断：侧栏动画逐帧记录进度与像素宽度
+                writeDebugLog("RAIL dt=${Int64(deltaMs)} t=${railSpring.spring.value} w=${railVisibleWidth()} target=${target}")
             }
             // 像素宽度已经到位就立刻吸附到目标值：
             // 弹簧的收敛阈值是 5e-4（对 0..1 的进度来说远小于 1 像素），否则浮点会
@@ -259,7 +261,10 @@ func railRows(state: AppState, expanded: Bool, selectedTab: Int64): Unit {
             ZStack { }.height(SELINE_SPACE_SM)
             SidebarItem(if (expanded) { "chevron_left" } else { "chevron_right" },
                 if (expanded) { "收起侧栏" } else { "展开侧栏" }, expanded, false,
-                {=> state.railExpanded.value = !state.railExpanded.value})
+                {=>
+                    state.railExpanded.value = !state.railExpanded.value
+                    diagMark("rail-toggle expanded=${state.railExpanded.value}")
+                })
             ZStack { }.height(SELINE_SPACE_XS)
             for (index in 0..APP_TABS.size) {
                 let item = APP_TABS[index]
