@@ -119,25 +119,47 @@ func fitTextWidth(ctx: UiContext, text: String, maxWidth: Float32, pointSize: Fl
         return text
     }
     let runes = text.toRuneArray()
-    var result = "…"
-    var end = Int64(runes.size) - 1
-    while (end > 0) {
-        var candidate = ""
-        var index: Int64 = 0
-        for (rune in runes) {
-            if (index >= end) {
-                break
-            }
-            candidate += rune.toString()
-            index += 1
-        }
-        let withEllipsis = candidate + "…"
-        if (ctx.renderer.textWidth(withEllipsis, pointSize: pointSize, style: style,
+    // **二分**找"最长能放下的前缀"。
+    //
+    // 旧实现是从整段文本开始逐字符收缩：每收缩一次都要重建候选字符串（O(n)）
+    // 再跑一遍完整 shaping（`renderer.textWidth`），整体是 O(n²)。
+    // 一段 400 字的书单简介在首次出现时能跑到 100~400ms —— 这就是"网络请求
+    // 刚结束那一下卡死"的真凶（新一页的文字第一次需要精确截断，每帧只测 2 段，
+    // 每段却要几百毫秒，于是连着几帧都是 200~330ms）。
+    //
+    // 二分只需 log2(n) ≈ 9 次 shaping，成本从"几百毫秒"降到"几毫秒"，而且
+    // 结果和逐字符收缩完全一致（宽度随长度单调不减）。
+    var lo: Int64 = 0
+    var hi: Int64 = Int64(runes.size)
+    while (lo < hi) {
+        let mid = (lo + hi + 1) / 2
+        let candidate = textPrefix(runes, mid) + "…"
+        if (ctx.renderer.textWidth(candidate, pointSize: pointSize, style: style,
             font: fontValue) <= maxWidth) {
-            result = withEllipsis
+            lo = mid
+        } else {
+            hi = mid - 1
+        }
+    }
+    if (lo <= 0) {
+        return "…"
+    }
+    textPrefix(runes, lo) + "…"
+}
+
+/** 取前 `count` 个 rune 组成的字符串（二分里只调用 log2(n) 次）。 */
+private func textPrefix(runes: Array<Rune>, count: Int64): String {
+    if (count <= 0) {
+        return ""
+    }
+    let builder = StringBuilder()
+    var index: Int64 = 0
+    for (rune in runes) {
+        if (index >= count) {
             break
         }
-        end -= 1
+        builder.append(rune)
+        index += 1
     }
-    result
+    builder.toString()
 }
