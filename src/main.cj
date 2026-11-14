@@ -88,7 +88,7 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
     var zoom: Float32 = 1.0
     var plainWindow = false
     var blank = false
-    var pacingFps: Int64 = 0
+    var pacingFps: Int64 = 0  // 0 = 默认 60fps；-1 = device(vsync)；>0 = 指定 fps
     for (arg in args) {
         // 验收用：把渲染器后备缓冲导出成 PNG，拍完自动关窗
         if (arg.startsWith("--shot=")) {
@@ -139,7 +139,9 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         }
         // 验收：帧率上限（例：--pacing=60）。用于对比"高帧率但显示抖动"的情况
         if (arg.startsWith("--pacing=")) {
-            pacingFps = Int64.parse(arg.replace("--pacing=", ""))
+            let value = Int64.parse(arg.replace("--pacing=", ""))
+            // "--pacing=0" 表示回到 device（跟随 vsync），其余正数表示指定帧率
+            pacingFps = if (value == 0) { -1 } else { value }
         }
         // 验收：关闭 vsync（测真实渲染耗时 / 滚动跟手）
         if (arg == "--novsync") {
@@ -221,8 +223,16 @@ main(args: Array<String>): Int64 {
             hints: hintSettings,
             // 验收用：`--shot=<path>` 由框架在 present 之后从渲染器后备缓冲读回像素，
             // 与窗口是否在前台、有没有被遮挡无关；拍完自动关窗。
+            // 帧节奏：默认锁 60fps。
+            // 实测本机 vsync 不生效（present 只耗时 0.6ms，循环会飙到 80~240fps）：
+            //   device  : avg 12.3ms p95 16 **max 32ms（偶发双倍间隔 = 肉眼可见的顿一下）** CPU 102%
+            //   Fixed60 : avg 17.3ms p95 18 **max 18ms（间隔稳定）** CPU 46%
+            // 固定 60fps 的帧间隔稳定、CPU 减半，动画不再有"双倍间隔"的抖动。
+            // `--pacing=FPS` 覆盖；`--pacing=0` 回到 device（跟随 vsync）。
             framePacing: if (options.pacingFps > 0) {
                 Some(FramePacing.Fixed(UInt32(options.pacingFps)))
+            } else if (options.pacingFps == 0) {
+                Some(FramePacing.Fixed(UInt32(60)))
             } else {
                 Option<FramePacing>.None
             },
