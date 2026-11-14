@@ -154,6 +154,16 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         settleFrames, booklistAutoOpen, openDownloadMenu, perf, gpuDriver, noVsync, zoom, plainWindow, blank)
 }
 
+/**
+ * 压测用帧追踪计数器（闭包不能捕获 var，用对象字段）。
+ *
+ * `SELINE_READ_FRAME_TRACE=1` + `--perf` 时，每帧往调试日志写一行
+ * `F <帧号> <帧间隔ms>`，`scripts/stress_pages.ps1` 读它算 p95/p99。
+ */
+class FrameTraceState {
+    var tick: Int64 = 0
+}
+
 /** 帧耗时统计（`--perf` 时启用）：用于证明/回归性能优化。 */
 
 
@@ -232,6 +242,9 @@ main(args: Array<String>): Int64 {
         applyDebugProbes(state, options, app)
 
         writeDebugLog("window ready")
+        // 压测探针：SELINE_READ_FRAME_TRACE=1 时逐帧记录帧间隔（scripts/stress_pages.ps1 用）
+        let frameTrace = (getVariable("SELINE_READ_FRAME_TRACE") ?? "") == "1"
+        let traceState = FrameTraceState()
         let perf = PerfStats(options.perf)
 
         app.run {
@@ -241,7 +254,10 @@ main(args: Array<String>): Int64 {
             // 静态页面交给 chui 的脏帧机制，避免空转重绘整棵树（首页 100 张卡
             // 每帧重绘会直接吃满 CPU）。
             FrameHandler(onFrame: {info =>
-
+                if (frameTrace) {
+                    traceState.tick += 1
+                    writeDebugLog("F ${traceState.tick} ${info.deltaMs}")
+                }
                 state.beginFrameTextureBudget()
                 railAdvance(state, Float32(info.deltaMs))
                 perf.onFrame(Float32(info.deltaMs))

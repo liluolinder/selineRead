@@ -10,19 +10,21 @@ import seline_ui.*
 let PAGE_PAD: Float32 = SELINE_PAGE_MARGIN
 
 /**
- * 全局滚动手感：滚轮步长放大，动画时长缩短。
+ * 全局滚动手感。
  *
- * chui 默认是 300ms 的缓动动画；本机整窗重绘较慢（约 40~60ms/帧），
- * 长动画在低帧率下看起来是一跳一跳的。缩短到 160ms + ease-out，
- * 滚轮响应更跟手；也支持 `SELINE_READ_SCROLL=immediate` 直接无动画。
+ * 目标是"滚轮一格 = 一小段、动画能看清但不停顿"：
+ * - 步长 84px（约 2~3 行），比默认更大，滚轮响应跟手；
+ * - 动画 200ms + ease-out：全程十几帧都在动，60Hz 下是连续滑动，
+ *   而不是"一下就跳过去"；先快后慢的曲线收尾不生硬。
+ *
+ * 也支持 `SELINE_READ_SCROLL=immediate` 直接无动画（验收/低配机用）。
  */
 func appScrollOptions(): ScrollOptions {
     let mode = scrollModeOverride()
     if (mode == "immediate") {
-        return ScrollOptions.immediate(wheelStep: 96.0)
+        return ScrollOptions.immediate(wheelStep: 84.0)
     }
-    ScrollOptions.web(wheelStep: 96.0, duration: 160,
-        easing: Easing.CubicBezier(0.16, 1.0, 0.3, 1.0))
+    ScrollOptions.web(wheelStep: 84.0, duration: 200, easing: Easing.EaseOutCubic)
 }
 
 /**
