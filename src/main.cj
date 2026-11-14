@@ -242,8 +242,8 @@ main(args: Array<String>): Int64 {
         applyDebugProbes(state, options, app)
 
         writeDebugLog("window ready")
-        // 压测探针：SELINE_READ_FRAME_TRACE=1 时逐帧记录帧间隔（scripts/stress_pages.ps1 用）
-        let frameTrace = (getVariable("SELINE_READ_FRAME_TRACE") ?? "") == "1"
+        // 压测探针：`--perf` 时逐帧记录帧间隔（scripts/stress_pages.ps1 用）
+        let frameTrace = options.perf
         let traceState = FrameTraceState()
         let perf = PerfStats(options.perf)
 

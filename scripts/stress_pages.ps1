@@ -3,7 +3,7 @@
     页面压测：逐帧耗时统计（用于"哪些页面会卡"的回归测量）。
 
 .DESCRIPTION
-    启动 release 产物（`SELINE_READ_FRAME_TRACE=1`），把窗口切到前台，
+启动 release 产物（带 `--perf`，逐帧记录由它驱动），把窗口切到前台，
     在内容区发滚轮滚动，然后从 %TEMP%\seline_read_debug.log 里读 `F <帧号> <间隔ms>`
     逐帧记录，输出 avg / p50 / p95 / p99 / max / 超过 33ms 的帧数。
 
@@ -78,7 +78,7 @@ Get-Process main -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorActio
 Start-Sleep -Milliseconds 500
 $logPath = Join-Path $env:TEMP "seline_read_debug.log"
 Remove-Item $logPath -ErrorAction SilentlyContinue
-$env:SELINE_READ_FRAME_TRACE = "1"
+
 $proc = Start-Process -FilePath $exe -WorkingDirectory $ExeDir -ArgumentList $appArgs -PassThru
 Start-Sleep -Seconds $WarmupSeconds
 if ($proc.HasExited) { throw "进程提前退出：$Page" }
@@ -112,7 +112,6 @@ $alive = -not $proc.HasExited
 $q = Get-Process -Id $proc.Id -ErrorAction SilentlyContinue
 if ($q) { $memMB = [math]::Round($q.PrivateMemorySize64 / 1MB, 0) }
 Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-Remove-Item Env:SELINE_READ_FRAME_TRACE
 
 $frames = New-Object System.Collections.Generic.List[int]
 foreach ($line in (Get-Content $logPath -ErrorAction SilentlyContinue)) {

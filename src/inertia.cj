@@ -15,7 +15,6 @@
 package seline_read
 
 import std.math.abs
-import std.env.getVariable
 import chui.*
 
 /** 一个滚轮格在基础位移之外额外带来的初速系数（200px/格时滑行约 37px）。 */
@@ -29,16 +28,6 @@ private let INERTIA_MAX_SPEED: Float32 = 160.0
 /** 惯性使用的滚轮步长（与 `appScrollOptions` 的基础步长保持一致）。 */
 
 
-/** 验收探针开关（`SELINE_READ_INERTIA_TEST=1`）。 */
-private var inertiaProbeFlag: Int64 = -1
-
-func inertiaProbeEnabled(): Bool {
-    if (inertiaProbeFlag < 0) {
-        inertiaProbeFlag = if ((getVariable("SELINE_READ_INERTIA_TEST") ?? "") == "1") { 1 } else { 0 }
-    }
-    inertiaProbeFlag == 1
-}
-
 /** 惯性滚动状态：全局一份就够了（同一时间只有一个页面在滚）。 */
 class ScrollInertia {
     private var target: ?State<Float32> = None
@@ -49,7 +38,7 @@ class ScrollInertia {
     func onWheel(offset: State<Float32>, wheelY: Float32): Unit {
         target = offset
         lastOffset = offset.value
-        var next = velocity + (-wheelY) * scrollStepValue() * INERTIA_GAIN
+        var next = velocity + (-wheelY) * SCROLL_WHEEL_STEP * INERTIA_GAIN
         if (next > INERTIA_MAX_SPEED) {
             next = INERTIA_MAX_SPEED
         } else if (next < -INERTIA_MAX_SPEED) {

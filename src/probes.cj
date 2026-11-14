@@ -58,29 +58,6 @@ class PerfStats {
  */
 @When[debug]
 func applyDebugProbes(state: AppState, options: LaunchOptions, app: DesktopApp): Unit {
-        // 惯性验收：模拟 4 格滚轮，之后每 100ms 记录一次滚动偏移与速度
-        if ((getVariable("SELINE_READ_INERTIA_TEST") ?? "") == "1") {
-            state.whenClientReady({=>
-                let _ = spawn {=>
-                    sleep(4000 * Duration.millisecond)
-                    // 走 UI 队列：chui 看到有 UI 工作就会出帧，惯性 tick 才会被推进
-                    app.postToUi({=>
-                        var i = 0
-                        while (i < 4) {
-                            scrollInertia.onWheel(state.booklistsScroll, -1.0)
-                            i += 1
-                        }
-                    })
-                    writeDebugLog("INERTIA start offset=${state.booklistsScroll.value} v=${scrollInertia.currentVelocity()}")
-                    var k = 0
-                    while (k < 15) {
-                        sleep(100 * Duration.millisecond)
-                        writeDebugLog("INERTIA t=${(k + 1) * 100}ms offset=${state.booklistsScroll.value} v=${scrollInertia.currentVelocity()}")
-                        k += 1
-                    }
-                }
-            })
-        }
         if ((getVariable("SELINE_READ_SKELETON") ?? "") == "1") {
             state.forceSkeleton.value = true
         }

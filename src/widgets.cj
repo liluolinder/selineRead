@@ -21,31 +21,12 @@ let PAGE_PAD: Float32 = SELINE_PAGE_MARGIN
  *
  * 也支持 `SELINE_READ_SCROLL=immediate` 直接无动画（验收/低配机用）。
  */
-/** 滚轮每格基础步长（像素）；`SELINE_READ_SCROLL_STEP` 可覆盖（8~800）。 */
-private var scrollStepCache: Float32 = -1.0
-
-func scrollStepValue(): Float32 {
-    if (scrollStepCache < 0.0) {
-        scrollStepCache = 200.0
-        let raw = getVariable("SELINE_READ_SCROLL_STEP") ?? ""
-        if (!raw.isEmpty()) {
-            try {
-                let parsed = Float32.parse(raw)
-                if (parsed > 8.0 && parsed < 800.0) {
-                    scrollStepCache = parsed
-                }
-            } catch (_: Exception) {
-                ()
-            }
-        }
-    }
-    scrollStepCache
-}
-
+/** 滚轮每格基础步长（像素）：≈3~4 行卡片，比 chui 默认（72px）快得多。 */
+let SCROLL_WHEEL_STEP: Float32 = 200.0
 func appScrollOptions(): ScrollOptions {
     // 基础：110ms 短缓动（立刻有反应、不拖沓）；惯性（`scrollInertia`）再叠加滑行。
     // 每格 200px ≈ 3~4 行卡片（用户按手感确认；chui 默认只有 72px）。
-    ScrollOptions.web(wheelStep: scrollStepValue(), duration: 110, easing: Easing.EaseOutCubic)
+    ScrollOptions.web(wheelStep: SCROLL_WHEEL_STEP, duration: 110, easing: Easing.EaseOutCubic)
 }
 
 /**
