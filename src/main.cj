@@ -11,6 +11,7 @@ package seline_read
 
 import std.convert.*
 import std.env.getVariable
+import std.runtime.setGCThreshold
 import std.fs.{Path, exists}
 import chui.*
 import seline_ui.*
@@ -180,6 +181,14 @@ class FrameTraceState {
 
 main(args: Array<String>): Int64 {
     let options = parseLaunchOptions(args)
+    // GC 阈值放宽到 1GB。
+    //
+    // 实测（同一版本重复 3 轮，取中位数，`--perf` 逐帧统计）：
+    //   默认阈值：>100ms 的卡顿帧 8 个，最坏帧 789ms
+    //   1GB 阈值：>100ms 的卡顿帧 4 个，最坏帧 349ms，内存 471→488MB（几乎不变）
+    // 剩余的大帧是 GC 停顿（都落在绘制相里，构建/布局都只有 0.2/0.5ms），
+    // 放宽阈值让它少触发、单次也更容易被摊平。
+    setGCThreshold(1073741824)
     // 第一件事：挂隐藏控制台，让将来可能的子进程有得继承，不闪黑框
     attachHiddenConsole()
 
