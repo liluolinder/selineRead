@@ -24,9 +24,10 @@ except (AttributeError, ValueError):
 
 LOG_PATH = os.path.join(os.environ.get("TEMP", "."), "seline_read_debug.log")
 
+# 兼容两种格式：旧版以 slow= 结尾；新版追加了 gcc/gct/freed
 RE_FRAME = re.compile(
     r"^FRAME tick=(\d+) ms=(\d+) page=(\S+) rail=(\S+) scroll=(\d+) "
-    r"cells=(\S+) loading=(\S+) slow=(\S+)$"
+    r"cells=(\S+) loading=(\S+) slow=(\S+)(?: gcc=(\d+) gct=(\d+) freed=(\d+))?$"
 )
 RE_RAIL = re.compile(r"^RAIL dt=([\d.-]+) t=([\d.-]+) w=([\d.-]+) target=([\d.-]+)$")
 RE_MARK = re.compile(r"^MARK (.+)$")
@@ -72,6 +73,8 @@ def parse_session(lines):
                     "cells": match.group(6),
                     "loading": match.group(7),
                     "slow": match.group(8) == "true",
+                    "gcc": int(match.group(9)) if match.group(9) else None,
+                    "freed": int(match.group(11)) if match.group(11) else None,
                 }
             )
             continue

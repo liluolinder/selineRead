@@ -110,6 +110,13 @@ class BooklistCard <: Widget {
         if (!visibleInViewport(ctx, frame)) {
             return
         }
+        let cardT0 = PerformanceClock.ticksNanoseconds()
+        state.diagCardCount += 1
+        drawCardBody(ctx)
+        state.diagCardMs += Float32(Int64(PerformanceClock.ticksNanoseconds() - cardT0)) / 1000000.0
+    }
+
+    private func drawCardBody(ctx: UiContext): Unit {
         let theme = selineTheme()
         let palette = theme.palette
         let fill = if (hovered) { palette.surfaceHover } else { palette.surfaceRaised }

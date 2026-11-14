@@ -1396,10 +1396,20 @@ public class AppState {
         }
     }
 
+    // ---- 本帧绘制分项耗时（诊断用，毫秒累计）----
+    public var diagCoverMs: Float32 = 0.0
+    public var diagCardMs: Float32 = 0.0
+    public var diagCardCount: Int64 = 0
+    public var diagUploadCount: Int64 = 0
+
     /** 帧回调开头调用：重置本帧文本测量预算。 */
     public func beginFrameTextBudget(): Unit {
         textMeasuresThisFrame = 0
         cardTextsPaintedThisFrame = 0
+        diagCoverMs = 0.0
+        diagCardMs = 0.0
+        diagCardCount = 0
+        diagUploadCount = 0
         // 闭环调整文字首绘预算：上一帧超 20ms 就收缩，明显有余量（<13ms）再放开
         if (lastFrameDeltaMs > 20.0) {
             if (cardTextBudget > 1) {

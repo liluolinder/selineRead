@@ -20,6 +20,13 @@ let BOOK_COVER_ASPECT: Float32 = 2.0 / 3.0
 /** 画一张网络封面（未就绪时画占位块）。 */
 func drawBookCover(ctx: UiContext, state: AppState, url: String, frame: Rect,
     radius: Float32, backdrop!: Bool = true): Unit {
+    let t0 = PerformanceClock.ticksNanoseconds()
+    drawBookCoverImpl(ctx, state, url, frame, radius, backdrop)
+    state.diagCoverMs += Float32(Int64(PerformanceClock.ticksNanoseconds() - t0)) / 1000000.0
+}
+
+private func drawBookCoverImpl(ctx: UiContext, state: AppState, url: String, frame: Rect,
+    radius: Float32, backdrop: Bool): Unit {
     let palette = selineTheme().palette
     if (frame.w <= 0.0 || frame.h <= 0.0) {
         return
@@ -42,6 +49,7 @@ func drawBookCover(ctx: UiContext, state: AppState, url: String, frame: Rect,
             match (state.takeDecodedImage(url)) {
                 case Some(image) =>
                     state.noteTextureUpload()
+                    state.diagUploadCount += 1
                     let texture = SelineImageTexture(ctx.renderer, image)
                     state.rememberCoverTexture(url, texture)
                     if (backdrop) {
