@@ -43,11 +43,13 @@ class LaunchOptions {
     let zoom: Float32
     let plainWindow: Bool
     let blank: Bool
+    /** 帧率上限（0 = 跟随 vsync / 不限）。 */
+    let pacingFps: Int64
 
     init(shotPath: String, initialTab: Int64, searchKeyword: String, railOpen: Bool,
         login: Bool, downloadTarget: String, bookTarget: String, settleFrames: UInt64,
         booklistAutoOpen: Bool, openDownloadMenu: Bool, perf: Bool, gpuDriver: String,
-        noVsync: Bool, zoom: Float32, plainWindow: Bool, blank: Bool) {
+        noVsync: Bool, zoom: Float32, plainWindow: Bool, blank: Bool, pacingFps: Int64) {
         this.shotPath = shotPath
         this.initialTab = initialTab
         this.searchKeyword = searchKeyword
@@ -64,6 +66,7 @@ class LaunchOptions {
         this.zoom = zoom
         this.plainWindow = plainWindow
         this.blank = blank
+        this.pacingFps = pacingFps
     }
 }
 
@@ -85,6 +88,7 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
     var zoom: Float32 = 1.0
     var plainWindow = false
     var blank = false
+    var pacingFps: Int64 = 0
     for (arg in args) {
         // 验收用：把渲染器后备缓冲导出成 PNG，拍完自动关窗
         if (arg.startsWith("--shot=")) {
@@ -133,6 +137,10 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         if (arg.startsWith("--gpu=")) {
             gpuDriver = arg[6..]
         }
+        // 验收：帧率上限（例：--pacing=60）。用于对比"高帧率但显示抖动"的情况
+        if (arg.startsWith("--pacing=")) {
+            pacingFps = Int64.parse(arg.replace("--pacing=", ""))
+        }
         // 验收：关闭 vsync（测真实渲染耗时 / 滚动跟手）
         if (arg == "--novsync") {
             noVsync = true
@@ -151,7 +159,8 @@ func parseLaunchOptions(args: Array<String>): LaunchOptions {
         }
     }
     LaunchOptions(shotPath, initialTab, keyword, railOpen, login, downloadTarget, bookTarget,
-        settleFrames, booklistAutoOpen, openDownloadMenu, perf, gpuDriver, noVsync, zoom, plainWindow, blank)
+        settleFrames, booklistAutoOpen, openDownloadMenu, perf, gpuDriver, noVsync, zoom, plainWindow, blank,
+        pacingFps)
 }
 
 /**
@@ -212,6 +221,11 @@ main(args: Array<String>): Int64 {
             hints: hintSettings,
             // 验收用：`--shot=<path>` 由框架在 present 之后从渲染器后备缓冲读回像素，
             // 与窗口是否在前台、有没有被遮挡无关；拍完自动关窗。
+            framePacing: if (options.pacingFps > 0) {
+                Some(FramePacing.Fixed(UInt32(options.pacingFps)))
+            } else {
+                Option<FramePacing>.None
+            },
             capture: if (options.shotPath.isEmpty()) {
                 Option<DesktopCaptureRequest>.None
             } else {
