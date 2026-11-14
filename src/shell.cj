@@ -53,10 +53,11 @@ func appShell(state: AppState): Unit {
         titleBar(state)
         ZStack {
 
-            // 内容区：左边距 = 侧栏当前宽度（与侧栏同一帧、同一表达式）
+            // 内容区：左边距取侧栏的**目标**宽度（不跟着弹簧插值）。
+            // 侧栏动画期间内容宽度不变 → 不会整页重排，展开/收起才不卡。
             SelineContentPanel(palette.surface, 14.0, true) {
                 pageFor(state)
-            }.padding(railVisibleWidth(), 0.0, 0.0, 0.0)
+            }.padding(railContentPadding(state), 0.0, 0.0, 0.0)
                 .fillWidth().fillHeight()
             // 侧栏浮层：直接作为 ZStack 子节点，位置由父容器给（x=0）
             sidebarTabs(state)

@@ -60,8 +60,9 @@ class RailSpring {
 
     init() {
         this.spring = rememberState<Spring>("rail.spring") {
-            // 阻尼比 ~0.9：快速收住、不来回弹，低帧率下也不显得"卡"
-            Spring(0.0, stiffness: 620.0, damping: 46.0)
+            // 阻尼比 ~0.88：不来回弹。现在内容宽度不再逐帧重排，出帧很便宜，
+            // 动画时长放到 ~230ms（原来 ~150ms 只有 9 帧，看起来发"跳"）。
+            Spring(0.0, stiffness: 360.0, damping: 34.0)
         }.value
         this.pendingMs = rememberState<State<Float32>>("rail.pending") {
             State<Float32>(0.0)
@@ -128,6 +129,21 @@ func railAnimating(state: AppState): Bool {
             railSpring.spring.value != target
         case None => false
     }
+}
+
+/**
+ * 内容面板的左内边距：**直接取目标值**（展开=220 / 收起=56），不随弹簧插值。
+ *
+ * 这是侧栏动画不再卡的关键：之前每帧都用弹簧插值当内边距 → 内容区宽度每帧都变
+ * → 整页（十几到几十张卡片）每帧重新测量/排版/绘制，帧耗时随卡片数量线性上涨，
+ * 卡顿就是必然的。
+ *
+ * 现在动画期间内容宽度是常量，只有侧栏自身（十来行）在变；内容在切换那一刻
+ * 一次到位。视觉上侧栏像抽屉一样滑过内容旁边的空白区 —— 那个空白的颜色就是
+ * 窗口底色，和侧栏底色一致，所以看不到"缝"。
+ */
+func railContentPadding(state: AppState): Float32 {
+    if (state.railExpanded.value) { RAIL_EXPANDED } else { RAIL_COLLAPSED }
 }
 
 /** 当前可见宽度（整像素）。 */
