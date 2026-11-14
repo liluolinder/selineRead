@@ -22,9 +22,9 @@ let PAGE_PAD: Float32 = SELINE_PAGE_MARGIN
  * 也支持 `SELINE_READ_SCROLL=immediate` 直接无动画（验收/低配机用）。
  */
 /** 滚轮每格的基础位移（像素，立即生效）。 */
-let SCROLL_BASE_STEP: Float32 = 120.0
+let SCROLL_BASE_STEP: Float32 = 110.0
 /** 每格额外的惯性滑行距离（像素，由 `scrollInertia` 在后续帧补齐）。 */
-let SCROLL_GLIDE_STEP: Float32 = 80.0
+let SCROLL_GLIDE_STEP: Float32 = 70.0
 /** 每格总位移（基础 + 滑行），手感主要看这个数。 */
 let SCROLL_WHEEL_STEP: Float32 = SCROLL_BASE_STEP + SCROLL_GLIDE_STEP
 
