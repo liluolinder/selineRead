@@ -1,4 +1,4 @@
-﻿# 打包一个「双击即可运行」的 Windows release。
+# 打包一个「双击即可运行」的 Windows release。
 #
 # 产出：
 #   dist\SelineRead-<version>-win64\      （可直接拷走的目录）
@@ -82,8 +82,11 @@ Copy-Needed (Join-Path $sdl "SDL3_ttf.dll")
 Copy-Needed (Join-Path $system32 "libssl-3-x64.dll")
 Copy-Needed (Join-Path $system32 "libcrypto-3-x64.dll")
 
-# 说明：OpenSSL 的导入表写了 VCRUNTIME140.dll，但 Win10/11 目标机实测通常已带
-# （系统组件或已装 VC++ Redist）；按用户要求不再随包分发，缩小体积。
+# VC++ 运行时：OpenSSL 的导入表写了 VCRUNTIME140.dll，缺了它 libssl 加载失败，
+# 整个 HTTPS 请求链就断（程序启动后无法登录/取数据）。目标机不一定装了 VC++ Redist，
+# 所以随包分发（两个文件加起来才 ~220KB）。
+Copy-Needed (Join-Path $system32 "VCRUNTIME140.dll")
+Copy-Needed (Join-Path $system32 "VCRUNTIME140_1.dll")
 
 # 资源
 $assets = Join-Path $root "assets"
