@@ -49,7 +49,7 @@ func appShell(state: AppState): Unit {
     VStack(spacing: vp(0.0)) {
         // 主题同步探针必须是整棵树最先绘制的节点：
         // 顶栏/侧栏/内容都按它对齐后的全局配色画，主题过渡两遍才各自正确。
-        ThemeSyncProbe()
+        ThemeSyncProbe(state)
         titleBar(state)
         ZStack {
 
@@ -57,7 +57,7 @@ func appShell(state: AppState): Unit {
             // 侧栏动画期间内容宽度不变 → 不会整页重排，展开/收起才不卡。
             SelineContentPanel(palette.surface, 14.0, true) {
                 pageFor(state)
-            }.padding(railContentPadding(state), 0.0, 0.0, 0.0)
+            }.padding(railVisibleWidth(), 0.0, 0.0, 0.0)
                 .fillWidth().fillHeight()
             // 侧栏浮层：直接作为 ZStack 子节点，位置由父容器给（x=0）
             sidebarTabs(state)
@@ -324,7 +324,10 @@ func pageFor(state: AppState): Unit {
 private var shellTextWarmed: Bool = false
 
 class ThemeSyncProbe <: Widget {
-    init() {
+    private let state: AppState
+
+    init(state: AppState) {
+        this.state = state
         emit(this)
     }
 
@@ -344,6 +347,9 @@ class ThemeSyncProbe <: Widget {
             shellTextWarmed = true
             warmUpTextPipelines(ctx)
         }
+        // 数据刚到就把卡片文字摊到空闲帧预热（屏外绘制，只灌字形缓存）：
+        // 这样用户展开/收起侧栏或滚动时，新卡片上屏不再做字形栅格化。
+        state.drainWarmTexts(ctx, 1)
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {

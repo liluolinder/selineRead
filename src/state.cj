@@ -93,6 +93,28 @@ public class DownloadEntry {
 }
 
 /** 书单卡片（ViewModel）：书单元信息 + 预览封面。 */
+/**
+ * 一段待预热的文字。
+ *
+ * 首次绘制某段文字时 SDL_ttf 要做整形 + 字形栅格化（实测单段 1~5ms，一屏几十段
+ * 就是 100~450ms）。数据刚到就绘制会卡在"内容出现那一刻"；侧栏展开/收起时若又
+ * 赶上新卡片进入视口，同样会一卡一卡。这里把卡片文字排进队列，用**屏外绘制**在
+ * 空闲帧里逐段把字形灌进缓存，等到真正上屏时已经没有栅格化成本。
+ */
+public class WarmTextRequest {
+    public let text: String
+    public let size: Float32
+    public let bold: Bool
+    public let family: String
+
+    public init(text: String, size: Float32, bold: Bool, family: String) {
+        this.text = text
+        this.size = size
+        this.bold = bold
+        this.family = family
+    }
+}
+
 public class BooklistCell {
     public let id: Int64
     public let title: String
@@ -1301,6 +1323,79 @@ public class AppState {
     /** 待精确测量的文字（FIFO）。 */
     private let pendingTextMeasures = ArrayList<PendingTextMeasure>()
 
+    // ---- 文字预热队列（数据加载完成后摊到空闲帧，避免首绘卡顿）--------------
+    private let warmTextQueue = ArrayList<WarmTextRequest>()
+    private let warmTextSeen = HashSet<String>()
+
+    private func warmText(text: String, size: Float32, bold: Bool, family: String): Unit {
+        if (text.isEmpty()) {
+            return
+        }
+        let key = "${size}|${bold}|${text}"
+        if (warmTextSeen.contains(key)) {
+            return
+        }
+        if (warmTextSeen.size > 20000) {
+            warmTextSeen.clear()
+        }
+        warmTextSeen.add(key)
+        warmTextQueue.add(WarmTextRequest(text, size, bold, family))
+    }
+
+    /** 把一批书卡文字排进预热队列（标题/作者/统计）。 */
+    public func enqueueBookWarmTexts(cells: ArrayList<BookCell>): Unit {
+        let theme = selineTheme()
+        for (cell in cells) {
+            warmText(cell.title, theme.fontLabel, true, theme.fontFamily)
+            warmText(cell.author, theme.fontCaption, false, theme.fontFamily)
+            warmText(cell.meta, theme.fontCaption, false, theme.fontFamily)
+        }
+    }
+
+    /** 把一批书单卡文字排进预热队列（标题/作者/简介/统计）。 */
+    public func enqueueBooklistWarmTexts(cells: ArrayList<BooklistCell>): Unit {
+        let theme = selineTheme()
+        for (cell in cells) {
+            warmText(cell.title, theme.fontLabel, true, theme.fontFamily)
+            warmText(if (cell.author.isEmpty()) { "匿名书单" } else { cell.author },
+                theme.fontCaption, false, theme.fontFamily)
+            if (!cell.description.isEmpty()) {
+                warmText(cell.description, theme.fontCaption, false, theme.fontFamily)
+            }
+            warmText("${cell.booksCount} 本 · 浏览 ${cell.viewsCount} · 收藏 ${cell.favoritesCount}",
+                theme.fontCaption, false, theme.fontFamily)
+        }
+    }
+
+    /**
+     * 每帧至多预热 `maxCount` 段（在屏幕外绘制：只灌字形缓存，不影响布局/画面）。
+     *
+     * 侧栏动画期间**暂停**预热：预热本身要跑完整 shaping + 字形栅格化（每段 1~5ms），
+     * 和动画抢帧只会让动画变卡；等动画结束再继续，反正用户此刻看的是侧栏。
+     */
+    public func drainWarmTexts(ctx: UiContext, maxCount: Int64): Unit {
+        if (warmTextQueue.isEmpty()) {
+            return
+        }
+        if (railAnimating(this)) {
+            ctx.requestFrame()
+            return
+        }
+        var done: Int64 = 0
+        while (done < maxCount && !warmTextQueue.isEmpty()) {
+            let request = warmTextQueue.remove(at: 0)
+            // 用 seline_ui 的 paintText（内部会解析字体）：屏外绘制，只灌字形缓存。
+            paintText(ctx.renderer, request.text,
+                Rect(-6000.0, -6000.0, 600.0, request.size * 1.6),
+                selineTheme().palette.text, request.size,
+                style: selineFontStyle(bold: request.bold), family: request.family)
+            done += 1
+        }
+        if (!warmTextQueue.isEmpty()) {
+            ctx.requestFrame()
+        }
+    }
+
     /** 帧回调开头调用：重置本帧文本测量预算。 */
     public func beginFrameTextBudget(): Unit {
         textMeasuresThisFrame = 0
@@ -1824,6 +1919,7 @@ public class AppState {
                 let cells = cellsFromBriefs(briefs, clientBox.value.currentSiteUrl())
                 postToUi({=>
                     popular.value = cells
+                    enqueueBookWarmTexts(cells)
                     popularVisible.value = 12
                     status.value = "${sourceLabel} ${cells.size} 本 · ${clientBox.value.currentSiteUrl()}"
                     loading.value = false
@@ -1897,6 +1993,7 @@ public class AppState {
                         return
                     }
                     results.value = cells
+                    enqueueBookWarmTexts(cells)
                     searchPage = 1
                     searchHasMore.value = page.pagination.hasMore()
                     lastKeyword.value = keyword
@@ -2912,9 +3009,13 @@ public class AppState {
                 let cells = booklistCells(page, currentSite())
                 if (reset) {
                     booklists.value = cells
+                enqueueBooklistWarmTexts(cells)
                 } else {
                     for (cell in cells) {
                         booklists.value.add(cell)
+                let single = ArrayList<BooklistCell>()
+                single.add(cell)
+                enqueueBooklistWarmTexts(single)
                     }
                 }
                 booklistsNextPage.value = page.nextPage
@@ -3668,6 +3769,7 @@ public class AppState {
                     }
                     if (reset) {
                         favorites.value = cells
+                enqueueBookWarmTexts(cells)
                     } else {
                         for (cell in cells) {
                             favorites.value.add(cell)
