@@ -43,10 +43,9 @@ func booklistsPage(state: AppState): Unit {
                     if (state.booklistsNextPage.value > 0) {
                         LoadMoreNotice(trigger: {=>
                             if (!state.booklistsLoading.value) {
-                                // 只有用户真的滚动过才提示，避免启动/首屏自动补一页时弹 toast
-                                if (state.booklistsScroll.value > 8.0) {
-                                    state.showToastNow("正在加载更多书单…", kind: ToastKind.Info)
-                                }
+                                // 首屏没铺满窗口时会立刻自动补一页 —— 这种也要提示，
+                                // 否则用户只看到"页面没满、还在转"，不知道发生了什么。
+                                state.showToastNow("正在加载更多书单…", kind: ToastKind.Info)
                                 state.loadBooklists(reset: false)
                             }
                         })

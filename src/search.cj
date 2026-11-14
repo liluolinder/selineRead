@@ -33,9 +33,8 @@ func searchPage(state: AppState): Unit {
                         LoadMoreNotice(trigger: {=>
                             if (state.searchHasMore.value && !state.searchLoadingMore.value &&
                                 !state.loading.value) {
-                                if (state.searchScroll.value > 8.0) {
-                                    state.showToastNow("正在加载更多…", kind: ToastKind.Info)
-                                }
+                                // 首屏没铺满窗口时的自动补页同样要提示
+                                state.showToastNow("正在加载更多…", kind: ToastKind.Info)
                                 state.loadMoreSearch()
                             }
                         })

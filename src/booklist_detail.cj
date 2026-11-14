@@ -55,9 +55,8 @@ func booklistDetailPage(state: AppState): Unit {
                     // 页面里不再放「加载更多」按钮：滚到底自动加载，状态用 Toast 反馈
                     LoadMoreNotice(trigger: {=>
                         if (!state.booklistLoading.value) {
-                            if (state.booklistDetailScroll.value > 8.0) {
-                                state.showToastNow("正在加载更多…", kind: ToastKind.Info)
-                            }
+                            // 首屏没铺满窗口时的自动补页同样要提示
+                            state.showToastNow("正在加载更多…", kind: ToastKind.Info)
                             state.loadMoreBooklistBooks()
                         }
                     })

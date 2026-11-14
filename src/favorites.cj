@@ -44,9 +44,8 @@ func favoritesPage(state: AppState): Unit {
                     if (state.favoritesNextPage.value > 0) {
                         LoadMoreNotice(trigger: {=>
                             if (!state.favoritesLoading.value) {
-                                if (state.favoritesScroll.value > 8.0) {
-                                    state.showToastNow("正在加载更多收藏…", kind: ToastKind.Info)
-                                }
+                                // 首屏没铺满窗口时的自动补页同样要提示
+                                state.showToastNow("正在加载更多收藏…", kind: ToastKind.Info)
                                 state.loadFavorites(reset: false)
                             }
                         })
