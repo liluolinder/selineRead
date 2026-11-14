@@ -26,7 +26,7 @@ private var scrollStepCache: Float32 = -1.0
 
 func scrollStepValue(): Float32 {
     if (scrollStepCache < 0.0) {
-        scrollStepCache = 140.0
+        scrollStepCache = 200.0
         let raw = getVariable("SELINE_READ_SCROLL_STEP") ?? ""
         if (!raw.isEmpty()) {
             try {
@@ -44,7 +44,7 @@ func scrollStepValue(): Float32 {
 
 func appScrollOptions(): ScrollOptions {
     // 基础：110ms 短缓动（立刻有反应、不拖沓）；惯性（`scrollInertia`）再叠加滑行。
-    // 每格 140px ≈ 2~3 行卡片，比 chui 默认（72px）快一倍。
+    // 每格 200px ≈ 3~4 行卡片（用户按手感确认；chui 默认只有 72px）。
     ScrollOptions.web(wheelStep: scrollStepValue(), duration: 110, easing: Easing.EaseOutCubic)
 }
 

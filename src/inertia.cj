@@ -18,8 +18,8 @@ import std.math.abs
 import std.env.getVariable
 import chui.*
 
-/** 一个滚轮格在基础位移之外额外带来的初速系数。 */
-private let INERTIA_GAIN: Float32 = 0.08
+/** 一个滚轮格在基础位移之外额外带来的初速系数（200px/格时滑行约 37px）。 */
+private let INERTIA_GAIN: Float32 = 0.03
 /** 每 16.7ms 速度衰减比例（越小停得越快）。 */
 private let INERTIA_DECAY: Float32 = 0.84
 /** 低于该速度（px/帧）视为停止。 */
