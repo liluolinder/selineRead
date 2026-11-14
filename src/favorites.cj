@@ -13,32 +13,25 @@ import seline_ui.*
 
 func favoritesPage(state: AppState): Unit {
     state.ensureFavoritesLoaded()
-    if (!state.loggedIn.value) {
-        // 未登录：整页居中空态（不套背景）
-        VStack(spacing: vp(0.0)) {
-            Spacer()
-            emptyBlock("user", "登录后查看收藏",
-                "去「账号」页登录 Z-Library，就能在这里看到收藏的书籍",
-                actionLabel: "去账号页登录",
-                onAction: Some({=> state.tabSelectFromRail(TAB_ACCOUNT)}))
-            Spacer()
-        }.fillWidth().fillHeight()
-        return
-    }
-    if (!state.favoritesError.value.isEmpty() && state.favorites.value.isEmpty() &&
-        !state.favoritesLoading.value) {
-        VStack(spacing: vp(0.0)) {
-            Spacer()
-            errorStateCard("收藏加载失败", state.favoritesError.value,
-                retry: Some({=> state.loadFavorites()}), busy: state.favoritesLoading.value)
-            Spacer()
-        }.fillWidth().fillHeight()
-        return
-    }
+    // 未登录/失败/空态都放在同一个滚动容器里（与书单页一致），任何状态下都能滚动。
+    let failedOnEmpty = !state.favoritesError.value.isEmpty() &&
+        state.favorites.value.isEmpty() && !state.favoritesLoading.value
     VStack(spacing: vp(0.0)) {
         pageScrollView(scrollState: state.favoritesScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
-                if (true) {
+                if (!state.loggedIn.value) {
+                    VStack(spacing: vp(0.0)) {
+                        emptyBlock("user", "登录后查看收藏",
+                            "去「账号」页登录 Z-Library，就能在这里看到收藏的书籍",
+                            actionLabel: "去账号页登录",
+                            onAction: Some({=> state.tabSelectFromRail(TAB_ACCOUNT)}))
+                    }.padding(0.0, 40.0, 0.0, 0.0)
+                } else if (failedOnEmpty) {
+                    VStack(spacing: vp(0.0)) {
+                        errorStateCard("收藏加载失败", state.favoritesError.value,
+                            retry: Some({=> state.loadFavorites()}), busy: state.favoritesLoading.value)
+                    }.padding(0.0, 72.0, 0.0, 0.0)
+                } else {
                     let failed = !state.favoritesError.value.isEmpty()
                     if (failed && !state.favorites.value.isEmpty()) {
                         state.toastIfChanged(state.favoritesError.value)

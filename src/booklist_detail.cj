@@ -21,17 +21,14 @@ func booklistDetailPage(state: AppState): Unit {
                 kind: SelineButtonKind.Ghost, compact: true)
             Spacer()
         }.hug().fillWidth().padding(PAGE_PAD, 12.0, PAGE_PAD, 4.0)
-        if (failedOnEmpty) {
-            VStack(spacing: vp(0.0)) {
-                Spacer()
-                errorStateCard("书单内容加载失败", state.booklistError.value,
-                    retry: Some({=> state.loadBooklistBooks(1)}), busy: state.booklistLoading.value)
-                Spacer()
-            }.fillWidth().fillHeight()
-            return
-        }
         pageScrollView(scrollState: state.booklistDetailScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
+                if (failedOnEmpty) {
+                    VStack(spacing: vp(0.0)) {
+                        errorStateCard("书单内容加载失败", state.booklistError.value,
+                            retry: Some({=> state.loadBooklistBooks(1)}), busy: state.booklistLoading.value)
+                    }.padding(0.0, 72.0, 0.0, 0.0)
+                }
                 VStack(spacing: vp(SELINE_SPACE_XS)) {
                     Label(state.booklistTitle.value).fontSize(theme.fontTitle).bold()
                         .wrap()
@@ -55,9 +52,15 @@ func booklistDetailPage(state: AppState): Unit {
                     emptyBlock("star_fill", "这份书单还没有书", "可能已被作者清空")
                 }
                 if (state.booklistNextPage.value > 0 && state.booklistError.value.isEmpty()) {
-                    SelineButton("加载更多", {=> state.loadMoreBooklistBooks()},
-                        glyph: "refresh", kind: SelineButtonKind.Ghost, compact: true,
-                        busy: state.booklistLoading.value)
+                    // 页面里不再放「加载更多」按钮：滚到底自动加载，状态用 Toast 反馈
+                    LoadMoreNotice(trigger: {=>
+                        if (!state.booklistLoading.value) {
+                            if (state.booklistDetailScroll.value > 8.0) {
+                                state.showToastNow("正在加载更多…", kind: ToastKind.Info)
+                            }
+                            state.loadMoreBooklistBooks()
+                        }
+                    })
                 }
             }.padding(PAGE_PAD, 8.0, PAGE_PAD, 32.0)
         }

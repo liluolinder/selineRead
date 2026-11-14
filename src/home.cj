@@ -15,23 +15,20 @@ import seline_ui.*
 func homePage(state: AppState): Unit {
     // 首页不要页头、不要常驻刷新按钮：直接一墙封面。
     // 只有获取失败时才出现错误块 + 「重试」（用户明确要求）。
+    // 不论成功/失败/空，页面结构都保持同一个滚动容器（和书单页一致）：
+    // 这样任何状态下页面都能正常滚到内容底部，不会出现"这一屏滚不动"。
     let failedOnEmpty = !state.error.value.isEmpty() &&
         state.popular.value.isEmpty() && !state.loading.value
-    if (failedOnEmpty) {
-        // 整页失败：内容整体在页面中央（不套背景块）
-        VStack(spacing: vp(0.0)) {
-            Spacer()
-            errorStateCard("没能加载热门图书", state.error.value,
-                retry: Some({=> state.reloadPopular()}), busy: state.loading.value)
-            Spacer()
-        }.fillWidth().fillHeight()
-        return
-    }
     VStack(spacing: vp(0.0)) {
         pageScrollView(scrollState: state.homeScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
                 let failed = !state.error.value.isEmpty()
-                if (true) {
+                if (failedOnEmpty) {
+                    VStack(spacing: vp(0.0)) {
+                        errorStateCard("没能加载热门图书", state.error.value,
+                            retry: Some({=> state.reloadPopular()}), busy: state.loading.value)
+                    }.padding(0.0, 72.0, 0.0, 0.0)
+                } else {
                     // 列表已经有内容、只是这次刷新失败：紧凑横幅
                     if (failed) {
                         state.toastIfChanged(state.error.value)

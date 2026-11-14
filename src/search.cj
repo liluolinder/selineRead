@@ -11,20 +11,17 @@ import seline_ui.*
 
 /** 搜索结果（不再占用独立页签，显示在「热门」页签内）。 */
 func searchPage(state: AppState): Unit {
-    if (!state.error.value.isEmpty() && !state.loading.value) {
-        VStack(spacing: vp(0.0)) {
-            Spacer()
-            errorStateCard("搜索失败", state.error.value,
-                retry: Some({=> state.submitSearch()}), busy: state.loading.value)
-            Spacer()
-        }.fillWidth().fillHeight()
-        return
-    }
+    // 出错也放在滚动容器里：搜索页在任何状态下都能正常滚动。
+    let failedOnEmpty = !state.error.value.isEmpty() && !state.loading.value
     VStack(spacing: vp(0.0)) {
         pageScrollView(scrollState: state.searchScroll) {
             VStack(spacing: vp(SELINE_SPACE_MD)) {
-
-                if (state.loading.value || state.forceSkeleton.value) {
+                if (failedOnEmpty) {
+                    VStack(spacing: vp(0.0)) {
+                        errorStateCard("搜索失败", state.error.value,
+                            retry: Some({=> state.submitSearch()}), busy: state.loading.value)
+                    }.padding(0.0, 72.0, 0.0, 0.0)
+                } else if (state.loading.value || state.forceSkeleton.value) {
                     bookSkeletonGrid(count: 12)
                 } else {
                     bookGrid(state, state.results.value)
