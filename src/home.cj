@@ -118,6 +118,11 @@ class BookCard <: Widget {
         let cover = Rect(frame.x + BOOK_CARD_PAD, frame.y + BOOK_CARD_PAD, coverW, coverH)
         // 封面圆角 = 卡片圆角 - 内边距，两条圆弧同心
         drawBookCover(ctx, state, cell.cover, cover, BOOK_CARD_RADIUS - BOOK_CARD_PAD)
+        // 文字首绘受每帧预算限制（同书单卡）：没轮到的这一帧只画封面，下一帧补
+        if (!state.grantCardText("bk|${cell.id}")) {
+            ctx.requestFrame()
+            return
+        }
         let textX = cover.x
         let titleY = cover.y + cover.h + 8.0
         let titleStyle = selineFontStyle(bold: true)

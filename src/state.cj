@@ -11,7 +11,7 @@
  */
 package seline_read
 
-import std.collection.{ArrayList, HashMap}
+import std.collection.{ArrayList, HashMap, HashSet}
 import std.convert.*
 import std.env.getVariable
 import std.sync.*
@@ -143,8 +143,27 @@ func booklistCells(page: BooklistPage, siteUrl: String): ArrayList<BooklistCell>
     cells
 }
 
-/** 书单列表后台结果。 */
-class BooklistsPayload {
+/** 排队等精确测量的文字（`fittedText` 的分帧测量队列用）。 */
+class PendingTextMeasure {
+    let key: String
+    let text: String
+    let maxWidth: Float32
+    let pointSize: Float32
+    let bold: Bool
+    let family: String
+
+    init(key: String, text: String, maxWidth: Float32, pointSize: Float32, bold: Bool,
+        family: String) {
+        this.key = key
+        this.text = text
+        this.maxWidth = maxWidth
+        this.pointSize = pointSize
+        this.bold = bold
+        this.family = family
+    }
+}
+
+/** 书单列表后台结果。 */class BooklistsPayload {
     let page: ?BooklistPage
     let error: String
 
@@ -1262,6 +1281,137 @@ public class AppState {
     private let fittedTextCache = HashMap<String, String>()
 
     /** 按可用宽度截断文本（带缓存，避免每帧对每张卡片重复测量）。 */
+    /*
+     * 文本测量预算。
+     *
+     * `renderer.textWidth` 要跑完整 shaping（含 CJK 字体回退/字形栅格化），实测
+     * 单次 1.4~6ms。一屏 13 张书单卡有 42 段文字要量，同一帧全量测量会卡 260ms
+     * （release 实测 400~500ms，就是用户感觉到的"书单页一下就卡住"）。
+     *
+     * 所以分三步：
+     *   1. 用字符估算宽度（上界）：明确放得下就直接用 —— 短标题/作者/统计行
+     *      绝大多数走这条，完全不测量；
+     *   2. 需要截断的，先用"估算截断"顶上（不测量），并可立即绘制；
+     *   3. 每帧最多精确测量 2 段（且本帧测量耗时超过 4ms 就停），排队逐帧纠正。
+     * 任何一帧的测量成本都有上界，不再出现半秒级卡顿。
+     */
+    private var textMeasuresThisFrame: Int64 = 0
+    /** key → 暂用的估算截断结果（精确值算好后移除）。 */
+    private let pendingFittedText = HashMap<String, String>()
+    /** 待精确测量的文字（FIFO）。 */
+    private let pendingTextMeasures = ArrayList<PendingTextMeasure>()
+
+
+    /** 帧回调开头调用：重置本帧文本测量预算。 */
+    public func beginFrameTextBudget(): Unit {
+        textMeasuresThisFrame = 0
+        cardTextsPaintedThisFrame = 0
+    }
+
+
+    /*
+     * 卡片文字的"首绘预算"。
+     *
+     * 首次绘制一段没见过的新文字时，SDL_ttf 要做 shaping + 字形栅格化；实测一屏
+     * 13 张书单卡（约 50 段文字）一次性首绘会卡 200~600ms —— 这就是"书单页
+     * 一下卡住"的真凶（release 实测 557ms）。
+     *
+     * 做法：每帧只允许 N 张卡片做"文字首绘"，其余卡片这一帧只画底板/封面并
+     * `requestFrame()`，下一帧继续 —— 文字在 4~5 帧内（约 80ms）补齐，用户看到
+     * 的是轻微淡入，而不是一次卡死。已经绘过的文字记在 `warmedCardTexts` 里，
+     * 之后每帧都能正常绘制，不再受预算限制。
+     */
+    private var cardTextsPaintedThisFrame: Int64 = 0
+    private let warmedCardTexts = HashSet<String>()
+
+    /** 一张卡片是否可以在本帧绘制文字（首次绘制受每帧预算限制）。 */
+    public func grantCardText(warmKey: String): Bool {
+        if (warmedCardTexts.contains(warmKey)) {
+            return true
+        }
+        if (cardTextsPaintedThisFrame >= 3) {
+            return false
+        }
+        cardTextsPaintedThisFrame += 1
+        if (warmedCardTexts.size > 8192) {
+            warmedCardTexts.clear()
+        }
+        warmedCardTexts.add(warmKey)
+        true
+    }
+
+    /** 估算一段文字的像素宽度（上界）：CJK/emoji 按 1.0 字宽，其它按 0.6。 */
+    private func estimatedTextWidth(text: String, pointSize: Float32, bold: Bool): Float32 {
+        var width = Float32(0.0)
+        for (rune in text.toRuneArray()) {
+            // UTF-8 字节数 ≥ 3 → CJK/全角/emoji，按一个字宽算
+            width += if (rune.toString().size >= 3) { pointSize } else { pointSize * 0.6 }
+        }
+        if (bold) {
+            width = width * 1.03
+        }
+        width
+    }
+
+    /** 不测量、按估算宽度截断（含省略号）。 */
+    private func estimatedTruncate(text: String, maxWidth: Float32, pointSize: Float32,
+        bold: Bool): String {
+        if (text.isEmpty() || maxWidth <= 0.0) {
+            return ""
+        }
+        if (estimatedTextWidth(text, pointSize, bold) <= maxWidth) {
+            return text
+        }
+        let runes = text.toRuneArray()
+        let ellipsisWidth = pointSize
+        var width = Float32(0.0)
+        var count: Int64 = 0
+        for (rune in runes) {
+            let advance = if (rune.toString().size >= 3) { pointSize } else { pointSize * 0.6 }
+            if (width + advance + ellipsisWidth > maxWidth) {
+                break
+            }
+            width += advance
+            count += 1
+        }
+        if (count >= Int64(runes.size)) {
+            return text
+        }
+        var result = ""
+        var index: Int64 = 0
+        for (rune in runes) {
+            if (index >= count) {
+                break
+            }
+            result += rune.toString()
+            index += 1
+        }
+        result + "…"
+    }
+
+    /** 推进队列：本帧最多精确测量 2 段，且累计耗时超过 4ms 就停。 */
+    private func pumpPendingTextMeasures(ctx: UiContext): Unit {
+        if (pendingTextMeasures.isEmpty()) {
+            return
+        }
+        let started = MonoTime.now()
+        while (textMeasuresThisFrame < 2 && !pendingTextMeasures.isEmpty()) {
+            let request = pendingTextMeasures.remove(at: 0)
+            match (pendingFittedText.get(request.key)) {
+                case Some(_) => ()
+                case None => continue   // 已经算过/作废
+            }
+            let fitted = fitTextWidth(ctx, request.text, request.maxWidth, request.pointSize,
+                selineFontStyle(bold: request.bold), request.family)
+            fittedTextCache[request.key] = fitted
+            pendingFittedText.remove(request.key)
+            textMeasuresThisFrame += 1
+            if (Int64((MonoTime.now() - started).toNanoseconds()) > 4_000_000) {
+                break
+            }
+        }
+    }
+
     public func fittedText(ctx: UiContext, text: String, maxWidth: Float32,
         pointSize: Float32, bold: Bool, family: String): String {
         // 宽度按 8px 分桶（向下取整）：侧栏展开/窗口缩放时宽度每帧都在变，
@@ -1273,13 +1423,27 @@ public class AppState {
             case Some(value) => return value
             case None => ()
         }
-        if (fittedTextCache.size > 4096) {
-            fittedTextCache.clear()
+        // 先顺手推进排队中的精确测量（每帧有上界）
+        pumpPendingTextMeasures(ctx)
+        // 已经有估算值：先用它，精确值下一帧再补
+        match (pendingFittedText.get(key)) {
+            case Some(value) => return value
+            case None => ()
         }
-        let fitted = fitTextWidth(ctx, text, Float32(bucket), pointSize,
-            selineFontStyle(bold: bold), family)
-        fittedTextCache[key] = fitted
-        fitted
+        let limit = Float32(bucket)
+        // 1) 估算就放得下：不测量，直接缓存
+        if (estimatedTextWidth(text, pointSize, bold) <= limit - 2.0) {
+            if (fittedTextCache.size > 4096) {
+                fittedTextCache.clear()
+            }
+            fittedTextCache[key] = text
+            return text
+        }
+        // 2) 需要截断：先给估算结果，排队等精确测量
+        let estimated = estimatedTruncate(text, limit, pointSize, bold)
+        pendingFittedText[key] = estimated
+        pendingTextMeasures.add(PendingTextMeasure(key, text, limit, pointSize, bold, family))
+        estimated
     }
 
     /** 默认封面纹理（懒加载，UI 线程 draw 时创建一次）。 */

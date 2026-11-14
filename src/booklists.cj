@@ -116,6 +116,12 @@ class BooklistCard <: Widget {
             drawBookCover(ctx, state, cell.covers[index], cover, 6.0)
             index += 1
         }
+
+        // 文字首绘受每帧预算限制：没轮到的卡片这一帧只画底板/封面，下一帧补上
+        if (!state.grantCardText("bl|${cell.id}")) {
+            ctx.requestFrame()
+            return
+        }
         let textX = frame.x + BOOKLIST_CARD_PAD +
             Float32(3) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP) + 4.0
         let textW = max(Float32(40.0), frame.right() - BOOKLIST_CARD_PAD - textX)

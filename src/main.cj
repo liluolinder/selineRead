@@ -257,8 +257,11 @@ main(args: Array<String>): Int64 {
                 if (frameTrace) {
                     traceState.tick += 1
                     writeDebugLog("F ${traceState.tick} ${info.deltaMs}")
+
                 }
                 state.beginFrameTextureBudget()
+                state.beginFrameTextBudget()
+
                 railAdvance(state, Float32(info.deltaMs))
                 perf.onFrame(Float32(info.deltaMs))
             }, keepsAlive: {=>

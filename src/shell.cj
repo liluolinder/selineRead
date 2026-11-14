@@ -14,8 +14,33 @@ import std.math.*
 import chui.*
 import seline_ui.*
 
-/** 标题栏高度（窗口按钮、居中搜索框都按它对齐）。 */
-let TITLE_BAR_HEIGHT: Float32 = 52.0
+/**
+ * 预热文字渲染管线：建字体面、填字形图集。
+ *
+ * 在**屏外**（负坐标）画几段真正会用到的字号/字重/中英混排文字。SDL_ttf
+ * 首次绘制文本的 200~250ms 成本被挪到启动首帧（那时屏幕上还是骨架/加载态），
+ * 之后卡片文字、列表文字都直接命中已建好的字体面与字形图集。
+ */
+func warmUpTextPipelines(ctx: UiContext): Unit {
+    let theme = selineTheme()
+    let palette = theme.palette
+    let sample = "Seline Read 书单热门收藏下载设置账号 Abc123"
+    let sizes = [theme.fontCaption, theme.fontBody, theme.fontLabel, theme.fontHeading,
+        theme.fontTitle]
+    var index: Int64 = 0
+    var y = Float32(-4000.0)
+    while (index < Int64(sizes.size)) {
+        let size = sizes[index]
+        paintText(ctx.renderer, sample, Rect(-4000.0, y, 600.0, size + 6.0), palette.text,
+            size, style: selineFontStyle(bold: false), family: theme.fontFamily)
+        paintText(ctx.renderer, sample, Rect(-4000.0, y - 40.0, 600.0, size + 6.0),
+            palette.text, size, style: selineFontStyle(bold: true), family: theme.fontFamily)
+        y = y - 80.0
+        index += 1
+    }
+}
+
+/** 标题栏高度（窗口按钮、居中搜索框都按它对齐）。 */let TITLE_BAR_HEIGHT: Float32 = 52.0
 
 /** 整个窗口的树。 */
 func appShell(state: AppState): Unit {
@@ -293,7 +318,8 @@ func pageFor(state: AppState): Unit {
  * `ctx.theme`；因为 `ZStack` 按子节点顺序绘制，探针先画，后面所有内容就是
  * 该遍对应的配色 —— 圆形揭示时颜色才会跟着辐射边界走。
  */
-private var shellDriverLogged: Bool = false
+/** 字体是否已预热（首帧画一段屏外文字）。 */
+private var shellTextWarmed: Bool = false
 
 class ThemeSyncProbe <: Widget {
     init() {
@@ -308,10 +334,13 @@ class ThemeSyncProbe <: Widget {
 
     public func draw(ctx: UiContext): Unit {
         setSelineTheme(selineThemeForChuiTheme(ctx.theme))
-        // 临时诊断：记一次渲染后端
-        if (!shellDriverLogged) {
-            shellDriverLogged = true
-            writeDebugLog("renderer: ${ctx.renderer.driverName()} size=${Int64(ctx.viewportWidth)}x${Int64(ctx.viewportHeight)} scale=${ctx.displayScale}")
+
+        // 首帧把字体"点着"：SDL_ttf 第一次真正绘制文字时要建字体面 + 字形图集，
+        // 实测耗时 200~250ms。若等到书单卡片第一次出现再建，就会卡在内容出现那一刻；
+        // 这里在启动首帧（用户在看骨架屏）先画一段屏外文字把它预热掉。
+        if (!shellTextWarmed) {
+            shellTextWarmed = true
+            warmUpTextPipelines(ctx)
         }
     }
 
