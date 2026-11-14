@@ -17,14 +17,12 @@ package seline_read
 import std.math.abs
 import chui.*
 
-/** 一个滚轮格在基础位移之外额外带来的初速系数（200px/格时滑行约 37px）。 */
-private let INERTIA_GAIN: Float32 = 0.03
 /** 每 16.7ms 速度衰减比例（越小停得越快）。 */
 private let INERTIA_DECAY: Float32 = 0.84
 /** 低于该速度（px/帧）视为停止。 */
 private let INERTIA_MIN_SPEED: Float32 = 0.5
 /** 速度上限，防止连续滚动后飞太远。 */
-private let INERTIA_MAX_SPEED: Float32 = 160.0
+private let INERTIA_MAX_SPEED: Float32 = 240.0
 /** 惯性使用的滚轮步长（与 `appScrollOptions` 的基础步长保持一致）。 */
 
 
@@ -38,7 +36,9 @@ class ScrollInertia {
     func onWheel(offset: State<Float32>, wheelY: Float32): Unit {
         target = offset
         lastOffset = offset.value
-        var next = velocity + (-wheelY) * SCROLL_WHEEL_STEP * INERTIA_GAIN
+        // 每格补 `SCROLL_GLIDE_STEP` 的滑行：初速 = 距离 × (1 - 衰减率)，
+        // 这样速度按 DECAY 衰减到停止时，积分正好等于这段距离。
+        var next = velocity + (-wheelY) * SCROLL_GLIDE_STEP * (1.0 - INERTIA_DECAY)
         if (next > INERTIA_MAX_SPEED) {
             next = INERTIA_MAX_SPEED
         } else if (next < -INERTIA_MAX_SPEED) {
