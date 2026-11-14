@@ -283,6 +283,7 @@ main(args: Array<String>): Int64 {
                     writeDebugLog("F ${traceState.tick} ${info.deltaMs}")
 
                 }
+                state.lastFrameDeltaMs = Float32(info.deltaMs)
                 state.beginFrameTextureBudget()
                 state.beginFrameTextBudget()
                 railAdvance(state, Float32(info.deltaMs))

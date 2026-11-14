@@ -1400,6 +1400,16 @@ public class AppState {
     public func beginFrameTextBudget(): Unit {
         textMeasuresThisFrame = 0
         cardTextsPaintedThisFrame = 0
+        // 闭环调整文字首绘预算：上一帧超 20ms 就收缩，明显有余量（<13ms）再放开
+        if (lastFrameDeltaMs > 20.0) {
+            if (cardTextBudget > 1) {
+                cardTextBudget -= 1
+            }
+        } else if (lastFrameDeltaMs < 13.0) {
+            if (cardTextBudget < 3) {
+                cardTextBudget += 1
+            }
+        }
     }
 
 
@@ -1417,13 +1427,29 @@ public class AppState {
      */
     private var cardTextsPaintedThisFrame: Int64 = 0
     private let warmedCardTexts = HashSet<String>()
+    /**
+     * 本帧允许多少张卡片做"文字首绘"——**自适应**。
+     *
+     * 单段文字首绘 1~5ms，一张书单卡有 4 段，固定 3 张/帧时一帧就要 30~60ms，
+     * 正好落在"数据刚到"那几帧上（实测 273ms/130ms/62ms 的尖峰）。
+     * 这里按上一帧的实际耗时闭环调整：帧超时就把预算降到 1，帧很快才逐步放开。
+     * 文字会晚几帧补齐（看着像淡入），但每一帧都在预算内。
+     */
+    public var cardTextBudget: Int64 = 2
+    /** 上一帧的总耗时（帧回调写入），用于上面的自适应。 */
+    public var lastFrameDeltaMs: Float32 = 16.0
 
-    /** 一张卡片是否可以在本帧绘制文字（首次绘制受每帧预算限制）。 */
+    /**
+     * 一张卡片是否可以在本帧绘制文字（首次绘制受**自适应**每帧预算限制）。
+     *
+     * 单段文字首绘 1~5ms、一张书单卡 4 段，固定 3 张/帧时一帧要 30~60ms；
+     * 这里是按上一帧耗时闭环的预算（1~3 张/帧），把首绘摊到多帧里。
+     */
     public func grantCardText(warmKey: String): Bool {
         if (warmedCardTexts.contains(warmKey)) {
             return true
         }
-        if (cardTextsPaintedThisFrame >= 3) {
+        if (cardTextsPaintedThisFrame >= cardTextBudget) {
             return false
         }
         cardTextsPaintedThisFrame += 1
