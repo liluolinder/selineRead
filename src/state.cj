@@ -880,6 +880,39 @@ func friendlyErrorMessage(failure: ZlibError): String {
         case ZlibErrorKind.Cangjie => "网络请求失败（当前站和种子站都无法访问）"
     }
 }
+/**
+ * 把下载失败原因压成一行短提示（toast 用）。
+ *
+ * 引擎的错误消息长这样：`下载失败: HTTP 522（不可重试）：<html>...`，
+ * 直接塞进 toast 会撑成好几行。这里去掉重复前缀、只取第一行、最多 40 个字符。
+ */
+func shortDownloadError(message: String): String {
+    var text = message.trimAscii()
+    for (prefix in ["下载失败: ", "下载失败：", "下载失败:"]) {
+        if (text.startsWith(prefix)) {
+            text = text[prefix.size..].trimAscii()
+        }
+    }
+    match (text.indexOf("\n")) {
+        case Some(at) => text = text[..at].trimAscii()
+        case None => ()
+    }
+    let runes = text.toRuneArray()
+    if (Int64(runes.size) <= 40) {
+        return text
+    }
+    let builder = StringBuilder()
+    var index: Int64 = 0
+    for (rune in runes) {
+        if (index >= 40) {
+            break
+        }
+        builder.append(rune)
+        index += 1
+    }
+    builder.toString() + "…"
+}
+
 public class AppState {
     /** 当前一级页签：0 热门 / 1 搜索 / 2 下载 / 3 设置。 */
     public let tab = State<Int64>(0)
@@ -4309,6 +4342,7 @@ public class AppState {
                         downloadLogAppend("done task=${taskId} ${logBytes(item.totalBytes)} " +
                             "elapsed=${elapsedMs / 1000}.${elapsedMs % 1000 / 100}s avg=${logBytes(avg)}/s")
                         writeDebugLog("download complete: ${taskId} ${fileName}")
+                        showToast("《${item.title}》下载完成", kind: ToastKind.Success)
                     })
                 })
                 task.setErrorCallback({failure =>
@@ -4322,6 +4356,8 @@ public class AppState {
                         item.error = failure.message
                         downloadsTick.value += 1
                         writeDebugLog("download failed: ${taskId} ${failure.message}")
+                        showToast("《${item.title}》下载失败：${shortDownloadError(failure.message)}",
+                            kind: ToastKind.Error)
                     })
                 })
                 task.setRetryCallback({attempt, total =>
@@ -4348,17 +4384,21 @@ public class AppState {
                 task.await()
             } catch (failure: ZlibError) {
                 downloadLogAppend("FAIL task=${taskId} 取下载链接失败: ${failure.detail}")
+                let failureText = friendlyErrorMessage(failure)
                 postToUi({=>
                     item.status = DL_FAILED
                     item.error = failure.detail
                     downloadsTick.value += 1
+                    showToast("《${title}》下载失败：${failureText}", kind: ToastKind.Error)
                 })
             } catch (failure: Exception) {
                 downloadLogAppend("FAIL task=${taskId} 异常: ${failure.message}")
+                let failureText = shortDownloadError(failure.message)
                 postToUi({=>
                     item.status = DL_FAILED
                     item.error = failure.message
                     downloadsTick.value += 1
+                    showToast("《${title}》下载失败：${failureText}", kind: ToastKind.Error)
                 })
             }
         }
