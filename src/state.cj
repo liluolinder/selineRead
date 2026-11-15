@@ -730,13 +730,13 @@ public func ensureDownloadLog(): Unit {
     downloadLogReady = true
     try {
         ensureAppDataDir()
-        // 下载专用超时：读 10 分钟（慢网络/限速下 60 秒必然断）、写 2 分钟。
-        // 必须在共享 HTTP 客户端第一次被使用之前设置，否则不生效。
-        setHttpTimeouts(Duration.minute * 10, Duration.minute * 2)
         let file = File(Path(downloadLogPath()), OpenMode.Append)
         DownloadLogger.sink = file
         DownloadLogger.level = LogLevel.INFO
-        downloadLogAppend("===== session start (readTimeout=${httpReadTimeout()}) =====")
+        // 超时由每个 DownloadTask 的 config 带过去（读 10 分钟 / 写 2 分钟，见 startDownload），
+        // 库会在该进程第一个下载任务启动时应用到共享客户端。
+        downloadLogAppend("===== session start (download readTimeout=10m writeTimeout=2m) =====")
+        let _ = httpReadTimeout()
     } catch (failure: Exception) {
         downloadLogReady = false
         writeDebugLog("download log open failed: ${failure.message}")
