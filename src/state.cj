@@ -877,7 +877,7 @@ func friendlyErrorMessage(failure: ZlibError): String {
         case ZlibErrorKind.NotFound => "内容不存在或已被删除"
         case ZlibErrorKind.Forbidden => "访问被拒绝（可能是站点风控）"
         case ZlibErrorKind.Closed => "客户端已关闭"
-        case ZlibErrorKind.Cangjie => "网络请求失败（当前站和种子站都无法访问）"
+        case ZlibErrorKind.Cangjie => "网络链接失败"
     }
 }
 /**
@@ -1199,16 +1199,8 @@ public class AppState {
             case Some(value) => value
             case None => return
         }
-        let baseUrl = if (activeSite.value.isEmpty()) {
-            ZlibHost.DEFAULT_URL
-        } else {
-            activeSite.value
-        }
-        let seed = if (seedSite.value.isEmpty()) {
-            ZlibHost.DEFAULT_URL
-        } else {
-            seedSite.value
-        }
+                let baseUrl = if (activeSite.value.isEmpty()) { OFFICIAL_SITES[0] } else { activeSite.value }
+        let seed = effectiveSeedSite()
         try {
             let created = ZlibClient.create(baseUrl: baseUrl, credential: entry.credential(),
                 seed: seed)
@@ -1782,25 +1774,22 @@ public class AppState {
             case None => credential.userId
         }
         let isLoggedIn = credential.isLoggedIn
-        // 自定义站点 / 种子站：用户配置优先，没配置就用官方默认站
-        let baseUrl = if (activeSite.value.isEmpty()) {
-            ZlibHost.DEFAULT_URL
-        } else {
-            activeSite.value
-        }
-        let seed = if (seedSite.value.isEmpty()) {
-            ZlibHost.DEFAULT_URL
-        } else {
-            seedSite.value
-        }
-        writeDebugLog("bootstrap: begin (background) base=${baseUrl} seed=${seed}")
+        // 站点：官方地址**不带种子站**（失败直接报错）；自定义地址才启用种子站回退
+        let baseUrl = if (activeSite.value.isEmpty()) { OFFICIAL_SITES[0] } else { activeSite.value }
+        let official = isOfficialSiteUrl(baseUrl)
+        let seed = effectiveSeedSite()
+        writeDebugLog("bootstrap: begin (background) base=${baseUrl} official=${official} seed=${seed} " +
+            "fallback=${!seed.isEmpty()}")
         let _ = spawn {=>
             let created = try {
                 ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
             } catch (failure: ZlibError) {
                 postToUi({=>
-                    error.value = "创建客户端失败：${friendlyErrorMessage(failure)}"
-                    status.value = "离线"
+                    // 官方地址失败：直接报「网络链接失败」，不回退种子站
+                    error.value = if (official) { "网络链接失败" } else {
+                        "创建客户端失败：${friendlyErrorMessage(failure)}"
+                    }
+                    status.value = if (official) { "网络链接失败" } else { "离线" }
                     loading.value = false
                     writeDebugLog("bootstrap: create client failed: ${failure.detail}")
                 })
@@ -1820,10 +1809,12 @@ public class AppState {
                     activeSite.value = site
                 }
                 adoptRefreshedSite()
+                // 换站后 currentSiteUrl() 才是真正在用的地址（封面补全/状态栏都用它）
+                let liveSite = created.currentSiteUrl()
                 if (landing.error.isEmpty()) {
-                    popular.value = cellsFromBriefs(landing.briefs, site)
+                    popular.value = cellsFromBriefs(landing.briefs, liveSite)
                     popularVisible.value = 12
-                    status.value = "${landing.label} ${popular.value.size} 本 · ${site}"
+                    status.value = "${landing.label} ${popular.value.size} 本 · ${liveSite}"
                     error.value = ""
                     writeDebugLog("popular loaded: ${popular.value.size} (${landing.label})")
                     if (!popular.value.isEmpty()) {
@@ -1835,8 +1826,11 @@ public class AppState {
                         }
                     }
                 } else {
-                    error.value = "加载失败：${landing.error}"
-                    status.value = "加载失败"
+                    // 官方地址：失败就是「网络链接失败」，不尝试回退
+                    error.value = if (official) { "网络链接失败" } else {
+                        "加载失败：${landing.error}"
+                    }
+                    status.value = if (official) { "网络链接失败" } else { "加载失败" }
                 }
                 loading.value = false
                 writeDebugLog("bootstrap: site=${site}")
@@ -1873,6 +1867,11 @@ public class AppState {
 
     /** 应用 3xx 探测结果：把跳转目标作为当前站（写配置 + State）。 */
     private func applySiteRedirect(current: String, location: String): Unit {
+        // 官方地址固定就是前端内置那 3 个：**不跟随 3xx 改写**（官方地址不可达直接报错）
+        if (isOfficialSiteUrl(current) || activeSiteIsOfficial()) {
+            writeDebugLog("startup redirect ignored (official): ${current} -> ${location}")
+            return
+        }
         let target = try {
             ZlibHost.of(location)
         } catch (_: ZlibError) {
@@ -1992,7 +1991,7 @@ public class AppState {
     private func currentSite(): String {
         match (this.client) {
             case Some(box) => box.value.currentSiteUrl()
-            case None => ZlibHost.DEFAULT_URL
+            case None => OFFICIAL_SITES[0]
         }
     }
 
@@ -3352,7 +3351,7 @@ public class AppState {
         loginMessage.value = "已退出登录"
         let site = match (this.client) {
             case Some(box) => box.value.currentSiteUrl()
-            case None => ZlibHost.DEFAULT_URL
+            case None => OFFICIAL_SITES[0]
         }
         match (this.client) {
             case Some(box) =>
@@ -3364,9 +3363,9 @@ public class AppState {
             case None => ()
         }
         let anonymous = try {
-            ZlibClient.create(baseUrl: site, seed: site)
+            ZlibClient.create(baseUrl: site, seed: effectiveSeedSite())
         } catch (_: ZlibError) {
-            ZlibClient.create()
+            ZlibClient.create(baseUrl: OFFICIAL_SITES[0])
         }
         this.client = Some(ClientBox(anonymous))
         // 回到游客态：首页换回热门
@@ -3422,22 +3421,22 @@ public class AppState {
     /**
      * 首次运行（或配置里站点为空）时，把库内默认站点落盘。
      *
-     * - `activeSite` 默认 `ZlibHost.DEFAULT_URL`；
-     * - `seedSites` 默认 = `ZlibHost.MIRRORS`（官方镜像候选，换站用）；
-     * - `officialSites` 是只读的官方候选列表（设置页展示/可直接点选）。
+     * - `activeSite` 默认第一个官方地址（前端 OFFICIAL_SITES[0]）；
+     * - `seedSite` 默认 `DEFAULT_SEED_SITE`（单值）；
+     * - `officialSites` 是只读的官方地址（前端内置 3 个，设置页展示/可直接点选）。
      */
     private func seedDefaultSitesIfNeeded(): Unit {
         officialSites.value = ArrayList<String>()
-        for (mirror in ZlibHost.MIRRORS) {
-            officialSites.value.add(mirror)
+        for (site in OFFICIAL_SITES) {
+            officialSites.value.add(site)
         }
         var changed = false
         if (activeSite.value.isEmpty()) {
-            activeSite.value = ZlibHost.DEFAULT_URL
+            activeSite.value = OFFICIAL_SITES[0]
             changed = true
         }
         if (seedSite.value.isEmpty()) {
-            seedSite.value = ZlibHost.DEFAULT_URL
+            seedSite.value = DEFAULT_SEED_SITE
             changed = true
         }
         if (changed) {
@@ -3462,22 +3461,16 @@ public class AppState {
                 if (!dir.isEmpty()) {
                     downloadDir.value = dir
                 }
-                activeSite.value = readString(obj, "activeSite")
+                activeSite.value = normalizeSiteUrl(readString(obj, "activeSite"))
                 customSites.value = ArrayList<String>()
                 for (item in arrayFieldOf(obj, "customSites")) {
-                    let text = item.asString().getValue().trimAscii()
+                    let text = normalizeSiteUrl(item.asString().getValue())
                     if (!text.isEmpty()) {
                         customSites.value.add(text)
                     }
                 }
-                // 单个种子站；兼容旧版 seedSites 数组（取第一个）
-                seedSite.value = readString(obj, "seedSite")
-                if (seedSite.value.isEmpty()) {
-                    let legacySeeds = arrayFieldOf(obj, "seedSites")
-                    if (!legacySeeds.isEmpty()) {
-                        seedSite.value = legacySeeds[0].asString().getValue().trimAscii()
-                    }
-                }
+                // 种子站：**单值**（后端只接收单值，不再兼容旧版 seedSites 数组）
+                seedSite.value = normalizeSiteUrl(readString(obj, "seedSite"))
                 writeDebugLog("config loaded(json): dark=${darkMode.value} sites=${customSites.value.size} seed=${seedSite.value} active=${activeSite.value}")
             } catch (_: Exception) {
                 writeDebugLog("config.json unreadable; using defaults")
@@ -3549,12 +3542,13 @@ public class AppState {
             if (customSites.value[index] == url) {
                 customSites.value.remove(at: index)
                 if (activeSite.value == url) {
+                    // 删掉的正好是当前站：退到剩余自定义站；没有就回官方地址
                     activeSite.value = if (customSites.value.isEmpty()) {
-                        ""
+                        OFFICIAL_SITES[0]
                     } else {
                         customSites.value[0]
                     }
-                    applyActiveSite()
+                    rebuildClientForActiveSite()
                 }
                 networkMessage.value = "已删除站点：${url}"
                 saveUserConfig()
@@ -3563,69 +3557,100 @@ public class AppState {
         }
     }
 
-    /** 保存种子站（单个引导站）。 */
+    /**
+     * 保存种子站（**单值**，仅对自定义站生效）。
+     *
+     * 种子站只在「当前选中的是自定义地址」时才会传给后端用于换站；
+     * 官方地址永远不带种子站（官方地址失败直接报错）。
+     */
     public func applySeedSite(): Unit {
         var value = normalizeSiteInput(seedInput.value)
         if (value.isEmpty()) {
             value = seedSite.value
         }
         if (value.isEmpty()) {
-            value = ZlibHost.DEFAULT_URL
+            value = DEFAULT_SEED_SITE
         }
         seedSite.value = value
         seedInput.value = ""
         saveUserConfig()
-        rebuildClientWithSeed()
-        networkMessage.value = "种子站已保存：${value}"
+        rebuildClientForActiveSite()
+        networkMessage.value = if (activeSiteIsOfficial()) {
+            "种子站已保存：${displaySiteUrl(value)}（当前是官方地址，不启用自动换站）"
+        } else {
+            "种子站已保存：${displaySiteUrl(value)}"
+        }
         writeDebugLog("seed site -> ${value}")
     }
 
-    /** 种子站变了要重建客户端（ZlibSites 的种子列表只在创建时传入）。 */
-    private func rebuildClientWithSeed(): Unit {
+    /** 当前选中的是否官方地址（官方地址失败时不走种子站回退）。 */
+    public func activeSiteIsOfficial(): Bool {
+        isOfficialSiteUrl(activeSite.value)
+    }
+
+    /**
+     * 实际生效的种子站（单值）。
+     *
+     * - 官方地址 → 空串：客户端没有种子站，请求失败直接报错，**不会**自动换站；
+     * - 自定义地址 → 用户配置的种子站；没配置就用 `DEFAULT_SEED_SITE`。
+     */
+    private func effectiveSeedSite(): String {
+        if (activeSiteIsOfficial()) {
+            return ""
+        }
+        if (seedSite.value.isEmpty()) {
+            return DEFAULT_SEED_SITE
+        }
+        seedSite.value
+    }
+
+    /**
+     * 按「当前选中的站点」重建客户端。
+     *
+     * 站点本体与种子站都只在创建客户端时传给后端（`ZlibSites` 是单值构造），
+     * 所以「官方 ↔ 自定义」切换必须重建：官方地址的客户端不带 seed，自定义站才带。
+     */
+    private func rebuildClientForActiveSite(): Unit {
         let box = match (this.client) {
             case Some(value) => value
             case None => return
         }
         let current = box.value
-        let baseUrl = current.sites.customUrl()
         let credential = current.credential
-        let seed = if (seedSite.value.isEmpty()) {
-            ZlibHost.DEFAULT_URL
-        } else {
-            seedSite.value
-        }
+        let baseUrl = if (activeSite.value.isEmpty()) { OFFICIAL_SITES[0] } else { activeSite.value }
+        let seed = effectiveSeedSite()
         try {
             let rebuilt = ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
             current.close()
             this.client = Some(ClientBox(rebuilt))
+            writeDebugLog("client rebuilt: site=${baseUrl} official=${isOfficialSiteUrl(baseUrl)} " +
+                "seed=${seed} fallback=${!seed.isEmpty()}")
         } catch (failure: ZlibError) {
-            writeDebugLog("rebuild client for seed failed: ${failure.detail}")
+            writeDebugLog("client rebuild failed: ${failure.detail}")
+            networkMessage.value = "切换站点失败：${friendlyErrorMessage(failure)}"
         }
     }
-    /** 用单选框选中某个站点：立刻切到它并持久化。 */
+    /**
+     * 单选框选中某个站点：立刻切过去并持久化。
+     *
+     * 官方地址 → 重建出的客户端**不带种子站**：请求失败直接报「网络链接失败」；
+     * 自定义地址 → 客户端带种子站：失败时后端用种子站换新域名，成功后回填这一条。
+     */
     public func selectActiveSite(url: String): Unit {
-        activeSite.value = url
-        applyActiveSite()
-        saveUserConfig()
-        networkMessage.value = "当前站点：${url}"
-    }
-
-    /** 把 activeSite 应用到客户端。 */
-    public func applyActiveSite(): Unit {
-        let url = activeSite.value
-        if (url.isEmpty()) {
+        let target = normalizeSiteUrl(url)
+        if (target.isEmpty()) {
             return
         }
-        match (this.client) {
-            case Some(box) =>
-                try {
-                    box.value.setCustomSite(url)
-                } catch (_: Exception) {
-                    ()
-                }
-            case None => ()
+        activeSite.value = target
+        rebuildClientForActiveSite()
+        saveUserConfig()
+        networkMessage.value = if (isOfficialSiteUrl(target)) {
+            "当前站点：${displaySiteUrl(target)}（官方地址失败时直接报错，不走种子站）"
+        } else {
+            "当前站点：${displaySiteUrl(target)}（访问失败时会用种子站自动换新域名）"
         }
     }
+
 
     /**
      * 种子站回退成功后：把新站点**覆盖**到自定义站点列表与当前站点，并持久化。
@@ -3634,6 +3659,10 @@ public class AppState {
      * 下次启动直接用新地址，不用再走一遍种子站。
      */
     public func adoptRefreshedSite(): Unit {
+        // 官方地址**不支持换站**：客户端里根本没有种子站，这里也绝不能改官方地址
+        if (activeSiteIsOfficial()) {
+            return
+        }
         let current = match (this.client) {
             case Some(box) => box.value.currentSiteUrl()
             case None => ""
@@ -3642,24 +3671,36 @@ public class AppState {
             return
         }
         writeDebugLog("site refreshed -> ${current}")
-        // 覆盖：原来选中的自定义站换成新地址
+        let healthy = normalizeSiteUrl(current)
+        // 覆盖：原来选中的自定义站换成新域名；配置里没有这一条（旧配置/手动填的）就补一条
         var replaced = false
         for (index in 0..customSites.value.size) {
             if (customSites.value[index] == activeSite.value) {
-                customSites.value[index] = current
+                customSites.value[index] = healthy
                 replaced = true
             }
         }
-        if (!replaced && !customSites.value.isEmpty()) {
-            customSites.value[0] = current
+        if (!replaced) {
+            customSites.value.add(healthy)
         }
-        activeSite.value = current
+        activeSite.value = healthy
         saveUserConfig()
-        status.value = "站点已更新：${current}"
+        status.value = "站点已更新：${displaySiteUrl(healthy)}"
+        networkMessage.value = "自定义站已换成新域名：${displaySiteUrl(healthy)}"
     }
 
-    /** 「重新拉取站点」：走种子站换新地址，成功后覆盖自定义站点。 */
+    /** 「重新拉取站点」：走种子站换新地址，成功后覆盖自定义站点（仅自定义站可用）。 */
     public func refreshSiteNow(): Unit {
+        if (activeSiteIsOfficial()) {
+            networkMessage.value = "官方地址不支持自动换站：请改选其它官方地址，或使用「自定义站 + 种子站」"
+            return
+        }
+        if (effectiveSeedSite().isEmpty()) {
+            networkMessage.value = "没有配置种子站，无法自动换站"
+            return
+        }
+        // 重建一次：确保客户端里的种子站就是配置里的最新值
+        rebuildClientForActiveSite()
         match (this.client) {
             case Some(box) =>
                 let refreshed = try {
@@ -3677,19 +3718,9 @@ public class AppState {
         }
     }
 
-    /** 规范化用户输入的站点地址。 */
+    /** 规范化用户输入的站点地址（规则见 `sites.cj` 的 `normalizeSiteUrl`）。 */
     private func normalizeSiteInput(raw: String): String {
-        var value = raw.trimAscii()
-        if (value.isEmpty()) {
-            return ""
-        }
-        if (value.endsWith("/")) {
-            value = value[0..value.size - 1]
-        }
-        if (!value.startsWith("http://") && !value.startsWith("https://")) {
-            value = "https://" + value
-        }
-        value
+        normalizeSiteUrl(raw)
     }
 
     /* -------------------------------------------------- 主题 */

@@ -353,17 +353,17 @@ func downloadSettings(state: AppState): Unit {
     }
 }
 
-/** 网络设置：官方站（占位、不可删）+ 自定义站 + 种子站。 */
+/** 网络设置：官方地址（前端内置 3 个）+ 自定义站（数组）+ 种子站（单值，仅对自定义站生效）。 */
 func networkSettings(state: AppState): Unit {
     let theme = selineTheme()
     let palette = theme.palette
-    sectionCard("官方站点（默认镜像，不可删除）") {
+    sectionCard("官方地址（内置 3 个，仅前端定义，不可编辑）") {
         VStack(spacing: vp(SELINE_SPACE_XS)) {
-            Label("来自 zlibraryAPI4CJ 的默认镜像列表；点一下设为当前站点。")
+            Label("内置 3 个官方地址，点一下设为当前站点。官方地址不可达时直接报错（不走种子站回退）。")
                 .fontSize(theme.fontCaption).muted().wrap()
             for (site in state.officialSites.value) {
                 HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    SelineOptionRow(site, if (state.activeSite.value == site) {
+                    SelineOptionRow(displaySiteUrl(site), if (state.activeSite.value == site) {
                         "当前使用"
                     } else {
                         "点击切换"
@@ -374,14 +374,17 @@ func networkSettings(state: AppState): Unit {
             }
         }.hug().fillWidth()
     }
-    sectionCard("自定义站点（单选框选当前使用的站点）") {
+    sectionCard("自定义站点（数组，可增删）") {
         VStack(spacing: vp(SELINE_SPACE_SM)) {
             if (state.customSites.value.isEmpty()) {
                 Label("还没有自定义站点").fontSize(theme.fontCaption).muted()
+            } else {
+                Label("选中的自定义站访问失败时：用种子站查询新域名，成功后覆盖这一条（下次启动直接用新地址）。")
+                    .fontSize(theme.fontCaption).muted().wrap()
             }
             for (site in state.customSites.value) {
                 HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    SelineOptionRow(site, if (state.activeSite.value == site) {
+                    SelineOptionRow(displaySiteUrl(site), if (state.activeSite.value == site) {
                         "当前使用"
                     } else {
                         "点击切换"
@@ -403,11 +406,15 @@ func networkSettings(state: AppState): Unit {
             }.hug().fillWidth()
         }.hug().fillWidth()
     }
-    sectionCard("种子站（引导站：向它问最新域名）") {
+    sectionCard("种子站（单值，仅对自定义站点生效）") {
         VStack(spacing: vp(SELINE_SPACE_SM)) {
-            Label("种子站是「引导站」：自定义站访问失败时，向它发请求拿最新域名" +
-                "（响应头的 Location 重定向 / 域名列表），成功后覆盖当前自定义站，下次启动直接用新地址。")
+            Label("种子站是「引导站」：仅当当前选中的是自定义站、且该站访问失败时，才向它查询最新域名；" +
+                "拿到新域名后覆盖这一条自定义站。官方地址失败不走种子站。")
                 .fontSize(theme.fontCaption).muted().wrap()
+            if (state.activeSiteIsOfficial()) {
+                Label("当前选中的是官方地址：种子站暂不生效。").fontSize(theme.fontCaption)
+                    .foregroundColor(palette.accent)
+            }
             HStack(spacing: vp(SELINE_SPACE_SM)) {
                 SelineIcon("cloud", size: 14.0, color: palette.accent)
                 Label(if (state.seedSite.value.isEmpty()) {
@@ -433,7 +440,7 @@ func networkSettings(state: AppState): Unit {
                     .foregroundColor(palette.accent)
             }
             HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineButton("重新拉取站点", {=> state.refreshSiteNow()}, glyph: "refresh",
+                SelineButton("重新拉取站点（仅自定义站）", {=> state.refreshSiteNow()}, glyph: "refresh",
                     kind: SelineButtonKind.Ghost, compact: true)
                 Label("状态：${state.status.value}").fontSize(theme.fontCaption).muted()
                 Spacer()
