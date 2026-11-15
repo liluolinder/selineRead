@@ -109,6 +109,76 @@ private func writeTextFile(path: Path, text: String): Unit {
     }
 }
 
+/** 缩进字符串（level 层，每层 2 个空格）。 */
+private func indentText(level: Int64): String {
+    let builder = StringBuilder()
+    var index: Int64 = 0
+    while (index < level) {
+        builder.append("  ")
+        index += 1
+    }
+    builder.toString()
+}
+
+/**
+ * 把 JSON DOM 格式化成多行文本。
+ *
+ * 配置文件是给人看的（改了哪个字段要能一眼看到），`toJson()` 默认输出是一整行，
+ * 所以落盘前统一过一遍这里；数组/对象递归缩进，标量交给 `toString()` 自己转义。
+ */
+private func prettyJson(value: JsonValue, level: Int64): String {
+    match (value.kind()) {
+        case JsObject =>
+            let fields = value.asObject().getFields()
+            if (fields.isEmpty()) {
+                return "{}"
+            }
+            let builder = StringBuilder()
+            builder.append("{\n")
+            var index: Int64 = 0
+            for ((key, item) in fields) {
+                builder.append(indentText(level + 1))
+                builder.append("\"")
+                builder.append(key)
+                builder.append("\": ")
+                builder.append(prettyJson(item, level + 1))
+                index += 1
+                if (index < fields.size) {
+                    builder.append(",")
+                }
+                builder.append("\n")
+            }
+            builder.append(indentText(level))
+            builder.append("}")
+            builder.toString()
+        case JsArray =>
+            let items = value.asArray().getItems()
+            if (items.isEmpty()) {
+                return "[]"
+            }
+            let builder = StringBuilder()
+            builder.append("[\n")
+            var index: Int64 = 0
+            for (item in items) {
+                builder.append(indentText(level + 1))
+                builder.append(prettyJson(item, level + 1))
+                index += 1
+                if (index < items.size) {
+                    builder.append(",")
+                }
+                builder.append("\n")
+            }
+            builder.append(indentText(level))
+            builder.append("]")
+            builder.toString()
+        case _ => value.toString()
+    }
+}
+
+/** 序列化成"给人看"的 JSON 文本（缩进多行）。 */
+private func toPrettyJson(text: String): String {
+    prettyJson(JsonValue.fromStr(text), 0) + "\n"
+}
 /** 读应用配置；文件缺失或损坏给默认值。 */
 func readAppConfig(path: String): AppConfig {
     let text = readTextFile(Path(path)).trimAscii()
@@ -126,7 +196,7 @@ func readAppConfig(path: String): AppConfig {
 /** 写应用配置。 */
 func writeAppConfig(path: String, config: AppConfig): Unit {
     try {
-        writeTextFile(Path(path), config.toJson())
+        writeTextFile(Path(path), toPrettyJson(config.toJson()))
     } catch (failure: Exception) {
         writeDebugLog("config.json serialize failed: ${failure.message}")
     }
@@ -149,7 +219,7 @@ func readAccountsConfig(path: String): AccountsConfig {
 /** 写账号文件。 */
 func writeAccountsConfig(path: String, config: AccountsConfig): Unit {
     try {
-        writeTextFile(Path(path), config.toJson())
+        writeTextFile(Path(path), toPrettyJson(config.toJson()))
     } catch (failure: Exception) {
         writeDebugLog("accounts.json serialize failed: ${failure.message}")
     }
