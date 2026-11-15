@@ -79,6 +79,13 @@ let BOOKLIST_CARD_PAD: Float32 = 10.0
 let BOOKLIST_PREVIEW_W: Float32 = 46.0
 let BOOKLIST_PREVIEW_H: Float32 = 66.0
 let BOOKLIST_PREVIEW_GAP: Float32 = 5.0
+/**
+ * 卡片高度 = 预览封面高 + 上下内边距。
+ *
+ * 这样封面四周的留白都是 `BOOKLIST_CARD_PAD`（上=下=左），
+ * 不会出现"左右 10、上下 23"这种不一致。
+ */
+let BOOKLIST_CARD_H: Float32 = BOOKLIST_PREVIEW_H + BOOKLIST_CARD_PAD * 2.0
 
 class BooklistCard <: Widget {
     private let state: AppState
@@ -98,7 +105,7 @@ class BooklistCard <: Widget {
         } else {
             Float32(360.0)
         }
-        Size(width, 112.0)
+        Size(width, BOOKLIST_CARD_H)
     }
 
     public func layout(_: UiContext, rect: Rect): Unit {
@@ -122,9 +129,9 @@ class BooklistCard <: Widget {
         let fill = if (hovered) { palette.surfaceHover } else { palette.surfaceRaised }
         paintSurface(ctx.renderer, frame, fill, BOOKLIST_CARD_RADIUS)
         // 左侧预览封面（最多 3 张）
-        // 垂直居中：上下留白相等（之前固定贴顶，底部空 36px、顶部只有 10px，
-        // 看起来封面整体偏上、和右侧文字也不对齐）
-        let coverTop = frame.y + (frame.h - BOOKLIST_PREVIEW_H) * 0.5
+        // 贴内边距：上/下/左都是 BOOKLIST_CARD_PAD，四边留白一致（之前封面垂直居中，
+        // 左右 10、上下 23，看起来整体偏上，和右侧文字也不齐）。
+        let coverTop = frame.y + BOOKLIST_CARD_PAD
         let coverCount = if (cell.covers.size > 3) { 3 } else { cell.covers.size }
         var index: Int64 = 0
         while (index < coverCount) {
@@ -147,16 +154,16 @@ class BooklistCard <: Widget {
         let title = state.fittedText(ctx, cell.title, textW, theme.fontLabel, true,
             theme.fontFamily)
         paintText(ctx.renderer, title,
-            Rect(textX, frame.y + 8.0, textW, 20.0), palette.text, theme.fontLabel,
+            Rect(textX, coverTop, textW, 18.0), palette.text, theme.fontLabel,
             style: selineFontStyle(bold: true), family: theme.fontFamily)
         let author = if (cell.author.isEmpty()) { "匿名书单" } else { cell.author }
         paintText(ctx.renderer, state.fittedText(ctx, author, textW, theme.fontCaption,
-            false, theme.fontFamily), Rect(textX, frame.y + 30.0, textW, 16.0),
+            false, theme.fontFamily), Rect(textX, coverTop + 18.0, textW, 15.0),
             palette.textMuted, theme.fontCaption, family: theme.fontFamily)
         if (!cell.description.isEmpty()) {
             paintText(ctx.renderer, state.fittedText(ctx, cell.description, textW,
                 theme.fontCaption, false, theme.fontFamily),
-                Rect(textX, frame.y + 50.0, textW, 16.0), palette.textFaint,
+                Rect(textX, coverTop + 33.0, textW, 15.0), palette.textFaint,
                 theme.fontCaption, family: theme.fontFamily)
         }
         // 统计行已经是 fittedText（一定放得下），不需要再 pushClip/popClip：
@@ -165,7 +172,7 @@ class BooklistCard <: Widget {
             "${cell.booksCount} 本 · 浏览 ${cell.viewsCount} · 收藏 ${cell.favoritesCount}",
             textW, theme.fontCaption, false, theme.fontFamily)
         paintText(ctx.renderer, meta,
-            Rect(textX, frame.bottom() - 26.0, textW, 16.0), palette.textFaint,
+            Rect(textX, coverTop + BOOKLIST_PREVIEW_H - 15.0, textW, 15.0), palette.textFaint,
             theme.fontCaption, family: theme.fontFamily)
     }
 

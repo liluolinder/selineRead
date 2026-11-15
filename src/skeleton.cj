@@ -124,7 +124,7 @@ class SkeletonBooklistCard <: Widget {
         } else {
             Float32(360.0)
         }
-        Size(width, 112.0)
+        Size(width, BOOKLIST_CARD_H)
     }
 
     public func layout(_: UiContext, rect: Rect): Unit {
@@ -146,12 +146,17 @@ class SkeletonBooklistCard <: Widget {
         let textX = frame.x + BOOKLIST_CARD_PAD +
             Float32(3) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP) + 4.0
         let textW = max(Float32(40.0), frame.right() - BOOKLIST_CARD_PAD - textX)
-        paintSurface(ctx.renderer, Rect(textX, frame.y + 14.0, textW * 0.7, 14.0),
+        // 四条占位条与真实卡片一一对应：标题顶 = 封面顶、统计条底 = 封面底，
+        // 中间两条用真实卡片的行距 —— 骨架与加载完成后的布局完全同构。
+        let coverTop = frame.y + BOOKLIST_CARD_PAD
+        paintSurface(ctx.renderer, Rect(textX, coverTop, textW * 0.62, 14.0),
             palette.surfaceHover, 4.0)
-        paintSurface(ctx.renderer, Rect(textX, frame.y + 38.0, textW * 0.45, 11.0),
+        paintSurface(ctx.renderer, Rect(textX, coverTop + 18.0, textW * 0.42, 11.0),
             palette.surfaceHover, 4.0)
-        paintSurface(ctx.renderer, Rect(textX, frame.y + 58.0, textW * 0.8, 11.0),
+        paintSurface(ctx.renderer, Rect(textX, coverTop + 33.0, textW * 0.72, 11.0),
             palette.surfaceHover, 4.0)
+        paintSurface(ctx.renderer, Rect(textX, coverTop + BOOKLIST_PREVIEW_H - 12.0,
+            textW * 0.52, 11.0), palette.surfaceHover, 4.0)
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {
