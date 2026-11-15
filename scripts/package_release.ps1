@@ -8,7 +8,7 @@
 #   - 仓颉运行时：libcangjie-runtime.dll / libboundscheck.dll
 #   - SDL：SDL3.dll / SDL3_ttf.dll
 #   - OpenSSL：libssl-3-x64.dll / libcrypto-3-x64.dll（从本机 System32 取，3.x）
-#   - VC 运行时：VCRUNTIME140.dll
+
 #   - assets\：窗口图标 + 默认封面
 #
 # 目标机不需要安装仓颉 SDK：Windows 会优先从 exe 所在目录加载这些 DLL。
@@ -82,11 +82,6 @@ Copy-Needed (Join-Path $sdl "SDL3_ttf.dll")
 Copy-Needed (Join-Path $system32 "libssl-3-x64.dll")
 Copy-Needed (Join-Path $system32 "libcrypto-3-x64.dll")
 
-# VC++ 运行时：OpenSSL 的导入表写了 VCRUNTIME140.dll，缺了它 libssl 加载失败，
-# 整个 HTTPS 请求链就断（程序启动后无法登录/取数据）。目标机不一定装了 VC++ Redist，
-# 所以随包分发（两个文件加起来才 ~220KB）。
-Copy-Needed (Join-Path $system32 "VCRUNTIME140.dll")
-Copy-Needed (Join-Path $system32 "VCRUNTIME140_1.dll")
 
 # 资源
 $assets = Join-Path $root "assets"
