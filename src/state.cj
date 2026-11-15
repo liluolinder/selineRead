@@ -16,7 +16,7 @@ import std.convert.*
 import std.env.getVariable
 import std.sync.*
 import std.time.*
-import std.fs.{Directory, File, Path, exists, remove}
+import std.fs.{Directory, File, OpenMode, Path, exists, remove}
 import chui.*
 import seline_ui.*
 import zlibraryAPI4CJ.*
@@ -28,6 +28,7 @@ import zlibraryAPI4CJ.booklist.*
 import zlibraryAPI4CJ.comment.*
 import zlibraryAPI4CJ.core.*
 import stdx.encoding.json.*
+import stdx.log.LogLevel
 import selineDownload.*
 
 /** toast 语义：决定图标与颜色。 */
@@ -705,6 +706,79 @@ func ensureAppDataDir(): Unit {
         }
     }
 }
+/* -------------------------------------------------- 下载日志 */
+
+/**
+ * 下载日志：`~/.seline-app/SelineRead/download-log.log`。
+ *
+ * 用户要求"每次下载在配置目录写一份 download-log.log"。这里记两层：
+ *   1. **应用层**：每次下载的开始/进度里程碑/完成/失败，带耗时、平均速度、错误原文；
+ *   2. **库层**：把 `selineDownload` 自己的 logger 接到同一个文件（分片、重试、
+ *      断点续传探测都在里面）—— 排查"下载到一半失败"缺的正是这一层。
+ */
+func downloadLogPath(): String {
+    appDataDir().join("download-log.log").toString()
+}
+
+private var downloadLogReady = false
+
+/** 打开下载日志（幂等）。顺便把 HTTP 超时调大：默认 60 秒对几十 MB 的书太短。 */
+public func ensureDownloadLog(): Unit {
+    if (downloadLogReady) {
+        return
+    }
+    downloadLogReady = true
+    try {
+        ensureAppDataDir()
+        // 下载专用超时：读 10 分钟（慢网络/限速下 60 秒必然断）、写 2 分钟。
+        // 必须在共享 HTTP 客户端第一次被使用之前设置，否则不生效。
+        setHttpTimeouts(Duration.minute * 10, Duration.minute * 2)
+        let file = File(Path(downloadLogPath()), OpenMode.Append)
+        DownloadLogger.sink = file
+        DownloadLogger.level = LogLevel.INFO
+        downloadLogAppend("===== session start (readTimeout=${httpReadTimeout()}) =====")
+    } catch (failure: Exception) {
+        downloadLogReady = false
+        writeDebugLog("download log open failed: ${failure.message}")
+    }
+}
+
+/** 往下载日志追加一行（带时间戳）。 */
+public func downloadLogAppend(text: String): Unit {
+    try {
+        ensureAppDataDir()
+        let stamp = DateTime.now().toString()
+        File.appendTo(Path(downloadLogPath()), ("[${stamp}] ${text}\n").toArray())
+    } catch (_: Exception) {
+        ()
+    }
+}
+
+/** 从 URL 取主机名（日志里不记录带签名的完整链接）。 */
+func urlHost(url: String): String {
+    let marker = "://"
+    match (url.indexOf(marker)) {
+        case Some(at) =>
+            let rest = url[(at + marker.size)..]
+            match (rest.indexOf("/")) {
+                case Some(slash) => rest[..slash]
+                case None => rest
+            }
+        case None => "?"
+    }
+}
+
+/** 字节数转可读文本（日志用）。 */
+func logBytes(value: Int64): String {
+    if (value >= 1024 * 1024) {
+        "${value / (1024 * 1024)}.${(value % (1024 * 1024)) * 10 / (1024 * 1024)}MB"
+    } else if (value >= 1024) {
+        "${value / 1024}KB"
+    } else {
+        "${value}B"
+    }
+}
+
 /** 读回上次保存的凭证；没有/损坏时返回游客凭证。 */
 /**
  * 一个已保存的账号。
@@ -2190,10 +2264,15 @@ public class AppState {
     @When[debug]
     public func runDownloadSelfTest(): Unit {
         let _ = spawn {=>
-            sleep(800 * Duration.millisecond)
+            // 等客户端就绪（bootstrap 要连站点/登录），否则下载会直接"客户端未就绪"
+            var waited: Int64 = 0
+            while (!isClientReady() && waited < 30000) {
+                sleep(500 * Duration.millisecond)
+                waited += 500
+            }
             postToUi({=>
                 let id = startDownload(24126585, "217fd6", "下载自检")
-                writeDebugLog("dlselftest: created ${id}")
+                writeDebugLog("dlselftest: created ${id} ready=${isClientReady()}")
             })
             sleep(3000 * Duration.millisecond)
             postToUi({=>
@@ -4141,12 +4220,16 @@ public class AppState {
         downloadItems.value.add(item)
         downloadsTick.value += 1
         writeDebugLog("download start: ${taskId} ${title}")
+        ensureDownloadLog()
+        let startedAt = MonoTime.now()
+        downloadLogAppend("start task=${taskId} book=${bookId} title=\"${title}\"")
         let clientBox = match (this.client) {
             case Some(value) => value
             case None =>
                 item.status = DL_FAILED
                 item.error = "客户端未就绪"
                 downloadsTick.value += 1
+                downloadLogAppend("FAIL task=${taskId} 客户端未就绪（未登录/站点未连上）")
                 return taskId
         }
         let dirValue = downloadDir.value
@@ -4168,14 +4251,40 @@ public class AppState {
                     ()
                 }
                 let savePath = Path(dirValue).join(fileName).toString()
+                // **单连接 + 大超时**。
+                //
+                // 实测（download-log.log）：
+                //   - 这个 CDN 的 HEAD 就要 44 秒，分片 GET 还会被回 416/522；
+                //   - 开了断点续传（Range）反而每个分片都 416 重试到失败 ——
+                //     服务端是按 `redirection?...` 跳转给的，Range 在跳转后对不上；
+                //   - 真正的失败原因是**默认 60 秒读超时**：慢链路下正文读到一半
+                //     就报 `Read body timeout and the connection is closed`。
+                // 所以：单连接（不发 Range，不触发 416）+ 读超时放到 10 分钟。
                 let config = DownloadConfig()
                     .setUrl(info.downloadLink)
                     .setSavePath(savePath)
                     .setThreadCount(1)
                     .setEnableRange(false)
+                    .setMaxRetries(6)
+                    .setReadTimeout(Duration.minute * 10)
+                    .setWriteTimeout(Duration.minute * 2)
                     .setFileExistsAction(FileExistsAction.Rename)
+                downloadLogAppend("link task=${taskId} file=\"${fileName}\" host=${urlHost(info.downloadLink)} " +
+                    "threads=1 range=0 retries=6 readTimeout=10m")
                 let task = DownloadTask(config)
+                // 每 10% 记一行进度：既能看出"卡在哪个百分比"，也不至于刷爆日志。
+                let lastDecile = Array<Int64>(1, repeat: -1)
                 task.setProgressCallback({progress =>
+                    let decile = if (progress.totalBytes > 0) {
+                        progress.downloadedBytes * 10 / progress.totalBytes
+                    } else {
+                        -1
+                    }
+                    if (decile > lastDecile[0]) {
+                        lastDecile[0] = decile
+                        downloadLogAppend("progress task=${taskId} ${logBytes(progress.downloadedBytes)}/" +
+                            "${logBytes(progress.totalBytes)} (${decile * 10}%) ${progress.formattedSpeed}")
+                    }
                     postToUi({=>
                         item.downloadedBytes = progress.downloadedBytes
                         item.totalBytes = progress.totalBytes
@@ -4193,10 +4302,22 @@ public class AppState {
                         item.speedText = ""
                         item.status = DL_COMPLETED
                         downloadsTick.value += 1
+                        let elapsedMs = Int64((MonoTime.now() - startedAt).toMilliseconds())
+                        let avg = if (elapsedMs > 0) {
+                            item.totalBytes * 1000 / elapsedMs
+                        } else {
+                            0
+                        }
+                        downloadLogAppend("done task=${taskId} ${logBytes(item.totalBytes)} " +
+                            "elapsed=${elapsedMs / 1000}.${elapsedMs % 1000 / 100}s avg=${logBytes(avg)}/s")
                         writeDebugLog("download complete: ${taskId} ${fileName}")
                     })
                 })
                 task.setErrorCallback({failure =>
+                    let elapsedMs = Int64((MonoTime.now() - startedAt).toMilliseconds())
+                    downloadLogAppend("FAIL task=${taskId} err=${failure.message} " +
+                        "downloaded=${logBytes(item.downloadedBytes)}/${logBytes(item.totalBytes)} " +
+                        "elapsed=${elapsedMs / 1000}s")
                     postToUi({=>
                         item.speedText = ""
                         item.status = DL_FAILED
@@ -4204,6 +4325,9 @@ public class AppState {
                         downloadsTick.value += 1
                         writeDebugLog("download failed: ${taskId} ${failure.message}")
                     })
+                })
+                task.setRetryCallback({attempt, total =>
+                    downloadLogAppend("retry task=${taskId} attempt=${attempt}/${total}")
                 })
                 task.setCancelCallback({=>
                     postToUi({=>
@@ -4225,12 +4349,14 @@ public class AppState {
                 task.start()
                 task.await()
             } catch (failure: ZlibError) {
+                downloadLogAppend("FAIL task=${taskId} 取下载链接失败: ${failure.detail}")
                 postToUi({=>
                     item.status = DL_FAILED
                     item.error = failure.detail
                     downloadsTick.value += 1
                 })
             } catch (failure: Exception) {
+                downloadLogAppend("FAIL task=${taskId} 异常: ${failure.message}")
                 postToUi({=>
                     item.status = DL_FAILED
                     item.error = failure.message

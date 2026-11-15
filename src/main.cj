@@ -194,6 +194,8 @@ main(args: Array<String>): Int64 {
 
     let state = AppState()
     diagSessionStart()
+    // 下载日志：早一点打开（顺便把下载用的 HTTP 超时设置好在共享客户端之前）
+    ensureDownloadLog()
     state.prepareImageStore()
     // 启动第一步：只读本地配置/账号（**不做任何网络**），窗口立刻能出来
     writeDebugLog("bootstrap: begin")
