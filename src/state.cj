@@ -4251,26 +4251,24 @@ public class AppState {
                     ()
                 }
                 let savePath = Path(dirValue).join(fileName).toString()
-                // **单连接 + 大超时**。
+                // 交给 2.0 引擎自动决定：HEAD + 1 字节 Range 探测，服务器支持就分片
+                // 多线程，不支持/回 416 就自动退化成单连接。
                 //
-                // 实测（download-log.log）：
-                //   - 这个 CDN 的 HEAD 就要 44 秒，分片 GET 还会被回 416/522；
-                //   - 开了断点续传（Range）反而每个分片都 416 重试到失败 ——
-                //     服务端是按 `redirection?...` 跳转给的，Range 在跳转后对不上；
-                //   - 真正的失败原因是**默认 60 秒读超时**：慢链路下正文读到一半
-                //     就报 `Read body timeout and the connection is closed`。
-                // 所以：单连接（不发 Range，不触发 416）+ 读超时放到 10 分钟。
+                // 真正要调大的是**读超时**：书店 CDN 很慢（2.7MB 实测要 100~220 秒），
+                // 默认值会在正文中途断掉（`Read body timeout and the connection is closed`）。
+                // 2.0 的超时是**请求级**的，设 10 分钟只影响本任务的请求。
                 let config = DownloadConfig()
                     .setUrl(info.downloadLink)
                     .setSavePath(savePath)
-                    .setThreadCount(1)
-                    .setEnableRange(false)
+                    .setThreadCount(0)
+                    .setEnableRange(true)
+                    .setProbeBeforeDownload(true)
                     .setMaxRetries(6)
                     .setReadTimeout(Duration.minute * 10)
                     .setWriteTimeout(Duration.minute * 2)
                     .setFileExistsAction(FileExistsAction.Rename)
                 downloadLogAppend("link task=${taskId} file=\"${fileName}\" host=${urlHost(info.downloadLink)} " +
-                    "threads=1 range=0 retries=6 readTimeout=10m")
+                    "threads=auto range=auto retries=6 readTimeout=10m")
                 let task = DownloadTask(config)
                 // 每 10% 记一行进度：既能看出"卡在哪个百分比"，也不至于刷爆日志。
                 let lastDecile = Array<Int64>(1, repeat: -1)
@@ -4283,7 +4281,7 @@ public class AppState {
                     if (decile > lastDecile[0]) {
                         lastDecile[0] = decile
                         downloadLogAppend("progress task=${taskId} ${logBytes(progress.downloadedBytes)}/" +
-                            "${logBytes(progress.totalBytes)} (${decile * 10}%) ${progress.formattedSpeed}")
+                            "${logBytes(progress.totalBytes)} (${decile * 10}%) ${progress.formattedSpeed} threads=${progress.threads}")
                     }
                     postToUi({=>
                         item.downloadedBytes = progress.downloadedBytes
@@ -4367,7 +4365,7 @@ public class AppState {
         taskId
     }
 
-    /** 停止下载（zlib 不支持断点续传，停止后不保留恢复）。 */
+    /** 停止下载（新引擎会保留 .tmp/ 续存点，再次下载从断点继续）。 */
     public func stopDownload(taskId: String): Unit {
         let task = synchronized(downloadTaskLock) {
             match (downloadTasks.get(taskId)) {
