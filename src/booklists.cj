@@ -132,14 +132,17 @@ class BooklistCard <: Widget {
         // 贴内边距：上/下/左都是 BOOKLIST_CARD_PAD，四边留白一致（之前封面垂直居中，
         // 左右 10、上下 23，看起来整体偏上，和右侧文字也不齐）。
         let coverTop = frame.y + BOOKLIST_CARD_PAD
-        let coverCount = if (cell.covers.size > 3) { 3 } else { cell.covers.size }
+        // 固定画 3 个封面位：接口没给预览（或不足 3 本）时补默认封面图，不能留空 ——
+        // 同一屏里有的卡 3 张、有的 1 张、有的全空，会让人以为加载失败。
+        // 空 URL 传给 drawBookCover 就会画 assets 里的占位封面。
         var index: Int64 = 0
-        while (index < coverCount) {
+        while (index < 3) {
             let x = frame.x + BOOKLIST_CARD_PAD +
                 Float32(index) * (BOOKLIST_PREVIEW_W + BOOKLIST_PREVIEW_GAP)
             let cover = Rect(x, coverTop, BOOKLIST_PREVIEW_W, BOOKLIST_PREVIEW_H)
-            // 三张预览共用一块底板（第一张时画），少两次圆角填充/卡
-            drawBookCover(ctx, state, cell.covers[index], cover, 6.0, backdrop: index == 0)
+            let url = if (index < cell.covers.size) { cell.covers[index] } else { "" }
+            // 三个封面位共用一块底板（第一张时画），少两次圆角填充/卡
+            drawBookCover(ctx, state, url, cover, 6.0, backdrop: index == 0)
             index += 1
         }
 
