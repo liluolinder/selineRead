@@ -14,12 +14,17 @@ Z-Library 桌面阅读客户端，用**仓颉 + CangHui（chui）**写成，后�
 │  detail.cj      图书详情页（元信息 / 可选格式 / 下载）                          │
 │  misc_pages.cj  下载列表页 / 设置页（登录表单、本地目录）                        │
 │  cover.cj       网络封面绘制 + 文本按宽截断                                     │
+│  config.cj      JSON 配置（CJson 宏序列化：config.json / accounts.json）        │
 │  widgets.cj     加载态 / 空状态 / 错误条 / 页头                                 │
 │  platform/      Win32 原生线程包裹、隐藏控制台                                  │
 └──────────┬────────────────┬──────────────────┬──────────────────────────────┘
            │                │                  │
       chui（GUI）     seline_ui（共用 UI）  zlibraryAPI4CJ（Z-Library API）
       禁止修改         令牌/组件/标题栏/图片解码   本库
+
+> 配置读写用 [`CJson`](https://gitcode.com/LiquidStudio/CJson)：`@JsonSerializable` 直接
+> 在 `config.cj` 的 `AppConfig` / `AccountsConfig` 上生成 `fromJson` / `toJson`，
+> 不再手写 `JsonObject` 拼装；加字段只改类。**不做旧格式兼容**，缺失字段取默认值。
 ```
 
 ## 架构约定（MVVM）

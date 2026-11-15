@@ -1,3 +1,6 @@
 version = 1
 
-[requires]
+[requires."CJson"]
+version = "1.0.1"
+source = "git+https://gitcode.com/LiquidStudio/CJson.git#d92cac4f20326c9c16d4a99cbb9b43340d2cc85f"
+dependencies = []

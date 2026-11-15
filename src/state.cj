@@ -27,7 +27,6 @@ import zlibraryAPI4CJ.user.*
 import zlibraryAPI4CJ.booklist.*
 import zlibraryAPI4CJ.comment.*
 import zlibraryAPI4CJ.core.*
-import stdx.encoding.json.*
 import stdx.log.LogLevel
 import selineDownload.*
 
@@ -671,29 +670,6 @@ private func accountsJsonPath(): String {
     appDataDir().join("accounts.json").toString()
 }
 
-/** 读文本文件（不存在/读失败返回空串）。 */
-private func readTextFile(path: Path): String {
-    if (!exists(path)) {
-        return ""
-    }
-    try {
-        String.fromUtf8(File.readFrom(path))
-    } catch (_: Exception) {
-        ""
-    }
-}
-
-/** 写文本文件（自动建父目录）。 */
-private func writeTextFile(path: Path, text: String): Unit {
-    try {
-        if (!exists(path.parent)) {
-            Directory.create(path.parent, recursive: true)
-        }
-        File.writeTo(path, text.toArray())
-    } catch (failure: Exception) {
-        writeDebugLog("write ${path} failed: ${failure.message}")
-    }
-}
 
 /** 确保数据目录存在（`~/.seline-app/SelineRead`）。 */
 func ensureAppDataDir(): Unit {
@@ -1060,56 +1036,34 @@ public class AppState {
 
     /* ---- 多账号 ---- */
 
-    /** 读 `accounts.json` 到内存；坏条目直接跳过。 */
+    /** 读 `accounts.json` 到内存（CJson 反序列化，缺字段/坏文件按默认值）。 */
     private func loadAccounts(): Unit {
         accounts.value = ArrayList<AccountEntry>()
-        let jsonText = readTextFile(Path(accountsJsonPath()))
-        if (jsonText.trimAscii().isEmpty()) {
-            writeDebugLog("accounts loaded: 0")
-            return
-        }
-        try {
-            let root = parseJsonObject(jsonText, path: "accounts.json")
-            for (item in arrayFieldOf(root, "accounts")) {
-                try {
-                    let obj = item.asObject()
-                    let userId = readString(obj, "userId")
-                    if (userId.isEmpty()) {
-                        continue
-                    }
-                    accounts.value.add(AccountEntry(
-                        readString(obj, "email"),
-                        readString(obj, "name"),
-                        userId,
-                        readString(obj, "userKey"),
-                        readString(obj, "language"),
-                        readBoolOr(obj, "default", false)))
-                } catch (_: Exception) {
-                    () // 单条坏数据跳过
-                }
+        for (item in readAccountsConfig(accountsJsonPath()).accounts) {
+            if (item.userId.isEmpty()) {
+                continue
             }
-            writeDebugLog("accounts loaded(json): ${accounts.value.size}")
-        } catch (_: Exception) {
-            writeDebugLog("accounts.json unreadable; ignored")
+            accounts.value.add(AccountEntry(item.email, item.name, item.userId,
+                item.userKey, item.language, item.isDefault))
         }
+        writeDebugLog("accounts loaded: ${accounts.value.size}")
     }
-    /** 把内存里的账号写回 `accounts.json`。 */
+
+    /** 把内存里的账号写回 `accounts.json`（CJson 序列化）。 */
     public func saveAccounts(): Unit {
         ensureAppDataDir()
-        let root = JsonObject()
-        let list = JsonArray()
+        let file = AccountsConfig()
         for (entry in accounts.value) {
-            let obj = JsonObject()
-            obj.put("email", JsonString(entry.email))
-            obj.put("name", JsonString(entry.name))
-            obj.put("userId", JsonString(entry.userId))
-            obj.put("userKey", JsonString(entry.userKey))
-            obj.put("language", JsonString(entry.language))
-            obj.put("default", JsonBool(entry.isDefault))
-            list.add(obj)
+            let item = AccountConfig()
+            item.email = entry.email
+            item.name = entry.name
+            item.userId = entry.userId
+            item.userKey = entry.userKey
+            item.language = entry.language
+            item.isDefault = entry.isDefault
+            file.accounts.add(item)
         }
-        root.put("accounts", list)
-        writeTextFile(Path(accountsJsonPath()), root.toJsonString())
+        writeAccountsConfig(accountsJsonPath(), file)
     }
     /** 默认账号（启动时只自动登录它）。 */
     public func defaultAccount(): ?AccountEntry {
@@ -3343,54 +3297,42 @@ public class AppState {
         }
     }
 
+    /** 启动时读回配置（CJson 反序列化：`~/.seline-app/SelineRead/config.json`）。 */
     private func loadUserConfig(): Unit {
-        // 唯一格式：JSON（`~/.seline-app/SelineRead/config.json`）
-        let jsonText = readTextFile(Path(configJsonPath()))
-        if (!jsonText.trimAscii().isEmpty()) {
-            try {
-                let obj = parseJsonObject(jsonText, path: "config.json")
-                let theme = readString(obj, "theme")
-                if (!theme.isEmpty()) {
-                    let dark = theme != "light"
-                    darkMode.value = dark
-                    setSelineTheme(if (dark) { SelineTheme.dark() } else { SelineTheme.light() })
-                }
-                let dir = readString(obj, "downloadDir")
-                if (!dir.isEmpty()) {
-                    downloadDir.value = dir
-                }
-                activeSite.value = normalizeSiteUrl(readString(obj, "activeSite"))
-                customSites.value = ArrayList<String>()
-                for (item in arrayFieldOf(obj, "customSites")) {
-                    let text = normalizeSiteUrl(item.asString().getValue())
-                    if (!text.isEmpty()) {
-                        customSites.value.add(text)
-                    }
-                }
-                // 种子站：**单值**（后端只接收单值，不再兼容旧版 seedSites 数组）
-                seedSite.value = normalizeSiteUrl(readString(obj, "seedSite"))
-                writeDebugLog("config loaded(json): dark=${darkMode.value} sites=${customSites.value.size} seed=${seedSite.value} active=${activeSite.value}")
-            } catch (_: Exception) {
-                writeDebugLog("config.json unreadable; using defaults")
+        let config = readAppConfig(configJsonPath())
+        if (!config.theme.isEmpty()) {
+            let dark = config.theme != "light"
+            darkMode.value = dark
+            setSelineTheme(if (dark) { SelineTheme.dark() } else { SelineTheme.light() })
+        }
+        if (!config.downloadDir.isEmpty()) {
+            downloadDir.value = config.downloadDir
+        }
+        activeSite.value = normalizeSiteUrl(config.activeSite)
+        customSites.value = ArrayList<String>()
+        for (site in config.customSites) {
+            let text = normalizeSiteUrl(site)
+            if (!text.isEmpty()) {
+                customSites.value.add(text)
             }
         }
+        seedSite.value = normalizeSiteUrl(config.seedSite)
         seedDefaultSitesIfNeeded()
         downloadPathInput.value = downloadDir.value
-        writeDebugLog("config loaded: dark=${darkMode.value} sites=${customSites.value.size} seed=${seedSite.value} active=${activeSite.value}")
+        writeDebugLog("config loaded: dark=${darkMode.value} sites=${customSites.value.size} " +
+            "seed=${seedSite.value} active=${activeSite.value}")
     }
-    /** 把当前配置写回磁盘（JSON：`~/seline_read/config.json`）。 */
+
+    /** 把当前配置写回磁盘（CJson 序列化）。 */
     public func saveUserConfig(): Unit {
-        let obj = JsonObject()
-        obj.put("theme", JsonString(if (darkMode.value) { "dark" } else { "light" }))
-        obj.put("downloadDir", JsonString(downloadDir.value))
-        obj.put("activeSite", JsonString(activeSite.value))
-        let custom = JsonArray()
-        for (site in customSites.value) {
-            custom.add(JsonString(site))
-        }
-        obj.put("customSites", custom)
-        obj.put("seedSite", JsonString(seedSite.value))
-        writeTextFile(Path(configJsonPath()), obj.toJsonString())
+        ensureAppDataDir()
+        let config = AppConfig()
+        config.theme = if (darkMode.value) { "dark" } else { "light" }
+        config.downloadDir = downloadDir.value
+        config.activeSite = activeSite.value
+        config.customSites = customSites.value
+        config.seedSite = seedSite.value
+        writeAppConfig(configJsonPath(), config)
     }
     /** 设置页页签切换。 */
     public func selectSettingsTab(index: Int64): Unit {

@@ -24,6 +24,8 @@
   zlibraryAPI4CJ = { path = "../zlibraryAPI4CJ" }
   selineDownload = { path = "../selineDownload" }
   linderHttp = { path = "../LinderHttp" }
+  # JSON 配置读写（config.json / accounts.json）：CJson 宏序列化，加字段只改类
+  CJson = { git = "https://gitcode.com/LiquidStudio/CJson.git" }
 
 [target]
 [target.x86_64-w64-mingw32]
