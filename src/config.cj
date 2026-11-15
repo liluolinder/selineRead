@@ -16,19 +16,54 @@ import stdx.encoding.json.*
 import CJson.*
 import CJson.jsonmacro.*
 
-/** 应用配置（`~/.seline-app/SelineRead/config.json`）。 */
+// ---------------------------------------------------------------------------
+// 配置按设置页的分类分组，JSON 也一样分层（不是把所有字段平铺在一层）。
+// 加字段时先想清楚它属于哪一类，再加到对应的子结构里。
+// ---------------------------------------------------------------------------
+
+/** 显示设置（`config.json` → `display`）。 */
 @JsonSerializable
-public class AppConfig {
+public class DisplaySettings {
     /** `dark` / `light`。 */
     public var theme: String = "dark"
+}
+
+/** 下载设置（`config.json` → `download`）。 */
+@JsonSerializable
+public class DownloadSettings {
     /** 下载目录绝对路径；空串表示用默认目录。 */
-    public var downloadDir: String = ""
+    public var dir: String = ""
+}
+
+/** 网络设置（`config.json` → `network`）。 */
+@JsonSerializable
+public class NetworkSettings {
     /** 当前选中的站点（官方地址或自定义站点）。 */
     public var activeSite: String = ""
     /** 自定义站点（数组，可增删）。 */
     public var customSites: ArrayList<String> = ArrayList<String>()
     /** 种子站（单值，仅对自定义站点生效）。 */
     public var seedSite: String = ""
+}
+
+/**
+ * 应用配置（`~/.seline-app/SelineRead/config.json`）。
+ *
+ * ```json
+ * {
+ *   "display":  { "theme": "dark" },
+ *   "download": { "dir": "C:\\Users\\me\\Downloads\\SelineRead" },
+ *   "network":  { "activeSite": "https://zh.z-library.sk",
+ *                 "customSites": ["https://example.com"],
+ *                 "seedSite": "https://zh.eva101.ru" }
+ * }
+ * ```
+ */
+@JsonSerializable
+public class AppConfig {
+    public var display: DisplaySettings = DisplaySettings()
+    public var download: DownloadSettings = DownloadSettings()
+    public var network: NetworkSettings = NetworkSettings()
 }
 
 /** 已保存账号（`accounts.json` 的列表项）。 */

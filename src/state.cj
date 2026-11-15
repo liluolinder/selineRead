@@ -3300,38 +3300,41 @@ public class AppState {
     /** 启动时读回配置（CJson 反序列化：`~/.seline-app/SelineRead/config.json`）。 */
     private func loadUserConfig(): Unit {
         let config = readAppConfig(configJsonPath())
-        if (!config.theme.isEmpty()) {
-            let dark = config.theme != "light"
+        // 显示设置
+        if (!config.display.theme.isEmpty()) {
+            let dark = config.display.theme != "light"
             darkMode.value = dark
             setSelineTheme(if (dark) { SelineTheme.dark() } else { SelineTheme.light() })
         }
-        if (!config.downloadDir.isEmpty()) {
-            downloadDir.value = config.downloadDir
+        // 下载设置
+        if (!config.download.dir.isEmpty()) {
+            downloadDir.value = config.download.dir
         }
-        activeSite.value = normalizeSiteUrl(config.activeSite)
+        // 网络设置
+        activeSite.value = normalizeSiteUrl(config.network.activeSite)
         customSites.value = ArrayList<String>()
-        for (site in config.customSites) {
+        for (site in config.network.customSites) {
             let text = normalizeSiteUrl(site)
             if (!text.isEmpty()) {
                 customSites.value.add(text)
             }
         }
-        seedSite.value = normalizeSiteUrl(config.seedSite)
+        seedSite.value = normalizeSiteUrl(config.network.seedSite)
         seedDefaultSitesIfNeeded()
         downloadPathInput.value = downloadDir.value
         writeDebugLog("config loaded: dark=${darkMode.value} sites=${customSites.value.size} " +
             "seed=${seedSite.value} active=${activeSite.value}")
     }
 
-    /** 把当前配置写回磁盘（CJson 序列化）。 */
+    /** 把当前配置写回磁盘（CJson 序列化，按显示/下载/网络分组）。 */
     public func saveUserConfig(): Unit {
         ensureAppDataDir()
         let config = AppConfig()
-        config.theme = if (darkMode.value) { "dark" } else { "light" }
-        config.downloadDir = downloadDir.value
-        config.activeSite = activeSite.value
-        config.customSites = customSites.value
-        config.seedSite = seedSite.value
+        config.display.theme = if (darkMode.value) { "dark" } else { "light" }
+        config.download.dir = downloadDir.value
+        config.network.activeSite = activeSite.value
+        config.network.customSites = customSites.value
+        config.network.seedSite = seedSite.value
         writeAppConfig(configJsonPath(), config)
     }
     /** 设置页页签切换。 */

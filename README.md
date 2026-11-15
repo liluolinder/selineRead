@@ -130,7 +130,19 @@ $env:SELINE_READ_SEARCH="三体"; $env:SELINE_READ_SEARCH_RACE_B="活着"; $env:
 | 下载设置 | 下载目录（可编辑、自动创建、持久化） |
 | 网络设置 | 官方地址（前端内置 3 个，不可编辑） + 自定义站（数组，可增删） + 种子站（单值） + 「重新拉取站点」 |
 
-配置持久化在 `~/.seline-app/SelineRead/config.json`（主题 / 下载目录 / 当前站点 / 自定义站数组 / 种子站单值）。
+配置持久化在 `~/.seline-app/SelineRead/config.json`，**按设置页分类分组**（CJson 序列化，不平铺）：
+
+```json
+{
+  "display":  { "theme": "dark" },
+  "download": { "dir": "C:\\Users\\liluo\\Downloads\\SelineRead" },
+  "network":  { "activeSite": "https://zh.z-library.sk",
+                "customSites": [],
+                "seedSite": "https://zh.eva101.ru" }
+}
+```
+
+账号单独存在 `~/.seline-app/SelineRead/accounts.json`（`{"accounts":[{email,name,userId,userKey,language,default}]}`）。
 请求逻辑：选**官方地址** → 请求失败直接报「网络链接失败」，**不**走种子站回退；
 选**自定义地址** → 失败时后端用种子站换新域名，成功后**覆盖这一条自定义站**并持久化（`adoptRefreshedSite`）。
 
