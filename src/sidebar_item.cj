@@ -134,65 +134,6 @@ class SidebarItem <: Widget {
     }
 }
 
-/** 「分区」组标题：一行文字 + 右侧箭头。 */
-class SidebarGroupHeader <: Widget {
-    private let title: String
-    private let open: Bool
-    private let onTap: () -> Unit
-    private var frame = Rect.zero()
-
-    init(title: String, open: Bool, onTap: () -> Unit) {
-        this.title = title
-        this.open = open
-        this.onTap = onTap
-        emit(this)
-    }
-
-    public func measure(_: UiContext, _: Size): Size {
-        Size(RAIL_EXPANDED, SIDEBAR_GROUP_HEADER_HEIGHT)
-    }
-
-    public func layout(_: UiContext, rect: Rect): Unit {
-        frame = rect
-    }
-
-    public func draw(ctx: UiContext): Unit {
-        let theme = selineTheme()
-        let palette = theme.palette
-        let arrowSide: Float32 = 14.0
-        let arrowX = frame.right() - 20.0 - arrowSide
-        let textX = frame.x + 20.0
-        paintText(ctx.renderer, title,
-            Rect(textX, frame.y, max(0.0, arrowX - 8.0 - textX), frame.h),
-            palette.textMuted, theme.fontCaption, family: theme.fontFamily)
-        drawGlyph(ctx.renderer, if (open) { "chevron_up_fill" } else { "chevron_down_fill" },
-            Rect(arrowX, frame.centerY() - arrowSide * 0.5, arrowSide, arrowSide),
-            palette.textFaint, 1.0)
-    }
-
-    public func handle(_: UiContext, event: UiEvent): Bool {
-        match (event) {
-            case UiEvent.MouseDown(MouseButton.Left, x, y) => frame.contains(x, y)
-            case UiEvent.MouseUp(MouseButton.Left, x, y) =>
-                if (frame.contains(x, y)) {
-                    onTap()
-                    true
-                } else {
-                    false
-                }
-            case _ => false
-        }
-    }
-
-    public func isFlexible(): Bool {
-        false
-    }
-
-    public func acceptsStretch(_: Axis): Bool {
-        false
-    }
-}
-
 /**
  * 侧栏底部的账号入口（本轮是占位：登录功能下一轮接入）。
  *
@@ -265,7 +206,6 @@ class SidebarAccountChip <: Widget {
     private func hit(x: Float32, y: Float32): Bool {
         frame.contains(x, y) && x < frame.x + railVisibleWidth()
     }
-
 
     public func handle(_: UiContext, event: UiEvent): Bool {
         match (event) {

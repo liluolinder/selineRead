@@ -22,8 +22,6 @@ let RAIL_COLLAPSED: Float32 = 56.0
 let SIDEBAR_ROW_HEIGHT: Float32 = 44.0
 let SIDEBAR_INSET: Float32 = 8.0
 /** 「分区」组标题行高与子项行高。 */
-let SIDEBAR_GROUP_HEADER_HEIGHT: Float32 = 32.0
-let SIDEBAR_ZONE_ROW_HEIGHT: Float32 = 35.0
 
 /** 页签下标：内容页在前，设置固定在底部。 */
 let TAB_HOME: Int64 = 0
@@ -132,20 +130,6 @@ func railAnimating(state: AppState): Bool {
     }
 }
 
-/**
- * 内容面板的左内边距：**直接取目标值**（展开=220 / 收起=56），不随弹簧插值。
- *
- * 这是侧栏动画不再卡的关键：之前每帧都用弹簧插值当内边距 → 内容区宽度每帧都变
- * → 整页（十几到几十张卡片）每帧重新测量/排版/绘制，帧耗时随卡片数量线性上涨，
- * 卡顿就是必然的。
- *
- * 现在动画期间内容宽度是常量，只有侧栏自身（十来行）在变；内容在切换那一刻
- * 一次到位。视觉上侧栏像抽屉一样滑过内容旁边的空白区 —— 那个空白的颜色就是
- * 窗口底色，和侧栏底色一致，所以看不到"缝"。
- */
-func railContentPadding(state: AppState): Float32 {
-    if (state.railExpanded.value) { RAIL_EXPANDED } else { RAIL_COLLAPSED }
-}
 
 /** 进度 `t` 对应的整像素宽度（用于判断"视觉上已经到位"）。 */
 func railWidthAt(t: Float32): Float32 {

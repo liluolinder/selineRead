@@ -9,45 +9,6 @@ package seline_read
 import chui.*
 import seline_ui.*
 
-/** 一个圆角占位块。 */
-class SkeletonBox <: Widget {
-    private let boxWidth: Float32
-    private let boxHeight: Float32
-    private let radius: Float32
-    private var frame = Rect.zero()
-
-    init(width: Float32, height: Float32, radius!: Float32 = 8.0) {
-        this.boxWidth = width
-        this.boxHeight = height
-        this.radius = radius
-        emit(this)
-    }
-
-    public func measure(_: UiContext, _: Size): Size {
-        Size(boxWidth, boxHeight)
-    }
-
-    public func layout(_: UiContext, rect: Rect): Unit {
-        frame = rect
-    }
-
-    public func draw(ctx: UiContext): Unit {
-        paintSurface(ctx.renderer, frame, selineTheme().palette.surfaceHover, radius)
-    }
-
-    public func handle(_: UiContext, _: UiEvent): Bool {
-        false
-    }
-
-    public func isFlexible(): Bool {
-        false
-    }
-
-    public func acceptsStretch(_: Axis): Bool {
-        false
-    }
-}
-
 /** 图书卡骨架：封面块 + 标题条 + 作者条。 */
 class SkeletonBookCard <: Widget {
     private var frame = Rect.zero()
@@ -224,45 +185,6 @@ class DescriptionSkeletonBlock <: Widget {
                 palette.surfaceHover, 4.0)
             index += 1
         }
-    }
-
-    public func handle(_: UiContext, _: UiEvent): Bool {
-        false
-    }
-
-    public func isFlexible(): Bool {
-        false
-    }
-
-    public func acceptsStretch(_: Axis): Bool {
-        false
-    }
-}
-
-/** 按宽度比例画一条骨架（不能预知可用宽度，所以只能按 frame 百分比）。 */
-class CommentSkeletonLine <: Widget {
-    private let widthRatio: Float32
-    private let lineHeight: Float32
-    private var frame = Rect.zero()
-
-    init(widthRatio!: Float32, height!: Float32) {
-        this.widthRatio = widthRatio
-        this.lineHeight = height
-        emit(this)
-    }
-
-    public func measure(_: UiContext, available: Size): Size {
-        Size(available.w, lineHeight)
-    }
-
-    public func layout(_: UiContext, rect: Rect): Unit {
-        frame = rect
-    }
-
-    public func draw(ctx: UiContext): Unit {
-        paintSurface(ctx.renderer,
-            Rect(frame.x, frame.y, frame.w * widthRatio, frame.h),
-            selineTheme().palette.surfaceHover, 4.0)
     }
 
     public func handle(_: UiContext, _: UiEvent): Bool {

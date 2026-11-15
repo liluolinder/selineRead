@@ -10,11 +10,6 @@ import std.convert.*
 import std.env.getVariable
 import std.fs.{File, Path, exists}
 
-/** 系统临时目录（Windows 即 `%TEMP%`）。 */
-public func getTempRoot(): String {
-    getVariable("TEMP") ?? "."
-}
-
 /** 追加一行调试日志（失败静默：日志不该影响主流程）。 */
 public func writeDebugLog(text: String): Unit {
     try {
@@ -114,4 +109,3 @@ public func themeTransitionMs(): Int64 {
 public func themeTransitionMs(): Int64 {
     620
 }
-

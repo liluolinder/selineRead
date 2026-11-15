@@ -824,11 +824,6 @@ public class AccountEntry <: ToString {
         ZlibCredential(userId: userId, userKey: userKey, siteLanguage: lang)
     }
 
-    public func toLine(): String {
-        let flag = if (isDefault) { "1" } else { "0" }
-        "${email}|${name}|${userId}|${userKey}|${language}|${flag}"
-    }
-
     public func toString(): String {
         "${label()} (${userId})${if (isDefault) { " [默认]" } else { "" }}"
     }
@@ -1130,16 +1125,6 @@ public class AppState {
         }
     }
 
-    /** 当前会话使用的账号（可能不在列表里，比如刚登录还没保存）。 */
-    public func currentAccount(): ?AccountEntry {
-        for (entry in accounts.value) {
-            if (entry.userId == accountId.value) {
-                return Some(entry)
-            }
-        }
-        None
-    }
-
     /** 设为默认账号（单选）。 */
     public func setDefaultAccount(userId: String): Unit {
         for (entry in accounts.value) {
@@ -1397,7 +1382,6 @@ public class AppState {
         iconAsset
     }
 
-
     /** 文本按宽截断缓存：同一文本/字号/宽度只测量一次。 */
     private let fittedTextCache = HashMap<String, String>()
 
@@ -1520,7 +1504,6 @@ public class AppState {
             }
         }
     }
-
 
     /*
      * 卡片文字的"首绘预算"。
@@ -1982,11 +1965,6 @@ public class AppState {
         writeDebugLog("shutdown: end")
     }
 
-    /** 取窗口；未 attach 时返回 None（调用即 bug，页面里打印一次即可）。 */
-    public func windowOrNone(): ?DesktopApp {
-        app
-    }
-
     /** 当前站点地址（相对封面/链接补全用）。 */
     private func currentSite(): String {
         match (this.client) {
@@ -2012,37 +1990,6 @@ public class AppState {
      */
     private func fetchLandingBriefs(clientValue: ZlibClient): (ArrayList<BookInfoBrief>, String) {
         landingBriefsFor(clientValue, loggedIn.value)
-    }
-
-    private func loadPopularBlocking(clientValue: ZlibClient): Unit {
-        loading.value = true
-        try {
-            let (briefs, sourceLabel) = fetchLandingBriefs(clientValue)
-            popular.value = cellsFromBriefs(briefs, clientValue.currentSiteUrl())
-            popularVisible.value = 12
-            status.value = "${sourceLabel} ${popular.value.size} 本 · ${clientValue.currentSiteUrl()}"
-            error.value = ""
-            writeDebugLog("popular loaded: ${popular.value.size} (${sourceLabel})")
-        } catch (failure: ZlibError) {
-            error.value = "加载热门失败：${friendlyErrorMessage(failure)}"
-            status.value = "加载失败"
-            writeDebugLog("popular failed: ${failure.detail}")
-        } catch (failure: Exception) {
-            error.value = "加载热门失败：${failure.message}"
-            status.value = "加载失败"
-            writeDebugLog("popular failed (unexpected): ${failure.message}")
-        } finally {
-            loading.value = false
-        }
-        // 首页第一张封面在启动期就开始下载，缩短首屏空白时间
-        if (!popular.value.isEmpty()) {
-            let first = popular.value[0]
-            writeDebugLog("first book: id=${first.id} hash=${first.hash}")
-            writeDebugLog("first cover url: ${first.cover}")
-            if (!first.cover.isEmpty()) {
-                let _ = imagePath(first.cover, SelineImageKind.Cover)
-            }
-        }
     }
 
     /** 重新拉热门（后台线程 + 回投 UI）。 */
@@ -2607,17 +2554,6 @@ public class AppState {
         }
     }
 
-    /** 退出搜索态，回到热门列表。 */
-    public func exitSearch(): Unit {
-        searchGeneration += 1
-        lastKeyword.value = ""
-        results.value.clear()
-        searchPage = 1
-        searchHasMore.value = false
-        searchLoadingMore.value = false
-        tab.value = TAB_HOME
-    }
-
     /* -------------------------------------------------- 详情 */
 
     /** 打开图书详情页（二级页面）。 */
@@ -2804,24 +2740,6 @@ public class AppState {
         lines
     }
 
-    /** 「重新加载」按钮：清掉错误后重试。 */
-    /** 详情加载失败后的「重试」：按当前 id/hash 重新拉一次详情。 */
-    public func retryDetail(): Unit {
-        if (detailId.value <= 0 || detailHash.value.isEmpty()) {
-            return
-        }
-        detailError.value = ""
-        openBookById(detailId.value, detailHash.value)
-    }
-
-    /** 评论加载失败后的「重试」。 */
-    public func retryComments(): Unit {
-        commentsError.value = ""
-        commentsLoaded = false
-        commentsLoading.value = false
-        ensureCommentsLoaded()
-    }
-
     /* -------------------------------------------------- 收藏 */
 
     /**
@@ -2893,13 +2811,6 @@ public class AppState {
             sleep(delayMs * Duration.millisecond)
             postToUi({=> toggleDetailFavorite() })
         }
-    }
-
-    public func reloadRelated(): Unit {
-        detailRelatedError.value = ""
-        detailRelatedLoaded = false
-        detailRelatedLoading.value = false
-        loadRelated()
     }
 
     private func loadRelated(): Unit {
@@ -3134,19 +3045,6 @@ public class AppState {
                 applyBooklists(payload, reset)
             })
         }
-    }
-
-    /** 切换「公开书单 / 我的书单」。 */
-    public func setBooklistsMine(value: Bool): Unit {
-        if (booklistsMine.value == value) {
-            return
-        }
-        booklistsMine.value = value
-        booklistsLoaded = false
-        booklists.value = ArrayList<BooklistCell>()
-        booklistsNextPage.value = 0
-        booklistsError.value = ""
-        loadBooklists()
     }
 
     private func applyBooklists(payload: BooklistsPayload, reset: Bool): Unit {
@@ -3651,7 +3549,6 @@ public class AppState {
         }
     }
 
-
     /**
      * 种子站回退成功后：把新站点**覆盖**到自定义站点列表与当前站点，并持久化。
      *
@@ -3725,7 +3622,6 @@ public class AppState {
 
     /* -------------------------------------------------- 主题 */
 
-
     /**
      * 切换深浅色：用 chui 自带的圆形揭示过渡（`DesktopApp.transitionTheme`）。
      *
@@ -3770,7 +3666,6 @@ public class AppState {
         }
     }
 
-
     /** 验收用：从侧栏主题按钮位置触发一次切换。 */
     @When[debug]
     public func postThemeToggleForTest(): Unit {
@@ -3779,23 +3674,6 @@ public class AppState {
             case None => return
         }
         let _ = appRef.postToUi({=> toggleTheme(0.0, 0.0)})
-    }
-
-    /** 动画结束：真正切换到目标主题（同时换 seline_ui 与 chui 两套 token）。 */
-    public func applyThemeSwitch(): Unit {
-        let nextDark = !darkMode.value
-        darkMode.value = nextDark
-        setSelineTheme(if (nextDark) { SelineTheme.dark() } else { SelineTheme.light() })
-        match (app) {
-            case Some(value) =>
-                try {
-                    value.setTheme(selineChuiTheme())
-                } catch (_: Exception) {
-                    ()
-                }
-            case None => ()
-        }
-        writeDebugLog("theme: switched dark=${nextDark}")
     }
 
     /** 验收用：造几个假账号，用来截图账号页/登录弹窗。 */
@@ -3867,15 +3745,6 @@ public class AppState {
         showToast(text, kind: kind)
     }
 
-    /** 验收用：延时弹一条指定语义的 toast（截图/联调用）。 */
-    @When[debug]
-    public func showToastAfterForTest(delayMs: Int64, text: String, kind!: ToastKind): Unit {
-        let _ = spawn {=>
-            sleep(delayMs * Duration.millisecond)
-            postToUi({=> showToastNow(text, kind: kind) })
-        }
-    }
-
     /** 验收用：循环弹同一条 toast，保证截图时一定能拍到。 */
     @When[debug]
     public func startToastLoopForTest(text: String, kind!: ToastKind): Unit {
@@ -3885,13 +3754,6 @@ public class AppState {
                 postToUi({=> showToastNow(text, kind: kind) })
             }
         }
-    }
-
-    /** 点击/切换页面时立即收起 toast。 */
-    public func dismissToast(): Unit {
-        toastSeq += 1
-        toastText.value = ""
-        toastSpring.reset(0.0)
     }
 
     /* -------------------------------------------------- 收藏 */
@@ -4456,17 +4318,6 @@ public class AppState {
         }
     }
 
-    /** 清掉已结束的下载记录。 */
-    public func clearFinishedDownloads(): Unit {
-        let kept = ArrayList<DownloadItem>()
-        for (item in downloadItems.value) {
-            if (item.active()) {
-                kept.add(item)
-            }
-        }
-        downloadItems.value = kept
-        downloadsTick.value += 1
-    }
     /* -------------------------------------------------- 网络封面 */
 
     /**
