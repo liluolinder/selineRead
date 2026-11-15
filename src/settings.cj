@@ -19,10 +19,12 @@ let SETTINGS_TABS: Array<SelineRailItem> = [
     SelineRailItem("网络设置", "cloud", "cloud")
 ]
 
+/** 设置内容列宽：窗口很宽时也不让卡片横跨整屏（设置项是读的，不是看图的）。 */
+let SETTINGS_CONTENT_W: Float32 = 760.0
+
 func settingsPage(state: AppState): Unit {
-    let theme = selineTheme()
     VStack(spacing: vp(0.0)) {
-        pageHeader("设置", "", {=> ()})
+        pageHeader("设置", "外观、下载与网络", {=> ()})
         HStack(spacing: vp(SELINE_SPACE_LG)) {
             VStack(spacing: vp(0.0)) {
                 // 图标列：文字只在悬浮时以 tooltip 出现（showLabels = false）
@@ -32,15 +34,21 @@ func settingsPage(state: AppState): Unit {
                 Spacer()
             }.hug()
             pageScrollView(scrollState: state.settingsScroll) {
-                VStack(spacing: vp(SELINE_SPACE_MD)) {
-                    if (state.settingsTab.value == 0) {
-                        displaySettings(state)
-                    } else if (state.settingsTab.value == 1) {
-                        downloadSettings(state)
-                    } else {
-                        networkSettings(state)
-                    }
-                }.hug().fillWidth().padding(0.0, 4.0, PAGE_PAD, 32.0)
+                // 内容固定宽度并水平居中：窗口再宽也不让设置卡片拉满整屏
+                HStack(spacing: vp(0.0)) {
+                    Spacer()
+                    VStack(spacing: vp(SELINE_SPACE_LG)) {
+                        if (state.settingsTab.value == 0) {
+                            displaySettings(state)
+                        } else if (state.settingsTab.value == 1) {
+                            downloadSettings(state)
+                        } else {
+                            networkSettings(state)
+                        }
+                    }.hug().width(SETTINGS_CONTENT_W)
+                    Spacer()
+                }.hug().fillWidth()
+                    .padding(8.0, SELINE_SPACE_SM, 8.0, 40.0)
             }
             .fillWidth()
         }.hug().fillWidth().fillHeight()
@@ -48,13 +56,129 @@ func settingsPage(state: AppState): Unit {
     }.fillWidth().fillHeight()
 }
 
-/** 显示设置：深浅色 + 账号（下载需要登录）。 */
-func displaySettings(state: AppState): Unit {
+/** 设置页分区卡片：图标方块 + 标题 + 右侧提示 + 内容。 */
+func settingsSection(icon: String, title: String, hint!: String = "", body!: () -> Unit): Unit {
     let theme = selineTheme()
-    sectionCard("外观") {
-        HStack(spacing: vp(SELINE_SPACE_MD)) {
-            Label("主题").fontSize(theme.fontBody)
+    let palette = theme.palette
+    VStack(spacing: vp(SELINE_SPACE_MD)) {
+        HStack(spacing: vp(SELINE_SPACE_SM)) {
+            HStack(spacing: vp(0.0)) {
+                SelineIcon(icon, size: 15.0, color: palette.accent)
+            }.hug().padding(7.0).background(palette.accentSoft, vp(8.0))
+            Label(title).fontSize(theme.fontHeading).bold()
             Spacer()
+            if (!hint.isEmpty()) {
+                Label(hint).fontSize(theme.fontCaption).muted()
+            }
+        }.hug().fillWidth()
+        body()
+    }.hug().fillWidth()
+        .padding(18.0)
+        .background(palette.surfaceRaised, vp(theme.radiusCard))
+}
+
+/** 一行设置：标题/说明在左，控件在右。 */
+func settingsRow(title: String, detail!: String = "", control!: () -> Unit): Unit {
+    let theme = selineTheme()
+    HStack(spacing: vp(SELINE_SPACE_MD)) {
+        VStack(spacing: vp(2.0)) {
+            Label(title).fontSize(theme.fontBody)
+            if (!detail.isEmpty()) {
+                Label(detail).fontSize(theme.fontCaption).muted().wrap()
+            }
+        }.hug()
+        Spacer()
+        control()
+    }.hug().fillWidth().padding(2.0, 8.0, 2.0, 8.0)
+}
+
+/** 设置页的一行小提示（图标 + 灰色说明）。 */
+func settingsHint(icon: String, text: String): Unit {
+    let theme = selineTheme()
+    let palette = theme.palette
+    HStack(spacing: vp(SELINE_SPACE_SM)) {
+        SelineIcon(icon, size: 14.0, color: palette.textFaint)
+        Label(text).fontSize(theme.fontCaption).muted().wrap()
+    }.hug().fillWidth()
+}
+
+/** 站点行左侧的单选圆点。 */
+class SettingsRadioDot <: Widget {
+    private let selected: Bool
+    private var frame = Rect.zero()
+
+    init(selected: Bool) {
+        this.selected = selected
+        emit(this)
+    }
+
+    public func isFlexible(): Bool {
+        false
+    }
+
+    public func acceptsStretch(_: Axis): Bool {
+        false
+    }
+
+    public func measure(_: UiContext, _: Size): Size {
+        Size(20.0, 20.0)
+    }
+
+    public func layout(_: UiContext, rect: Rect): Unit {
+        frame = rect
+    }
+
+    public func draw(ctx: UiContext): Unit {
+        let palette = selineTheme().palette
+        let ring = if (selected) { palette.accent } else { palette.borderStrong }
+        ctx.renderer.strokeCircle(frame.centerX(), frame.centerY(), 8.5, Pen(width: 1.5, color: ring))
+        if (selected) {
+            paintDot(ctx.renderer, frame.centerX(), frame.centerY(), 4.5, palette.accent)
+        }
+    }
+
+    public func handle(_: UiContext, _: UiEvent): Bool {
+        false
+    }
+}
+
+/** 一个可点选的站点行：单选圆点 + 地址 + 当前使用标记（自定义站带删除按钮）。 */
+func settingsSiteRow(state: AppState, site: String, isOfficial: Bool): Unit {
+    let theme = selineTheme()
+    let palette = theme.palette
+    let current = state.activeSite.value == site
+    // 注意：删除按钮必须放在 TapRegion **外面**（SelineTapRegion 是叶子控件，不向下分发事件，
+    // 放在里面会永远点不到）。
+    HStack(spacing: vp(SELINE_SPACE_SM)) {
+        SelineTapRegion({=> state.selectActiveSite(site)}) {
+            HStack(spacing: vp(SELINE_SPACE_SM)) {
+                SettingsRadioDot(current)
+                VStack(spacing: vp(1.0)) {
+                    Label(displaySiteUrl(site)).fontSize(theme.fontBody)
+                        .foregroundColor(if (current) { palette.accent } else { palette.text })
+                    Label(if (isOfficial) { "内置 · 不可编辑" } else { "自定义 · 失败自动换域名" })
+                        .fontSize(theme.fontCaption).muted()
+                }.hug()
+                Spacer()
+                if (current) {
+                    SelineBadge("当前使用", fill: palette.surfaceRaised,
+                        foreground: palette.accent, border: palette.border)
+                }
+            }.hug().fillWidth()
+        }
+        if (!isOfficial) {
+            SelineIconButton("trash", {=> state.removeCustomSite(site)}, side: 28.0,
+                tint: palette.textMuted, tooltip: "删除这个站点")
+        }
+    }.hug().fillWidth().padding(12.0, 9.0, 12.0, 9.0)
+        .background(if (current) { palette.accentSoft } else { palette.surfaceSunken },
+            vp(theme.radiusSmall))
+}
+
+/** 显示设置：深浅色 + 数据目录。 */
+func displaySettings(state: AppState): Unit {
+    settingsSection("moon", "外观", hint: "跟随窗口，不需要重启") {
+        settingsRow("主题", detail: "深色更省眼；切换时从按钮位置向外辐射过渡") {
             SelineSegmented(["深色", "浅色"],
                 if (state.darkMode.value) { 0 } else { 1 },
                 {index =>
@@ -62,11 +186,21 @@ func displaySettings(state: AppState): Unit {
                     if (wantDark != state.darkMode.value) {
                         state.toggleTheme(100.0, 200.0)
                     }
-                }, minSegment: 70.0)
-        }.hug().fillWidth()
+                }, minSegment: 72.0)
+        }
+    }
+    settingsSection("folder", "数据与配置", hint: "全部保存在本地") {
+        settingsRow("配置目录", detail: appDataDir().toString()) {
+            SelineButton("打开", {=> selineOpenFolder(appDataDir().toString())},
+                glyph: "folder-open", kind: SelineButtonKind.Ghost, compact: true)
+        }
+        selineDivider()
+        settingsRow("下载目录", detail: state.downloadDir.value) {
+            SelineButton("打开", {=> selineOpenFolder(state.downloadDir.value)},
+                glyph: "folder-open", kind: SelineButtonKind.Ghost, compact: true)
+        }
     }
 }
-
 /** 账号页：一个列表管所有账号，当前账号高亮。 */
 func accountPage(state: AppState): Unit {
     let theme = selineTheme()
@@ -327,29 +461,28 @@ class DialogScrim <: Widget {
         }
     }
 }
-/** 下载设置：下载目录。 */
+/** 下载设置：下载目录 + 引擎限制说明。 */
 func downloadSettings(state: AppState): Unit {
     let theme = selineTheme()
-    sectionCard("下载目录") {
-        VStack(spacing: vp(SELINE_SPACE_SM)) {
-            Label("下载的文件保存在这个目录（不存在会自动创建）")
-                .fontSize(theme.fontCaption).muted().wrap()
+    let palette = theme.palette
+    settingsSection("download", "下载目录", hint: "不存在会自动创建") {
+
+        HStack(spacing: vp(SELINE_SPACE_SM)) {
             SelineTextField(state.downloadPathInput.value,
                 {text => state.downloadPathInput.value = text},
                 placeholder: state.downloadDir.value, glyph: "folder", height: 38.0,
-                width: 420.0, onSubmit: {=> state.applyDownloadPath()})
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineButton("保存目录", {=> state.applyDownloadPath()}, glyph: "download",
-                    kind: SelineButtonKind.Secondary, compact: true)
-                Label("当前：${state.downloadDir.value}").fontSize(theme.fontCaption).muted()
-                Spacer()
-            }.hug().fillWidth()
+                width: 460.0, onSubmit: {=> state.applyDownloadPath()})
+            SelineButton("保存", {=> state.applyDownloadPath()}, glyph: "check",
+                kind: SelineButtonKind.Secondary, compact: true)
+            SelineButton("打开文件夹", {=> selineOpenFolder(state.downloadDir.value)},
+                glyph: "folder-open", kind: SelineButtonKind.Ghost, compact: true)
+            Spacer()
         }.hug().fillWidth()
     }
-    sectionCard("说明") {
-        Label("zlib 的下载链接不支持断点续传与多线程，所以下载是单线程的；" +
-            "「停止」后需要重新下载，不会从中间继续。")
-            .fontSize(theme.fontCaption).muted().wrap()
+    settingsSection("warn", "下载说明", hint: "zlib 链接的限制") {
+        settingsHint("warn", "zlib 的下载链接不支持 Range / 多线程，所以是单线程下载。")
+        settingsHint("warn", "「停止」后需要重新下载，不会从中间继续。")
+        settingsHint("about", "失败原因会写进下载页与 ~/.seline-app/SelineRead/download-log.log。")
     }
 }
 
@@ -357,109 +490,78 @@ func downloadSettings(state: AppState): Unit {
 func networkSettings(state: AppState): Unit {
     let theme = selineTheme()
     let palette = theme.palette
-    sectionCard("官方地址（内置 3 个，仅前端定义，不可编辑）") {
-        VStack(spacing: vp(SELINE_SPACE_XS)) {
-            Label("内置 3 个官方地址，点一下设为当前站点。官方地址不可达时直接报错（不走种子站回退）。")
-                .fontSize(theme.fontCaption).muted().wrap()
+    settingsSection("cloud", "官方地址", hint: "内置 3 个，不可编辑") {
+        settingsHint("warn", "官方地址不可达时直接报「网络链接失败」，不会用种子站回退。")
+        VStack(spacing: vp(6.0)) {
             for (site in state.officialSites.value) {
-                HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    SelineOptionRow(displaySiteUrl(site), if (state.activeSite.value == site) {
-                        "当前使用"
-                    } else {
-                        "点击切换"
-                    }, state.activeSite.value == site,
-                        {=> state.selectActiveSite(site)}, width: 520.0)
-                    Spacer()
-                }.hug().fillWidth()
+                settingsSiteRow(state, site, true)
             }
         }.hug().fillWidth()
     }
-    sectionCard("自定义站点（数组，可增删）") {
-        VStack(spacing: vp(SELINE_SPACE_SM)) {
-            if (state.customSites.value.isEmpty()) {
+    settingsSection("globe", "自定义站点", hint: "数组，可增删") {
+        settingsHint("about", "选中的自定义站访问失败时：用种子站查询新域名，成功后覆盖这一条。")
+        if (state.customSites.value.isEmpty()) {
+            HStack(spacing: vp(SELINE_SPACE_SM)) {
+                SelineIcon("globe", size: 15.0, color: palette.textFaint)
                 Label("还没有自定义站点").fontSize(theme.fontCaption).muted()
-            } else {
-                Label("选中的自定义站访问失败时：用种子站查询新域名，成功后覆盖这一条（下次启动直接用新地址）。")
-                    .fontSize(theme.fontCaption).muted().wrap()
-            }
-            for (site in state.customSites.value) {
-                HStack(spacing: vp(SELINE_SPACE_SM)) {
-                    SelineOptionRow(displaySiteUrl(site), if (state.activeSite.value == site) {
-                        "当前使用"
-                    } else {
-                        "点击切换"
-                    }, state.activeSite.value == site,
-                        {=> state.selectActiveSite(site)}, width: 520.0)
-                    Spacer()
-                    SelineButton("删除", {=> state.removeCustomSite(site)}, glyph: "close",
-                        kind: SelineButtonKind.Ghost, compact: true)
-                }.hug().fillWidth()
-            }
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineTextField(state.siteInput.value,
-                    {text => state.siteInput.value = text},
-                    placeholder: "https://example.com", glyph: "cloud", height: 36.0,
-                    width: 320.0, onSubmit: {=> state.addCustomSite()})
-                SelineButton("添加站点", {=> state.addCustomSite()}, glyph: "plus",
-                    kind: SelineButtonKind.Secondary, compact: true)
                 Spacer()
+            }.hug().fillWidth().padding(12.0, 10.0, 12.0, 10.0)
+                .background(palette.surfaceSunken, vp(theme.radiusSmall))
+        } else {
+            VStack(spacing: vp(6.0)) {
+                for (site in state.customSites.value) {
+                    settingsSiteRow(state, site, false)
+                }
             }.hug().fillWidth()
+        }
+        HStack(spacing: vp(SELINE_SPACE_SM)) {
+            SelineTextField(state.siteInput.value,
+                {text => state.siteInput.value = text},
+                placeholder: "https://example.com", glyph: "cloud", height: 36.0,
+                width: 340.0, onSubmit: {=> state.addCustomSite()})
+            SelineButton("添加站点", {=> state.addCustomSite()}, glyph: "plus",
+                kind: SelineButtonKind.Secondary, compact: true)
+            Spacer()
         }.hug().fillWidth()
     }
-    sectionCard("种子站（单值，仅对自定义站点生效）") {
-        VStack(spacing: vp(SELINE_SPACE_SM)) {
-            Label("种子站是「引导站」：仅当当前选中的是自定义站、且该站访问失败时，才向它查询最新域名；" +
-                "拿到新域名后覆盖这一条自定义站。官方地址失败不走种子站。")
-                .fontSize(theme.fontCaption).muted().wrap()
+    settingsSection("link", "种子站", hint: "单值，仅对自定义站点生效") {
+        HStack(spacing: vp(SELINE_SPACE_SM)) {
+            SelineIcon("link", size: 15.0, color: palette.accent)
+            Label(displaySiteUrl(state.seedSite.value)).fontSize(theme.fontBody)
+            Spacer()
             if (state.activeSiteIsOfficial()) {
-                Label("当前选中的是官方地址：种子站暂不生效。").fontSize(theme.fontCaption)
-                    .foregroundColor(palette.accent)
+                SelineBadge("暂不生效", fill: palette.surfaceSunken,
+                    foreground: palette.textMuted, border: palette.border)
+            } else {
+                SelineBadge("生效中", fill: palette.accentSoft, foreground: palette.accent,
+                    border: palette.border)
             }
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineIcon("cloud", size: 14.0, color: palette.accent)
-                Label(if (state.seedSite.value.isEmpty()) {
-                    "未配置（使用默认站）"
-                } else {
-                    state.seedSite.value
-                }).fontSize(theme.fontBody)
-                Spacer()
-            }.hug().fillWidth()
-                .padding(10.0)
-                .background(palette.surfaceSunken, vp(8.0))
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineTextField(state.seedInput.value,
-                    {text => state.seedInput.value = text},
-                    placeholder: state.seedSite.value, glyph: "cloud", height: 36.0,
-                    width: 320.0, onSubmit: {=> state.applySeedSite()})
-                SelineButton("保存种子站", {=> state.applySeedSite()}, glyph: "check",
-                    kind: SelineButtonKind.Secondary, compact: true)
-                Spacer()
-            }.hug().fillWidth()
-            if (!state.networkMessage.value.isEmpty()) {
-                Label(state.networkMessage.value).fontSize(theme.fontCaption)
-                    .foregroundColor(palette.accent)
-            }
-            HStack(spacing: vp(SELINE_SPACE_SM)) {
-                SelineButton("重新拉取站点（仅自定义站）", {=> state.refreshSiteNow()}, glyph: "refresh",
-                    kind: SelineButtonKind.Ghost, compact: true)
-                Label("状态：${state.status.value}").fontSize(theme.fontCaption).muted()
-                Spacer()
-            }.hug().fillWidth()
+        }.hug().fillWidth().padding(12.0, 10.0, 12.0, 10.0)
+            .background(palette.surfaceSunken, vp(theme.radiusSmall))
+        if (state.activeSiteIsOfficial()) {
+            settingsHint("warn", "当前选中的是官方地址：种子站不参与回退；改选自定义站点后生效。")
+        }
+        HStack(spacing: vp(SELINE_SPACE_SM)) {
+            SelineTextField(state.seedInput.value,
+                {text => state.seedInput.value = text},
+                placeholder: state.seedSite.value, glyph: "cloud", height: 36.0,
+                width: 340.0, onSubmit: {=> state.applySeedSite()})
+            SelineButton("保存种子站", {=> state.applySeedSite()}, glyph: "check",
+                kind: SelineButtonKind.Secondary, compact: true)
+            Spacer()
+        }.hug().fillWidth()
+        if (!state.networkMessage.value.isEmpty()) {
+            settingsHint("check", state.networkMessage.value)
+        }
+        selineDivider()
+        HStack(spacing: vp(SELINE_SPACE_SM)) {
+            SelineButton("重新拉取站点", {=> state.refreshSiteNow()}, glyph: "refresh",
+                kind: SelineButtonKind.Ghost, compact: true)
+            Label("状态：${state.status.value}").fontSize(theme.fontCaption).muted()
+            Spacer()
         }.hug().fillWidth()
     }
 }
-
-/** 统一的设置分区卡片（标题 + 圆角底色）。 */
-func sectionCard(title: String, body!: () -> Unit): Unit {
-    let theme = selineTheme()
-    VStack(spacing: vp(SELINE_SPACE_SM)) {
-        Label(title).fontSize(theme.fontHeading).bold()
-        body()
-    }.hug().fillWidth()
-        .padding(14.0)
-        .background(theme.palette.surfaceRaised, vp(12.0))
-}
-
 /* -------------------------------------------------- 下载管理器页 */
 
 func downloadsPage(state: AppState): Unit {
