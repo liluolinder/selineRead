@@ -36,7 +36,9 @@ func favoritesPage(state: AppState): Unit {
                     if (failed && !state.favorites.value.isEmpty()) {
                         state.toastIfChanged(state.favoritesError.value)
                     }
-                    if (state.favoritesLoading.value || state.forceSkeleton.value) {
+                    // 客户端还没就绪时也走骨架：不然会显示「还没有收藏」，看起来像真的没有
+                    if (state.favoritesLoading.value || state.forceSkeleton.value ||
+                        !state.isClientReady()) {
                         bookSkeletonGrid(count: 12)
                     } else {
                         bookGrid(state, state.favorites.value)

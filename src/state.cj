@@ -1263,6 +1263,8 @@ public class AppState {
     private var clientReadyFired: Bool = false
     /** 书单页在等客户端就绪（避免重复排队）。 */
     private var booklistsWaitingClient: Bool = false
+    /** 收藏页在等客户端就绪（避免重复排队）。 */
+    private var favoritesWaitingClient: Bool = false
     private var clientReadyHooks: ArrayList<() -> Unit> = ArrayList<() -> Unit>()
     private var pendingSearchKeyword: String = ""
     private var pendingBookId: Int64 = 0
@@ -1809,6 +1811,12 @@ public class AppState {
             writeDebugLog("startup redirect ignored (official): ${current} -> ${location}")
             return
         }
+        // 探测是后台跑的：结果回来时用户可能已经手动换了站点，不能再把当前站点改回去
+        if (activeSite.value != current) {
+            writeDebugLog("startup redirect ignored (site changed): ${current} -> ${location} " +
+                "active=${activeSite.value}")
+            return
+        }
         let target = try {
             ZlibHost.of(location)
         } catch (_: ZlibError) {
@@ -1950,8 +1958,10 @@ public class AppState {
     public func reloadPopular(): Unit {
         let clientBox = match (this.client) {
             case Some(value) => value
+            // 客户端还在后台创建（启动期）：保持骨架，bootstrap 完成后会自己拉首屏；
+            // 不要写成「客户端未就绪」错误 —— 那会把首页钉死在错误卡片上。
             case None =>
-                error.value = "客户端未就绪"
+                loading.value = true
                 return
         }
         loading.value = true
@@ -1967,11 +1977,14 @@ public class AppState {
                     status.value = "${sourceLabel} ${cells.size} 本 · ${clientBox.value.currentSiteUrl()}"
                     loading.value = false
                     error.value = ""
+                    writeDebugLog("popular reloaded: ${cells.size} (${sourceLabel}) " +
+                        "site=${clientBox.value.currentSiteUrl()}")
                 })
             } catch (failure: ZlibError) {
                 postToUi({=>
                     error.value = "加载热门失败：${friendlyErrorMessage(failure)}"
                     loading.value = false
+                    writeDebugLog("popular reload failed: ${failure.detail}")
                 })
             }
         }
@@ -3473,6 +3486,52 @@ public class AppState {
             networkMessage.value = "切换站点失败：${friendlyErrorMessage(failure)}"
         }
     }
+
+    /**
+     * 换站后把「按站点取的数据」全部作废并重拉。
+     *
+     * 首页推荐、收藏、书单都是**当前站点**的数据；切完站点不重拉，用户看到的还是
+     * 旧站点的书，点进详情/下载拿到的地址也可能指向旧域名。二级页面（详情、单份
+     * 书单）同理：直接退出比留在旧数据上更安全。
+     *
+     * 收藏/书单不在这里直接请求：清掉"已加载"标记后，由页面构建期的
+     * `ensureFavoritesLoaded` / `ensureBooklistsLoaded` 懒加载（当前页签下一帧就会补）。
+     */
+    public func reloadContentForSiteChange(): Unit {
+        // 一层页
+        popular.value = ArrayList<BookCell>()
+        popularVisible.value = 12
+        error.value = ""
+        loading.value = true
+
+        // generation++ 会让在途请求的结果被丢弃；这里同时把 loading 归位，
+        // 否则被丢弃的那次请求不会清 loading，页面会一直停在骨架。
+        favoritesGeneration += 1
+        favoritesLoaded = false
+        favoritesLoading.value = false
+        favorites.value = ArrayList<BookCell>()
+        favoritesNextPage.value = 0
+        favoritesError.value = ""
+
+        booklistsGeneration += 1
+        booklistsLoaded = false
+        booklistsLoading.value = false
+        booklists.value = ArrayList<BooklistCell>()
+        booklistsNextPage.value = 0
+        booklistsError.value = ""
+
+        // 二层页
+        detailGeneration += 1
+        detailOpen.value = false
+        booklistGeneration += 1
+        booklistOpen.value = false
+        detailHistory.clear()
+        downloadMenuOpen.value = false
+
+        // 首页立刻重拉（它没有构建期懒加载）
+        reloadPopular()
+        writeDebugLog("site changed: content reset (loggedIn=${loggedIn.value})")
+    }
     /**
      * 单选框选中某个站点：立刻切过去并持久化。
      *
@@ -3492,6 +3551,8 @@ public class AppState {
         } else {
             "当前站点：${displaySiteUrl(target)}（访问失败时会用种子站自动换新域名）"
         }
+        // 站点变了：首页推荐 / 收藏 / 书单都是按站点取的，必须重拉
+        reloadContentForSiteChange()
     }
 
     /**
@@ -3545,14 +3606,20 @@ public class AppState {
         rebuildClientForActiveSite()
         match (this.client) {
             case Some(box) =>
+                let before = box.value.currentSiteUrl()
                 let refreshed = try {
                     box.value.refreshSite(force: true)
                 } catch (_: ZlibError) {
                     false
                 }
                 if (refreshed) {
+                    let moved = box.value.currentSiteUrl() != before
                     adoptRefreshedSite()
                     networkMessage.value = "站点已更新：${box.value.currentSiteUrl()}"
+                    // 换到了不同的域名：按站点取的数据全部重拉
+                    if (moved) {
+                        reloadContentForSiteChange()
+                    }
                 } else {
                     networkMessage.value = "当前站和种子站都不可用，刷新失败"
                 }
@@ -3708,7 +3775,20 @@ public class AppState {
         if (!loggedIn.value) {
             return
         }
-        if (favoritesLoaded || favoritesLoading.value) {
+        // 出错后不再每帧自动重试（否则每帧都发一次请求）：交给「重试」按钮
+        if (favoritesLoaded || favoritesLoading.value || !favoritesError.value.isEmpty()) {
+            return
+        }
+        // 客户端还没建好（启动后几百毫秒内）：排队等就绪再拉，
+        // 不要写成「客户端未就绪」错误 —— 那会把收藏页钉死在错误卡片上。
+        if (client.isNone()) {
+            if (!favoritesWaitingClient) {
+                favoritesWaitingClient = true
+                whenClientReady({=>
+                    favoritesWaitingClient = false
+                    ensureFavoritesLoaded()
+                })
+            }
             return
         }
         loadFavorites(reset: true)
@@ -3723,9 +3803,9 @@ public class AppState {
         }
         let clientBox = match (this.client) {
             case Some(value) => value
-            case None =>
-                favoritesError.value = "客户端未就绪"
-                return
+            // 启动期客户端还没就绪：直接返回（ensureFavoritesLoaded 会在就绪后补拉），
+            // 不写错误态，避免页面停在「客户端未就绪」上。
+            case None => return
         }
         let target = if (reset) { 1 } else { favoritesNextPage.value }
         if (target <= 0) {
