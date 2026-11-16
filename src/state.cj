@@ -1142,7 +1142,7 @@ public class AppState {
         let seed = effectiveSeedSite()
         try {
             let created = ZlibClient.create(baseUrl: baseUrl, credential: entry.credential(),
-                seed: seed)
+                seed: seed, config: clientConfigForSite(baseUrl))
             this.client = Some(ClientBox(created))
         } catch (failure: ZlibError) {
             loginMessage.value = "切换账号失败：${friendlyErrorMessage(failure)}"
@@ -1263,6 +1263,8 @@ public class AppState {
     private var clientReadyFired: Bool = false
     /** 书单页在等客户端就绪（避免重复排队）。 */
     private var booklistsWaitingClient: Bool = false
+    /** 站点变更代次：手动换站时 +1，用来丢弃在途的旧 bootstrap 结果。 */
+    private var siteGeneration: Int64 = 0
     /** 收藏页在等客户端就绪（避免重复排队）。 */
     private var favoritesWaitingClient: Bool = false
     private var clientReadyHooks: ArrayList<() -> Unit> = ArrayList<() -> Unit>()
@@ -1717,13 +1719,42 @@ public class AppState {
         let baseUrl = if (activeSite.value.isEmpty()) { OFFICIAL_SITES[0] } else { activeSite.value }
         let official = isOfficialSiteUrl(baseUrl)
         let seed = effectiveSeedSite()
+        // 后台 bootstrap 期间用户可能手动换站：那时这批结果必须作废（否则会把用户
+        // 刚选的站点/刚拉的数据又覆盖掉，界面上就是"切了没反应"）。
+        let generation = siteGeneration
         writeDebugLog("bootstrap: begin (background) base=${baseUrl} official=${official} seed=${seed} " +
-            "fallback=${!seed.isEmpty()}")
+            "fallback=${!seed.isEmpty()} gen=${generation}")
         let _ = spawn {=>
+            // 官方地址没有种子站兜底：先用 5 秒 HEAD 探一下，域名根本不可达就直接报错。
+            // 否则要等首屏两个接口各自超时（实测几十秒），用户会以为"根本没反应"。
+            if (official) {
+                let probe = probeSite(baseUrl, timeoutSeconds: 5)
+                // 只有「连不上」（status=0：DNS/TLS/连接超时）才断定网络失败；
+                // 任何 HTTP 响应（含 403/404）都说明主机是通的，交给真实接口判断。
+                if (probe.status == 0) {
+                    postToUi({=>
+                        if (generation != siteGeneration) {
+                            writeDebugLog("drop stale official probe: gen=${generation}")
+                            return
+                        }
+                        error.value = "网络链接失败"
+                        status.value = "网络链接失败"
+                        loading.value = false
+                        writeDebugLog("bootstrap: official site unreachable " +
+                            "(site=${baseUrl} status=${probe.status})")
+                    })
+                    return
+                }
+            }
             let created = try {
-                ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
+                ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed,
+                    config: clientConfigForSite(baseUrl))
             } catch (failure: ZlibError) {
                 postToUi({=>
+                    if (generation != siteGeneration) {
+                        writeDebugLog("drop stale bootstrap failure: gen=${generation}")
+                        return
+                    }
                     // 官方地址失败：直接报「网络链接失败」，不回退种子站
                     error.value = if (official) { "网络链接失败" } else {
                         "创建客户端失败：${friendlyErrorMessage(failure)}"
@@ -1738,6 +1769,13 @@ public class AppState {
             // 首屏列表（登录态优先个性化推荐）
             let landing = LandingResult.load(created, isLoggedIn)
             postToUi({=>
+                // 用户在等这批请求的期间已经手动换站：丢弃（含 client 赋值），
+                // 否则会把新的客户端和新的数据一起盖掉。
+                if (generation != siteGeneration) {
+                    writeDebugLog("drop stale bootstrap result: gen=${generation} active=${siteGeneration}")
+                    created.close()
+                    return
+                }
                 client = Some(ClientBox(created))
                 if (isLoggedIn) {
                     loggedIn.value = true
@@ -3228,9 +3266,11 @@ public class AppState {
             case None => ()
         }
         let anonymous = try {
-            ZlibClient.create(baseUrl: site, seed: effectiveSeedSite())
+            ZlibClient.create(baseUrl: site, seed: effectiveSeedSite(),
+                config: clientConfigForSite(site))
         } catch (_: ZlibError) {
-            ZlibClient.create(baseUrl: OFFICIAL_SITES[0])
+            ZlibClient.create(baseUrl: OFFICIAL_SITES[0],
+                config: clientConfigForSite(OFFICIAL_SITES[0]))
         }
         this.client = Some(ClientBox(anonymous))
         // 回到游客态：首页换回热门
@@ -3461,26 +3501,57 @@ public class AppState {
     }
 
     /**
+     * 建客户端用的配置。
+     *
+     * 官方地址**没有种子站兜底**（失败就是「网络链接失败」），所以把超时/重试收紧：
+     * 默认是 3 次尝试 + 60 秒总超时，域名不可达时要等好几分钟才报错，用户会以为
+     * "根本没反应"。这里改成单次尝试 + 25 秒总超时，尽快给结论。
+     * 自定义站保持默认（有种子站换站兜底，值得多试几次）。
+     */
+    private func clientConfigForSite(baseUrl: String): ZlibClientConfig {
+        let config = ZlibClientConfig()
+        if (isOfficialSiteUrl(baseUrl)) {
+            config.maxAttempts = 1
+            config.readTimeout = Duration.second * 12
+            config.totalTimeout = Duration.second * 25
+        }
+        config
+    }
+    /**
      * 按「当前选中的站点」重建客户端。
      *
      * 站点本体与种子站都只在创建客户端时传给后端（`ZlibSites` 是单值构造），
      * 所以「官方 ↔ 自定义」切换必须重建：官方地址的客户端不带 seed，自定义站才带。
      */
     private func rebuildClientForActiveSite(): Unit {
-        let box = match (this.client) {
-            case Some(value) => value
-            case None => return
-        }
-        let current = box.value
-        let credential = current.credential
         let baseUrl = if (activeSite.value.isEmpty()) { OFFICIAL_SITES[0] } else { activeSite.value }
         let seed = effectiveSeedSite()
+        // 站点变了：在途的旧 bootstrap / 旧请求结果都不再可信（见 startBackgroundBootstrap 里的代次判断）
+        siteGeneration += 1
+        let current = this.client
+        // 客户端可能还没建好（启动期 bootstrap 还在后台跑，例如官方站不可达一直卡着）：
+        // 这时也要能立刻切过去 —— 用默认账号的凭证新建一个，而不是直接 return。
+        let credential = match (current) {
+            case Some(box) => box.value.credential
+            case None => match (defaultAccount()) {
+                case Some(entry) => entry.credential()
+                case None => ZlibCredential.anonymous()
+            }
+        }
         try {
-            let rebuilt = ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed)
-            current.close()
+            let rebuilt = ZlibClient.create(baseUrl: baseUrl, credential: credential, seed: seed,
+                config: clientConfigForSite(baseUrl))
+            match (current) {
+                case Some(box) => box.value.close()
+                case None => ()
+            }
             this.client = Some(ClientBox(rebuilt))
             writeDebugLog("client rebuilt: site=${baseUrl} official=${isOfficialSiteUrl(baseUrl)} " +
                 "seed=${seed} fallback=${!seed.isEmpty()}")
+            // 客户端第一次就绪：补跑启动期排队的动作（收藏/书单的懒加载、pending 搜索/下载等）
+            if (!clientReadyFired) {
+                fireClientReady()
+            }
         } catch (failure: ZlibError) {
             writeDebugLog("client rebuild failed: ${failure.detail}")
             networkMessage.value = "切换站点失败：${friendlyErrorMessage(failure)}"
