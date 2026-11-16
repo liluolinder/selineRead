@@ -3708,9 +3708,10 @@ public class AppState {
     /**
      * 切换深浅色：用 chui 自带的圆形揭示过渡（`DesktopApp.transitionTheme`）。
      *
-     * 它会冻结新旧两帧，再以**鼠标位置（= 刚点的主题按钮）**为圆心、
-     * 用 `renderer.texturedCircle` 把新主题从圆内逐渐扩散出来 —— 颜色是跟着
-     * 辐射边界走的，而不是整体瞬切。
+     * 它以**鼠标位置（= 刚点的主题按钮）**为圆心冻结新旧两帧，再沿圆形边界切换，
+     * 两个方向故意不对称（视觉上都是"波纹从按钮走 / 往按钮收"）：
+     * - **浅 → 深**：深色以按钮为圆心**向外扩散**（`reverse: false`，新主题从圆内长出）；
+     * - **深 → 浅**：浅色从四周铺开、旧深色收成圆**向内收拢**到按钮（`reverse: true`）。
      */
     /** 构建期钩子：主题过渡期间让"新帧"用目标主题构建（否则构建期抓色仍是旧主题）。 */
     public func prepareThemeBuild(): Unit {
@@ -3731,7 +3732,9 @@ public class AppState {
         writeDebugLog("theme: transition -> dark=${nextDark} (${ms}ms)")
         match (app) {
             case Some(value) =>
-                value.transitionTheme(selineChuiThemeFor(nextDark), durationMs: UInt64(ms))
+                // 变深：新主题从按钮向外长；变浅：旧主题收成圆、往里收拢
+                value.transitionTheme(selineChuiThemeFor(nextDark), durationMs: UInt64(ms),
+                    reverse: !nextDark)
             case None =>
                 setSelineTheme(if (nextDark) { SelineTheme.dark() } else { SelineTheme.light() })
                 darkMode.value = nextDark
