@@ -26,8 +26,8 @@
       mirrors = { path = "ios/cangjie_bridge" }
 
 [dependencies]
-  zlibraryAPI4CJ = { path = "C:/Project/Cangjie/zlibraryAPI4CJ" }
-  linderHttp = { path = "C:/Project/Cangjie/LinderHttp" }
+  zlibraryAPI4CJ = { git = "https://gitcode.com/LiquidStudio/zlibraryAPI4CJ.git" }
+  linderHttp = { git = "https://gitcode.com/LiquidStudio/LinderHttp.git" }
   CJson = { git = "https://gitcode.com/LiquidStudio/CJson.git" }
 
 [package]
