@@ -1,0 +1,11 @@
+{
+  "app": {
+    "bundleName": "seline.book.read",
+    "vendor": "book",
+    "versionCode": 1000000,
+    "versionName": "1.0.0",
+    "icon": "$media:sr",
+    "label": "$string:app_name"
+  }
+}
+

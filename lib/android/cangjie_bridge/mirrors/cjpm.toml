@@ -1,0 +1,28 @@
+[target]
+  [target.aarch64-linux-android26]
+    compile-option = "--cfg target_platform=android --sysroot \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/sysroot\" -L \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/lib/clang/18/lib/linux\" -L \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/sysroot/usr/lib/aarch64-linux-android/26\" -B \"${ANDROID_CANGJIE_PATH}/third_party/llvm/bin\" -L \"${FFI_BRIDGE}\""
+    [target.aarch64-linux-android26.bin-dependencies]
+      path-option = [ "${ANDROID_CJ_FRONTEND}", "${ANDROID_CJ_MACRO}", "${ANDROID_CANGJIE_STDX_PATH}", "${ANDROID_CJMP_LIBS_PATH}/ohos", "${ANDROID_CJMP_LIBS_PATH}/kit", "${ANDROID_TEST_PATH}", "${SCRIPT_BUILD_PATH}/java", "${ANDROID_CJ_FRONTEND}/../kit" ]
+
+[package]
+  cjc-version = "1.1.0"
+  compile-option = "-Woff all"
+  description = "Mirrors for Java types"
+  link-option = ""
+  name = "mirrors"
+  output-type = "dynamic"
+  src-dir = "src"
+  target-dir = ""
+  version = "1.0.0"
+  [package.package-configuration]
+  [package.scripts]
+
+[profile]
+  experimental = true
+  [profile.build]
+    incremental = true
+    lto = ""
+  [profile.customized-option]
+    debug = "-g"
+    release = "--fast-math -O2 -s"
+  [profile.test]

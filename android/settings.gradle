@@ -1,0 +1,3 @@
+include ':app'
+include ':prefs'
+rootProject.name = 'read'

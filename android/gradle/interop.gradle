@@ -1,0 +1,262 @@
+import org.gradle.internal.os.OperatingSystem
+
+enum IncludeAppClasses {
+    /** Do not put app classes on the generator classpath. */
+    NONE,
+    /** Put app classes on the classpath without depending on Java compile. */
+    REFERENCE,
+    /** Put app classes on the classpath and depend on Java compile. */
+    REFERENCE_AND_DEPEND
+
+    static IncludeAppClasses from(Object value) {
+        if (value == null) {
+            return NONE
+        }
+        if (value instanceof IncludeAppClasses) {
+            return (IncludeAppClasses) value
+        }
+        String text = value.toString().trim()
+        if (text.isEmpty()) {
+            return NONE
+        }
+        try {
+            return valueOf(text.toUpperCase())
+        } catch (IllegalArgumentException ignored) {
+            throw new GradleException(
+                "cangjieInterop.includeAppClasses must be NONE, REFERENCE, or REFERENCE_AND_DEPEND, got '${value}'")
+        }
+    }
+}
+
+class CangjieInteropExtension implements org.gradle.util.Configurable<CangjieInteropExtension> {
+    private boolean specified = false
+    String outputDir
+    String packageName
+    Integer closureDepth
+    String javaMirrorGen
+    String interopConf
+    private IncludeAppClasses includeAppClasses = IncludeAppClasses.NONE
+
+    IncludeAppClasses getIncludeAppClasses() {
+        return includeAppClasses
+    }
+
+    void setIncludeAppClasses(Object value) {
+        includeAppClasses = IncludeAppClasses.from(value)
+    }
+
+    @Override
+    CangjieInteropExtension configure(Closure closure) {
+        def copy = (Closure) closure.clone()
+        copy.resolveStrategy = Closure.DELEGATE_FIRST
+        copy.delegate = this
+        copy.call()
+        specified = true
+        return this
+    }
+}
+
+/**
+ * Resolves a JDK 17+ home for java-mirror-gen when the Gradle JVM cannot run it.
+ *
+ * <p>Resolution order: Gradle property {@code JAVA17_HOME}, then
+ * {@code local.properties}, then the {@code JAVA17_HOME} environment variable.
+ * The build fails if none of these point at a usable JDK.
+ */
+class MirrorJdkResolver {
+    static int currentMajor() {
+        String version = System.getProperty("java.specification.version")
+        if (version.startsWith("1.")) {
+            return Integer.parseInt(version.substring(2))
+        }
+        return Integer.parseInt(version)
+    }
+
+    static boolean gradleJvmSupportsMirrorGen() {
+        int major = currentMajor()
+        return major >= 17
+    }
+
+    static String resolve(Project project) {
+        String overrideHome = resolveOverrideHome(project)
+        if (overrideHome == null) {
+            throw new GradleException(
+                "JAVA17_HOME is not set. The Gradle JVM is Java ${currentMajor()}, " +
+                "but java-mirror-gen requires JDK 17+. Set JAVA17_HOME via " +
+                "-PJAVA17_HOME, local.properties, or the environment.")
+        }
+        File overrideJdk = new File(overrideHome)
+        if (!isUsableJdk(overrideJdk)) {
+            throw new GradleException(
+                "JAVA17_HOME is set to '${overrideJdk}' but it does not contain a usable JDK (missing bin/java)")
+        }
+        project.logger.lifecycle("Using JDK from JAVA17_HOME=${overrideJdk.absolutePath}")
+        return overrideJdk.absolutePath
+    }
+
+    private static String resolveOverrideHome(Project project) {
+        def fromProp = project.findProperty("JAVA17_HOME")
+        if (fromProp != null && !fromProp.toString().trim().isEmpty()) {
+            return fromProp.toString().trim()
+        }
+
+        File localPropsFile = new File(project.rootDir, "local.properties")
+        if (localPropsFile.isFile()) {
+            Properties props = new Properties()
+            localPropsFile.withInputStream { props.load(it) }
+            def fromLocal = props.getProperty("JAVA17_HOME")
+            if (fromLocal != null && !fromLocal.trim().isEmpty()) {
+                return fromLocal.trim()
+            }
+        }
+
+        def fromEnv = System.getenv("JAVA17_HOME")
+        if (fromEnv != null && !fromEnv.trim().isEmpty()) {
+            return fromEnv.trim()
+        }
+        return null
+    }
+
+    private static boolean isUsableJdk(File javaHome) {
+        if (javaHome == null || !javaHome.isDirectory()) {
+            return false
+        }
+        String exe = OperatingSystem.current().isWindows() ? "java.exe" : "java"
+        return new File(javaHome, "bin/${exe}").isFile()
+    }
+}
+
+abstract class MirrorGenTask extends DefaultTask {
+    MirrorGenTask() {
+        group = "cangjie"
+        getOutputs().upToDateWhen { false }
+    }
+
+    @Optional
+    @InputFiles
+    abstract ConfigurableFileCollection getAppClassesDir()
+
+    @CompileClasspath
+    abstract ConfigurableFileCollection getClasspathFiles()
+
+    @CompileClasspath
+    abstract ConfigurableFileCollection getBootClasspathFiles()
+
+    File resolveMirrorGenJar(CangjieInteropExtension interop) {
+        if (interop.javaMirrorGen != null) {
+            String configured = interop.javaMirrorGen.trim()
+            if (!configured.isEmpty()) {
+                return new File(configured)
+            }
+        }
+        def cjmpSdkDir = System.getenv("CJMP_SDK_HOME")
+        if (cjmpSdkDir != null && !cjmpSdkDir.trim().isEmpty()) {
+            return new File(
+                cjmpSdkDir.trim(),
+                "cjmp-tools/third_party/cangjie-android/tools/bin/java-mirror-gen.jar")
+        }
+        throw new GradleException(
+            "cangjieInterop.javaMirrorGen is not set. Set it in cangjieInterop " +
+            "or define CJMP_SDK_HOME so the default java-mirror-gen.jar path can be used.")
+    }
+
+    File resolveInteropConf(CangjieInteropExtension interop) {
+        if (interop.interopConf != null) {
+            String configured = interop.interopConf.trim()
+            if (!configured.isEmpty()) {
+                return project.file(configured)
+            }
+        }
+        File interopConf = new File(project.projectDir, "interop.conf")
+        if (interopConf.isFile()) {
+            return interopConf
+        }
+        return new File(project.rootDir, "interop.conf")
+    }
+
+    @TaskAction
+    action() {
+        def interop = project.extensions.getByName("cangjieInterop")
+        if (!interop.specified) {
+            throw new GradleException("cangjieInterop is not specified")
+        }
+        if (interop.outputDir == null || interop.outputDir.trim().isEmpty()) {
+            throw new GradleException("cangjieInterop.outputDir is required")
+        }
+        if (interop.packageName == null || interop.packageName.trim().isEmpty()) {
+            throw new GradleException("cangjieInterop.packageName is required")
+        }
+        File mirrorGenJar = resolveMirrorGenJar(interop)
+        if (!mirrorGenJar.isFile()) {
+            throw new GradleException(
+                "java-mirror-gen.jar was not found at '${mirrorGenJar.absolutePath}'")
+        }
+
+        def fullClassPath = []
+        if (interop.includeAppClasses != IncludeAppClasses.NONE) {
+            fullClassPath.add(appClassesDir.singleFile.absolutePath)
+        }
+        classpathFiles.forEach { file ->
+            fullClassPath.add(file.absolutePath)
+        }
+
+        String javaExecutable = null
+        if (!MirrorJdkResolver.gradleJvmSupportsMirrorGen()) {
+            def javaHome = MirrorJdkResolver.resolve(project)
+            def javaExe = OperatingSystem.current().isWindows() ? "java.exe" : "java"
+            javaExecutable = new File(javaHome, "bin/${javaExe}").absolutePath
+        }
+
+        def props = ["package.mode": "true", "package.name": interop.packageName]
+        if (interop.closureDepth != null) {
+            props["gen.closure.depth"] = interop.closureDepth.toString()
+        }
+
+        if (bootClasspathFiles.isEmpty()) {
+            throw new GradleException("Android boot classpath is empty")
+        }
+
+        List<String> argList = [
+            "-bootclasspath", bootClasspathFiles.asPath,
+            "-cp", fullClassPath.join(File.pathSeparator),
+            "-d", interop.outputDir,
+        ]
+        File interopConf = resolveInteropConf(interop)
+        if (!interopConf.isFile()) {
+            throw new GradleException(
+                "interop.conf was not found at '${interopConf.absolutePath}'")
+        }
+        argList.addAll(interopConf.readLines()*.trim().findAll { !it.isEmpty() && !it.startsWith("#") })
+
+        project.javaexec {
+            if (javaExecutable != null) {
+                executable javaExecutable
+            }
+            classpath mirrorGenJar
+            systemProperties(props)
+            args argList
+        }
+    }
+}
+
+extensions.add("cangjieInterop", new CangjieInteropExtension())
+
+afterEvaluate {
+    def variants = plugins.hasPlugin("com.android.application")
+        ? android.applicationVariants
+        : android.libraryVariants
+    variants.all { variant ->
+        tasks.register("${variant.name}MirrorGenTask", MirrorGenTask) {
+            if (cangjieInterop.specified) {
+                def includeAppClasses = cangjieInterop.includeAppClasses
+                if (includeAppClasses == IncludeAppClasses.REFERENCE_AND_DEPEND) {
+                    appClassesDir.from(variant.javaCompileProvider.flatMap { it.destinationDirectory })
+                } else if (includeAppClasses == IncludeAppClasses.REFERENCE) {
+                    appClassesDir.from(variant.javaCompileProvider.get().destinationDirectory.get().asFile)
+                }
+                classpathFiles.from(variant.getCompileClasspath(null))
+                bootClasspathFiles.from(project.android.bootClasspath)
+            }
+        }
+    }
+}

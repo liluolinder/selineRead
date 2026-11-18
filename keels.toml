@@ -1,0 +1,25 @@
+[project]
+name = "read"
+description = "SelineRead - a Z-Library client for Android and HarmonyOS"
+type = "app"
+organization = "seline.book"
+android_toolchain = "modern"
+interop = "interop"
+
+[compatibility]
+cjmpSdk = ">=0.8.0"
+
+[compatibility.android]
+minSdk = 26
+
+[compatibility.hos]
+compatibleSdk = "6.0.0(20)"
+
+[compatibility.ios]
+deploymentTarget = "12.0"
+
+# You can add other Keels library or module projects as dependencies.
+# [dependencies]
+# packageName = "/path/to/library"
+# moduleName = "/path/to/module"
+

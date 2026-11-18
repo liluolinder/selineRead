@@ -1,0 +1,141 @@
+import org.gradle.internal.os.OperatingSystem
+import com.android.build.gradle.tasks.ProcessMultiApkApplicationManifest
+plugins {
+    id 'com.android.application'
+}
+
+apply from: "${rootDir}/gradle/interop.gradle"
+
+android {
+    namespace "seline.book.read"
+    compileSdk 34
+
+    ndkVersion "27.2.12479018"
+
+    defaultConfig {
+        applicationId "seline.book.read"
+        def ltoEnabled = ["1", "true"].contains((System.getenv("KEELS_LTO") ?: "").toLowerCase())
+        buildConfigField "boolean", "KEELS_LTO_ENABLED", ltoEnabled.toString()
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debugTest {
+            initWith debug
+            matchingFallbacks = ['debug']
+        }
+        releaseTest {
+            initWith release
+            debuggable true
+            matchingFallbacks = ['release']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs', 'src/main/jniLibs']
+        }
+    }
+
+    dynamicFeatures = []
+
+    applicationVariants.all { variant ->
+        def os = OperatingSystem.current()
+        def cangjieBuildType = variant.name == "debugTest" ? "debug" : (variant.name == "releaseTest" ? "release" : variant.name)
+        def androidBridgePath = "${project.rootDir}/app/build/intermediates/cmake/${variant.name}/obj/arm64-v8a"
+        def postBuildTask = tasks.register("buildCangjieResources${variant.name.capitalize()}", Exec) {
+            dependsOn variant.externalNativeBuildTasks
+            workingDir "../.."
+            environment "ANDROID_NDK_DIR", android.ndkDirectory.absolutePath
+            if (os.isWindows()) {
+                commandLine "cmd", "/C", "build.bat", cangjieBuildType, "android", "--cmake-bridge-path", androidBridgePath
+            } else {
+                commandLine "bash", "build.sh", cangjieBuildType, "android", "--cmake-bridge-path", androidBridgePath
+            }
+        }
+        variant.javaCompileProvider.get().dependsOn(postBuildTask)
+        tasks.named("merge${variant.name.capitalize()}JniLibFolders").configure {
+            dependsOn postBuildTask
+        }
+    }
+}
+afterEvaluate {
+    tasks.withType(ProcessMultiApkApplicationManifest).configureEach { processManifestTask ->
+        processManifestTask.outputs.upToDateWhen { false }
+
+        processManifestTask.doLast {
+            def taskName = processManifestTask.name.toLowerCase()
+            if (!taskName.contains('debug') || !(System.getenv('KEELS_PROFILE') ?: '').toBoolean()) {
+                return
+            }
+            def manifestOutputDir = processManifestTask.multiApkManifestOutputDirectory.get().asFile
+            File manifestFile = new File(manifestOutputDir, "AndroidManifest.xml")
+            if (!manifestFile.exists()) {
+                manifestFile = new File(manifestOutputDir, "main/AndroidManifest.xml")
+            }
+            println("manifestFile: ${manifestFile.absolutePath}")
+            if (!manifestFile.exists()) {
+                println("cannot find manifest file, skip...")
+                return
+            }
+
+            def xmlParser = new XmlParser(false, false)
+            xmlParser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+            def manifestRoot = xmlParser.parse(manifestFile)
+
+            boolean hasInternetPermission = false
+            manifestRoot.children().each { child ->
+                if (child.name() == "uses-permission" &&
+                    child.attribute("android:name") == "android.permission.INTERNET") {
+                    hasInternetPermission = true
+                }
+            }
+            println("Checking INTERNET permission: ${hasInternetPermission ? 'exists' : 'missing'}")
+            if (hasInternetPermission) {
+                return
+            }
+
+            def internetPermission = new Node(manifestRoot, "uses-permission")
+            internetPermission.attributes().put("android:name", "android.permission.INTERNET")
+            def printer = new XmlNodePrinter(new PrintWriter(manifestFile, "UTF-8"))
+            printer.preserveWhitespace = true
+            printer.print(manifestRoot)
+            println("Added INTERNET permission to AndroidManifest.xml")
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    implementation project(':prefs')
+    implementation "androidx.startup:startup-runtime:1.1.1"
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "com.google.android.material:material:1.12.0"
+}
+
+cangjieInterop {
+    outputDir = "${rootDir}/../lib/android/cangjie_bridge"
+    packageName = "mirrors"
+    closureDepth = 1
+}
+

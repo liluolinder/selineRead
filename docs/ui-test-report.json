@@ -1,0 +1,90 @@
+{
+  "status": "passed",
+  "startTime": "2026-11-14 21:54:15",
+  "uiTestSummary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 57256,
+    "status": "passed"
+  },
+  "environment": {
+    "deviceId": "2e390e17",
+    "deviceName": "M2012K11AC",
+    "platform": "android-arm64",
+    "systemVersion": "Android 13 (API 33)",
+    "cjmpVersion": "0.8.0",
+    "cangjieVersion": "1.1.0"
+  },
+  "build": {
+    "mode": "debug",
+    "testDir": "C:\\Project\\CJMP\\SelineRead\\tests"
+  },
+  "golden": {
+    "mode": "capture",
+    "directory": null,
+    "screenshotDirectory": "C:\\Project\\CJMP\\SelineRead\\docs\\test-run\\screenshots"
+  },
+  "selection": {
+    "mode": "all",
+    "filters": [],
+    "resolvedCases": [],
+    "resolvedClasses": [
+      "TestExample00"
+    ]
+  },
+  "artifacts": {
+    "report": "C:\\Project\\CJMP\\SelineRead\\docs\\test-run\\report.json"
+  },
+  "cases": [
+    {
+      "className": "default.TestExample00",
+      "name": "testSearchFlow",
+      "status": "passed",
+      "durationMs": 10434.664,
+      "failure": null
+    },
+    {
+      "className": "default.TestExample00",
+      "name": "testBackReturnsToRecommendations",
+      "status": "passed",
+      "durationMs": 6138.413,
+      "failure": null
+    },
+    {
+      "className": "default.TestExample00",
+      "name": "testWideLayout",
+      "status": "passed",
+      "durationMs": 5191.373,
+      "failure": null
+    }
+  ],
+  "notices": [],
+  "goldenCaptureSummary": {
+    "status": "passed",
+    "total": 3,
+    "captured": 3,
+    "error": 0
+  },
+  "goldenCaptureResults": [
+    {
+      "name": "back_home",
+      "status": "passed",
+      "message": "Screenshot captured.",
+      "actual": "C:\\Project\\CJMP\\SelineRead\\docs\\test-run\\screenshots\\back_home.png"
+    },
+    {
+      "name": "search_mode",
+      "status": "passed",
+      "message": "Screenshot captured.",
+      "actual": "C:\\Project\\CJMP\\SelineRead\\docs\\test-run\\screenshots\\search_mode.png"
+    },
+    {
+      "name": "wide_layout",
+      "status": "passed",
+      "message": "Screenshot captured.",
+      "actual": "C:\\Project\\CJMP\\SelineRead\\docs\\test-run\\screenshots\\wide_layout.png"
+    }
+  ]
+}

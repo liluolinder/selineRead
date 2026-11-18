@@ -1,0 +1,50 @@
+[target]
+  [target.aarch64-linux-ohos]
+    compile-option = "--cfg target_platform=hos --cfg keels_test_platform=hos -B \"${DEVECO_CANGJIE_PATH}/build-tools/third_party/llvm/bin\" -B \"${DEVECO_OH_NATIVE_HOME}/sysroot/usr/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/sysroot/usr/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/llvm/lib/clang/15.0.4/lib/aarch64-linux-ohos\" -L \"${DEVECO_OH_NATIVE_HOME}/llvm/lib/aarch64-linux-ohos\" --sysroot \"${DEVECO_OH_NATIVE_HOME}/sysroot\""
+    [target.aarch64-linux-ohos.bin-dependencies]
+      path-option = [ "${AARCH64_LIBS}", "${AARCH64_MACRO_LIBS}", "${AARCH64_KIT_LIBS}", "${CJMP_SDK_HOME}/cjmp-tools/third_party/cangjie-stdx/linux_ohos_aarch64_cjnative/dynamic/stdx" ]
+
+  [target.aarch64-linux-android26]
+    compile-option = "--cfg target_platform=android --cfg keels_test_platform=android --sysroot \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/sysroot\" -L \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/lib/clang/18/lib/linux\" -L \"${ANDROID_NDK_DIR}/toolchains/llvm/prebuilt/${SYSTEM_STRING}/sysroot/usr/lib/aarch64-linux-android/26\" -B \"${ANDROID_CANGJIE_PATH}/third_party/llvm/bin\""
+    [target.aarch64-linux-android26.bin-dependencies]
+      path-option = [ "${ANDROID_CJ_FRONTEND}", "${ANDROID_CJ_MACRO}", "${ANDROID_CANGJIE_STDX_PATH}", "${ANDROID_CJMP_LIBS_PATH}/ohos", "${ANDROID_CJMP_LIBS_PATH}/kit", "${ANDROID_TEST_PATH}", "${ANDROID_CJ_FRONTEND}/../kit" ]
+
+  [target.aarch64-apple-ios]
+    compile-option = "--cfg target_platform=ios --cfg keels_test_platform=ios --sysroot=${IOS_SDK_DIR} -L${FFI_BRIDGE} -lread_ffi"
+    [target.aarch64-apple-ios.bin-dependencies]
+      path-option = ["${IOS_CJ_FRONTEND}", "${IOS_CJ_MACRO}", "${IOS_CANGJIE_STDX_PATH}", "${IOS_CJMP_LIBS_PATH}/ohos", "${IOS_CJMP_LIBS_PATH}/kit", "${IOS_TEST_PATH}", "${IOS_CJ_FRONTEND}/../kit" ]
+    package-option = {}
+
+  [target.aarch64-apple-ios-simulator]
+    compile-option = "--cfg target_platform=ios-sim --cfg keels_test_platform=ios-sim --sysroot=${IOS_SIM_SDK_DIR} -L${FFI_BRIDGE} -lread_ffi"
+    [target.aarch64-apple-ios-simulator.bin-dependencies]
+      path-option = ["${IOS_SIM_CJ_FRONTEND}/ohos", "${IOS_SIM_CJ_FRONTEND}/macro/ohos", "${IOS_SIM_CANGJIE_STDX_PATH}", "${IOS_SIM_CJMP_LIBS_PATH}/ohos", "${IOS_SIM_CJMP_LIBS_PATH}/kit", "${IOS_SIM_TEST_PATH}", "${CJMP_SDK_HOME}/cjmp-ui/ios-sim/kit" ]
+    package-option = {}
+
+[package]
+  cjc-version = "1.1.0"
+  compile-option = ""
+  description = "Keels Tests"
+  link-option = ""
+  name = "ohos_app_cangjie_entry_test"
+  output-type = "dynamic"
+  src-dir = "cangjie"
+  target-dir = ""
+  version = "1.0.0"
+  [package.package-configuration]
+  [package.scripts]
+
+[dependencies]
+  [dependencies.ohos_app_cangjie_entry]
+    path = "../lib"
+
+[profile]
+  experimental = true
+  [profile.build]
+    incremental = true
+    lto = ""
+  [profile.customized-option]
+    debug = "-g -Woff all"
+    release = "--fast-math -O2 -s -Woff all"
+  [profile.test]
+
